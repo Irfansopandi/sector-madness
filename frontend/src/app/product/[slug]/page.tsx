@@ -11,6 +11,9 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import AnimatedSection from "@/components/AnimatedSection";
 import Container from "@/components/Container";
+import { addItemToBag } from "@/utils/bag";
+import AuthRequiredModal from "@/components/AuthRequiredModal";
+import BagToast from "@/components/BagToast";
 
 export default function ProductPage({
   params,
@@ -32,6 +35,32 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [activeImage, setActiveImage] = useState(0);
   const [openAccordion, setOpenAccordion] = useState<string | null>("description");
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+
+  const handleAddToBag = () => {
+    const size = selectedSize || product.sizes[0] || "M";
+    if (!selectedSize) {
+      setSelectedSize(size);
+    }
+    const res = addItemToBag(
+      {
+        slug: product.slug,
+        name: product.name,
+        collection: product.collection || "ATELIER COLLECTION",
+        size,
+        price: product.price,
+        image: product.image,
+      },
+      1
+    );
+
+    if (res.requiresAuth) {
+      setShowAuthModal(true);
+    } else if (res.success) {
+      setShowToast(true);
+    }
+  };
 
   const stockCount = getVariantStock(product.slug, selectedColor, selectedSize);
 
@@ -250,12 +279,14 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
 
               {/* Action Buttons */}
               <div className="space-y-4 pt-10 mb-16">
-                <button
+                <motion.button
+                  whileTap={{ scale: 0.985 }}
                   translate="no"
-                  className="w-full py-5 bg-[#F5F5F5] text-[#0A0A0A] text-[11px] tracking-[0.25em] uppercase font-[family-name:var(--font-body)] font-medium hover:bg-[#B6A47E] transition-all duration-300 cursor-pointer"
+                  onClick={handleAddToBag}
+                  className="w-full py-5 bg-[#F5F5F5] text-[#0A0A0A] text-[11px] tracking-[0.25em] uppercase font-[family-name:var(--font-body)] font-medium hover:bg-[#B6A47E] hover:text-[#0A0A0A] transition-colors duration-300 cursor-pointer shadow-lg"
                 >
                   ADD TO BAG
-                </button>
+                </motion.button>
 
                 <button
                   translate="no"
@@ -414,6 +445,8 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
         </AnimatedSection>
       </Container>
 
+      <AuthRequiredModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+      <BagToast show={showToast} onClose={() => setShowToast(false)} />
       <Footer />
     </main>
   );
