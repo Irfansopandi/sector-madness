@@ -1,0 +1,207 @@
+@import "tailwindcss";
+
+:root {
+  --color-bg-primary: #0A0A0A;
+  --color-bg-surface: #161616;
+  --color-text-primary: #F5F5F5;
+  --color-text-secondary: #8A8A8A;
+  --color-accent: #B6A47E;
+  --color-accent-dim: #9A8B6A;
+  --color-border: #222222;
+  --color-border-light: #2A2A2A;
+
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: 'Inter', -apple-system, sans-serif;
+}
+
+@theme inline {
+  --color-background: var(--color-bg-primary);
+  --color-foreground: var(--color-text-primary);
+  --color-surface: var(--color-bg-surface);
+  --color-muted: var(--color-text-secondary);
+  --color-accent: var(--color-accent);
+  --color-accent-dim: var(--color-accent-dim);
+  --color-border: var(--color-border);
+  --color-border-light: var(--color-border-light);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+}
+
+/* =============================================
+   BASE STYLES
+   ============================================= */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-weight: 300;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+::selection {
+  background-color: var(--color-accent);
+  color: var(--color-bg-primary);
+}
+
+/* =============================================
+   TYPOGRAPHY SCALE
+   ============================================= */
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+/* =============================================
+   LUXURY EDITORIAL SPACING SYSTEM
+   ============================================= */
+
+/* Container centering & responsive horizontal padding */
+.site-container {
+  width: 100%;
+  max-width: 1280px;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-left: clamp(1.5rem, 5vw, 4.5rem);
+  padding-right: clamp(1.5rem, 5vw, 4.5rem);
+}
+
+/* Standard Major Section Padding */
+.section-py {
+  padding-top: clamp(3.75rem, 8.5vw, 9.5rem);    /* 60px -> 152px */
+  padding-bottom: clamp(3.75rem, 8.5vw, 9.5rem);
+}
+
+/* Extra Deep Section Padding for major transitions (e.g. before Footer) */
+.section-py-lg {
+  padding-top: clamp(5rem, 11vw, 13rem);        /* 80px -> 208px */
+  padding-bottom: clamp(4.5rem, 9.5vw, 11rem);   /* 72px -> 176px */
+}
+
+/* Section Header Bottom Margin */
+.section-header-mb {
+  margin-bottom: clamp(3rem, 6vw, 6.5rem);      /* 48px -> 104px */
+}
+
+/* Section Heading Bottom Margin */
+.heading-mb {
+  margin-bottom: clamp(1.25rem, 2.5vw, 2.25rem); /* 20px -> 36px */
+}
+
+/* Story Section Bottom Padding */
+.story-pb {
+  padding-bottom: clamp(4.5rem, 9.5vw, 12rem);   /* 72px -> 192px */
+}
+
+/* =============================================
+   SCROLLBAR
+   ============================================= */
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-secondary);
+}
+
+/* =============================================
+   KEN BURNS ANIMATION
+   ============================================= */
+
+@keyframes kenBurns {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.08);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes subtleFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+/* =============================================
+   UTILITY CLASSES
+   ============================================= */
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.tracking-editorial {
+  letter-spacing: 0.2em;
+}
+
+.tracking-wide-editorial {
+  letter-spacing: 0.35em;
+}
+
+/* =============================================
+   REDUCED MOTION
+   ============================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}
