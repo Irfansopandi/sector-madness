@@ -1,9 +1,10 @@
 export interface BagItem {
-  id: string; // `${slug}-${size}`
+  id: string; // `${slug}-${size}-${color}`
   slug: string;
   name: string;
   collection: string;
   size: string;
+  color?: string;
   price: number;
   image: string;
   quantity: number;
@@ -69,7 +70,7 @@ export function addItemToBag(item: Omit<BagItem, "id" | "quantity">, quantity = 
   }
 
   const currentItems = getBagItems();
-  const id = `${item.slug}-${item.size}`;
+  const id = `${item.slug}-${item.size}-${item.color || "default"}`;
   const existingIndex = currentItems.findIndex((i) => i.id === id);
 
   if (existingIndex > -1) {

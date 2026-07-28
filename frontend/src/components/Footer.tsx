@@ -1,124 +1,182 @@
+"use client";
+
+import Link from "next/link";
+
 export default function Footer() {
   return (
-    <footer
-      style={{ paddingTop: "48px" }}
-      className="w-full bg-[#0A0A0A] text-[#F5F5F5] pb-4 border-t border-[#222222]"
-    >
-      {/* Upper Content Container */}
-      <div className="max-w-[1480px] mx-auto px-8 md:px-14 lg:px-20">
-        {/* 12-Column Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-14 xl:gap-16">
-          {/* Column 1: Newsletter Subscribe */}
-          <div className="lg:col-span-6 flex flex-col justify-between pr-0 lg:pr-16">
-            <div style={{ paddingLeft: "60px" }}>
-              <h3 className="font-[family-name:var(--font-display)] text-[22px] md:text-[26px] lg:text-[28px] font-bold tracking-[0.05em] uppercase text-[#F5F5F5] leading-[1.25] mb-6">
-                SUBSCRIBE TO THE<br />NEWSLETTER
-              </h3>
-              <p
-                style={{ fontFamily: "'Inter', sans-serif" }}
-                className="text-[11px] md:text-[12px] tracking-[0.12em] uppercase text-[#8A8A8A] font-normal leading-[1.8] mb-8 max-w-md"
-              >
-                CREATE AN ACCOUNT AND GET ACCESS TO EXCLUSIVE CONTENT, PREVIEWS AND SPECIAL OFFERS.
-              </p>
-            </div>
-            <div style={{ paddingLeft: "60px" }}>
-              <button
-                style={{ fontFamily: "'Inter', sans-serif" }}
-                className="bg-[#F5F5F5] text-[#0A0A0A] px-8 py-3.5 text-[11px] tracking-[0.25em] uppercase font-bold hover:bg-[#B6A47E] hover:text-[#0A0A0A] transition-all duration-300 cursor-pointer"
-              >
-                SIGN UP
-              </button>
-            </div>
-          </div>
-
-          {/* Column 2: ABOUT */}
-          <div className="lg:col-span-2 pt-1">
-            <h4
-              style={{ fontFamily: "'Inter', sans-serif", marginBottom: "20px" }}
-              className="text-[11px] tracking-[0.18em] uppercase font-bold text-[#F5F5F5] whitespace-nowrap block"
-            >
-              ABOUT
-            </h4>
-            <ul className="space-y-4 md:space-y-5">
-              {["OUR STORY", "VENTILE®", "OUR PEOPLE"].map((item) => (
-                <li key={item}>
-                  <a
-                    href="#"
-                    style={{ fontFamily: "'Inter', sans-serif" }}
-                    className="text-[11px] tracking-[0.18em] uppercase text-[#F5F5F5] font-bold hover:text-[#B6A47E] transition-colors cursor-pointer whitespace-nowrap block"
-                  >
-                    {item}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Column 3: LEGAL AREA */}
-          <div className="lg:col-span-2 pt-1">
-            <h4
-              style={{ fontFamily: "'Inter', sans-serif", marginBottom: "20px" }}
-              className="text-[11px] tracking-[0.18em] uppercase font-bold text-[#F5F5F5] whitespace-nowrap block"
-            >
-              LEGAL AREA
-            </h4>
-            <ul className="space-y-4 md:space-y-5">
-              {["RETURNS & REFUNDS", "PRIVACY POLICY"].map((item) => (
-                <li key={item}>
-                  <a
-                    href="#"
-                    style={{ fontFamily: "'Inter', sans-serif" }}
-                    className="text-[11px] tracking-[0.18em] uppercase text-[#F5F5F5] font-bold hover:text-[#B6A47E] transition-colors cursor-pointer whitespace-nowrap block"
-                  >
-                    {item}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Column 4: CUSTOMER CARE */}
-          <div className="lg:col-span-2 flex flex-col justify-between pt-1">
+    <footer className="w-full bg-[#0A0A0A] text-[#F5F5F5] mt-32 md:mt-48 lg:mt-64 pb-12 md:pb-16 border-t border-[#222222]/80">
+      {/* Upper Content Container - Infallible explicit style padding for generous top & bottom boundaries */}
+      <div 
+        style={{ 
+          paddingLeft: "clamp(50px, 7vw, 120px)", 
+          paddingRight: "clamp(50px, 7vw, 120px)",
+          paddingTop: "clamp(38px, 4.5vw, 60px)",
+          paddingBottom: "clamp(24px, 2.5vw, 36px)"
+        }} 
+        className="w-full"
+      >
+        {/* Upper Navigation & Manifesto Area */}
+        <div className="flex flex-col lg:flex-row justify-between gap-16 lg:gap-24 xl:gap-36">
+          
+          {/* LEFT SECTION: Brand Manifesto */}
+          <div className="lg:w-[380px] xl:w-[440px] flex flex-col justify-between shrink-0">
             <div>
-              <h4
-                style={{ fontFamily: "'Inter', sans-serif", marginBottom: "20px" }}
-                className="text-[11px] tracking-[0.18em] uppercase font-bold text-[#F5F5F5] whitespace-nowrap block"
+              <h3 
+                translate="no" 
+                className="font-[family-name:var(--font-display)] text-[26px] md:text-[30px] lg:text-[34px] font-normal tracking-[0.06em] uppercase text-[#F5F5F5] mb-8"
               >
-                CUSTOMER CARE
+                SECTOR MADNESS
+              </h3>
+              <div className="text-[13px] md:text-[14px] font-[family-name:var(--font-body)] text-[#8A8A8A] font-light leading-[2.1] tracking-[0.04em] space-y-4 mb-12">
+                <p className="text-[#F5F5F5]/90 font-normal">
+                  NOT MADE FOR EVERYONE.
+                </p>
+                <p>
+                  CREATED FOR THOSE WHO DEFINE THEIR OWN DIRECTION.
+                </p>
+                <p className="text-[#B6A47E] text-[11px] md:text-[12px] tracking-[0.22em] font-medium pt-3">
+                  EST. 2024
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <Link
+                href="/brand"
+                className="group inline-flex items-center text-[11px] md:text-[12px] tracking-[0.25em] uppercase font-[family-name:var(--font-body)] font-medium text-[#F5F5F5] opacity-90 hover:opacity-100 hover:text-[#B6A47E] transition-all duration-300 ease-out"
+              >
+                <span className="relative pb-1.5 border-b border-[#F5F5F5]/30 group-hover:border-[#B6A47E] group-hover:translate-x-1 transition-all duration-300 ease-out inline-block">
+                  DISCOVER OUR STORY
+                </span>
+                <span className="ml-4 transition-transform duration-300 ease-out group-hover:translate-x-2">
+                  →
+                </span>
+              </Link>
+            </div>
+          </div>
+
+          {/* RIGHT SECTION: Three Columns Navigation */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-12 sm:gap-14 lg:gap-16 xl:gap-24 flex-1 max-w-full pt-1">
+            
+            {/* COLUMN 1: Collections */}
+            <div>
+              <h4 className="font-[family-name:var(--font-display)] text-[13px] md:text-[14px] tracking-[0.2em] uppercase font-medium text-[#F5F5F5] mb-8 md:mb-10">
+                COLLECTIONS
               </h4>
               <ul className="space-y-4 md:space-y-5">
-                {["HOW TO ORDER", "FAQ", "CONTACT US"].map((item) => (
-                  <li key={item}>
-                    <a
-                      href="#"
-                      style={{ fontFamily: "'Inter', sans-serif" }}
-                      className="text-[11px] tracking-[0.18em] uppercase text-[#F5F5F5] font-bold hover:text-[#B6A47E] transition-colors cursor-pointer whitespace-nowrap block"
+                {[
+                  { label: "New Arrivals", href: "/shop" },
+                  { label: "Outerwear", href: "/shop" },
+                  { label: "T-Shirts", href: "/shop" },
+                  { label: "Bottoms", href: "/shop" },
+                  { label: "Accessories", href: "/shop" },
+                ].map((item) => (
+                  <li key={item.label}>
+                    <Link
+                      href={item.href}
+                      className="text-[13px] md:text-[14px] font-[family-name:var(--font-body)] font-light text-[#8A8A8A] hover:text-[#F5F5F5] hover:translate-x-[4px] transition-all duration-300 ease-out inline-block leading-[1.6]"
                     >
-                      {item}
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* COLUMN 2: Customer */}
+            <div>
+              <h4 className="font-[family-name:var(--font-display)] text-[13px] md:text-[14px] tracking-[0.2em] uppercase font-medium text-[#F5F5F5] mb-8 md:mb-10">
+                CUSTOMER
+              </h4>
+              <ul className="space-y-4 md:space-y-5">
+                {[
+                  { label: "Shipping", href: "#" },
+                  { label: "Returns", href: "#" },
+                  { label: "Size Guide", href: "#" },
+                  { label: "FAQ", href: "#" },
+                  { label: "Contact", href: "#" },
+                ].map((item) => (
+                  <li key={item.label}>
+                    <a
+                      href={item.href}
+                      className="text-[13px] md:text-[14px] font-[family-name:var(--font-body)] font-light text-[#8A8A8A] hover:text-[#F5F5F5] hover:translate-x-[4px] transition-all duration-300 ease-out inline-block leading-[1.6]"
+                    >
+                      {item.label}
                     </a>
                   </li>
                 ))}
               </ul>
             </div>
+
+            {/* COLUMN 3: Company */}
+            <div>
+              <h4 className="font-[family-name:var(--font-display)] text-[13px] md:text-[14px] tracking-[0.2em] uppercase font-medium text-[#F5F5F5] mb-8 md:mb-10">
+                COMPANY
+              </h4>
+              <ul className="space-y-4 md:space-y-5">
+                {[
+                  { label: "About", href: "/brand" },
+                  { label: "Manifesto", href: "/brand" },
+                  { label: "Lookbook", href: "/journal" },
+                  { label: "Terms & Conditions", href: "#" },
+                  { label: "Privacy Policy", href: "#" },
+                ].map((item) => (
+                  <li key={item.label}>
+                    <Link
+                      href={item.href}
+                      className="text-[13px] md:text-[14px] font-[family-name:var(--font-body)] font-light text-[#8A8A8A] hover:text-[#F5F5F5] hover:translate-x-[4px] transition-all duration-300 ease-out inline-block leading-[1.6]"
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
           </div>
+
         </div>
       </div>
 
-      {/* 100% Full Screen Width Copyright Line with Tight 6px Clearance */}
-      <div
-        style={{ marginTop: "48px", marginBottom: "6px" }}
-        className="w-full h-[1px] bg-[#222222]"
-      />
+      {/* Thin Horizontal Divider - Stretching FULL WIDTH of the screen */}
+      <div className="w-full h-[1px] bg-[#222222]/70 mb-10 md:mb-14" />
 
-      {/* Copyright Bar */}
-      <div className="max-w-[1480px] mx-auto px-8 md:px-14 lg:px-20">
-        <div className="flex flex-col md:flex-row items-center justify-center text-center">
-          <p
-            style={{ fontFamily: "'Inter', sans-serif" }}
-            className="text-[10px] md:text-[11px] tracking-[0.25em] uppercase text-[#8A8A8A] font-[family-name:var(--font-body)]"
-          >
-            SECTOR MADNESS ® 2026. ALL RIGHTS RESERVED.
-          </p>
+      {/* Bottom Copyright and Socials Section - Matching the protected safety padding */}
+      <div 
+        style={{ paddingLeft: "clamp(50px, 7vw, 120px)", paddingRight: "clamp(50px, 7vw, 120px)" }} 
+        className="w-full"
+      >
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8 text-[11px] md:text-[12px] font-[family-name:var(--font-body)] text-[#8A8A8A] tracking-[0.08em]">
+          <div className="space-y-2 md:space-y-0 md:flex md:flex-wrap md:items-center md:gap-4 leading-relaxed">
+            <span className="text-[#F5F5F5] font-normal block md:inline" translate="no">
+              © 2026 SECTOR MADNESS.
+            </span>
+            <span className="hidden md:inline text-[#333333]">//</span>
+            <span className="block md:inline">
+              ALL RIGHTS RESERVED.
+            </span>
+            <span className="hidden md:inline text-[#333333]">//</span>
+            <span className="text-[#B6A47E]/90 font-light block md:inline pt-1 md:pt-0">
+              Crafted in Karawang, Indonesia.
+            </span>
+          </div>
+
+          {/* Social Links (Typography Only) */}
+          <div className="flex items-center gap-8 md:gap-10 shrink-0 pt-2 lg:pt-0">
+            {[
+              { name: "Instagram", url: "https://www.instagram.com/sectormadness.id?igsh=dWRjeGR4M3l3ZWw5" },
+            ].map((social) => (
+              <a
+                key={social.name}
+                href={social.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="uppercase tracking-[0.22em] font-medium text-[#F5F5F5] opacity-85 hover:opacity-100 hover:text-[#B6A47E] transition-colors duration-300 ease-out inline-block"
+              >
+                {social.name}
+              </a>
+            ))}
+          </div>
         </div>
       </div>
     </footer>

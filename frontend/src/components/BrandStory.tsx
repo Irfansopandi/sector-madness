@@ -34,7 +34,7 @@ export default function BrandStory() {
               }}
               className="uppercase text-[#FFFFFF] mb-4 tracking-tighter"
             >
-              THE BRAND
+              STORIES
             </h2>
           </AnimatedSection>
 

@@ -110,7 +110,7 @@ export default function Hero() {
             transition={{ duration: 1, delay: 0.9 }}
             className="text-[12px] md:text-[13px] tracking-[0.25em] uppercase text-[#8A8A8A] font-[family-name:var(--font-body)] font-light mb-14 md:mb-16 max-w-md"
           >
-            Designed for those who move differently
+            We trust quality
           </motion.p>
 
           {/* CTA - High End Luxury Streetwear Wide Button */}

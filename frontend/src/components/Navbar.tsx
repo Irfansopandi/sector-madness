@@ -11,7 +11,7 @@ import { getBagItems } from "@/utils/bag";
 const navLinks = [
   { label: "SHOP", href: "/shop", hasDropdown: true },
   { label: "JOURNAL", href: "/journal", hasDropdown: false },
-  { label: "THE BRAND", href: "/brand", hasDropdown: false },
+  { label: "STORIES", href: "/brand", hasDropdown: false },
 ];
 
 const productCategories = [
@@ -178,7 +178,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
         }`}
       >
         <div className="max-w-[1480px] mx-auto px-8 md:px-14 lg:px-20">
-          <div className="flex justify-between items-center h-20 md:h-24">
+          <div className="flex justify-between items-center h-[88px] md:h-[116px]">
             {/* Bagian Kiri (Menu Navigasi) - Matching Footer exact 60px inset padding */}
             <div className="hidden lg:flex items-center gap-8 flex-1 justify-start" style={{ paddingLeft: "60px" }}>
               {navLinks.map((link) => {
@@ -222,9 +222,9 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                 <Image
                   src="/images/logo.png"
                   alt="SECTOR MADNESS"
-                  width={320}
-                  height={90}
-                  className={`h-10 md:h-14 lg:h-16 w-auto object-contain transition-all duration-300 ${
+                  width={420}
+                  height={120}
+                  className={`h-[60px] md:h-[85px] lg:h-[110px] w-auto object-contain transition-all duration-300 ${
                     isLightMode || isShopHovered ? "brightness-0" : ""
                   }`}
                   priority
@@ -242,12 +242,12 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
+                  width="24"
+                  height="24"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="1.5"
+                  strokeWidth="1.75"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   className={`transition-colors duration-300 ${
@@ -286,12 +286,12 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
+                  width="24"
+                  height="24"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="1.5"
+                  strokeWidth="1.75"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   className={`transition-colors duration-300 ${
@@ -512,7 +512,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                 {/* Top Header: Centered Logo & Close Button (100% identical structural size and positioning as main Navbar) */}
                 <div className="w-full border-b border-[#E5E5E5]/40">
                   <div className="max-w-[1480px] mx-auto px-8 md:px-14 lg:px-20">
-                    <div className="flex justify-between items-center h-20 md:h-24">
+                    <div className="flex justify-between items-center h-[88px] md:h-[116px]">
                       {/* Bagian Kiri (Senada dengan padding navbar utama) */}
                       <div className="flex-1 hidden lg:flex items-center justify-start" style={{ paddingLeft: "60px" }}></div>
                       <div className="flex-1 lg:hidden flex items-center justify-start"></div>
@@ -527,9 +527,9 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                           <Image
                             src="/images/logo.png"
                             alt="SECTOR MADNESS"
-                            width={320}
-                            height={90}
-                            className="h-10 md:h-14 lg:h-16 w-auto object-contain brightness-0 transition-all duration-300"
+                            width={420}
+                            height={120}
+                            className="h-[60px] md:h-[85px] lg:h-[110px] w-auto object-contain brightness-0 transition-all duration-300"
                             priority
                           />
                         </Link>
@@ -678,7 +678,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                                       {prod.name}
                                     </h5>
                                     <p style={{ fontSize: "13px", letterSpacing: "0.05em", marginTop: "4px", color: "#555555" }}>
-                                      Rp {prod.price.toLocaleString("id-ID")}
+                                      Rp {(prod.price * 15000).toLocaleString("id-ID")}
                                     </p>
                                   </Link>
                                 ))}

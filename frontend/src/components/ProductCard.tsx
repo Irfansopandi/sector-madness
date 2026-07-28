@@ -87,7 +87,7 @@ export default function ProductCard({
             {material} · {weight}
           </p>
           <p className="text-[13px] text-[#F5F5F5] font-[family-name:var(--font-body)] font-light pt-1">
-            ${price}
+            Rp {(price * 15000).toLocaleString("id-ID")}
           </p>
         </div>
       </Link>

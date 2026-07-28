@@ -155,8 +155,11 @@ export default function ShoppingBagPage() {
                                   {item.name}
                                 </h2>
                               </Link>
-                              <div className="mt-3 text-[12px] uppercase text-[#CCCCCC] font-mono tracking-widest font-medium">
-                                SIZE // <span className="text-white font-bold">{item.size}</span>
+                              <div className="mt-3 flex flex-wrap items-center gap-4 text-[12px] uppercase text-[#CCCCCC] font-mono tracking-widest font-medium">
+                                <span>SIZE // <span className="text-white font-bold">{item.size}</span></span>
+                                {item.color && (
+                                  <span>COLOR // <span className="text-[#B6A47E] font-bold">{item.color}</span></span>
+                                )}
                               </div>
                             </div>
 
@@ -247,7 +250,7 @@ export default function ShoppingBagPage() {
                             {item.name}
                           </span>
                           <span className="text-[#888888]" style={{ fontSize: "11px", letterSpacing: "0.1em" }}>
-                            SIZE // {item.size}  [QTY: {item.quantity}]
+                            SIZE // {item.size}{item.color ? `  |  COLOR // ${item.color}` : ""}  [QTY: {item.quantity}]
                           </span>
                         </div>
                         <div className="text-right shrink-0 font-medium text-[#F5F5F5] pt-0.5 whitespace-nowrap">

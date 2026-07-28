@@ -12,7 +12,7 @@ export default function BrandPage() {
       style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}
       className="min-h-screen bg-[#0A0A0A] text-[#F5F5F5] selection:bg-[#B6A47E] selection:text-[#0A0A0A] overflow-x-hidden"
     >
-      <Navbar mode="dark" activeLink="THE BRAND" />
+      <Navbar mode="dark" activeLink="STORIES" />
 
       {/* ── HERO PROLOGUE STAGE (DARK CINEMATIC ATMOSPHERE) ── */}
       <section style={{ paddingTop: "200px", paddingBottom: "100px" }} className="relative border-b border-[#222222]/70">
@@ -39,7 +39,7 @@ export default function BrandPage() {
               }}
               className="uppercase text-[#FFFFFF] tracking-tighter"
             >
-              THE BRAND
+              STORIES
             </h1>
 
             {/* Suggested Subheading */}

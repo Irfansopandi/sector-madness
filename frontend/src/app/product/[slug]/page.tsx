@@ -40,8 +40,12 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
 
   const handleAddToBag = () => {
     const size = selectedSize || product.sizes[0] || "M";
+    const color = selectedColor || (product.colors && product.colors.length > 0 ? product.colors[0].name : "DEFAULT");
     if (!selectedSize) {
       setSelectedSize(size);
+    }
+    if (!selectedColor && product.colors && product.colors.length > 0) {
+      setSelectedColor(color);
     }
     const res = addItemToBag(
       {
@@ -49,6 +53,7 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
         name: product.name,
         collection: product.collection || "ATELIER COLLECTION",
         size,
+        color,
         price: product.price,
         image: product.image,
       },
@@ -202,7 +207,7 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
               <div className="mb-12">
                 <div className="flex items-baseline justify-between mb-3">
                   <p className="text-[22px] text-[#F5F5F5] font-[family-name:var(--font-body)] font-light">
-                    ${product.price}
+                    Rp {(product.price * 15000).toLocaleString("id-ID")}
                   </p>
                   <span
                     className={`text-[10px] tracking-[0.2em] uppercase font-[family-name:var(--font-body)] transition-colors duration-300 ${
@@ -281,7 +286,6 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
               <div className="space-y-4 pt-10 mb-16">
                 <motion.button
                   whileTap={{ scale: 0.985 }}
-                  translate="no"
                   onClick={handleAddToBag}
                   className="w-full py-5 bg-[#F5F5F5] text-[#0A0A0A] text-[11px] tracking-[0.25em] uppercase font-[family-name:var(--font-body)] font-medium hover:bg-[#B6A47E] hover:text-[#0A0A0A] transition-colors duration-300 cursor-pointer shadow-lg"
                 >
@@ -289,7 +293,6 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
                 </motion.button>
 
                 <button
-                  translate="no"
                   className="w-full py-5 border border-[#222222] bg-transparent text-[#F5F5F5] text-[11px] tracking-[0.25em] uppercase font-[family-name:var(--font-body)] font-light hover:border-[#8A8A8A] transition-all duration-300 cursor-pointer"
                 >
                   ADD TO WISHLIST
@@ -421,7 +424,7 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
                         transition={{ duration: 0.3 }}
                         className="overflow-hidden pb-6 space-y-2 text-[12px] text-[#8A8A8A] font-[family-name:var(--font-body)] font-light"
                       >
-                        <p>Complimentary express shipping on orders over $200.</p>
+                        <p>Complimentary express shipping on orders over Rp 3.000.000.</p>
                         <p>Returns accepted within 14 days of delivery in original condition.</p>
                       </motion.div>
                     )}

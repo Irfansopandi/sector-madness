@@ -17,20 +17,25 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "SECTOR MADNESS — Premium Luxury Streetwear",
+  title: "SECTOR MADNESS",
   description:
     "Sector Madness is not just clothing, but a movement and identity. Each collection represents a different sector of creativity, mindset, and expression. Designed for those who move differently.",
+  icons: {
+    icon: "/images/tab-icon.png",
+    shortcut: "/images/tab-icon.png",
+    apple: "/images/tab-icon.png",
+  },
   keywords: [
     "sector madness",
-    "luxury streetwear",
-    "premium fashion",
+    "We trust quality",
+    "Premium fashion",
     "independent fashion",
     "designer clothing",
   ],
   openGraph: {
-    title: "SECTOR MADNESS — Premium Luxury Streetwear",
+    title: "SECTOR MADNESS",
     description:
-      "Designed for those who move differently. Premium luxury streetwear by Sector Madness.",
+      "We trust quality. Sector Madness official archive and store.",
     type: "website",
   },
 };
@@ -41,7 +46,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" translate="no" className={`${playfairDisplay.variable} ${inter.variable}`}>
+    <html lang="en" className={`${playfairDisplay.variable} ${inter.variable}`}>
       <body>{children}</body>
     </html>
   );
