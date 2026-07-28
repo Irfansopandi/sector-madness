@@ -50,7 +50,7 @@ export default function CampaignGallery() {
             {/* Authentic Luxury Editorial Text Link with Arrow */}
             <div>
               <Link
-                href="#collection"
+                href="/shop?category=SALE"
                 className="group/cta inline-flex items-center gap-3 text-[11px] md:text-[12px] tracking-[0.3em] uppercase text-[#F5F5F5] font-[family-name:var(--font-body)] font-medium transition-colors hover:text-[#B6A47E]"
               >
                 <span className="relative pb-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[1px] after:bg-[#F5F5F5] group-hover/cta:after:bg-[#B6A47E] after:transition-colors">
@@ -88,7 +88,7 @@ export default function CampaignGallery() {
             {/* Authentic Luxury Editorial Text Link with Arrow */}
             <div>
               <Link
-                href="#collection"
+                href="/shop?category=FW026"
                 className="group/cta inline-flex items-center gap-3 text-[11px] md:text-[12px] tracking-[0.3em] uppercase text-[#F5F5F5] font-[family-name:var(--font-body)] font-medium transition-colors hover:text-[#B6A47E]"
               >
                 <span className="relative pb-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[1px] after:bg-[#F5F5F5] group-hover/cta:after:bg-[#B6A47E] after:transition-colors">
@@ -152,7 +152,7 @@ export default function CampaignGallery() {
             {/* Authentic Luxury Editorial Text Link with Arrow */}
             <div>
               <Link
-                href="#collection"
+                href="/shop?category=ATELIER+ARCHIVE"
                 className="group/cta inline-flex items-center gap-3 text-[11px] md:text-[12px] tracking-[0.3em] uppercase text-[#F5F5F5] font-[family-name:var(--font-body)] font-medium transition-colors hover:text-[#B6A47E]"
               >
                 <span className="relative pb-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[1px] after:bg-[#F5F5F5] group-hover/cta:after:bg-[#B6A47E] after:transition-colors">
@@ -192,7 +192,7 @@ export default function CampaignGallery() {
             {/* Authentic Luxury Editorial Text Link with Arrow */}
             <div>
               <Link
-                href="#collection"
+                href="/shop?category=TACTICAL+SERIES"
                 className="group/cta inline-flex items-center gap-3 text-[11px] md:text-[12px] tracking-[0.3em] uppercase text-[#F5F5F5] font-[family-name:var(--font-body)] font-medium transition-colors hover:text-[#B6A47E]"
               >
                 <span className="relative pb-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[1px] after:bg-[#F5F5F5] group-hover/cta:after:bg-[#B6A47E] after:transition-colors">
@@ -218,9 +218,6 @@ export default function CampaignGallery() {
           />
         </AnimatedSection>
       </div>
-
-      {/* Spacious 160px Bottom Clearance Gap to Footer */}
-      <div style={{ marginBottom: "160px" }} />
     </section>
   );
 }

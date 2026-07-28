@@ -15,7 +15,7 @@ export default function FeaturedCollection() {
   };
 
   return (
-    <section id="collection" className="relative w-full bg-[#0A0A0A] pt-14 md:pt-18 lg:pt-24 pb-4">
+    <section id="collection" className="relative w-full bg-[#0A0A0A] pt-[220px] md:pt-[280px] lg:pt-[350px] pb-4">
       {/* Top Header Row - Aligned 60px with Navbar & Footer */}
       <div
         style={{ marginBottom: "60px", paddingLeft: "60px", paddingRight: "60px" }}
@@ -23,7 +23,7 @@ export default function FeaturedCollection() {
       >
         <div>
           <span className="text-[10px] md:text-[11px] tracking-[0.3em] uppercase text-[#8A8A8A] font-[family-name:var(--font-body)] block mb-3">
-            Sector 001
+            Sector
           </span>
           <h2 className="font-[family-name:var(--font-display)] text-[20px] md:text-[24px] lg:text-[28px] text-[#F5F5F5] font-bold tracking-[0.05em] uppercase">
             FEATURED PRODUCTS

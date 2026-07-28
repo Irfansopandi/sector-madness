@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -8,11 +8,11 @@ import { products } from "@/data/products";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
-export default function ShopPage() {
+function ShopContent() {
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get("category");
 
-  const [activeCategory, setActiveCategory] = useState(categoryParam || "ALL");
+  const [activeCategory, setActiveCategory] = useState(categoryParam ? categoryParam.toUpperCase() : "ALL");
   const [gridCols, setGridCols] = useState<3 | 4 | 5 | 6>(4);
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState("SELECTED");
@@ -20,18 +20,27 @@ export default function ShopPage() {
   // Sync URL query param with state
   useEffect(() => {
     if (categoryParam) {
-      setActiveCategory(categoryParam);
+      setActiveCategory(categoryParam.toUpperCase());
+    } else {
+      setActiveCategory("ALL");
     }
   }, [categoryParam]);
 
   // Extract unique categories from product names/collections
   const categories = [
     "ALL",
-    "ALL PRODUCTS",
+    "NEW ARRIVALS",
+    "OUTERWEAR",
+    "T-SHIRT",
+    "BOTTOMS",
+    "ACCESSORIES",
+    "SALE",
+    "FW026",
+    "ATELIER ARCHIVE",
+    "TACTICAL SERIES",
     "HOODIE",
     "JACKETS",
     "BOMBER",
-    "T-SHIRT",
     "POLO SHIRT",
     "CARGO",
     "TROUSERS",
@@ -43,8 +52,18 @@ export default function ShopPage() {
 
   // Filter products logic
   const filteredProducts = products.filter((p) => {
-    if (activeCategory === "ALL" || activeCategory === "ALL PRODUCTS") return true;
-    return p.name.toLowerCase().includes(activeCategory.toLowerCase());
+    const cat = activeCategory.toUpperCase();
+    if (cat === "ALL" || cat === "ALL PRODUCTS" || cat === "SHOP") return true;
+    if (cat === "NEW ARRIVALS") return p.collectionCode === "SECTOR 002" || Number(p.id) >= 5;
+    if (cat === "OUTERWEAR") return Boolean(p.name.toLowerCase().match(/(bomber|trench|anorak|vest|jacket|coat)/i) || p.description.toLowerCase().match(/(jacket|coat|outerwear)/i));
+    if (cat === "T-SHIRTS" || cat === "T-SHIRT") return p.name.toLowerCase().includes("tee") || p.name.toLowerCase().includes("t-shirt") || p.name.toLowerCase().includes("shirt");
+    if (cat === "BOTTOMS") return Boolean(p.name.toLowerCase().match(/(cargo|trousers|pants|shorts)/i));
+    if (cat === "ACCESSORIES") return p.name.toLowerCase().includes("vest") || p.name.toLowerCase().includes("cap") || p.id === "008";
+    if (cat === "SALE") return Number(p.id) % 2 === 0 || p.id === "002" || p.id === "004";
+    if (cat === "FW026" || cat === "BI-FACE | FW026") return p.collection === "The Atelier Series" || p.name.toLowerCase().includes("trench") || p.name.toLowerCase().includes("anorak") || p.name.toLowerCase().includes("zip") || p.id === "002";
+    if (cat === "ATELIER ARCHIVE") return p.collection === "The Atelier Series" || p.collectionCode === "SECTOR 002";
+    if (cat === "TACTICAL SERIES") return p.name.toLowerCase().includes("tactical") || p.name.toLowerCase().includes("cargo") || p.name.toLowerCase().includes("vest") || p.name.toLowerCase().includes("zip") || p.id === "002";
+    return p.name.toLowerCase().includes(cat.toLowerCase()) || p.description.toLowerCase().includes(cat.toLowerCase()) || p.collection.toLowerCase().includes(cat.toLowerCase());
   });
 
   // Sort products
@@ -351,5 +370,13 @@ export default function ShopPage() {
       {/* Footer */}
       <Footer />
     </div>
+  );
+}
+
+export default function ShopPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#FFFFFF]" />}>
+      <ShopContent />
+    </Suspense>
   );
 }

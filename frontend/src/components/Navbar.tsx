@@ -5,8 +5,10 @@ import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 import { products } from "@/data/products";
 import { getBagItems } from "@/utils/bag";
+import { getCart } from "@/utils/api";
 
 const navLinks = [
   { label: "SHOP", href: "/shop", hasDropdown: true },
@@ -21,7 +23,7 @@ const productCategories = [
   { label: "> SWEATSHIRTS", filter: "SWEATS" },
   { label: "> SHORTS & TROUSERS", filter: "TROUSERS" },
   { label: "> POLO SHIRTS", filter: "POLO SHIRT" },
-  { label: "> T-SHIRTS", filter: "T-SHIRT" },
+  { label: "> T-SHIRT", filter: "T-SHIRT" },
   { label: "> SHIRTS", filter: "SHIRT" },
 ];
 
@@ -32,7 +34,6 @@ const focusOnItems = [
   { label: "> FANCY", filter: "FANCY" },
   { label: "> FROLIC", filter: "FROLIC" },
   { label: "> SECTOR MADNESS | ORIGIN", filter: "SECTOR MADNESS" },
-  { label: "> VENTILE®", filter: "VENTILE" },
 ];
 
 interface NavbarProps {
@@ -53,6 +54,14 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const lastScrollY = useRef(0);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const { data: cartData } = useQuery({
+    queryKey: ["cart"],
+    queryFn: getCart,
+    retry: 1,
+  });
+
+  const actualBagCount = cartData ? cartData.total_quantity : bagCount;
 
   const isLightMode = mode === "light";
 
@@ -305,7 +314,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                   <path d="M16 10a4 4 0 0 1-8 0" />
                 </svg>
                 <AnimatePresence>
-                  {bagCount > 0 && (
+                  {actualBagCount > 0 && (
                     <motion.span
                       initial={{ scale: 0.5, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
@@ -314,7 +323,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                       style={{ fontSize: "11.5px", fontWeight: 700 }}
                       className="text-[#B6A47E] font-mono tracking-tighter block"
                     >
-                      ●{bagCount}
+                      ●{actualBagCount}
                     </motion.span>
                   )}
                 </AnimatePresence>
@@ -360,7 +369,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
             >
               {/* Column 1: PRODUCTS List */}
               <div className="col-span-5 border-r border-[#EEEEEE] pr-10">
-                <h4 className="font-serif text-xs tracking-[0.25em] font-normal text-gray-400 uppercase mb-8">
+                <h4 style={{ marginBottom: "36px" }} className="font-[family-name:var(--font-display)] text-[13px] md:text-[14px] tracking-[0.2em] font-medium text-[#777777] uppercase">
                   PRODUCTS
                 </h4>
                 <ul className="flex flex-col gap-5">
@@ -380,7 +389,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
 
               {/* Column 2: FOCUS ON List */}
               <div className="col-span-5 border-r border-[#EEEEEE] pr-10 pl-10">
-                <h4 className="font-serif text-xs tracking-[0.25em] font-normal text-gray-400 uppercase mb-8">
+                <h4 style={{ marginBottom: "36px" }} className="font-[family-name:var(--font-display)] text-[13px] md:text-[14px] tracking-[0.2em] font-medium text-[#777777] uppercase">
                   FOCUS ON
                 </h4>
                 <ul className="flex flex-col gap-5">

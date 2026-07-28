@@ -1,331 +1,327 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { getBagItems, updateItemQuantity, removeItemFromBag, BagItem } from "@/utils/bag";
+import { getCart, updateCartQuantity, deleteCartItem, clearCart, addToCart } from "@/utils/api";
+import { getBagItems, saveBagItems } from "@/utils/bag";
+import { BagItemSkeleton, ErrorState, EmptyState } from "@/components/UIState";
+import { useToast } from "@/components/Toast";
 
 export default function ShoppingBagPage() {
-  const [items, setItems] = useState<BagItem[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const { showToast, success, error } = useToast();
 
-  const loadBag = () => {
-    const bagData = getBagItems();
-    setItems(bagData);
-  };
+  // Load cart directly from Laravel API
+  const { data: cartData, isLoading, isError, refetch } = useQuery({
+    queryKey: ["cart"],
+    queryFn: getCart,
+  });
 
+  // Automatically sync any items waiting in browser localStorage into Laravel MySQL API
   useEffect(() => {
-    loadBag();
-    setIsLoaded(true);
+    const localItems = getBagItems();
+    if (localItems.length > 0 && cartData && cartData.total_quantity === 0) {
+      Promise.all(
+        localItems.map(async (item) => {
+          await addToCart({
+            slug: item.slug,
+            name: item.name,
+            color: item.color || "Obsidian Black",
+            size: item.size || "M",
+            quantity: item.quantity,
+          }).catch(() => {});
+        })
+      ).then(() => {
+        refetch();
+        queryClient.invalidateQueries({ queryKey: ["cart"] });
+        saveBagItems([]);
+      });
+    }
+  }, [cartData, refetch, queryClient]);
 
-    const handleBagChange = () => loadBag();
-    const handleAuthChange = () => loadBag();
+  // Mutation to update quantity
+  const updateMutation = useMutation({
+    mutationFn: ({ id, qty }: { id: number | string; qty: number }) =>
+      updateCartQuantity(id, qty),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+      success("Bag quantity updated automatically.", "PROTOCOL // UPDATE");
+    },
+    onError: (err: any) => {
+      error(err.response?.data?.message || "Failed to update quantity against stock limits.");
+    },
+  });
 
-    window.addEventListener("sector_bag_change", handleBagChange);
-    window.addEventListener("sector_auth_change", handleAuthChange);
+  // Mutation to delete item
+  const deleteMutation = useMutation({
+    mutationFn: (id: number | string) => deleteCartItem(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+      success("Item removed from your shopping bag.", "SECTOR // REMOVED");
+    },
+    onError: (err: any) => {
+      error(err.response?.data?.message || "Failed to remove item.");
+    },
+  });
 
-    return () => {
-      window.removeEventListener("sector_bag_change", handleBagChange);
-      window.removeEventListener("sector_auth_change", handleAuthChange);
-    };
-  }, []);
+  // Mutation to clear cart
+  const clearMutation = useMutation({
+    mutationFn: clearCart,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+      showToast("Shopping bag cleared completely.", "info", "VOlD // ATELIER");
+    },
+    onError: (err: any) => {
+      error(err.response?.data?.message || "Failed to clear bag.");
+    },
+  });
 
-  const handleQtyChange = (id: string, newQty: number) => {
-    updateItemQuantity(id, newQty);
-    loadBag();
+  const handleQuantityChange = (id: number | string, newQty: number, maxStock: number) => {
+    if (newQty <= 0) {
+      deleteMutation.mutate(id);
+      return;
+    }
+    if (newQty > maxStock) {
+      error(`Cannot exceed maximum available stock (${maxStock} items).`);
+      return;
+    }
+    updateMutation.mutate({ id, qty: newQty });
   };
 
-  const handleRemove = (id: string) => {
-    removeItemFromBag(id);
-    loadBag();
-  };
-
-  const subtotal = items.reduce((acc, item) => acc + item.price * 15000 * item.quantity, 0);
+  const items = cartData?.items || [];
+  const hasOutOfStockItem = items.some((item) => item.stock <= 0);
+  const isCheckoutDisabled = items.length === 0 || hasOutOfStockItem || isLoading || isError;
 
   return (
     <main
-      style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}
-      className="min-h-screen bg-[#0A0A0A] text-[#F5F5F5] selection:bg-[#B6A47E] selection:text-[#0A0A0A] overflow-x-hidden flex flex-col justify-between"
+      style={{ fontFamily: "'Inter', -apple-system, sans-serif" }}
+      className="min-h-screen bg-[#0A0A0A] text-[#FFFFFF] flex flex-col selection:bg-[#FFFFFF] selection:text-[#0A0A0A]"
     >
-      <div>
-        <Navbar mode="dark" activeLink="BAG" />
+      <Navbar />
 
-        <section style={{ paddingTop: "180px", paddingBottom: "120px" }} className="relative">
-          <div style={{ paddingLeft: "clamp(32px, 6vw, 80px)", paddingRight: "clamp(32px, 6vw, 80px)" }} className="max-w-[1600px] mx-auto">
-            
-            {/* Header Title */}
-            <div style={{ paddingBottom: "48px", marginBottom: "72px" }} className="border-b border-[#222222]/70">
-              <span style={{ fontSize: "11px", letterSpacing: "0.25em" }} className="uppercase text-[#8A8A8A] block mb-3 font-semibold">
-                SECTOR MADNESS ATELIER
+      {/* FULL-WIDTH HEADER SECTION WITH EDGE-TO-EDGE BORDER LINE */}
+      <div style={{ paddingTop: "140px" }} className="w-full border-b border-[#262626] pb-8">
+        <div className="max-w-[1480px] mx-auto px-8 md:px-14 lg:px-20">
+          <div style={{ paddingLeft: "60px", paddingRight: "60px" }} className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div>
+              <span className="text-[11px] font-mono tracking-[0.25em] text-[#8A8A8A] uppercase block mb-2 font-bold">
+                SECTOR // ATELIER VAULT
               </span>
-              <h1
-                style={{
-                  fontSize: "clamp(3rem, 6.5vw, 6.5rem)",
-                  lineHeight: "0.95",
-                  fontWeight: 900,
-                  letterSpacing: "-0.04em",
-                }}
-                className="uppercase text-[#FFFFFF] tracking-tighter"
-              >
+              <h1 className="text-3xl lg:text-5xl font-extrabold uppercase tracking-[0.08em] text-white">
                 SHOPPING BAG
               </h1>
             </div>
-
-            {!isLoaded ? (
-              <div className="py-36 text-center text-[#777777] font-mono tracking-widest uppercase text-sm">
-                INITIALIZING...
-              </div>
-            ) : items.length === 0 ? (
-              /* ── ELEGANT EMPTY STATE ── */
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                className="py-28 md:py-40 flex flex-col items-center justify-center text-center border-b border-[#222222]/70 mb-20"
-              >
-                <p
-                  style={{
-                    fontSize: "clamp(1.5rem, 2.5vw, 2.4rem)",
-                    fontWeight: 700,
-                    letterSpacing: "-0.02em",
-                  }}
-                  className="text-[#FFFFFF] mb-4"
-                >
-                  Your Shopping Bag is currently empty.
-                </p>
-                <p style={{ fontSize: "15.5px", lineHeight: "1.7", fontWeight: 300 }} className="text-[#888888] mb-12 max-w-md">
-                  Discover the latest SECTOR MADNESS collection.
-                </p>
-                <Link
-                  href="/shop"
-                  style={{ fontSize: "12px", letterSpacing: "0.26em", padding: "20px 52px" }}
-                  className="bg-[#FFFFFF] text-[#0A0A0A] font-bold uppercase hover:bg-[#B6A47E] hover:text-[#0A0A0A] transition-all duration-300 rounded-none inline-block shadow-xl cursor-pointer"
-                >
-                  EXPLORE COLLECTION
-                </Link>
-              </motion.div>
-            ) : (
-              /* ── LUXURY EDITORIAL BAG LAYOUT ── */
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 items-start">
-                
-                {/* Left Column: Product Items Grid */}
-                <div className="lg:col-span-8 flex flex-col">
-                  <AnimatePresence>
-                    {items.map((item) => (
-                      <motion.div
-                        key={item.id}
-                        layout
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.96 }}
-                        transition={{ duration: 0.4 }}
-                        style={{ paddingTop: "28px", paddingBottom: "32px", marginBottom: "0px" }}
-                        className="grid grid-cols-1 sm:grid-cols-12 gap-10 items-center border-b border-[#222222]/80 group first:pt-4"
-                      >
-                        {/* Large Product Photography */}
-                        <div className="sm:col-span-4 relative w-full aspect-[4/5] bg-[#141414] overflow-hidden border border-[#222222] shadow-xl">
-                          <Image
-                            src={item.image}
-                            alt={item.name}
-                            fill
-                            sizes="(max-width: 768px) 100vw, 30vw"
-                            className="object-cover object-center transition-transform duration-700 group-hover:scale-103"
-                          />
-                        </div>
-
-                        {/* Editorial Item Details & Actions */}
-                        <div style={{ paddingLeft: "10px" }} className="sm:col-span-8 flex flex-col justify-between h-full py-1">
-                          <div style={{ marginBottom: "28px" }} className="flex items-start justify-between gap-6">
-                            <div>
-                              <span style={{ fontSize: "11px", letterSpacing: "0.2em" }} className="uppercase text-[#8A8A8A] block mb-2 font-medium">
-                                {item.collection}
-                              </span>
-                              <Link href={`/product/${item.slug}`} className="hover:text-[#B6A47E] transition-colors">
-                                <h2
-                                  style={{
-                                    fontSize: "clamp(1.5rem, 2.2vw, 2.2rem)",
-                                    fontWeight: 800,
-                                    letterSpacing: "-0.02em",
-                                  }}
-                                  className="uppercase text-[#FFFFFF]"
-                                >
-                                  {item.name}
-                                </h2>
-                              </Link>
-                              <div className="mt-3 flex flex-wrap items-center gap-4 text-[12px] uppercase text-[#CCCCCC] font-mono tracking-widest font-medium">
-                                <span>SIZE // <span className="text-white font-bold">{item.size}</span></span>
-                                {item.color && (
-                                  <span>COLOR // <span className="text-[#B6A47E] font-bold">{item.color}</span></span>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Individual Price */}
-                            <div className="text-right shrink-0">
-                              <span style={{ fontSize: "18px", fontWeight: 700, letterSpacing: "-0.01em" }} className="text-[#FFFFFF] block font-mono">
-                                Rp {(item.price * 15000).toLocaleString("id-ID")}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Controls Row: Quantity Selector & Remove Action */}
-                          <div style={{ paddingTop: "18px" }} className="border-t border-[#1D1D1D] flex items-center justify-between gap-6">
-                            
-                            {/* Minimalist Quantity Selector */}
-                            <div className="flex items-center border border-[#2B2B2B] bg-[#0D0D0D]">
-                              <button
-                                type="button"
-                                onClick={() => handleQtyChange(item.id, item.quantity - 1)}
-                                className="w-10 h-10 flex items-center justify-center text-[#888888] hover:text-[#FFFFFF] hover:bg-[#1A1A1A] transition-colors text-lg font-mono cursor-pointer"
-                              >
-                                −
-                              </button>
-                              <span className="w-12 text-center font-mono text-sm font-semibold text-[#FFFFFF] select-none">
-                                {item.quantity}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => handleQtyChange(item.id, item.quantity + 1)}
-                                className="w-10 h-10 flex items-center justify-center text-[#888888] hover:text-[#FFFFFF] hover:bg-[#1A1A1A] transition-colors text-lg font-mono cursor-pointer"
-                              >
-                                +
-                              </button>
-                            </div>
-
-                            {/* Remove Action */}
-                            <button
-                              type="button"
-                              onClick={() => handleRemove(item.id)}
-                              style={{ fontSize: "11px", letterSpacing: "0.2em" }}
-                              className="uppercase font-semibold text-[#666666] hover:text-[#B6A47E] transition-colors cursor-pointer"
-                            >
-                              REMOVE ×
-                            </button>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
-
-                  <div style={{ marginTop: "48px" }}>
-                    <Link
-                      href="/shop"
-                      style={{ fontSize: "11.5px", letterSpacing: "0.22em" }}
-                      className="uppercase font-semibold text-[#B6A47E] hover:text-[#FFFFFF] transition-colors inline-block"
-                    >
-                      ← CONTINUE SHOPPING
-                    </Link>
-                  </div>
-                </div>
-
-                {/* Right Column: Order Summary */}
-                <div
-                  style={{
-                    padding: "44px 44px",
-                    backgroundColor: "#0C0C0C",
-                    border: "1px solid #262626",
-                    fontFamily: "'Inter', -apple-system, sans-serif",
-                  }}
-                  className="lg:col-span-4 sticky top-36 shadow-2xl"
-                >
-                  {/* Title */}
-                  <div style={{ paddingBottom: "24px", marginBottom: "28px", borderBottom: "1px solid #222222" }}>
-                    <h3 style={{ fontSize: "15px", letterSpacing: "0.22em", fontWeight: 700 }} className="uppercase text-[#FFFFFF]">
-                      ORDER SUMMARY
-                    </h3>
-                  </div>
-
-                  {/* Detail Barang yang Dibeli User */}
-                  <div style={{ paddingBottom: "24px", marginBottom: "28px", borderBottom: "1px solid #1E1E1E" }} className="space-y-4">
-                    <span style={{ fontSize: "10.5px", letterSpacing: "0.2em" }} className="uppercase text-[#B6A47E] font-semibold block mb-4">
-                      SELECTED GARMENTS ({items.reduce((acc, i) => acc + i.quantity, 0)})
-                    </span>
-                    {items.map((item) => (
-                      <div key={item.id} className="flex items-start justify-between gap-4 text-xs font-mono">
-                        <div className="flex-1 text-[#CCCCCC] uppercase">
-                          <span style={{ fontSize: "13px" }} className="font-semibold text-[#FFFFFF] block mb-1">
-                            {item.name}
-                          </span>
-                          <span className="text-[#888888]" style={{ fontSize: "11px", letterSpacing: "0.1em" }}>
-                            SIZE // {item.size}{item.color ? `  |  COLOR // ${item.color}` : ""}  [QTY: {item.quantity}]
-                          </span>
-                        </div>
-                        <div className="text-right shrink-0 font-medium text-[#F5F5F5] pt-0.5 whitespace-nowrap">
-                          Rp {(item.price * 15000 * item.quantity).toLocaleString("id-ID")}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Line Items */}
-                  <div className="space-y-4">
-                    <div style={{ padding: "6px 0" }} className="flex items-center justify-between gap-4">
-                      <span style={{ fontSize: "11.5px", letterSpacing: "0.18em" }} className="uppercase text-[#888888] font-medium shrink-0">
-                        SUBTOTAL
-                      </span>
-                      <span style={{ fontSize: "14.5px" }} className="font-mono font-medium text-[#F5F5F5] text-right shrink-0 whitespace-nowrap">
-                        Rp {subtotal.toLocaleString("id-ID")}
-                      </span>
-                    </div>
-
-                    <div style={{ padding: "6px 0" }} className="flex items-center justify-between gap-4">
-                      <span style={{ fontSize: "11.5px", letterSpacing: "0.18em" }} className="uppercase text-[#888888] font-medium shrink-0">
-                        SHIPPING RATES
-                      </span>
-                      <span style={{ fontSize: "11px", letterSpacing: "0.12em" }} className="font-mono text-[#CCCCCC] uppercase font-medium text-right shrink-0 whitespace-nowrap">
-                        CALCULATED AT CHECKOUT
-                      </span>
-                    </div>
-
-                    {/* Total Row */}
-                    <div style={{ marginTop: "28px", paddingTop: "28px", borderTop: "1px solid #262626" }} className="flex items-center justify-between gap-4">
-                      <span style={{ fontSize: "14px", letterSpacing: "0.22em" }} className="uppercase font-extrabold text-[#FFFFFF] shrink-0">
-                        TOTAL
-                      </span>
-                      <span style={{ fontSize: "20px", fontWeight: 700 }} className="font-mono text-[#FFFFFF] text-right shrink-0 whitespace-nowrap">
-                        Rp {subtotal.toLocaleString("id-ID")}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Action Buttons with generous spacing */}
-                  <div style={{ marginTop: "44px" }}>
-                    {/* Primary Button: Proceed to Checkout */}
-                    <button
-                      type="button"
-                      onClick={() => alert("Protocol initiated: Welcome to SECTOR MADNESS Concierge Checkout.")}
-                      style={{ fontSize: "11.5px", letterSpacing: "0.26em", padding: "22px 0", fontWeight: 700 }}
-                      className="w-full bg-[#FFFFFF] text-[#0A0A0A] uppercase hover:bg-[#B6A47E] hover:text-[#0A0A0A] transition-all duration-300 rounded-none cursor-pointer block text-center shadow-xl"
-                    >
-                      PROCEED TO CHECKOUT
-                    </button>
-
-                    {/* Secondary Button: Continue Shopping */}
-                    <div style={{ marginTop: "16px" }}>
-                      <Link
-                        href="/shop"
-                        style={{ fontSize: "11px", letterSpacing: "0.24em", padding: "20px 0", fontWeight: 600 }}
-                        className="w-full block text-center bg-transparent text-[#999999] border border-[#2E2E2E] hover:text-[#FFFFFF] hover:border-[#777777] transition-all uppercase"
-                      >
-                        CONTINUE SHOPPING
-                      </Link>
-                    </div>
-                  </div>
-
-                  {/* Footer Footnote */}
-                  <div style={{ marginTop: "36px", paddingTop: "24px", borderTop: "1px solid #1A1A1A" }} className="text-center">
-                    <span style={{ fontSize: "10px", letterSpacing: "0.2em" }} className="uppercase text-[#666666] block font-mono">
-                      SECURE ATELIER ENCRYPTION // PROTOCOL 01
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
+            <div className="text-right font-mono text-sm tracking-[0.15em] text-[#A0A0A0]">
+              TOTAL ITEMS: <span className="text-white font-bold">{cartData?.total_quantity || 0}</span>
+            </div>
           </div>
-        </section>
+        </div>
+      </div>
+
+      {/* CONTENT SECTION BELOW THE FULL-WIDTH LINE */}
+      <div className="flex-1 w-full max-w-[1480px] mx-auto px-8 md:px-14 lg:px-20 py-16 pb-36">
+        <div style={{ paddingLeft: "60px", paddingRight: "60px" }}>
+          {isLoading ? (
+            <div className="space-y-6 pt-2">
+              <BagItemSkeleton />
+              <BagItemSkeleton />
+              <BagItemSkeleton />
+            </div>
+          ) : isError ? (
+            <div className="w-full flex flex-col items-center justify-center py-24 my-6">
+              <ErrorState
+                title="FAILED TO CONNECT TO LARAVEL CART API"
+                message="We encountered an interruption while fetching your bag records from the Sector Madness archive server."
+                onRetry={() => refetch()}
+              />
+            </div>
+          ) : items.length === 0 ? (
+            <div className="w-full flex flex-col items-center justify-center py-24 my-6">
+              <EmptyState
+                title="YOUR SHOPPING BAG IS EMPTY"
+                message="No technical garments have been selected in your active session. Discover our iconic pieces and limited editions."
+                actionText="RETURN TO CATALOG"
+                actionHref="/shop"
+              />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start pt-4">
+            {/* Left Column: Cart Items */}
+            <div className="lg:col-span-8 space-y-2">
+              <div className="flex items-center justify-between pb-4 border-b border-[#222222] font-mono text-[11px] tracking-[0.2em] text-[#777777] uppercase">
+                <span>GARMENT DETAILS // SPECIFICATIONS</span>
+                <button
+                  onClick={() => clearMutation.mutate()}
+                  disabled={clearMutation.isPending}
+                  className="hover:text-white transition-colors uppercase font-bold cursor-pointer disabled:opacity-50"
+                >
+                  [CLEAR ALL ITEMS]
+                </button>
+              </div>
+
+              {items.map((item) => {
+                const isOutOfStock = item.stock <= 0;
+                return (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -15 }}
+                    transition={{ duration: 0.35 }}
+                    className={`flex flex-col sm:flex-row items-start sm:items-center gap-6 py-8 border-b border-[#262626] transition-opacity ${
+                      updateMutation.isPending ? "opacity-70" : "opacity-100"
+                    } ${isOutOfStock ? "bg-[#1A0C0C]/50 p-4 border border-[#441111]" : ""}`}
+                  >
+                    {/* Product Image */}
+                    <Link href={`/product/${item.product_id}`} className="relative w-28 h-36 bg-[#171717] shrink-0 overflow-hidden border border-[#333333] group">
+                      <Image
+                        src={item.product_image || "/collection1.png"}
+                        alt={item.product_name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-500 grayscale group-hover:grayscale-0"
+                      />
+                    </Link>
+
+                    {/* Details: Name, Category, Variant, Color, Size, Stock */}
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className="text-[10px] font-mono uppercase tracking-[0.2em] px-2 py-0.5 bg-[#1F1F1F] text-[#AAAAAA] border border-[#333333]">
+                          {item.category}
+                        </span>
+                        {isOutOfStock && (
+                          <span className="text-[10px] font-mono uppercase tracking-[0.2em] px-2 py-0.5 bg-[#881111] text-white font-extrabold animate-pulse">
+                            OUT OF STOCK
+                          </span>
+                        )}
+                      </div>
+
+                      <h3 className="text-lg font-bold tracking-[0.06em] text-white uppercase hover:text-[#D4AF37] transition-colors">
+                        <Link href={`/product/${item.product_id}`}>{item.product_name}</Link>
+                      </h3>
+
+                      <div className="font-mono text-xs text-[#8A8A8A] uppercase tracking-wider space-x-3">
+                        <span>COLOR: <strong className="text-[#EDEDED]">{item.color}</strong></span>
+                        <span>//</span>
+                        <span>SIZE: <strong className="text-[#EDEDED]">{item.size}</strong></span>
+                        <span>//</span>
+                        <span>STOCK: <strong className={item.stock > 3 ? "text-[#38A169]" : "text-[#E53E3E]"}>{item.stock} AVAIL</strong></span>
+                      </div>
+
+                      {/* Quantity & Actions */}
+                      <div className="flex items-center gap-6 pt-3">
+                        <div className="flex items-center border border-[#3A3A3A] bg-[#0E0E0E]">
+                          <button
+                            type="button"
+                            onClick={() => handleQuantityChange(item.id, item.quantity - 1, item.stock)}
+                            disabled={updateMutation.isPending || item.quantity <= 1}
+                            className="w-9 h-9 flex items-center justify-center text-sm font-mono text-[#CCCCCC] hover:bg-[#222] hover:text-white transition-colors disabled:opacity-30"
+                          >
+                            −
+                          </button>
+                          <span className="w-10 text-center font-mono text-sm font-bold text-white">
+                            {item.quantity}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleQuantityChange(item.id, item.quantity + 1, item.stock)}
+                            disabled={updateMutation.isPending || item.quantity >= item.stock}
+                            className="w-9 h-9 flex items-center justify-center text-sm font-mono text-[#CCCCCC] hover:bg-[#222] hover:text-white transition-colors disabled:opacity-30"
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => deleteMutation.mutate(item.id)}
+                          disabled={deleteMutation.isPending}
+                          className="text-[11px] font-mono tracking-[0.18em] uppercase text-[#777777] hover:text-[#E53E3E] transition-colors cursor-pointer"
+                        >
+                          [REMOVE]
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Price, Discount & Subtotal (All calculated by Backend) */}
+                    <div className="text-left sm:text-right shrink-0 w-full sm:w-auto mt-2 sm:mt-0 space-y-1">
+                      <p className="text-[11px] font-mono text-[#888888] uppercase tracking-widest">
+                        UNIT: Rp {item.price.toLocaleString("id-ID")}
+                      </p>
+                      {item.discount > 0 && (
+                        <p className="text-[11px] font-mono text-[#38A169] uppercase tracking-wider">
+                          DISC: −Rp {item.discount.toLocaleString("id-ID")}
+                        </p>
+                      )}
+                      <p className="text-base font-bold font-mono text-[#FFFFFF] tracking-wider pt-1">
+                        Rp {item.subtotal.toLocaleString("id-ID")}
+                      </p>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+
+            {/* Right Column: Sticky Summary */}
+            <div className="lg:col-span-4 sticky top-36 p-8 bg-[#101010] border border-[#262626] shadow-2xl space-y-6">
+              <h2 className="text-lg font-black uppercase tracking-[0.15em] text-white pb-4 border-b border-[#222222]">
+                ATELIER BAG SUMMARY
+              </h2>
+
+              <div className="space-y-4 font-mono text-xs tracking-wider">
+                <div className="flex justify-between text-[#B0B0B0]">
+                  <span>TOTAL QUANTITY</span>
+                  <span className="text-white font-bold">{cartData?.total_quantity || 0} PCS</span>
+                </div>
+                <div className="flex justify-between text-[#B0B0B0]">
+                  <span>SUBTOTAL (EX. TAX)</span>
+                  <span className="text-white font-bold">Rp {(cartData?.subtotal || 0).toLocaleString("id-ID")}</span>
+                </div>
+                <div className="flex justify-between text-[#8A8A8A] text-[11px]">
+                  <span>SHIPPING & VAT</span>
+                  <span>CALCULATED AT CHECKOUT</span>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-[#262626] flex justify-between items-baseline">
+                <span className="font-mono text-sm font-bold tracking-widest text-[#CCCCCC]">
+                  EST. TOTAL
+                </span>
+                <span className="font-mono text-xl font-extrabold text-[#D4AF37] tracking-wider">
+                  Rp {(cartData?.subtotal || 0).toLocaleString("id-ID")}
+                </span>
+              </div>
+
+              {hasOutOfStockItem && (
+                <div className="p-4 bg-[#2A0A0A] border border-[#E53E3E]/50 text-[#FFAA88] font-mono text-xs uppercase tracking-wider text-center">
+                  ⚠️ ONE OR MORE ITEMS IN YOUR BAG ARE OUT OF STOCK. PLEASE ADJUST QUANTITIES TO PROCEED.
+                </div>
+              )}
+
+              <Link
+                href={isCheckoutDisabled ? "#" : "/checkout"}
+                className={`block w-full py-5 text-center font-bold text-xs uppercase tracking-[0.25em] transition-all duration-300 shadow-xl border ${
+                  isCheckoutDisabled
+                    ? "bg-[#222222] text-[#666666] border-[#333333] pointer-events-none cursor-not-allowed"
+                    : "bg-[#FFFFFF] text-[#0A0A0A] border-[#FFFFFF] hover:bg-[#D4AF37] hover:text-[#0A0A0A] cursor-pointer"
+                }`}
+              >
+                PROCEED TO CHECKOUT
+              </Link>
+
+              <p className="text-[11px] font-mono text-[#666666] text-center uppercase tracking-widest leading-normal pt-2">
+                🔒 FULLY ENCRYPTED MIDTRANS TRANSACTIONS & BITESHIP LIVE TELEMETRY.
+              </p>
+            </div>
+          </div>
+        )}
+        </div>
       </div>
 
       <Footer />

@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="w-full bg-[#0A0A0A] text-[#F5F5F5] mt-32 md:mt-48 lg:mt-64 pb-12 md:pb-16 border-t border-[#222222]/80">
+    <footer className="w-full bg-[#0A0A0A] text-[#F5F5F5] mt-12 md:mt-16 lg:mt-20 pb-12 md:pb-16 border-t border-[#222222]/80">
       {/* Upper Content Container - Infallible explicit style padding for generous top & bottom boundaries */}
       <div 
         style={{ 
@@ -29,7 +29,7 @@ export default function Footer() {
               </h3>
               <div className="text-[13px] md:text-[14px] font-[family-name:var(--font-body)] text-[#8A8A8A] font-light leading-[2.1] tracking-[0.04em] space-y-4 mb-12">
                 <p className="text-[#F5F5F5]/90 font-normal">
-                  NOT MADE FOR EVERYONE.
+                  WE TRUST QUALITY
                 </p>
                 <p>
                   CREATED FOR THOSE WHO DEFINE THEIR OWN DIRECTION.
@@ -65,11 +65,11 @@ export default function Footer() {
               </h4>
               <ul className="space-y-4 md:space-y-5">
                 {[
-                  { label: "New Arrivals", href: "/shop" },
-                  { label: "Outerwear", href: "/shop" },
-                  { label: "T-Shirts", href: "/shop" },
-                  { label: "Bottoms", href: "/shop" },
-                  { label: "Accessories", href: "/shop" },
+                  { label: "New Arrivals", href: "/shop?category=NEW+ARRIVALS" },
+                  { label: "Outerwear", href: "/shop?category=OUTERWEAR" },
+                  { label: "T-Shirt", href: "/shop?category=T-SHIRT" },
+                  { label: "Bottoms", href: "/shop?category=BOTTOMS" },
+                  { label: "Accessories", href: "/shop?category=ACCESSORIES" },
                 ].map((item) => (
                   <li key={item.label}>
                     <Link
@@ -115,9 +115,8 @@ export default function Footer() {
               </h4>
               <ul className="space-y-4 md:space-y-5">
                 {[
-                  { label: "About", href: "/brand" },
-                  { label: "Manifesto", href: "/brand" },
-                  { label: "Lookbook", href: "/journal" },
+                  { label: "Stories", href: "/brand" },
+                  { label: "Journal", href: "/journal" },
                   { label: "Terms & Conditions", href: "#" },
                   { label: "Privacy Policy", href: "#" },
                 ].map((item) => (

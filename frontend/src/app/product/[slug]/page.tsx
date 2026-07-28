@@ -12,8 +12,10 @@ import Footer from "@/components/Footer";
 import AnimatedSection from "@/components/AnimatedSection";
 import Container from "@/components/Container";
 import { addItemToBag } from "@/utils/bag";
+import { addToCart } from "@/utils/api";
 import AuthRequiredModal from "@/components/AuthRequiredModal";
 import BagToast from "@/components/BagToast";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function ProductPage({
   params,
@@ -31,6 +33,7 @@ export default function ProductPage({
 }
 
 function ProductDetail({ product }: { product: (typeof products)[0] }) {
+  const queryClient = useQueryClient();
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [activeImage, setActiveImage] = useState(0);
@@ -64,6 +67,19 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
       setShowAuthModal(true);
     } else if (res.success) {
       setShowToast(true);
+      // Sync item directly with Laravel MySQL API database
+      addToCart({
+        product_id: !isNaN(parseInt(product.id, 10)) ? parseInt(product.id, 10) : undefined,
+        slug: product.slug,
+        name: product.name,
+        color,
+        size,
+        quantity: 1,
+      })
+        .then(() => {
+          queryClient.invalidateQueries({ queryKey: ["cart"] });
+        })
+        .catch(() => {});
     }
   };
 
