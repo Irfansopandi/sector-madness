@@ -290,43 +290,44 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
               {/* Cart Icon */}
               <Link
                 href="/bag"
-                className="cursor-pointer group relative flex items-center gap-1.5"
+                className="cursor-pointer group relative flex items-center"
                 aria-label="Shopping Bag"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.75"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className={`transition-colors duration-300 ${
-                    isLightMode || isShopHovered
-                      ? "text-gray-600 group-hover:text-black"
-                      : "text-gray-300 group-hover:text-white"
-                  }`}
-                >
-                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-                  <line x1="3" y1="6" x2="21" y2="6" />
-                  <path d="M16 10a4 4 0 0 1-8 0" />
-                </svg>
-                <AnimatePresence>
-                  {actualBagCount > 0 && (
-                    <motion.span
-                      initial={{ scale: 0.5, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0.5, opacity: 0 }}
-                      transition={{ type: "spring", stiffness: 450, damping: 25 }}
-                      style={{ fontSize: "11.5px", fontWeight: 700 }}
-                      className="text-[#B6A47E] font-mono tracking-tighter block"
-                    >
-                      ●{actualBagCount}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
+                <div className="relative">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.75"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={`transition-colors duration-300 ${
+                      isLightMode || isShopHovered
+                        ? "text-gray-600 group-hover:text-black"
+                        : "text-gray-300 group-hover:text-white"
+                    }`}
+                  >
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <path d="M16 10a4 4 0 0 1-8 0" />
+                  </svg>
+                  <AnimatePresence>
+                    {actualBagCount > 0 && (
+                      <motion.span
+                        initial={{ scale: 0.5, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.5, opacity: 0 }}
+                        transition={{ type: "spring", stiffness: 450, damping: 25 }}
+                        className="absolute -top-1.5 -right-2 min-w-[16px] h-[16px] px-1 rounded-full bg-[#B6A47E] text-[#0A0A0A] font-mono text-[9.5px] font-extrabold flex items-center justify-center shadow-md leading-none"
+                      >
+                        {actualBagCount}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </div>
               </Link>
 
               {/* Mobile Menu Button */}

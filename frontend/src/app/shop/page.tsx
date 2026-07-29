@@ -4,13 +4,41 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { products } from "@/data/products";
+import { useQuery } from "@tanstack/react-query";
+import { getProducts } from "@/utils/api";
+import { products as localProducts } from "@/data/products";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 function ShopContent() {
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get("category");
+
+  const { data: apiProducts } = useQuery({
+    queryKey: ["products"],
+    queryFn: getProducts,
+  });
+
+  const productsList = apiProducts && apiProducts.length > 0 ? apiProducts.map(p => ({
+    id: String(p.id).padStart(3, '0'),
+    slug: p.slug,
+    name: p.name,
+    collection: p.collection || "The Atelier Series",
+    collectionCode: p.collection_code || "SECTOR 001",
+    tagline: p.tagline || p.name,
+    description: p.description || "",
+    material: p.material || "Technical Blend",
+    weight: p.weight || "450 GSM",
+    price: typeof p.price === 'number' ? (p.price > 1000 ? p.price / 15000 : p.price) : 285,
+    image: p.image || "/images/products/product-1.png",
+    gallery: p.gallery || [p.image || "/images/products/product-1.png"],
+    colors: p.colors || [{ name: "Black", hex: "#0A0A0A" }],
+    sizes: p.sizes || ["S", "M", "L", "XL"],
+    details: p.details || ["Technical Construction"],
+    story: p.story || p.description,
+    limited: Boolean(p.limited),
+    stock: p.stock ?? 25,
+  })) : localProducts;
 
   const [activeCategory, setActiveCategory] = useState(categoryParam ? categoryParam.toUpperCase() : "ALL");
   const [gridCols, setGridCols] = useState<3 | 4 | 5 | 6>(4);
@@ -51,7 +79,7 @@ function ShopContent() {
   ];
 
   // Filter products logic
-  const filteredProducts = products.filter((p) => {
+  const filteredProducts = productsList.filter((p) => {
     const cat = activeCategory.toUpperCase();
     if (cat === "ALL" || cat === "ALL PRODUCTS" || cat === "SHOP") return true;
     if (cat === "NEW ARRIVALS") return p.collectionCode === "SECTOR 002" || Number(p.id) >= 5;

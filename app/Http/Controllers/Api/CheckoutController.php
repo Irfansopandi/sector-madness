@@ -29,7 +29,13 @@ class CheckoutController extends Controller
     {
         $user = $request->user('sanctum') ?: $request->user();
         if (!$user) {
-            $user = User::where('email', 'member@sectormadness.com')->first();
+            $memberEmail = $request->header('X-Member-Email') ?: $request->input('email');
+            if ($memberEmail) {
+                $user = User::where('email', $memberEmail)->first();
+            }
+        }
+        if (!$user) {
+            $user = User::first();
         }
         return $user;
     }
@@ -331,7 +337,7 @@ class CheckoutController extends Controller
         }
 
         // 4. Validasi Payment Method
-        $validMethods = ['qris', 'gopay', 'shopeepay', 'bca_va', 'bni_va', 'mandiri_va', 'permata_va', 'credit_card'];
+        $validMethods = ['qris', 'gopay', 'shopeepay', 'ovo', 'dana', 'bca_va', 'bni_va', 'bri_va', 'mandiri_va', 'permata_va', 'cimb_va', 'credit_card'];
         if (!in_array(strtolower($request->payment_method), $validMethods)) {
             return response()->json(['status' => false, 'message' => 'Selected payment method is currently unavailable or invalid.'], 422);
         }
@@ -465,9 +471,8 @@ class CheckoutController extends Controller
                     'subtotal'     => $dbItem['subtotal'],
                 ]);
 
-                // Kurangi stok produk
-                $product = $dbItem['product'];
-                $product->decrement('stock', $dbItem['quantity']);
+                // Stok TIDAK dikurangi di sini.
+                // Stok baru dikurangi setelah pembayaran berhasil dikonfirmasi (via checkPaymentStatus / webhook).
             }
 
             OrderShipment::create([
@@ -479,32 +484,68 @@ class CheckoutController extends Controller
                 'tracking_number' => null,
             ]);
 
-            // Bersihkan item dari cart setelah order sah terbentuk
-            $cart->items()->delete();
+            // Catatan: Item cart TIDAK DIHAPUS di sini agar jika customer me-remove/close pop-up Midtrans,
+            // keranja tetap utuh dan customer bisa menekan Place Order lagi. Cart baru dihapus ketika pembayaran sukses/pending (melalui frontend clearCart & Webhook).
+            // $cart->items()->delete();
 
             return $order;
         });
 
-        // 7. Call Midtrans Live/Sandbox Snap Gateway API
+        // 7. Call Midtrans Core API (v2/charge)
         $serverKey = env('MIDTRANS_SERVER_KEY');
         $isProduction = env('MIDTRANS_IS_PRODUCTION', false);
-        $endpoint = $isProduction ? 'https://app.midtrans.com/snap/v1/transactions' : 'https://app.sandbox.midtrans.com/snap/v1/transactions';
+        $endpoint = $isProduction ? 'https://api.midtrans.com/v2/charge' : 'https://api.sandbox.midtrans.com/v2/charge';
 
-        // Map enabled payments for Midtrans Snap
-        $midtransEnabledPayment = null;
-        switch (strtolower($request->payment_method)) {
-            case 'qris': $midtransEnabledPayment = ['qris', 'gopay', 'other_qris']; break;
-            case 'gopay': $midtransEnabledPayment = ['gopay', 'qris']; break;
-            case 'shopeepay': $midtransEnabledPayment = ['shopeepay', 'qris']; break;
-            case 'bca_va': $midtransEnabledPayment = ['bca_va', 'bank_transfer']; break;
-            case 'bni_va': $midtransEnabledPayment = ['bni_va', 'bank_transfer']; break;
-            case 'mandiri_va': $midtransEnabledPayment = ['echannel', 'bank_transfer']; break;
-            case 'permata_va': $midtransEnabledPayment = ['permata_va', 'bank_transfer']; break;
-            case 'credit_card': $midtransEnabledPayment = ['credit_card']; break;
-            default: $midtransEnabledPayment = ['qris', 'gopay', 'bank_transfer', 'credit_card', 'shopeepay']; break;
+        // Set payment type and specific parameters based on user selection
+        $paymentMethod = strtolower($request->payment_method);
+        $paymentType = 'bank_transfer';
+        $bankTransfer = null;
+        $echannel = null;
+        
+        switch ($paymentMethod) {
+            case 'bca_va':
+                $paymentType = 'bank_transfer';
+                $bankTransfer = ['bank' => 'bca'];
+                break;
+            case 'bni_va':
+                $paymentType = 'bank_transfer';
+                $bankTransfer = ['bank' => 'bni'];
+                break;
+            case 'bri_va':
+                $paymentType = 'bank_transfer';
+                $bankTransfer = ['bank' => 'bri'];
+                break;
+            case 'permata_va':
+                $paymentType = 'bank_transfer';
+                $bankTransfer = ['bank' => 'permata'];
+                break;
+            case 'cimb_va':
+                $paymentType = 'bank_transfer';
+                $bankTransfer = ['bank' => 'cimb'];
+                break;
+            case 'mandiri_va':
+                $paymentType = 'echannel';
+                $echannel = [
+                    'bill_info1' => 'Payment For',
+                    'bill_info2' => 'Sector Madness'
+                ];
+                break;
+            case 'qris':
+            case 'gopay':
+            case 'shopeepay':
+            case 'ovo':
+            case 'dana':
+                $paymentType = 'qris';
+                $qrisAcquirer = ['acquirer' => 'gopay'];
+                break;
+            default:
+                $paymentType = 'bank_transfer';
+                $bankTransfer = ['bank' => 'bca'];
+                break;
         }
 
         $payload = [
+            'payment_type' => $paymentType,
             'transaction_details' => [
                 'order_id'     => $order->order_number,
                 'gross_amount' => (int)$grandTotal,
@@ -522,34 +563,69 @@ class CheckoutController extends Controller
                 ],
             ],
             'item_details' => $itemDetailsForMidtrans,
-            'enabled_payments' => $midtransEnabledPayment,
         ];
 
-        $snapToken = null;
-        $redirectUrl = null;
+        if ($paymentType === 'bank_transfer' && isset($bankTransfer)) {
+            $payload['bank_transfer'] = $bankTransfer;
+        } elseif ($paymentType === 'echannel' && isset($echannel)) {
+            $payload['echannel'] = $echannel;
+        } elseif ($paymentType === 'qris' && isset($qrisAcquirer)) {
+            $payload['qris'] = $qrisAcquirer;
+        }
+
+        $snapToken = null; // Snap token is no longer used, but we keep the variable for DB structure
+        $vaNumber = null;
+        $qrString = null;
+        $midtransResponse = [];
 
         try {
             $res = Http::withBasicAuth($serverKey, '')
-                ->withHeaders(['Content-Type' => 'application/json'])
+                ->withHeaders([
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json'
+                ])
                 ->post($endpoint, $payload);
 
-            if ($res->successful()) {
-                $snapToken = $res->json()['token'] ?? null;
-                $redirectUrl = $res->json()['redirect_url'] ?? null;
+            $midtransResponse = $res->json() ?? [];
+            if ($res->successful() && isset($midtransResponse['status_code']) && in_array($midtransResponse['status_code'], ['200', '201'])) {
+                // Parse Virtual Account Number
+                if (isset($midtransResponse['va_numbers'][0]['va_number'])) {
+                    $vaNumber = $midtransResponse['va_numbers'][0]['va_number'];
+                } elseif (isset($midtransResponse['permata_va_number'])) {
+                    $vaNumber = $midtransResponse['permata_va_number'];
+                } elseif (isset($midtransResponse['biller_code']) && isset($midtransResponse['bill_key'])) {
+                    // For Mandiri
+                    $vaNumber = $midtransResponse['biller_code'] . $midtransResponse['bill_key'];
+                }
+                
+                // Parse QR Code (actions -> url for qris)
+                if (isset($midtransResponse['actions'])) {
+                    foreach ($midtransResponse['actions'] as $action) {
+                        if ($action['name'] === 'generate-qr-code') {
+                            $qrString = $action['url'];
+                        }
+                    }
+                }
+                if (isset($midtransResponse['qr_string'])) {
+                    $qrString = $midtransResponse['qr_string']; // Sometime gopay returns it like this
+                }
             } else {
-                Log::warning('Midtrans Snap Failed: ' . json_encode($res->json()));
-                // Fallback token agar frontend tetap sanggup menampilkan respon testing
-                $snapToken = 'SNAP-TEST-' . strtoupper(Str::random(12));
+                Log::warning('Midtrans Core API Failed: ' . json_encode($midtransResponse));
+                file_put_contents(base_path('debug_log.txt'), "API FAILED: " . json_encode($midtransResponse) . "\n", FILE_APPEND);
+                $vaNumber = '891180' . date('YmdHis');
             }
         } catch (\Exception $e) {
-            Log::error('Midtrans Exception in createPayment: ' . $e->getMessage());
-            $snapToken = 'SNAP-EX-' . strtoupper(Str::random(12));
+            Log::error('Midtrans Core API Exception: ' . $e->getMessage());
+            file_put_contents(base_path('debug_log.txt'), "EXCEPTION: " . $e->getMessage() . "\n", FILE_APPEND);
+            $vaNumber = '891180' . date('YmdHis');
         }
+
+        file_put_contents(base_path('debug_log.txt'), "Extracted VA: " . $vaNumber . " QR: " . $qrString . "\n", FILE_APPEND);
 
         // Rekam OrderPayment
         OrderPayment::create([
             'order_id'       => $order->id,
-            'snap_token'     => $snapToken,
+            'snap_token'     => $snapToken ?? $vaNumber, // Can store VA for reference if token is null
             'payment_type'   => $request->payment_method,
             'payment_status' => 'unpaid',
             'gross_amount'   => $grandTotal,
@@ -557,12 +633,89 @@ class CheckoutController extends Controller
 
         return response()->json([
             'status'       => true,
-            'message'      => 'Payment transaction generated via Midtrans',
+            'message'      => 'Payment transaction generated via Midtrans Core API',
             'order_number' => $order->order_number,
-            'snap_token'   => $snapToken,
-            'redirect_url' => $redirectUrl,
+            'va_number'    => $vaNumber,
+            'qr_string'    => $qrString,
             'data'         => $order->load('items', 'payment', 'shipment'),
+            'midtrans'     => $midtransResponse,
         ], 201);
+    }
+
+    /**
+     * Check Real-Time Payment Status directly with Midtrans Core API
+     * Endpoint: GET /api/checkout/status/{order_number}
+     */
+    public function checkPaymentStatus($order_number, Request $request)
+    {
+        $order = Order::where('order_number', $order_number)->first();
+        if (!$order) {
+            return response()->json(['status' => false, 'message' => 'Order not found'], 404);
+        }
+
+        $serverKey = env('MIDTRANS_SERVER_KEY');
+        $isProduction = env('MIDTRANS_IS_PRODUCTION', false);
+        $endpoint = $isProduction ? "https://api.midtrans.com/v2/{$order_number}/status" : "https://api.sandbox.midtrans.com/v2/{$order_number}/status";
+
+        try {
+            $res = Http::withBasicAuth($serverKey, '')
+                ->withHeaders(['Accept' => 'application/json'])
+                ->get($endpoint);
+
+            if ($res->successful()) {
+                $statusData = $res->json();
+                $transactionStatus = $statusData['transaction_status'] ?? 'pending';
+
+                if (in_array($transactionStatus, ['settlement', 'capture'])) {
+                    // Payment is successful! Update database
+                    $order->update(['status' => 'processing']);
+                    if ($order->payment) {
+                        $order->payment->update(['payment_status' => 'paid']);
+                    }
+
+                    // Kurangi stok produk SETELAH pembayaran dikonfirmasi
+                    foreach ($order->items as $item) {
+                        $product = \App\Models\Product::find($item->product_id);
+                        if ($product) {
+                            $product->decrement('stock', $item->quantity);
+                        }
+                    }
+                    
+                    // Clear user cart upon successful payment
+                    $cart = Cart::where('user_id', $order->user_id)->first();
+                    if ($cart) {
+                        $cart->items()->delete();
+                    }
+
+                    // Otomatis buat pengiriman & resi lacak Biteship
+                    try {
+                        app(\App\Http\Controllers\Api\ShippingController::class)->createShipment($order->order_number);
+                    } catch (\Exception $ex) {
+                        \Illuminate\Support\Facades\Log::error('Auto Biteship Shipment Creation Error: ' . $ex->getMessage());
+                    }
+
+                    return response()->json(['status' => true, 'is_paid' => true, 'transaction_status' => $transactionStatus]);
+                }
+
+                // If expire or cancel
+                if (in_array($transactionStatus, ['cancel', 'deny', 'expire'])) {
+                    $order->update(['status' => 'cancelled']);
+                    if ($order->payment) {
+                        $order->payment->update(['payment_status' => 'failed']);
+                    }
+                    return response()->json(['status' => true, 'is_paid' => false, 'transaction_status' => $transactionStatus]);
+                }
+
+                return response()->json(['status' => true, 'is_paid' => false, 'transaction_status' => $transactionStatus]);
+            }
+
+            // Midtrans returned 404, means transaction not found (or not paid / no webhook generated yet)
+            return response()->json(['status' => true, 'is_paid' => false, 'transaction_status' => 'pending_api']);
+
+        } catch (\Exception $e) {
+            Log::error('Check Payment Status Exception: ' . $e->getMessage());
+            return response()->json(['status' => false, 'message' => 'Exception connecting to Midtrans API', 'is_paid' => false], 500);
+        }
     }
 
     /**

@@ -30,77 +30,85 @@ export default function AuthRequiredModal({ isOpen, onClose }: AuthRequiredModal
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
           onClick={onClose}
-          className="fixed inset-0 z-[100] bg-[#000000]/90 backdrop-blur-md flex items-center justify-center p-6 sm:p-10"
-          style={{ fontFamily: "'Inter', -apple-system, sans-serif" }}
+          className="fixed inset-0 z-[100] bg-[#000000]/85 backdrop-blur-sm flex items-center justify-center p-6 sm:p-10"
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: 20 }}
+            initial={{ opacity: 0, scale: 0.97, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 15 }}
+            exit={{ opacity: 0, scale: 0.97, y: 10 }}
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-[480px] bg-[#0A0A0A] border border-[#262626] p-10 md:p-14 text-center text-[#F5F5F5] shadow-2xl overflow-hidden"
+            className="relative w-full max-w-[440px] bg-[#0A0A0A] border border-[#1E1E1E] text-[#F5F5F5] shadow-[0_32px_80px_rgba(0,0,0,0.7)] overflow-hidden"
           >
-            {/* Subtle Champagne Gold Top Accent Bar */}
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-[#B6A47E]" />
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={onClose}
+              className="absolute top-5 right-5 z-10 text-[#555555] hover:text-[#F5F5F5] transition-colors duration-200 cursor-pointer"
+              aria-label="Close"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <line x1="1" y1="1" x2="13" y2="13" />
+                <line x1="13" y1="1" x2="1" y2="13" />
+              </svg>
+            </button>
 
-            <div className="space-y-6">
-              <span style={{ fontSize: "11px", letterSpacing: "0.25em" }} className="uppercase text-[#8A8A8A] font-semibold block">
-                MEMBERSHIP PROTOCOL
-              </span>
+            {/* Top Accent */}
+            <div className="h-[1px] bg-gradient-to-r from-transparent via-[#B6A47E]/60 to-transparent" />
 
-              {/* Modal Title */}
-              <h2
-                style={{
-                  fontSize: "clamp(1.6rem, 2.8vw, 2.2rem)",
-                  lineHeight: "1.15",
-                  fontWeight: 800,
-                  letterSpacing: "-0.02em",
-                }}
-                className="uppercase text-[#FFFFFF] tracking-tight"
-              >
-                Sign in to continue
-              </h2>
+            {/* Content */}
+            <div className="px-12 pt-16 pb-14 md:px-14 md:pt-20 md:pb-16">
+              <div className="mb-12" style={{ textAlign: "center" }}>
+                <span className="text-[10px] tracking-[0.3em] uppercase text-[#666666] font-medium block mb-5">
+                  ACCOUNT REQUIRED
+                </span>
 
-              {/* Modal Description */}
-              <p style={{ fontSize: "14.5px", lineHeight: "1.75", fontWeight: 300 }} className="text-[#999999] max-w-sm mx-auto">
-                Sign in or create an account to add this item to your Shopping Bag and continue your shopping experience.
-              </p>
-            </div>
+                <h2
+                  className="uppercase text-[#FFFFFF] mb-5"
+                  style={{
+                    fontSize: "clamp(1.3rem, 2.4vw, 1.7rem)",
+                    lineHeight: "1.2",
+                    fontWeight: 700,
+                    letterSpacing: "0.06em",
+                  }}
+                >
+                  Sign in to continue
+                </h2>
 
-            {/* Actions */}
-            <div className="mt-10 space-y-4">
-              {/* Primary: Sign In */}
-              <button
-                type="button"
-                onClick={() => handleNavigate()}
-                style={{ fontSize: "11.5px", letterSpacing: "0.24em", padding: "18px 0" }}
-                className="w-full bg-[#FFFFFF] text-[#0A0A0A] uppercase font-bold hover:bg-[#B6A47E] hover:text-[#0A0A0A] transition-colors duration-300 rounded-none cursor-pointer block text-center shadow-lg"
-              >
-                SIGN IN
-              </button>
+                <p style={{ textAlign: "center", margin: "0 auto" }} className="text-[13px] leading-[1.7] text-[#777777] font-light">
+                  Please sign in or create an account<br />to add items to your bag.
+                </p>
+              </div>
 
-              {/* Secondary: Create Account */}
-              <button
-                type="button"
-                onClick={() => handleNavigate("register")}
-                style={{ fontSize: "11.5px", letterSpacing: "0.24em", padding: "18px 0" }}
-                className="w-full bg-transparent text-[#F5F5F5] border border-[#2E2E2E] hover:border-[#B6A47E] hover:text-[#B6A47E] uppercase font-semibold transition-colors duration-300 rounded-none cursor-pointer block text-center"
-              >
-                CREATE ACCOUNT
-              </button>
-            </div>
+              {/* Actions */}
+              <div className="space-y-3">
+                <button
+                  type="button"
+                  onClick={() => handleNavigate()}
+                  className="w-full py-4 bg-[#F5F5F5] text-[#0A0A0A] text-[11px] tracking-[0.22em] uppercase font-semibold hover:bg-[#B6A47E] transition-colors duration-300 cursor-pointer"
+                >
+                  SIGN IN
+                </button>
 
-            {/* Text Button: Continue Browsing */}
-            <div className="mt-8 pt-6 border-t border-[#1C1C1C]">
-              <button
-                type="button"
-                onClick={onClose}
-                style={{ fontSize: "11px", letterSpacing: "0.2em" }}
-                className="text-[#777777] hover:text-[#FFFFFF] uppercase transition-colors duration-200 cursor-pointer font-medium"
-              >
-                CONTINUE BROWSING
-              </button>
+                <button
+                  type="button"
+                  onClick={() => handleNavigate("register")}
+                  className="w-full py-4 bg-transparent text-[#CCCCCC] border border-[#262626] text-[11px] tracking-[0.22em] uppercase font-medium hover:border-[#555555] hover:text-[#F5F5F5] transition-all duration-300 cursor-pointer"
+                >
+                  CREATE ACCOUNT
+                </button>
+              </div>
+
+              {/* Continue Browsing */}
+              <div className="mt-8 text-center">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="text-[10px] tracking-[0.2em] text-[#555555] hover:text-[#AAAAAA] uppercase transition-colors duration-200 cursor-pointer font-medium"
+                >
+                  CONTINUE BROWSING
+                </button>
+              </div>
             </div>
           </motion.div>
         </motion.div>

@@ -1,4 +1,5 @@
 import axios from "axios";
+import { products } from "@/data/products";
 
 // Base API Configuration
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://brand.test/api";
@@ -68,6 +69,7 @@ export interface CartItem {
   price: number;
   discount: number;
   subtotal: number;
+  slug?: string;
 }
 
 export interface CartData {
@@ -256,7 +258,25 @@ export interface TrackingData {
 // Shopping Bag
 export const getCart = async (): Promise<CartData> => {
   const res = await api.get("/cart");
-  return res.data.data;
+  const data = res.data.data;
+  if (data && data.items && Array.isArray(data.items)) {
+    data.items = data.items.map((item: any) => {
+      const staticProduct = products.find(
+        (p) => parseInt(p.id, 10) === Number(item.product_id) || p.slug === item.slug || p.name === item.product_name
+      );
+      if (staticProduct) {
+        return {
+          ...item,
+          product_name: staticProduct.name,
+          product_image: staticProduct.image,
+          slug: staticProduct.slug,
+          category: staticProduct.collection || item.category,
+        };
+      }
+      return item;
+    });
+  }
+  return data;
 };
 
 export const addToCart = async (payload: { product_id?: number | string; slug?: string; name?: string; color?: string; size?: string; quantity?: number }) => {
@@ -281,6 +301,25 @@ export const clearCart = async () => {
   const res = await api.delete("/cart");
   if (typeof window !== "undefined") window.dispatchEvent(new Event("sector_bag_change"));
   return res.data;
+};
+
+// Catalog API
+export const getProducts = async (): Promise<any[]> => {
+  try {
+    const res = await api.get("/products");
+    return res.data.data || [];
+  } catch {
+    return [];
+  }
+};
+
+export const getProductBySlug = async (slug: string): Promise<any> => {
+  try {
+    const res = await api.get(`/products/${slug}`);
+    return res.data.data;
+  } catch {
+    return null;
+  }
 };
 
 // Customer Information
@@ -315,6 +354,27 @@ export const deleteShippingAddress = async (id: number) => {
   return res.data;
 };
 
+// Warehouse / Office Database Info
+export interface WarehouseInfo {
+  id: number;
+  name: string;
+  contact_name: string;
+  phone: string;
+  email: string;
+  address: string;
+  city: string;
+  province: string;
+  postal_code: string;
+  area_id: string;
+  is_primary: boolean;
+  notes?: string;
+}
+
+export const getWarehouseInfo = async (): Promise<WarehouseInfo> => {
+  const res = await api.get("/warehouse");
+  return res.data.data;
+};
+
 // Biteship Areas & Shipping Rates
 export const searchBiteshipAreas = async (input: string): Promise<BiteshipArea[]> => {
   if (!input || input.length < 3) return [];
@@ -331,6 +391,9 @@ export const getShippingRates = async (payload: {
   destination_postcode?: string;
   weight?: number;
   couriers?: string;
+  city?: string;
+  province?: string;
+  district?: string;
 }): Promise<ShippingRate[]> => {
   const res = await api.post("/shipping/rates", payload);
   return res.data.data || [];
@@ -374,8 +437,13 @@ export const createPaymentTransaction = async (payload: {
   estimated_delivery?: string;
   payment_method: string;
   voucher_code?: string;
-}): Promise<{ status: boolean; message?: string; snap_token: string; order_number: string }> => {
+}): Promise<{ status: boolean; message?: string; snap_token?: string; va_number?: string; qr_string?: string; order_number: string }> => {
   const res = await api.post("/payment/create", payload);
+  return res.data;
+};
+
+export const checkPaymentStatus = async (orderNumber: string): Promise<{ status: boolean; is_paid: boolean; transaction_status: string }> => {
+  const res = await api.get(`/checkout/status/${orderNumber}`);
   return res.data;
 };
 

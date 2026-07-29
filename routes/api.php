@@ -32,7 +32,9 @@ Route::get('/categories/{slug}', [CategoryController::class, 'show']);
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{slug}', [ProductController::class, 'show']);
 
-// Biteship Area, Rates & Tracking
+// Biteship Area, Rates, Tracking & Warehouse Database Info
+Route::get('/warehouse', [ShippingController::class, 'getWarehouseInfo']);
+Route::get('/store/info', [ShippingController::class, 'getWarehouseInfo']);
 Route::post('/shipping/rates', [ShippingController::class, 'rates']);
 Route::get('/shipping/areas', [ShippingController::class, 'searchAreas']);
 Route::get('/shipping/track/{tracking_number}', [ShippingController::class, 'track']);
@@ -74,6 +76,7 @@ Route::delete('/cart', [CartController::class, 'clear']);
 // Checkout, Voucher & Payment Methods API
 Route::get('/checkout/summary', [CheckoutController::class, 'summary']);
 Route::post('/checkout/summary', [CheckoutController::class, 'summary']);
+Route::get('/checkout/status/{order_number}', [CheckoutController::class, 'checkPaymentStatus']);
 Route::post('/voucher/check', [CheckoutController::class, 'checkVoucher']);
 Route::get('/payment-methods', [CheckoutController::class, 'paymentMethods']);
 Route::post('/payment/create', [CheckoutController::class, 'createPayment']);
@@ -83,6 +86,10 @@ Route::post('/checkout', [CheckoutController::class, 'createPayment']);
 Route::get('/orders', [OrderController::class, 'index']);
 Route::get('/orders/{order_number}', [OrderController::class, 'show']);
 Route::post('/orders/{order_number}/cancel', [OrderController::class, 'cancel']);
+
+// Admin Order & Shipment Tracking Control API
+Route::get('/admin/orders', [OrderController::class, 'adminOrders']);
+Route::put('/admin/orders/{order_number}/shipment', [OrderController::class, 'adminUpdateShipment']);
 
 /*
 |--------------------------------------------------------------------------

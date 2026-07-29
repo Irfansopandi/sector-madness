@@ -16,7 +16,13 @@ class OrderController extends Controller
     {
         $user = $request->user('sanctum') ?: $request->user();
         if (!$user) {
-            $user = User::where('email', 'member@sectormadness.com')->first();
+            $memberEmail = $request->header('X-Member-Email');
+            if ($memberEmail) {
+                $user = User::where('email', $memberEmail)->first();
+            }
+        }
+        if (!$user) {
+            $user = User::first();
         }
         return $user;
     }
@@ -120,18 +126,18 @@ class OrderController extends Controller
                 'order_number'      => $order->order_number,
                 'order_date'        => $order->created_at->format('d F Y, H:i') . ' WIB',
                 'customer_info'     => [
-                    'name'  => $addr['receiver_name'] ?? ($user ? $user->name : 'Customer'),
-                    'email' => $user ? $user->email : 'member@sectormadness.com',
-                    'phone' => $addr['phone_number'] ?? ($user ? $user->phone : '081234567890'),
+                    'name'  => $addr['receiver_name'] ?? ($user ? $user->name : ($order->user ? $order->user->name : 'Customer')),
+                    'email' => $user ? $user->email : ($order->user ? $order->user->email : ''),
+                    'phone' => $addr['phone_number'] ?? ($user ? $user->phone : ($order->user ? $order->user->phone : '')),
                 ],
                 'shipping_address'  => [
-                    'receiver_name'  => $addr['receiver_name'] ?? 'Recipient',
-                    'phone_number'   => $addr['phone_number'] ?? '081234567890',
-                    'street_address' => $addr['street_address'] ?? ($addr['street'] ?? 'Jl. Senopati No. 28'),
-                    'city'           => $addr['city'] ?? 'Jakarta Selatan',
-                    'province'       => $addr['province'] ?? 'DKI Jakarta',
-                    'postal_code'    => $addr['postal_code'] ?? '12110',
-                    'label'          => $addr['label'] ?? 'Rumah',
+                    'receiver_name'  => $addr['receiver_name'] ?? ($order->user ? $order->user->name : 'Recipient'),
+                    'phone_number'   => $addr['phone_number'] ?? ($order->user ? $order->user->phone : ''),
+                    'street_address' => $addr['street_address'] ?? ($addr['street'] ?? ''),
+                    'city'           => $addr['city'] ?? '',
+                    'province'       => $addr['province'] ?? '',
+                    'postal_code'    => $addr['postal_code'] ?? '',
+                    'label'          => $addr['label'] ?? 'Main Address',
                 ],
                 'courier_info'      => [
                     'courier_code'       => strtoupper($addr['courier_code'] ?? ($ship ? $ship->courier_company : 'JNE')),
@@ -207,6 +213,51 @@ class OrderController extends Controller
             'status'  => true,
             'message' => 'Order cancelled successfully',
             'data'    => $order->load('items', 'payment', 'shipment'),
+        ], 200);
+    }
+
+    /**
+     * Admin: List All Orders in System
+     * Endpoint: GET /api/admin/orders
+     */
+    public function adminOrders(Request $request)
+    {
+        $orders = Order::with(['user', 'items', 'payment', 'shipment'])->latest()->get();
+        return response()->json([
+            'status' => true,
+            'data'   => $orders,
+        ], 200);
+    }
+
+    /**
+     * Admin: Update Shipment & Tracking Resi Info
+     * Endpoint: PUT /api/admin/orders/{order_number}/shipment
+     */
+    public function adminUpdateShipment(Request $request, $order_number)
+    {
+        $order = Order::where('order_number', $order_number)->first();
+        if (!$order) {
+            return response()->json(['status' => false, 'message' => 'Order not found'], 404);
+        }
+
+        if ($order->shipment) {
+            $order->shipment->update(array_filter([
+                'tracking_number'   => $request->tracking_number,
+                'biteship_order_id' => $request->biteship_order_id,
+                'courier_company'   => $request->courier_company,
+                'courier_type'      => $request->courier_type,
+                'status'            => $request->status,
+            ]));
+        }
+
+        if ($request->has('order_status')) {
+            $order->update(['status' => $request->order_status]);
+        }
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Shipment tracking information updated successfully',
+            'data'    => $order->load('shipment', 'payment', 'items'),
         ], 200);
     }
 }

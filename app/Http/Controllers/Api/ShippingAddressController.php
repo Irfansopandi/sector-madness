@@ -17,7 +17,13 @@ class ShippingAddressController extends Controller
     {
         $user = $request->user('sanctum') ?: $request->user();
         if (!$user) {
-            $user = User::where('email', 'member@sectormadness.com')->first();
+            $memberEmail = $request->header('X-Member-Email');
+            if ($memberEmail) {
+                $user = User::where('email', $memberEmail)->first();
+            }
+        }
+        if (!$user) {
+            $user = User::first();
         }
         return $user;
     }

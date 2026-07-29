@@ -78,8 +78,14 @@ function CheckoutSuccessContent() {
             <div>
               <span className="text-[#888888] uppercase block mb-1">COURIER PROTOCOL</span>
               <strong className="text-[#00FF66] block">{order.courier_info?.courier_name}</strong>
-              <span className="text-[#CCCCCC] block pt-1">SERVICE: {order.courier_info?.service_code}</span>
-              <span className="text-[#888888] block">EST: {order.courier_info?.estimated_delivery}</span>
+              <div className="pt-1.5 pb-1 font-mono">
+                <span className="text-[10px] text-[#777777] uppercase block tracking-wider">RESI BITESHIP:</span>
+                <span className="text-sm font-black text-[#D4AF37] tracking-widest block">
+                  {order.courier_info?.tracking_number || (order as any).shipment?.tracking_number || "BITESHIP-PENDING"}
+                </span>
+              </div>
+              <span className="text-[#CCCCCC] block text-[11px]">SERVICE: {order.courier_info?.service_code}</span>
+              <span className="text-[#888888] block text-[11px]">EST: {order.courier_info?.estimated_delivery}</span>
             </div>
 
             <div>

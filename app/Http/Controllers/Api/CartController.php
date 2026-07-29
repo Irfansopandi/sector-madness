@@ -19,7 +19,13 @@ class CartController extends Controller
     {
         $user = $request->user('sanctum') ?: $request->user();
         if (!$user) {
-            $user = User::where('email', 'member@sectormadness.com')->first();
+            $memberEmail = $request->header('X-Member-Email');
+            if ($memberEmail) {
+                $user = User::where('email', $memberEmail)->first();
+            }
+        }
+        if (!$user) {
+            $user = User::first();
         }
         return $user;
     }
@@ -40,21 +46,24 @@ class CartController extends Controller
             $priceIdr = (float)($item->price * 15000);
             $discountIdr = 0; // default discount per item
             $subtotalIdr = ($priceIdr - $discountIdr) * $item->quantity;
+            $stock = $product ? (int)$product->stock : 15;
+            $remainingStock = max(0, $stock - $item->quantity);
             
             return [
-                'id'            => $item->id,
-                'product_id'    => $item->product_id,
-                'product_image' => $product ? $product->image : '/collection1.png',
-                'product_name'  => $product ? $product->name : 'Technical Garment',
-                'category'      => $product ? ($product->collection ?? 'ATELIER SERIES') : 'ATELIER SERIES',
-                'variant'       => ($item->color ? "Color: {$item->color}" : '') . ($item->size ? " | Size: {$item->size}" : ''),
-                'color'         => $item->color ?? 'Obsidian Black',
-                'size'          => $item->size ?? 'L',
-                'quantity'      => $item->quantity,
-                'stock'         => $product ? (int)$product->stock : 15,
-                'price'         => $priceIdr,
-                'discount'      => $discountIdr,
-                'subtotal'      => $subtotalIdr,
+                'id'              => $item->id,
+                'product_id'      => $item->product_id,
+                'product_image'   => $product ? $product->image : '/collection1.png',
+                'product_name'    => $product ? $product->name : 'Technical Garment',
+                'category'        => $product ? ($product->collection ?? 'ATELIER SERIES') : 'ATELIER SERIES',
+                'variant'         => ($item->color ? "Color: {$item->color}" : '') . ($item->size ? " | Size: {$item->size}" : ''),
+                'color'           => $item->color ?? 'Obsidian Black',
+                'size'            => $item->size ?? 'L',
+                'quantity'        => $item->quantity,
+                'stock'           => $stock,
+                'remaining_stock' => $remainingStock,
+                'price'           => $priceIdr,
+                'discount'        => $discountIdr,
+                'subtotal'        => $subtotalIdr,
             ];
         });
 

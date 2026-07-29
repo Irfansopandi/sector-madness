@@ -222,16 +222,16 @@ class PaymentController extends Controller
                 'gross_amount' => $calculatedTotal,
             ],
             'customer_details' => [
-                'first_name' => $request->get('first_name', 'Archive Member'),
-                'email'      => $request->get('email', 'member@sectormadness.com'),
-                'phone'      => $request->get('phone', '081234567890'),
+                'first_name' => $request->get('first_name', 'Customer'),
+                'email'      => $request->get('email', ''),
+                'phone'      => $request->get('phone', ''),
                 'billing_address' => [
-                    'address' => $request->get('address', 'Jl. Senopati Raya No. 28, Jakarta'),
+                    'address' => $request->get('address', ''),
                 ],
                 'shipping_address' => [
-                    'first_name' => $request->get('first_name', 'Archive Member'),
-                    'phone'      => $request->get('phone', '081234567890'),
-                    'address'    => $request->get('address', 'Jl. Senopati Raya No. 28, Jakarta'),
+                    'first_name' => $request->get('first_name', 'Customer'),
+                    'phone'      => $request->get('phone', ''),
+                    'address'    => $request->get('address', ''),
                 ]
             ],
             'item_details' => $itemDetails,

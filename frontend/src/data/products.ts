@@ -23,14 +23,47 @@ export interface Product {
   limited: boolean;
 }
 
-export function getVariantStock(slug: string, colorName: string | null, sizeName: string | null): number | null {
-  if (!colorName || !sizeName) return null;
+export function getVariantStock(slug: string, colorName: string | null, sizeName: string | null): number {
+  const prod = products.find((p) => p.slug === slug);
+  const colorStr = colorName || (prod?.colors[0]?.name ?? "default");
+  const sizeStr = sizeName || (prod?.sizes[0] ?? "M");
+  
   let seed = 0;
-  const str = `${slug}-${colorName}-${sizeName}`;
+  const str = `${slug}-${colorStr}-${sizeStr}`;
   for (let i = 0; i < str.length; i++) {
     seed = (seed + str.charCodeAt(i) * (i + 1)) % 100;
   }
-  return (seed % 5) + 1;
+  return (seed % 12) + 3; // Returns 3 to 14 units per variant
+}
+
+export function getTotalStock(slug: string): number {
+  const prod = products.find((p) => p.slug === slug);
+  if (!prod) return 45;
+  
+  let total = 0;
+  const colors = prod.colors && prod.colors.length > 0 ? prod.colors : [{ name: "Default", hex: "#000" }];
+  for (const c of colors) {
+    for (const s of prod.sizes) {
+      total += getVariantStock(slug, c.name, s);
+    }
+  }
+  return total;
+}
+
+export function getSizeStock(slug: string, sizeName: string, selectedColorName?: string | null): number {
+  const prod = products.find((p) => p.slug === slug);
+  if (!prod) return 8;
+  
+  if (selectedColorName) {
+    return getVariantStock(slug, selectedColorName, sizeName);
+  }
+  
+  let total = 0;
+  const colors = prod.colors && prod.colors.length > 0 ? prod.colors : [{ name: "Default", hex: "#000" }];
+  for (const c of colors) {
+    total += getVariantStock(slug, c.name, sizeName);
+  }
+  return total;
 }
 
 export const products: Product[] = [
@@ -183,8 +216,8 @@ export const products: Product[] = [
     material: "Heavyweight Gabardine",
     weight: "420 GSM",
     price: 520,
-    image: "/images/campaign/campaign-1.png",
-    gallery: ["/images/campaign/campaign-1.png"],
+    image: "/images/products/product-5.png",
+    gallery: ["/images/products/product-5.png"],
     colors: [
       { name: "Midnight Navy", hex: "#0E1525" },
       { name: "Obsidian Black", hex: "#0A0A0A" },
@@ -206,8 +239,8 @@ export const products: Product[] = [
     material: "100% Merino Wool",
     weight: "550 GSM",
     price: 310,
-    image: "/images/campaign/campaign-2.png",
-    gallery: ["/images/campaign/campaign-2.png"],
+    image: "/images/products/product-6.png",
+    gallery: ["/images/products/product-6.png"],
     colors: [
       { name: "Raw Washed Bone", hex: "#D6D3CC" },
       { name: "Pitch Black", hex: "#0A0A0A" },
@@ -228,9 +261,9 @@ export const products: Product[] = [
       "A half-zip pullover anorak with storm hood, front kangaroo pocket, and waterproof seam taping.",
     material: "3-Layer Nylon Ripstop",
     weight: "280 GSM",
-    price: 390,
-    image: "/images/campaign/campaign-3.png",
-    gallery: ["/images/campaign/campaign-3.png"],
+    price: 550,
+    image: "/images/products/product-7.png",
+    gallery: ["/images/products/product-7.png"],
     colors: [
       { name: "Tactical Olive", hex: "#353B31" },
       { name: "Stealth Black", hex: "#0A0A0A" },
@@ -252,8 +285,8 @@ export const products: Product[] = [
     material: "Technical Cordura Nylon",
     weight: "340 GSM",
     price: 260,
-    image: "/images/campaign/campaign-4.png",
-    gallery: ["/images/campaign/campaign-4.png"],
+    image: "/images/products/product-8.png",
+    gallery: ["/images/products/product-8.png"],
     colors: [
       { name: "Obsidian Black", hex: "#0A0A0A" },
       { name: "Charcoal Grey", hex: "#262626" },
@@ -275,8 +308,8 @@ export const products: Product[] = [
     material: "Wool Blend Twill",
     weight: "310 GSM",
     price: 295,
-    image: "/images/hero/hero-2.png",
-    gallery: ["/images/hero/hero-2.png"],
+    image: "/images/products/product-9.png",
+    gallery: ["/images/products/product-9.png"],
     colors: [
       { name: "Pitch Black", hex: "#0A0A0A" },
       { name: "Muted Taupe", hex: "#8C8275" },
@@ -298,8 +331,8 @@ export const products: Product[] = [
     material: "500 GSM Brushed Heavy Cotton",
     weight: "500 GSM",
     price: 320,
-    image: "/images/hero/hero-1.png",
-    gallery: ["/images/hero/hero-1.png"],
+    image: "/images/products/product-10.png",
+    gallery: ["/images/products/product-10.png"],
     colors: [
       { name: "Deep Black", hex: "#0A0A0A" },
       { name: "Washed Slate", hex: "#4A4E54" },
