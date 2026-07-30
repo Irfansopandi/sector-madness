@@ -82,9 +82,12 @@ export interface CartData {
 export interface CustomerProfile {
   id: number;
   name: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   phone: string;
   birth_date?: string;
+  dob?: string;
   last_login_at?: string;
 }
 
@@ -223,6 +226,8 @@ export interface OrderDetailData {
   };
   shipping_status: string;
   timeline: OrderTimeline[];
+  created_at?: string;
+  payment_status?: string;
 }
 
 export interface OrderListItem {

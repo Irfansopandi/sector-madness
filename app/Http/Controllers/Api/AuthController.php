@@ -186,6 +186,16 @@ class AuthController extends Controller
         if (!$user) {
             $user = User::first();
         }
+
+        // Jika nomor telepon pengguna masih kosong (misal pada akun lama), cari dari daftar alamat atau pesanan
+        if ($user && empty($user->phone)) {
+            $address = \App\Models\ShippingAddress::where('user_id', $user->id)->latest()->first();
+            if ($address && !empty($address->phone_number)) {
+                $user->phone = $address->phone_number;
+                $user->save();
+            }
+        }
+
         return response()->json([
             'status' => true,
             'data'   => $user,
@@ -221,18 +231,23 @@ class AuthController extends Controller
             'email' => 'nullable|email|max:255|unique:users,email,' . $user->id,
             'phone' => 'nullable|string|max:30',
             'birth_date' => 'nullable|string|max:50',
+            'password' => 'nullable|string|min:8',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['status' => false, 'message' => 'Validation Error', 'errors' => $validator->errors()], 422);
         }
 
-        $user->update(array_filter([
+        $updateData = array_filter([
             'name'       => $request->name ?? $user->name,
             'email'      => $request->email ?? $user->email,
             'phone'      => $request->phone ?? $user->phone,
             'birth_date' => $request->birth_date ?? $user->birth_date,
-        ]));
+        ]);
+        if (!empty($request->password)) {
+            $updateData['password'] = Hash::make($request->password);
+        }
+        $user->update($updateData);
 
         return response()->json([
             'status'  => true,

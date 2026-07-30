@@ -102,10 +102,10 @@ function CheckoutSuccessContent() {
       {/* Action Navigation Buttons */}
       <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-4 border-t border-[#222222]">
         <Link
-          href={orderNumber ? `/orders/${orderNumber}` : "/orders"}
+          href="/dashboard/orders"
           className="w-full sm:w-auto px-10 py-5 bg-[#FFFFFF] text-[#0A0A0A] font-extrabold font-mono text-xs uppercase tracking-[0.25em] hover:bg-[#D4AF37] hover:text-[#0A0A0A] transition-all shadow-xl"
         >
-          VIEW ORDER DETAIL & TIMELINE
+          VIEW ORDERS & TIMELINE
         </Link>
         <Link
           href="/shop"

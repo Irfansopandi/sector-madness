@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import Script from "next/script";
@@ -9,7 +9,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { getOrderDetail } from "@/utils/api";
+import CustomPaymentModal from "@/components/CustomPaymentModal";
+import { getOrderDetail, clearCart } from "@/utils/api";
 import api from "@/utils/api";
 import { OrderDetailSkeleton, ErrorState } from "@/components/UIState";
 import { useToast } from "@/components/Toast";
@@ -48,30 +49,10 @@ export default function OrderDetailPage() {
     },
   });
 
+  const [customModalOpen, setCustomModalOpen] = useState(false);
+
   const handleResumePayment = () => {
-    if (!order?.payment_info?.snap_token) {
-      error("No valid Midtrans authorization token available for this transaction.");
-      return;
-    }
-    showToast("Re-opening Midtrans gateway popup...", "info", "MIDTRANS SNAP");
-    if (typeof window !== "undefined" && window.snap) {
-      window.snap.pay(order.payment_info.snap_token, {
-        onSuccess: function () {
-          queryClient.invalidateQueries({ queryKey: ["order-detail", orderNumber] });
-          queryClient.invalidateQueries({ queryKey: ["orders"] });
-          success("Payment completed successfully!", "AUTHORIZATION SUCCESS");
-        },
-        onPending: function () {
-          showToast("Payment verification is pending via banking network.", "warning", "STATUS PENDING");
-          refetch();
-        },
-        onError: function () {
-          error("Transaction declined by gateway.");
-        },
-      });
-    } else {
-      error("Midtrans Gateway SDK not ready yet. Please refresh page.");
-    }
+    setCustomModalOpen(true);
   };
 
   return (
@@ -146,9 +127,9 @@ export default function OrderDetailPage() {
                 {order.courier_info?.tracking_number && (
                   <Link
                     href={`/shipping/track/${order.courier_info.tracking_number}`}
-                    className="px-6 py-3.5 bg-[#141414] hover:bg-[#262626] text-[#00FF66] font-mono text-xs font-extrabold uppercase tracking-widest border border-[#333] transition-all text-center"
+                    className="px-6 py-3.5 bg-[#141414] hover:bg-[#262626] text-[#B6A47E] font-mono text-xs font-extrabold uppercase tracking-widest border border-[#333] transition-all text-center"
                   >
-                    🚀 TRACK RESI ({order.courier_info.tracking_number})
+                    TRACK RESI ({order.courier_info.tracking_number})
                   </Link>
                 )}
 
@@ -157,9 +138,9 @@ export default function OrderDetailPage() {
                     <button
                       type="button"
                       onClick={handleResumePayment}
-                      className="px-8 py-3.5 bg-[#D4AF37] hover:bg-[#FFFFFF] text-[#0A0A0A] font-mono text-xs font-black uppercase tracking-[0.2em] transition-all shadow-xl cursor-pointer"
+                      className="px-8 py-3.5 bg-white hover:bg-[#E0E0E0] text-[#0A0A0A] font-mono text-xs font-black uppercase tracking-[0.2em] transition-all cursor-pointer"
                     >
-                      LANJUTKAN PEMBAYARAN / BAYAR LAGI
+                      LANJUTKAN PEMBAYARAN
                     </button>
                     <button
                       type="button"
@@ -301,6 +282,26 @@ export default function OrderDetailPage() {
         )}
         </div>
       </div>
+
+      {order && (
+        <CustomPaymentModal
+          isOpen={customModalOpen}
+          onClose={() => setCustomModalOpen(false)}
+          onPaymentConfirmed={async () => {
+            setCustomModalOpen(false);
+            await clearCart();
+            queryClient.invalidateQueries({ queryKey: ["cart"] });
+            queryClient.invalidateQueries({ queryKey: ["order-detail", orderNumber] });
+            queryClient.invalidateQueries({ queryKey: ["orders"] });
+            router.push(`/checkout/success?order_number=${orderNumber}`);
+          }}
+          orderNumber={order.order_number}
+          paymentMethod={order.payment_info?.method || "bca_va"}
+          grossAmount={order.summary?.grand_total || (order as any).total || 0}
+          receiverName={order.customer_info?.name || "Customer"}
+          vaNumber={order.payment_info?.snap_token}
+        />
+      )}
 
       <Footer />
     </main>

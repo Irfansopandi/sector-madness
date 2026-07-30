@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { updateCustomerProfile } from "@/utils/api";
 
 const countryOptions = [
   { code: "ID", dial: "+62", name: "Indonesia" },
@@ -34,8 +35,7 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
 
   // Registration Form States
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const [fullName, setFullName] = useState("");
   const [regEmail, setRegEmail] = useState("");
   const [countryCode, setCountryCode] = useState("ID");
   const [phoneCountry, setPhoneCountry] = useState("+62");
@@ -71,7 +71,23 @@ export default function LoginPage() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     const emailToSave = userEmail || "member@sectormadness.com";
-    const userObj = { email: emailToSave, loggedIn: true, name: emailToSave.split("@")[0], joinedAt: new Date().toISOString() };
+    let existingUser: any = {};
+    try {
+      const stored = localStorage.getItem("sector_madness_user");
+      if (stored) existingUser = JSON.parse(stored);
+    } catch {}
+
+    const userObj = {
+      ...existingUser,
+      email: emailToSave,
+      loggedIn: true,
+      name: existingUser.name || emailToSave.split("@")[0],
+      firstName: existingUser.firstName || "",
+      lastName: existingUser.lastName || "",
+      phone: existingUser.phone || "",
+      dob: existingUser.dob || "",
+      joinedAt: existingUser.joinedAt || new Date().toISOString(),
+    };
     localStorage.setItem("sector_madness_user", JSON.stringify(userObj));
     window.dispatchEvent(new Event("sector_auth_change"));
 
@@ -90,18 +106,32 @@ export default function LoginPage() {
       return;
     }
     const emailToSave = regEmail || "member@sectormadness.com";
-    const fullName = [firstName, lastName].filter(Boolean).join(" ") || emailToSave.split("@")[0];
+    const nameToSave = fullName.trim() || emailToSave.split("@")[0];
+    
+    let cleanPhone = `${phoneCountry}${phoneNumber}`.replace(/[^0-9]/g, "");
+    if (cleanPhone.startsWith("620")) cleanPhone = "0" + cleanPhone.slice(3);
+    else if (cleanPhone.startsWith("62")) cleanPhone = "0" + cleanPhone.slice(2);
+    else if (cleanPhone && !cleanPhone.startsWith("0")) cleanPhone = "0" + cleanPhone;
+
     const userObj = {
       email: emailToSave,
       loggedIn: true,
-      firstName,
-      lastName,
-      name: fullName,
-      phone: `${phoneCountry} ${phoneNumber}`,
+      firstName: nameToSave.split(" ")[0] || "",
+      lastName: nameToSave.split(" ").slice(1).join(" ") || "",
+      name: nameToSave,
+      phone: cleanPhone,
       dob: dateOfBirth,
       joinedAt: new Date().toISOString(),
     };
     localStorage.setItem("sector_madness_user", JSON.stringify(userObj));
+    try {
+      updateCustomerProfile({
+        name: nameToSave,
+        email: emailToSave,
+        phone: cleanPhone,
+        birth_date: dateOfBirth,
+      } as any);
+    } catch {}
     window.dispatchEvent(new Event("sector_auth_change"));
 
     const redirectUrl = new URLSearchParams(window.location.search).get("redirect") || "/dashboard";
@@ -270,14 +300,14 @@ export default function LoginPage() {
                     </button>
                   </form>
 
-                  <div style={{ marginTop: "64px", paddingTop: "48px", borderTop: "1px solid #E6EBEE" }}>
+                  <div style={{ marginTop: "32px", paddingTop: "28px", borderTop: "1px solid #E6EBEE" }}>
                     <div
-                      style={{ fontSize: "16px", letterSpacing: "0.14em", fontWeight: 700, marginBottom: "14px", fontFamily: "'Inter', -apple-system, sans-serif" }}
+                      style={{ fontSize: "16px", letterSpacing: "0.14em", fontWeight: 700, marginBottom: "12px", fontFamily: "'Inter', -apple-system, sans-serif" }}
                       className="uppercase text-[#0A0A0A]"
                     >
                       DO NOT HAVE AN ACCOUNT?
                     </div>
-                    <p style={{ fontSize: "13.5px", lineHeight: "1.75", marginBottom: "36px", fontFamily: "'Inter', -apple-system, sans-serif" }} className="text-[#666666] font-normal">
+                    <p style={{ fontSize: "13.5px", lineHeight: "1.7", marginBottom: "24px", fontFamily: "'Inter', -apple-system, sans-serif" }} className="text-[#666666] font-normal">
                       By creating a personal account, you will be able to checkout faster, save your shipping addresses, view and track your orders in your account and more.
                     </p>
 
@@ -309,35 +339,19 @@ export default function LoginPage() {
                   </div>
 
                   <form onSubmit={handleRegister}>
-                    <div style={{ marginBottom: "24px", gap: "20px" }} className="grid grid-cols-1 sm:grid-cols-2">
-                      <div>
-                        <label style={{ fontSize: "11px", letterSpacing: "0.18em", fontWeight: 700, marginBottom: "10px", fontFamily: "'Inter', -apple-system, sans-serif" }} className="block uppercase text-[#0A0A0A]">
-                          FIRST NAME <span className="text-[#D92323]">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={firstName}
-                          onChange={(e) => setFirstName(e.target.value)}
-                          placeholder="Enter first name"
-                          style={{ fontSize: "15px", padding: "16px 18px", fontFamily: "'Inter', -apple-system, sans-serif" }}
-                          className="w-full bg-[#F3F6F9] text-[#0A0A0A] font-medium border border-[#E0E6ED] focus:border-[#0A0A0A] focus:bg-[#FFFFFF] outline-none transition-all duration-200 rounded-none"
-                        />
-                      </div>
-                      <div>
-                        <label style={{ fontSize: "11px", letterSpacing: "0.18em", fontWeight: 700, marginBottom: "10px", fontFamily: "'Inter', -apple-system, sans-serif" }} className="block uppercase text-[#0A0A0A]">
-                          LAST NAME <span className="text-[#D92323]">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={lastName}
-                          onChange={(e) => setLastName(e.target.value)}
-                          placeholder="Enter last name"
-                          style={{ fontSize: "15px", padding: "16px 18px", fontFamily: "'Inter', -apple-system, sans-serif" }}
-                          className="w-full bg-[#F3F6F9] text-[#0A0A0A] font-medium border border-[#E0E6ED] focus:border-[#0A0A0A] focus:bg-[#FFFFFF] outline-none transition-all duration-200 rounded-none"
-                        />
-                      </div>
+                    <div style={{ marginBottom: "24px" }}>
+                      <label style={{ fontSize: "11px", letterSpacing: "0.18em", fontWeight: 700, marginBottom: "10px", fontFamily: "'Inter', -apple-system, sans-serif" }} className="block uppercase text-[#0A0A0A]">
+                        FULL NAME <span className="text-[#D92323]">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder="Enter full name"
+                        style={{ fontSize: "15px", padding: "16px 18px", fontFamily: "'Inter', -apple-system, sans-serif" }}
+                        className="w-full bg-[#F3F6F9] text-[#0A0A0A] font-medium border border-[#E0E6ED] focus:border-[#0A0A0A] focus:bg-[#FFFFFF] outline-none transition-all duration-200 rounded-none"
+                      />
                     </div>
 
                     <div style={{ marginBottom: "24px" }}>
@@ -388,10 +402,12 @@ export default function LoginPage() {
                           </span>
                           <input
                             type="tel"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
                             required
                             value={phoneNumber}
-                            onChange={(e) => setPhoneNumber(e.target.value)}
-                            placeholder="812 3456 7890"
+                            onChange={(e) => setPhoneNumber(e.target.value.replace(/[^0-9]/g, ""))}
+                            placeholder="81234567890"
                             style={{ fontSize: "15px", padding: "16px 18px", fontFamily: "'Inter', -apple-system, sans-serif" }}
                             className="w-full bg-[#F3F6F9] text-[#0A0A0A] font-medium border border-[#E0E6ED] focus:border-[#0A0A0A] focus:bg-[#FFFFFF] outline-none transition-all duration-200 rounded-none font-mono"
                           />
@@ -445,6 +461,12 @@ export default function LoginPage() {
                           )}
                         </button>
                       </div>
+                      <p style={{ fontSize: "12px", marginTop: "8px", fontFamily: "'Inter', -apple-system, sans-serif" }} className="text-[#666666] font-normal flex items-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="flex-shrink-0 text-[#888888]">
+                          <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+                        </svg>
+                        Must be at least 8 characters in length.
+                      </p>
                     </div>
 
                     <div style={{ marginBottom: "32px" }}>
@@ -480,6 +502,12 @@ export default function LoginPage() {
                           )}
                         </button>
                       </div>
+                      <p style={{ fontSize: "12px", marginTop: "8px", fontFamily: "'Inter', -apple-system, sans-serif" }} className="text-[#666666] font-normal flex items-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="flex-shrink-0 text-[#888888]">
+                          <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+                        </svg>
+                        Must match the password entered above (min. 8 characters).
+                      </p>
                     </div>
 
                     <div style={{ marginBottom: "36px" }}>
@@ -504,7 +532,7 @@ export default function LoginPage() {
                     </button>
                   </form>
 
-                  <div style={{ marginTop: "52px", paddingTop: "40px", borderTop: "1px solid #E6EBEE" }}>
+                  <div style={{ marginTop: "32px", paddingTop: "28px", borderTop: "1px solid #E6EBEE" }}>
                     <p style={{ fontSize: "13.5px", marginBottom: "16px", fontFamily: "'Inter', -apple-system, sans-serif" }} className="text-[#666666] font-normal">
                       Already have a personal account?
                     </p>

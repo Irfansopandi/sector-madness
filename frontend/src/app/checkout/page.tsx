@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import Script from "next/script";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
@@ -16,6 +16,7 @@ import {
   searchBiteshipAreas,
   getShippingRates,
   createPaymentTransaction,
+  getOrderDetail,
   ShippingRate,
   BiteshipArea,
 } from "@/utils/api";
@@ -746,9 +747,25 @@ function getRealtimeProvince(district: string = "", city: string = "", province:
 }
 
 export default function CheckoutPage() {
+  return (
+    <React.Suspense fallback={<div className="min-h-screen bg-[#0A0A0A] text-[#FFFFFF] flex items-center justify-center font-mono text-xs">LOADING ATELIER CONCIERGE...</div>}>
+      <CheckoutContent />
+    </React.Suspense>
+  );
+}
+
+function CheckoutContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const orderNumberParam = searchParams.get("order_number") || "";
   const queryClient = useQueryClient();
   const { showToast, success, error } = useToast();
+
+  const { data: existingOrder, isLoading: isExistingOrderLoading } = useQuery({
+    queryKey: ["order-detail", orderNumberParam],
+    queryFn: () => getOrderDetail(orderNumberParam),
+    enabled: !!orderNumberParam,
+  });
 
   /* ====================================================
      1. DATA LOADERS (MEMBER PROFILE & SHOPPING BAG)
@@ -770,8 +787,7 @@ export default function CheckoutPage() {
      2. FORM STATES (EXACT REFERENCE FORM FIELDS)
   ==================================================== */
   const [useSavedAddress, setUseSavedAddress] = useState(false);
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
 
@@ -790,18 +806,19 @@ export default function CheckoutPage() {
         const storedUser = localStorage.getItem("sector_madness_user");
         if (storedUser) {
           const parsed = JSON.parse(storedUser);
-          if (parsed && parsed.email) {
-            setEmail(parsed.email);
-            const userEmail: string = parsed.email;
-            const handle = userEmail.split("@")[0] || "";
-            // Format handle like "irfansopandi1212" into "Irfan Sopandi" if name is missing
-            const cleanParts = handle.replace(/[^a-zA-Z]/g, " ").trim().split(/\s+/).filter(Boolean);
-            if (cleanParts.length >= 2) {
-              setFirstName(cleanParts[0].charAt(0).toUpperCase() + cleanParts[0].slice(1));
-              setLastName(cleanParts.slice(1).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(" "));
-            } else if (cleanParts.length === 1) {
-              setFirstName(cleanParts[0].charAt(0).toUpperCase() + cleanParts[0].slice(1));
+          if (parsed) {
+            if (parsed.email) setEmail(parsed.email);
+            if (parsed.name) {
+              setFullName(parsed.name);
+            } else if (parsed.firstName || parsed.lastName) {
+              setFullName([parsed.firstName, parsed.lastName].filter(Boolean).join(" "));
+            } else if (parsed.email) {
+              const userEmail: string = parsed.email;
+              const handle = userEmail.split("@")[0] || "";
+              const clean = handle.replace(/[^a-zA-Z]/g, " ").trim();
+              setFullName(clean ? clean.split(/\s+/).map((p: string) => p.charAt(0).toUpperCase() + p.slice(1)).join(" ") : "Member");
             }
+            if (parsed.phone) setPhone(parsed.phone);
           }
         }
       } catch {
@@ -811,18 +828,28 @@ export default function CheckoutPage() {
 
     if (customer) {
       if (customer.email) setEmail(customer.email);
-      if (customer.name) {
-        const parts = customer.name.trim().split(" ");
-        if (parts.length > 1) {
-          setFirstName(parts[0]);
-          setLastName(parts.slice(1).join(" "));
-        } else {
-          setFirstName(customer.name);
-        }
-      }
       if (customer.phone) setPhone(customer.phone);
+      if (customer.name) setFullName(customer.name);
     }
   }, [customer]);
+
+  // Auto-fill from existing order when resuming payment
+  useEffect(() => {
+    if (existingOrder) {
+      if (existingOrder.customer_info?.email) setEmail(existingOrder.customer_info.email);
+      if (existingOrder.customer_info?.phone) setPhone(existingOrder.customer_info.phone);
+      if (existingOrder.customer_info?.name) {
+        setFullName(existingOrder.customer_info.name);
+      }
+      if (existingOrder.shipping_address) {
+        setAddress(existingOrder.shipping_address.street_address || "");
+        setCity(existingOrder.shipping_address.city || "");
+        setStateProvince(existingOrder.shipping_address.province || "");
+        setPostalCode(existingOrder.shipping_address.postal_code || "");
+      }
+      showToast("Order transaction data loaded for immediate checkout.", "success", "ORDER RESTORED");
+    }
+  }, [existingOrder]);
 
   // Handle "Use Saved Address" toggle
   const handleToggleSavedAddress = (checked: boolean) => {
@@ -1057,8 +1084,10 @@ export default function CheckoutPage() {
   const [promoInput, setPromoInput] = useState("");
   const [appliedPromo, setAppliedPromo] = useState<{ code: string; label: string; amount: number } | null>(null);
 
-  const subtotal = cartData?.subtotal || 0;
-  const shippingCost = selectedRate?.shipping_price || 0;
+  const displayItems = existingOrder?.products || (existingOrder as any)?.items || cartData?.items;
+  const isItemsLoading = isCartLoading || isExistingOrderLoading;
+  const subtotal = existingOrder?.summary?.subtotal || (existingOrder as any)?.total || cartData?.subtotal || 0;
+  const shippingCost = existingOrder?.summary?.shipping !== undefined ? existingOrder.summary.shipping : (selectedRate?.shipping_price || 0);
 
   const handleApplyPromo = () => {
     if (!promoInput.trim()) return;
@@ -1094,14 +1123,14 @@ export default function CheckoutPage() {
     showToast("Discount promo code has been removed.", "info", "PROMO RESET");
   };
 
-  const discountAmount = appliedPromo ? appliedPromo.amount : 0;
-  const grandTotal = Math.max(0, subtotal + shippingCost - discountAmount);
+  const discountAmount = appliedPromo ? appliedPromo.amount : (existingOrder?.summary?.discount || 0);
+  const grandTotal = existingOrder ? (existingOrder.summary?.grand_total || (existingOrder as any).total || Math.max(0, subtotal + shippingCost - discountAmount)) : Math.max(0, subtotal + shippingCost - discountAmount);
 
   /* ====================================================
      7. PLACE ORDER HANDLER (MIDTRANS SNAP)
   ==================================================== */
   const handlePlaceOrder = async () => {
-    if (!firstName.trim() || !phone.trim() || !email.trim() || !address.trim() || !city.trim()) {
+    if (!fullName.trim() || !phone.trim() || !email.trim() || !address.trim() || !city.trim()) {
       error("Please complete all required Contact and Shipping details (*).");
       return;
     }
@@ -1110,9 +1139,24 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (existingOrder || orderNumberParam) {
+      const ordNo = existingOrder?.order_number || orderNumberParam;
+      const fullNameCombined = fullName.trim() || existingOrder?.customer_info?.name || "Customer";
+      showToast("Initializing Sector Madness custom payment gateway...", "success", "GATEWAY CONNECTED");
+      setPaymentTxData({
+        order_number: ordNo,
+        payment_method: selectedPaymentMethod,
+        grossAmount: grandTotal,
+        receiverName: fullNameCombined,
+        vaNumber: existingOrder?.payment_info?.snap_token,
+      });
+      setCustomModalOpen(true);
+      return;
+    }
+
     setIsPaying(true);
     try {
-      const fullNameCombined = `${firstName} ${lastName}`.trim() || (customer?.name || "Customer");
+      const fullNameCombined = fullName.trim() || (customer?.name || "Customer");
       const res = await createPaymentTransaction({
         receiver_name: fullNameCombined,
         phone_number: phone,
@@ -1214,35 +1258,20 @@ export default function CheckoutPage() {
                 </h2>
                 
                 <div style={{ display: "flex", flexDirection: "column", gap: "36px" }}>
-                  {/* Row 1: First Name & Last Name */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: "32px" }}>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                      <label className="text-xs font-mono font-bold text-[#CCCCCC] uppercase tracking-wider block">
-                        FIRST NAME <span className="text-[#FF4444]">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
-                        placeholder="Enter first name"
-                        required
-                        style={{ padding: "18px 22px" }}
-                        className="w-full bg-[#141414] border border-[#2B2B2B] text-sm text-white placeholder:text-[#555555] focus:border-white outline-none transition-colors rounded-none font-sans font-medium"
-                      />
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                      <label className="text-xs font-mono font-bold text-[#CCCCCC] uppercase tracking-wider block">
-                        LAST NAME (OPTIONAL)
-                      </label>
-                      <input
-                        type="text"
-                        value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
-                        placeholder="Enter last name"
-                        style={{ padding: "18px 22px" }}
-                        className="w-full bg-[#141414] border border-[#2B2B2B] text-sm text-white placeholder:text-[#555555] focus:border-white outline-none transition-colors rounded-none font-bold font-sans font-medium"
-                      />
-                    </div>
+                  {/* Row 1: Full Name */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                    <label className="text-xs font-mono font-bold text-[#CCCCCC] uppercase tracking-wider block">
+                      FULL NAME <span className="text-[#FF4444]">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="Enter full name"
+                      required
+                      style={{ padding: "18px 22px" }}
+                      className="w-full bg-[#141414] border border-[#2B2B2B] text-sm text-white placeholder:text-[#555555] focus:border-white outline-none transition-colors rounded-none font-sans font-medium"
+                    />
                   </div>
 
                   {/* Row 2: Phone & Email Address */}
@@ -1580,27 +1609,27 @@ export default function CheckoutPage() {
 
                 {/* Items List in Bag */}
                 <div style={{ marginBottom: "32px" }}>
-                  {isCartLoading ? (
+                  {isItemsLoading ? (
                     <div className="animate-pulse space-y-4 py-2">
                       <div className="h-4 bg-[#222] w-3/4" />
                       <div className="h-4 bg-[#222] w-1/2" />
                     </div>
-                  ) : !cartData?.items || cartData.items.length === 0 ? (
+                  ) : !displayItems || displayItems.length === 0 ? (
                     <p className="text-xs text-[#777777] font-mono uppercase py-2">No items in order bag.</p>
                   ) : (
                     <div className="space-y-6">
-                      {cartData.items.map((item: any) => (
-                        <div key={item.id} className="flex justify-between items-start gap-5 font-mono">
+                      {displayItems.map((item: any, idx: number) => (
+                        <div key={item.id || idx} className="flex justify-between items-start gap-5 font-mono">
                           <div className="space-y-1">
                             <p className="text-sm font-bold uppercase text-white tracking-wide leading-snug">
-                              {item.product_name}
+                              {item.product_name || item.name}
                             </p>
                             <p className="text-xs font-normal text-[#888888] uppercase tracking-wider">
-                              {item.size || "M"} × {item.quantity}
+                              {item.size || "M"} × {item.quantity || 1}
                             </p>
                           </div>
                           <span className="text-sm font-bold text-white shrink-0 tracking-wide">
-                            Rp {item.subtotal.toLocaleString("id-ID")}
+                            Rp {(item.subtotal || (item.price || 0) * (item.quantity || 1)).toLocaleString("id-ID")}
                           </span>
                         </div>
                       ))}
@@ -1901,9 +1930,9 @@ export default function CheckoutPage() {
                   <button
                     type="button"
                     onClick={handlePlaceOrder}
-                    disabled={!agreedToTerms || isPaying || isCartLoading}
+                    disabled={!agreedToTerms || isPaying || (isCartLoading && !existingOrder)}
                     className={`w-full font-mono text-[13px] font-bold uppercase transition-all duration-300 ${
-                      !agreedToTerms || isPaying || isCartLoading
+                      !agreedToTerms || isPaying || (isCartLoading && !existingOrder)
                         ? "bg-[#1A1A1A] text-[#555555] pointer-events-none cursor-not-allowed border border-[#2B2B2B]"
                         : "bg-white text-[#0A0A0A] hover:bg-[#E0E0E0] cursor-pointer shadow-2xl"
                     }`}
@@ -1916,7 +1945,7 @@ export default function CheckoutPage() {
                       marginTop: "16px"
                     }}
                   >
-                    {isPaying ? "INITIALIZING PAYMENT GATEWAY..." : "PLACE ORDER"}
+                    {isPaying ? "INITIALIZING PAYMENT GATEWAY..." : existingOrder ? "PAY NOW" : "PLACE ORDER"}
                   </button>
                 </div>
 
@@ -1933,7 +1962,9 @@ export default function CheckoutPage() {
         isOpen={customModalOpen}
         onClose={() => {
           setCustomModalOpen(false);
-          showToast("Payment window closed. Your items remain safe in your bag; you can retry paying anytime.", "info", "PAYMENT PAUSED");
+          if (paymentTxData?.order_number && !existingOrder) {
+            router.push("/dashboard/orders");
+          }
         }}
         onPaymentConfirmed={async () => {
           setCustomModalOpen(false);

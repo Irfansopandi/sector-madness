@@ -22,34 +22,16 @@ export default function OrdersPage() {
   const [trackingResi, setTrackingResi] = useState("");
   const [trackingData, setTrackingData] = useState<TrackingData | null>(null);
 
-  // Return & Exchange Modal State
-  const [returnModalOpen, setReturnModalOpen] = useState(false);
-  const [returnType, setReturnType] = useState("Tukar Ukuran / Warna");
-  const [returnReason, setReturnReason] = useState("Ukuran tidak pas (terlalu besar / kecil)");
-  const [returnNotes, setReturnNotes] = useState("");
-
   // Cancellation & Refund Modal State
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [showConfirmCancel, setShowConfirmCancel] = useState(false);
   const [cancelSuccessModalOpen, setCancelSuccessModalOpen] = useState(false);
-  const [cancelReason, setCancelReason] = useState("Ingin merubah alamat pengiriman");
+  const [cancelReason, setCancelReason] = useState("Change shipping address");
   const [bankName, setBankName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [accountName, setAccountName] = useState("");
   const [cancelNotes, setCancelNotes] = useState("");
-
-  const handleSubmitReturnWA = () => {
-    if (!selectedOrderDetail) return;
-    const itemsText = (selectedOrderDetail.products || (selectedOrderDetail as any).items || [])
-      .map((it: any) => `• ${it.product_name || it.name || "Produk"} (${it.color || "Default"} - Size ${it.size || "Default"}, Qty: ${it.quantity || 1})`)
-      .join("\n") || "• Produk pesanan";
-
-    const msg = `Halo Tim Admin Sector Madness,\n\nSaya ingin mengajukan proses Retur / Penukaran untuk pesanan berikut:\n\n📦 *No. Invoice:* ${selectedOrderDetail.order_number}\n👤 *Nama Customer:* ${selectedOrderDetail.customer_info?.name || "Customer"}\n🏷️ *Produk yang Diajukan:*\n${itemsText}\n\n🔄 *Jenis Pengajuan:* ${returnType}\n📋 *Alasan Pengajuan:* ${returnReason}\n📝 *Catatan Tambahan:* ${returnNotes || "-"}\n\n*Berikut di bawah ini segera saya kirimkan / lampirkan bukti Foto dan Video Unboxing produk untuk proses verifikasi oleh tim Sector Madness.* Terima kasih!`;
-
-    const waText = encodeURIComponent(msg);
-    window.open(`https://wa.me/6281234567890?text=${waText}`, "_blank");
-    setReturnModalOpen(false);
-  };
+  const [cancelErrorMsg, setCancelErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     getOrders()
@@ -145,13 +127,20 @@ export default function OrdersPage() {
   const handleSubmitCancellation = () => {
     if (!selectedOrderDetail) return;
     if (!bankName.trim() || !accountNumber.trim() || !accountName.trim()) {
-      alert("Mohon lengkapi data Nama Bank, Nomor Rekening, dan Atas Nama untuk proses verifikasi pengembalian dana (refund).");
+      setCancelErrorMsg("Please provide Bank/E-Wallet Name, Account Number, and Account Holder Name for refund verification.");
+      setTimeout(() => setCancelErrorMsg(null), 5000);
+      const el = document.getElementById("cancel-modal-container");
+      if (el) el.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
     if (!cancelNotes.trim()) {
-      alert("Mohon isi alasan detail pembatalan pesanan Anda.");
+      setCancelErrorMsg("Please provide detailed reasons for your order cancellation.");
+      setTimeout(() => setCancelErrorMsg(null), 5000);
+      const el = document.getElementById("cancel-modal-container");
+      if (el) el.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
+    setCancelErrorMsg(null);
     setShowConfirmCancel(true);
   };
 
@@ -167,6 +156,7 @@ export default function OrdersPage() {
     setShowConfirmCancel(false);
     setCancelModalOpen(false);
     setCancelSuccessModalOpen(true);
+    setTimeout(() => setCancelSuccessModalOpen(false), 5000);
   };
 
   return (
@@ -205,18 +195,21 @@ export default function OrdersPage() {
               </div>
 
               <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 border-white/[0.08] pt-4 md:pt-0 flex-wrap">
-                <span className="px-3 py-1.5 bg-[#B6A47E]/10 text-[#B6A47E] text-[11px] font-mono font-bold uppercase tracking-wider border border-[#B6A47E]/20">
-                  {order.payment_status || "PAID"}
-                </span>
                 {(() => {
+                  const payStatus = (order.payment_status || "").toUpperCase();
+                  const isUnpaid = payStatus === "UNPAID" || payStatus === "PENDING" || payStatus === "AWAITING_PAYMENT";
                   const st = (order.shipping_status || order.status || "IN PROCESS").toUpperCase();
                   const isCancelled = st === "CANCELLED" || st === "DIBATALKAN";
                   const isDelivered = st === "DELIVERED" || st === "COMPLETED" || st === "RECEIVED" || st === "SELESAI";
                   const isReady = st === "READY TO SHIP" || st === "READY_TO_SHIP" || st === "PACKED" || st === "SIAP KIRIM";
+                  const isInProcess = st === "ALLOCATED" || st === "PROCESSING" || st === "IN PROCESS";
+                  const displayStatus = isCancelled ? "CANCELLED" : isDelivered ? "DELIVERED" : isReady ? "READY TO SHIP" : isInProcess ? "IN PROCESS" : st;
                   return (
-                    <span className={`px-3 py-1.5 text-[11px] font-mono font-bold uppercase tracking-wider border ${isCancelled ? "bg-red-500/10 text-red-400 border-red-500/20" : isDelivered ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : isReady ? "bg-sky-500/10 text-sky-400 border-sky-500/20" : "bg-amber-500/10 text-amber-400 border-amber-500/20"}`}>
-                      {isCancelled ? "CANCELLED" : isDelivered ? "DELIVERED" : isReady ? "READY TO SHIP" : st}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className={`px-3 py-1.5 text-[11px] font-mono font-bold uppercase tracking-wider border ${isCancelled ? "bg-red-500/10 text-red-400 border-red-500/20" : isDelivered ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : isReady ? "bg-sky-500/10 text-sky-400 border-sky-500/20" : "bg-amber-500/10 text-amber-400 border-amber-500/20"}`}>
+                        {displayStatus}
+                      </span>
+                    </div>
                   );
                 })()}
                 <button
@@ -258,7 +251,7 @@ export default function OrdersPage() {
                   {selectedOrderDetail.order_number}
                 </h3>
                 <p className="text-xs font-mono text-[#8A8A8A]">
-                  Ordered on {selectedOrderDetail.order_date}
+                  Ordered on {selectedOrderDetail.order_date || (selectedOrderDetail.created_at ? new Date(selectedOrderDetail.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "")}
                 </p>
               </div>
 
@@ -268,7 +261,7 @@ export default function OrdersPage() {
               >
                 <div className="space-y-2 text-left">
                   <span className="text-[10px] md:text-[11px] text-[#8A8A8A] uppercase tracking-wider block font-bold">TOTAL</span>
-                  <span className="text-[#B6A47E] font-black text-sm md:text-base block">Rp {(selectedOrderDetail.summary?.grand_total || 0).toLocaleString("id-ID")}</span>
+                  <span className="text-[#B6A47E] font-black text-sm md:text-base block">Rp {(selectedOrderDetail.summary?.grand_total || (selectedOrderDetail as any).total || 0).toLocaleString("id-ID")}</span>
                 </div>
                 <div className="space-y-2 text-left">
                   <span className="text-[10px] md:text-[11px] text-[#8A8A8A] uppercase tracking-wider block font-bold">PAYMENT METHOD</span>
@@ -297,7 +290,7 @@ export default function OrdersPage() {
                 </div>
               </div>
 
-              {/* PRODUCT LIST WITH THUMBNAIL, NAME, COLOR, SIZE & QTY */}
+              {/* ITEM LIST */}
               <div style={{ gap: "20px" }} className="flex flex-col text-left">
                 <span className="text-xs font-mono text-[#8A8A8A] uppercase tracking-[0.25em] block font-bold">
                   ORDERED PRODUCTS
@@ -348,6 +341,8 @@ export default function OrdersPage() {
 
               <div className="flex flex-col sm:flex-row gap-4 pt-2">
                 {(() => {
+                  const payStatus = (selectedOrderDetail.payment_info?.payment_status || (selectedOrderDetail as any).payment_status || "").toUpperCase();
+                  const isUnpaid = payStatus === "UNPAID" || payStatus === "PENDING" || payStatus === "AWAITING_PAYMENT";
                   const st = (selectedOrderDetail.shipping_status || "PROCESSING").toUpperCase();
                   const isCancelled = st === "CANCELLED" || st === "DIBATALKAN";
                   const isInProcessOrPending =
@@ -361,13 +356,25 @@ export default function OrdersPage() {
 
                   return (
                     <>
-                      <button
-                        onClick={() => handleOpenTrackShipment(selectedOrderDetail.courier_info?.tracking_number)}
-                        style={{ padding: "20px 0" }}
-                        className="flex-1 bg-[#B6A47E] text-[#0A0A0A] font-mono text-xs uppercase font-extrabold tracking-[0.25em] hover:bg-white transition-all duration-300 cursor-pointer shadow-xl rounded-sm block text-center"
-                      >
-                        TRACK SHIPMENT
-                      </button>
+                      {isUnpaid && !isCancelled && (
+                        <Link
+                          href={`/checkout?order_number=${selectedOrderDetail.order_number}`}
+                          style={{ padding: "20px 0" }}
+                          className="flex-1 bg-white hover:bg-[#E0E0E0] text-[#0A0A0A] font-mono text-xs uppercase font-extrabold tracking-[0.25em] transition-all duration-300 cursor-pointer rounded-sm block text-center"
+                        >
+                          PAY NOW
+                        </Link>
+                      )}
+
+                      {!isUnpaid && (
+                        <button
+                          onClick={() => handleOpenTrackShipment(selectedOrderDetail.courier_info?.tracking_number)}
+                          style={{ padding: "20px 0" }}
+                          className="flex-1 bg-[#B6A47E] text-[#0A0A0A] font-mono text-xs uppercase font-extrabold tracking-[0.25em] hover:bg-white transition-all duration-300 cursor-pointer shadow-xl rounded-sm block text-center"
+                        >
+                          TRACK SHIPMENT
+                        </button>
+                      )}
 
                       {isInProcessOrPending && (
                         <button
@@ -379,25 +386,14 @@ export default function OrdersPage() {
                         </button>
                       )}
 
-                      {isShippedOrDelivered && (
-                        <>
-                          {!isDelivered && (
-                            <button
-                              onClick={() => handleConfirmReceived(selectedOrderDetail.order_number)}
-                              style={{ padding: "20px 0" }}
-                              className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-[#0A0A0A] font-mono text-xs uppercase font-extrabold tracking-[0.25em] transition-all duration-300 cursor-pointer shadow-xl rounded-sm block text-center"
-                            >
-                              ✓ CONFIRM RECEIVED
-                            </button>
-                          )}
-                          <button
-                            onClick={() => setReturnModalOpen(true)}
-                            style={{ padding: "20px 0" }}
-                            className="flex-1 border border-white/[0.2] hover:border-white/50 text-[#8A8A8A] hover:text-[#F5F5F5] font-mono text-xs uppercase font-bold tracking-[0.2em] transition-all duration-300 cursor-pointer rounded-sm block text-center"
-                          >
-                            REQUEST RETURN // EXCHANGE
-                          </button>
-                        </>
+                      {isShippedOrDelivered && !isDelivered && (
+                        <button
+                          onClick={() => handleConfirmReceived(selectedOrderDetail.order_number)}
+                          style={{ padding: "20px 0" }}
+                          className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-[#0A0A0A] font-mono text-xs uppercase font-extrabold tracking-[0.25em] transition-all duration-300 cursor-pointer shadow-xl rounded-sm block text-center"
+                        >
+                          ✓ CONFIRM RECEIVED
+                        </button>
                       )}
                     </>
                   );
@@ -471,136 +467,14 @@ export default function OrdersPage() {
         )}
       </AnimatePresence>
 
-      {/* ── MODAL 3: RETURN & EXCHANGE INTERACTIVE FORM MODAL ── */}
-      <AnimatePresence>
-        {returnModalOpen && selectedOrderDetail && (
-          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-md">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              style={{ padding: "60px", gap: "32px" }}
-              className="bg-[#141414] border border-[#B6A47E]/30 text-[#F5F5F5] w-full max-w-3xl flex flex-col shadow-2xl relative text-left rounded-sm max-h-[90vh] overflow-y-auto font-sans"
-            >
-              <button
-                onClick={() => setReturnModalOpen(false)}
-                className="absolute top-6 right-6 text-[#8A8A8A] hover:text-[#F5F5F5] transition-colors p-2 cursor-pointer font-mono text-xl"
-                aria-label="Close Return Form"
-              >
-                ✕
-              </button>
 
-              <div className="border-b border-white/[0.1] pb-4">
-                <span className="text-xs font-mono text-[#B6A47E] uppercase tracking-[0.25em] block font-bold">
-                  [ATELIER AFTER-SALES SERVICE]
-                </span>
-                <h3 className="text-xl md:text-2xl font-black uppercase tracking-wide text-[#F5F5F5] mt-1.5 font-serif">
-                  FORMULIR PENGAJUAN RETUR & TUKAR
-                </h3>
-                <p className="text-xs text-[#8A8A8A] font-mono mt-1">
-                  Invoice Ref: <span className="text-[#F5F5F5] font-bold">{selectedOrderDetail.order_number}</span>
-                </p>
-              </div>
-
-              {/* JENIS PENGAJUAN */}
-              <div className="space-y-2">
-                <label className="text-xs font-mono text-[#8A8A8A] uppercase tracking-widest block font-bold">
-                  1. PILIH JENIS PENGAJUAN:
-                </label>
-                <div className="grid grid-cols-2 gap-4">
-                  <button
-                    type="button"
-                    onClick={() => setReturnType("Tukar Ukuran / Warna")}
-                    className={`py-3.5 px-4 text-xs font-mono font-bold uppercase tracking-wider rounded-sm border transition-all cursor-pointer ${returnType === "Tukar Ukuran / Warna" ? "bg-[#B6A47E] text-[#0A0A0A] border-[#B6A47E] font-black shadow-lg" : "bg-[#0A0A0A] text-[#8A8A8A] border-white/10 hover:border-white/30"}`}
-                  >
-                    🔄 Tukar Ukuran / Warna
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setReturnType("Retur & Pengembalian Dana")}
-                    className={`py-3.5 px-4 text-xs font-mono font-bold uppercase tracking-wider rounded-sm border transition-all cursor-pointer ${returnType === "Retur & Pengembalian Dana" ? "bg-[#B6A47E] text-[#0A0A0A] border-[#B6A47E] font-black shadow-lg" : "bg-[#0A0A0A] text-[#8A8A8A] border-white/10 hover:border-white/30"}`}
-                  >
-                    💰 Retur Pengembalian Dana
-                  </button>
-                </div>
-              </div>
-
-              {/* ALASAN PENGAJUAN */}
-              <div className="space-y-3">
-                <label className="text-xs font-mono text-[#8A8A8A] uppercase tracking-widest block font-bold">
-                  2. ALASAN PENGAJUAN:
-                </label>
-                <div className="relative">
-                  <select
-                    value={returnReason}
-                    onChange={(e) => setReturnReason(e.target.value)}
-                    className="w-full bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] p-4 md:p-5 font-mono text-sm uppercase focus:outline-none focus:border-[#B6A47E]/80 focus:ring-1 focus:ring-[#B6A47E]/50 rounded-sm cursor-pointer appearance-none transition-all"
-                  >
-                    <option value="Ukuran tidak pas (terlalu besar / kecil)">Ukuran tidak pas (terlalu besar / kecil)</option>
-                    <option value="Terdapat cacat / kendala pada fisik produk">Terdapat cacat / kendala pada fisik produk</option>
-                    <option value="Produk yang diterima tidak sesuai pesanan">Produk yang diterima tidak sesuai pesanan</option>
-                    <option value="Ingin menukar dengan varian / model lain">Ingin menukar dengan varian / model lain</option>
-                    <option value="Alasan lainnya (dijelaskan di catatan)">Alasan lainnya (dijelaskan di catatan)</option>
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#8A8A8A]">
-                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                  </div>
-                </div>
-              </div>
-
-              {/* CATATAN TAMBAHAN */}
-              <div className="space-y-2 pt-2">
-                <label className="text-xs font-mono text-[#8A8A8A] uppercase tracking-widest block font-bold">
-                  3. CATATAN / PENJELASAN TAMBAHAN (OPSIONAL):
-                </label>
-                <textarea
-                  rows={3}
-                  value={returnNotes}
-                  onChange={(e) => setReturnNotes(e.target.value)}
-                  placeholder="Contoh: Ingin tukar dari Size S ke Size M karena dada terlalu ketat..."
-                  className="w-full bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] p-4 md:p-5 font-mono text-sm focus:outline-none focus:border-[#B6A47E] focus:ring-1 focus:ring-[#B6A47E]/50 rounded-sm placeholder:text-[#444444] transition-all"
-                />
-              </div>
-
-              {/* IMPORTANT NOTICE ABOUT PHOTO/VIDEO PROOF */}
-              <div style={{ padding: "18px 20px" }} className="bg-amber-500/10 border border-amber-500/30 rounded-sm text-amber-300 text-xs font-mono leading-relaxed space-y-2">
-                <div className="font-bold tracking-wider uppercase flex items-center gap-2">
-                  <span>📸 4. INSTRUKSI BUKTI FOTO & VIDEO UNBOXING:</span>
-                </div>
-                <p className="text-amber-200/90 text-[11px] leading-relaxed">
-                  Karena kebijakan keamanan browser dan WhatsApp yang tidak mengizinkan pengiriman file foto/video secara otomatis dari web, maka saat tombol kirim di bawah ditekan, sistem akan merangkum seluruh formulir ini menjadi pesan chat resmi. <strong>Silakan langsung lampirkan Bukti Foto Produk & Video Unboxing Anda pada kolom chat WhatsApp yang otomatis terbuka!</strong>
-                </p>
-              </div>
-
-              {/* SUBMIT BUTTON */}
-              <div className="flex gap-4 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setReturnModalOpen(false)}
-                  style={{ padding: "18px 0" }}
-                  className="flex-1 border border-white/10 text-[#8A8A8A] hover:text-white font-mono text-xs uppercase font-bold tracking-widest transition-colors rounded-sm cursor-pointer block text-center"
-                >
-                  BATAL
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSubmitReturnWA}
-                  style={{ padding: "18px 0" }}
-                  className="flex-[2] bg-[#25D366] hover:bg-[#1EBE5D] text-white font-mono text-xs uppercase font-extrabold tracking-widest transition-colors shadow-lg rounded-sm flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <span>📨 KIRIM PENGAJUAN KE WHATSAPP</span>
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
       {/* ── MODAL 4: ORDER CANCELLATION & REFUND FORM MODAL ── */}
       <AnimatePresence>
         {cancelModalOpen && selectedOrderDetail && (
           <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-md">
             <motion.div
+              id="cancel-modal-container"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
@@ -608,7 +482,7 @@ export default function OrdersPage() {
               className="bg-[#141414] border border-white/[0.15] text-[#F5F5F5] w-full max-w-3xl flex flex-col shadow-2xl relative text-left rounded-sm max-h-[90vh] overflow-y-auto font-sans"
             >
               <button
-                onClick={() => setCancelModalOpen(false)}
+                onClick={() => { setCancelModalOpen(false); setCancelErrorMsg(null); }}
                 className="absolute top-6 right-6 text-[#8A8A8A] hover:text-[#F5F5F5] transition-colors p-2 cursor-pointer font-mono text-xl"
                 aria-label="Close Cancel Form"
               >
@@ -620,18 +494,29 @@ export default function OrdersPage() {
                   [ATELIER ORDER CANCELLATION]
                 </span>
                 <h3 className="text-xl md:text-2xl font-black uppercase tracking-wide text-[#F5F5F5] mt-1.5 font-serif">
-                  FORMULIR PEMBATALAN & REFUND
+                  CANCELLATION & REFUND FORM
                 </h3>
                 <p className="text-xs text-[#8A8A8A] font-mono mt-1">
                   Invoice Ref: <span className="text-[#F5F5F5] font-bold">{selectedOrderDetail.order_number}</span>
                 </p>
               </div>
 
+              {cancelErrorMsg && (
+                <div style={{ margin: "0 24px -16px 24px", padding: "16px 20px" }} className="bg-[#0A0A0A] border border-red-500/50 text-red-400 text-xs font-mono font-bold tracking-wider uppercase flex items-center gap-3.5 rounded-none shadow-xl">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-red-500">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                  </svg>
+                  <span>{cancelErrorMsg}</span>
+                </div>
+              )}
+
               <div style={{ padding: "0 24px", display: "flex", flexDirection: "column", gap: "40px" }}>
-                {/* ALASAN PEMBATALAN */}
+                {/* CANCELLATION REASON */}
                 <div className="space-y-4">
                   <label className="text-xs font-mono text-[#8A8A8A] uppercase tracking-widest block font-bold">
-                    1. TOPIK PEMBATALAN PESANAN:
+                    1. CANCELLATION REASON:
                   </label>
                   <div className="relative" style={{ marginTop: "16px" }}>
                     <select
@@ -640,11 +525,11 @@ export default function OrdersPage() {
                       style={{ padding: "18px 24px" }}
                       className="w-full bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] font-mono text-sm uppercase focus:outline-none focus:border-red-500/80 focus:ring-1 focus:ring-red-500/50 rounded-sm cursor-pointer appearance-none transition-all"
                     >
-                    <option value="Ingin merubah alamat pengiriman">Ingin merubah alamat pengiriman</option>
-                    <option value="Ingin mengganti atau menambah item pesanan">Ingin mengganti atau menambah item pesanan</option>
-                    <option value="Salah memilih metode pembayaran">Salah memilih metode pembayaran</option>
-                    <option value="Kendala finansial / Batal membeli">Kendala finansial / Batal membeli</option>
-                    <option value="Alasan lainnya">Alasan lainnya</option>
+                    <option value="Change shipping address">Change shipping address</option>
+                    <option value="Change or add order items">Change or add order items</option>
+                    <option value="Incorrect payment method selected">Incorrect payment method selected</option>
+                    <option value="Financial constraint / Cancel purchase">Financial constraint / Cancel purchase</option>
+                    <option value="Other reasons (explain below)">Other reasons (explain below)</option>
                   </select>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#8A8A8A]">
                     <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
@@ -652,72 +537,72 @@ export default function OrdersPage() {
                 </div>
               </div>
 
-                {/* DATA REKENING REFUND */}
+                {/* REFUND ACCOUNT DETAILS */}
                 <div className="space-y-8 pt-6 border-t border-white/[0.08]">
                   <label className="text-xs font-mono text-[#B6A47E] uppercase tracking-widest block font-bold">
-                    2. DATA REKENING PENGEMBALIAN DANA (REFUND):
+                    2. REFUND ACCOUNT DETAILS:
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-8" style={{ marginTop: "24px" }}>
                     <div className="space-y-2">
-                      <span className="text-[11px] font-mono text-[#8A8A8A] block uppercase tracking-wider">NAMA BANK / E-WALLET *</span>
+                      <span className="text-[11px] font-mono text-[#8A8A8A] block uppercase tracking-wider">BANK NAME / E-WALLET *</span>
                       <input
                         type="text"
                         value={bankName}
                         onChange={(e) => setBankName(e.target.value)}
-                        placeholder="Contoh: BCA / Mandiri / OVO"
+                        placeholder="e.g., BCA / Mandiri / OVO / PayPal"
                         style={{ padding: "18px 24px" }}
                         className="w-full bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] font-mono text-sm focus:outline-none focus:border-[#B6A47E] focus:ring-1 focus:ring-[#B6A47E]/50 rounded-sm placeholder:text-[#444444] transition-all"
                       />
                     </div>
                     <div className="space-y-2">
-                      <span className="text-[11px] font-mono text-[#8A8A8A] block uppercase tracking-wider">NOMOR REKENING / NO. HP *</span>
+                      <span className="text-[11px] font-mono text-[#8A8A8A] block uppercase tracking-wider">ACCOUNT NUMBER / PHONE *</span>
                       <input
                         type="number"
                         value={accountNumber}
                         onChange={(e) => setAccountNumber(e.target.value)}
-                        placeholder="Contoh: 1234567890"
+                        placeholder="e.g., 1234567890"
                         style={{ padding: "18px 24px" }}
                         className="w-full bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] font-mono text-sm focus:outline-none focus:border-[#B6A47E] focus:ring-1 focus:ring-[#B6A47E]/50 rounded-sm placeholder:text-[#444444] transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
                   </div>
                   <div className="space-y-2" style={{ marginTop: "32px" }}>
-                    <span className="text-[11px] font-mono text-[#8A8A8A] block uppercase tracking-wider">NAMA PEMILIK REKENING (ATAS NAMA) *</span>
+                    <span className="text-[11px] font-mono text-[#8A8A8A] block uppercase tracking-wider">ACCOUNT HOLDER NAME *</span>
                     <input
                       type="text"
                       value={accountName}
                       onChange={(e) => setAccountName(e.target.value)}
-                      placeholder="Nama lengkap sesuai buku tabungan / e-wallet"
+                      placeholder="Full name as shown on bank / e-wallet account"
                       style={{ padding: "18px 24px" }}
                       className="w-full bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] font-mono text-sm focus:outline-none focus:border-[#B6A47E] focus:ring-1 focus:ring-[#B6A47E]/50 rounded-sm placeholder:text-[#444444] transition-all"
                     />
                   </div>
                 </div>
 
-                {/* CATATAN TAMBAHAN */}
+                {/* ADDITIONAL NOTES */}
                 <div className="space-y-3 pt-4">
                   <label className="text-xs font-mono text-red-400 uppercase tracking-widest block font-bold">
-                    3. ALASAN PEMBATALAN (WAJIB):
+                    3. ADDITIONAL EXPLANATION (REQUIRED):
                   </label>
                   <textarea
                     rows={3}
                     value={cancelNotes}
                     onChange={(e) => setCancelNotes(e.target.value)}
-                    placeholder="Jelaskan alasan detail pembatalan Anda di sini..."
+                    placeholder="Please explain your detailed cancellation reasons here..."
                     style={{ padding: "18px 24px", marginTop: "16px" }}
                     className="w-full bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] font-mono text-sm focus:outline-none focus:border-red-500/80 focus:ring-1 focus:ring-red-500/50 rounded-sm placeholder:text-[#444444] transition-all"
                   />
                 </div>
               </div>
 
-              {/* IMPORTANT NOTE: PROSES 1-3 HARI */}
+              {/* IMPORTANT NOTE: PROCESS 1-3 DAYS */}
               <div style={{ padding: "16px 20px" }} className="bg-[#1C1C1C] border border-white/[0.12] rounded-sm text-xs font-mono leading-relaxed space-y-1.5">
                 <div className="font-bold text-[#F5F5F5] tracking-wider uppercase flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-amber-400"></span>
-                  <span>ESTIMASI PROSES REFUND (1 - 3 HARI KERJA)</span>
+                  <span>ESTIMATED REFUND PROCESS (1 - 3 BUSINESS DAYS)</span>
                 </div>
                 <p className="text-[#8A8A8A] text-[11px] leading-relaxed">
-                  Pengajuan pembatalan akan dikirim langsung ke backend Admin. Setelah disetujui dan diverifikasi oleh sistem, dana akan diproses kembali (refund) ke rekening yang tertera di atas dalam estimasi <strong>1 - 3 hari kerja</strong>.
+                  Your cancellation request will be submitted directly to the Atelier administration team. Once verified and approved by the system, funds will be refunded to the designated account above within an estimated <strong>1 - 3 business days</strong>.
                 </p>
               </div>
 
@@ -725,11 +610,11 @@ export default function OrdersPage() {
               <div className="flex gap-4 pt-2">
                 <button
                   type="button"
-                  onClick={() => setCancelModalOpen(false)}
+                  onClick={() => { setCancelModalOpen(false); setCancelErrorMsg(null); }}
                   style={{ padding: "18px 0" }}
                   className="flex-1 border border-white/10 text-[#8A8A8A] hover:text-white font-mono text-xs uppercase font-bold tracking-widest transition-colors rounded-sm cursor-pointer block text-center"
                 >
-                  KEMBALI
+                  BACK
                 </button>
                 <button
                   type="button"
@@ -737,7 +622,7 @@ export default function OrdersPage() {
                   style={{ padding: "18px 0" }}
                   className="flex-[2] bg-[#B6A47E] hover:bg-white text-[#0A0A0A] font-mono text-xs uppercase font-extrabold tracking-[0.2em] transition-colors shadow-lg rounded-sm flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <span>AJUKAN PEMBATALAN & REFUND</span>
+                  <span>SUBMIT CANCELLATION & REFUND</span>
                 </button>
               </div>
             </motion.div>
@@ -763,11 +648,11 @@ export default function OrdersPage() {
               </div>
 
               <h3 className="text-xl font-bold uppercase tracking-widest text-[#F5F5F5] font-serif mb-6">
-                KONFIRMASI PEMBATALAN
+                CONFIRM CANCELLATION
               </h3>
 
               <p className="text-xs sm:text-sm text-[#8A8A8A] font-mono leading-loose mb-8 max-w-sm">
-                Apakah Anda yakin ingin mengajukan pembatalan untuk pesanan ini? Pengajuan akan dikirimkan ke tim Admin dan status pesanan Anda akan berubah menjadi <span className="text-[#B6A47E] font-bold">PENDING</span>.
+                Are you sure you want to submit a cancellation request for this order? Your request will be forwarded to our administrative team and your order status will be updated to <span className="text-[#B6A47E] font-bold">PENDING</span>.
               </p>
 
               <div className="flex items-center gap-4 w-full pt-2">
@@ -777,7 +662,7 @@ export default function OrdersPage() {
                   style={{ padding: "16px 0" }}
                   className="flex-1 border border-white/15 hover:border-white/40 text-[#8A8A8A] hover:text-white font-mono text-xs uppercase font-bold tracking-widest rounded-sm transition-all cursor-pointer"
                 >
-                  BATALKAN
+                  CANCEL
                 </button>
                 <button
                   type="button"
@@ -785,7 +670,7 @@ export default function OrdersPage() {
                   style={{ padding: "16px 0" }}
                   className="flex-1 bg-red-600 hover:bg-red-700 text-white font-mono text-xs uppercase font-extrabold tracking-widest rounded-sm transition-all shadow-lg cursor-pointer"
                 >
-                  YA, PROSES
+                  YES, PROCEED
                 </button>
               </div>
             </motion.div>
@@ -811,11 +696,11 @@ export default function OrdersPage() {
               </div>
 
               <h3 className="text-xl font-bold uppercase tracking-widest text-[#F5F5F5] font-serif mb-4">
-                PENGAJUAN TERKIRIM
+                REQUEST SUBMITTED
               </h3>
 
               <p className="text-xs sm:text-sm text-[#8A8A8A] font-mono leading-loose mb-8 max-w-sm">
-                Pengajuan pembatalan pesanan Anda telah berhasil dikirim ke backend Admin. Status pesanan Anda saat ini adalah <span className="text-[#B6A47E] font-bold">PENDING</span> dan akan diverifikasi dalam 1 - 3 hari kerja.
+                Your cancellation and refund request has been successfully submitted to our administrative team. Your order status is currently <span className="text-[#B6A47E] font-bold">PENDING</span> and will be verified within 1 - 3 business days.
               </p>
 
               <button
@@ -824,7 +709,7 @@ export default function OrdersPage() {
                 style={{ padding: "16px 0" }}
                 className="w-full bg-[#B6A47E] hover:bg-white text-[#0A0A0A] font-mono text-xs uppercase font-extrabold tracking-widest rounded-sm transition-all shadow-lg cursor-pointer"
               >
-                MENGERTI & TUTUP
+                GOT IT & CLOSE
               </button>
             </motion.div>
           </div>
