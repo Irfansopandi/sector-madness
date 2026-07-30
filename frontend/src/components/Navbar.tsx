@@ -272,7 +272,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
 
               {/* Login / Account Link */}
               <Link
-                href="/login"
+                href={isLoggedIn ? "/dashboard" : "/login"}
                 className="hidden md:block cursor-pointer group"
                 aria-label={isLoggedIn ? "Account" : "Login"}
               >
@@ -478,7 +478,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                   Search
                 </span>
                 <Link
-                  href="/login"
+                  href={isLoggedIn ? "/dashboard" : "/login"}
                   onClick={() => setMobileOpen(false)}
                   className="text-[11px] tracking-[0.2em] uppercase text-[#8A8A8A] cursor-pointer hover:text-[#F5F5F5] transition-colors duration-300"
                 >

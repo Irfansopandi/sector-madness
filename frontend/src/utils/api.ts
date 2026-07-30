@@ -463,8 +463,15 @@ export const getShipmentTracking = async (trackingNumber: string): Promise<Track
   const raw = res.data.data || {};
   
   // Format consistent tracking timeline
+  const st = strtoupper(raw.status || "");
+  const formattedStatus = 
+    st === "ALLOCATED" || st === "PROCESSING" || st === "IN PROCESS" ? "IN PROCESS" :
+    st === "PACKED" || st === "READY_TO_SHIP" || st === "READY FOR DISPATCH" || st === "SIAP KIRIM" ? "READY TO SHIP" :
+    st === "SHIPPED" || st === "IN_TRANSIT" || st === "IN TRANSIT" ? "IN TRANSIT" :
+    st === "DELIVERED" || st === "COMPLETED" ? "DELIVERED" : (st || "IN PROCESS");
+
   return {
-    current_status: raw.status ? strtoupper(raw.status) : "IN TRANSIT (ATELIER WAREHOUSE)",
+    current_status: formattedStatus,
     courier: raw.courier?.company ? strtoupper(raw.courier.company) : "BITESHIP LOGISTICS",
     tracking_number: trackingNumber,
     estimated_delivery: raw.estimated_delivery_at || "1-3 Days",
