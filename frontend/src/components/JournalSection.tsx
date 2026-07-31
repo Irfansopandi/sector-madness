@@ -78,7 +78,7 @@ export default function JournalSection() {
               className="group flex flex-col justify-between"
             >
               <Link href="/journal" className="block cursor-pointer">
-                <div className="relative w-full aspect-[4/3] bg-[#141414] overflow-hidden mb-6 border border-[#222222]">
+                <div className="relative w-full aspect-[4/3] bg-[#141414] overflow-hidden mb-8 border border-[#222222]">
                   <Image
                     src={article.image}
                     alt={article.title}
@@ -88,7 +88,7 @@ export default function JournalSection() {
                   />
                 </div>
 
-                <div className="flex items-center justify-between text-[11.5px] text-[#A0A0A0] uppercase mb-3 tracking-[0.15em] font-medium">
+                <div className="flex items-center justify-between text-[11.5px] text-[#A0A0A0] uppercase mb-4 tracking-[0.15em] font-medium">
                   <span className="text-[#B6A47E] font-semibold">{article.category}</span>
                   <span className="text-[#777777] group-hover:text-white transition-colors">READ MORE →</span>
                 </div>
@@ -100,7 +100,7 @@ export default function JournalSection() {
                     fontWeight: 700,
                     letterSpacing: "-0.02em",
                   }}
-                  className="text-[#FFFFFF] group-hover:opacity-85 transition-opacity duration-300 mb-3"
+                  className="text-[#FFFFFF] group-hover:opacity-85 transition-opacity duration-300 mb-5"
                 >
                   {article.title}
                 </h3>

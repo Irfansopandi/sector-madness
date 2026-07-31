@@ -187,9 +187,9 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
         }`}
       >
         <div className="max-w-[1480px] mx-auto px-8 md:px-14 lg:px-20">
-          <div className="flex justify-between items-center h-[88px] md:h-[116px]">
-            {/* Bagian Kiri (Menu Navigasi) - Matching Footer exact 60px inset padding */}
-            <div className="hidden lg:flex items-center gap-8 flex-1 justify-start" style={{ paddingLeft: "60px" }}>
+          <div className="relative flex justify-between items-center h-[88px] md:h-[116px]">
+            {/* Bagian Kiri (Menu Navigasi) */}
+            <div className="hidden lg:flex items-center gap-8 justify-start z-10" style={{ paddingLeft: "50px" }}>
               {navLinks.map((link) => {
                 const isActive = activeLink === link.label;
 
@@ -222,10 +222,10 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
             </div>
 
             {/* Bagian Tengah (Logo) */}
-            <div className="flex-1 flex items-center justify-center">
+            <div className="absolute left-1/2 top-1/2 pointer-events-none" style={{ transform: "translate(calc(-50% + 25px), -50%)" }}>
               <Link
                 href="/"
-                className="relative z-50 cursor-pointer flex items-center justify-center"
+                className="relative z-50 cursor-pointer flex items-center justify-center pointer-events-auto"
                 onClick={() => setMobileOpen(false)}
               >
                 <Image
@@ -241,8 +241,8 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
               </Link>
             </div>
 
-            {/* Bagian Kanan (Menu Aksi) - Matching Footer exact 60px inset padding */}
-            <div className="flex items-center justify-end gap-8 flex-1" style={{ paddingRight: "60px" }}>
+            {/* Bagian Kanan (Menu Aksi) */}
+            <div className="flex items-center gap-8 justify-end z-10" style={{ paddingLeft: "50px" }}>
               {/* Search Icon */}
               <button
                 onClick={() => { setIsSearchOpen(true); setSearchQuery(""); }}

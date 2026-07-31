@@ -58,7 +58,7 @@ export default function LoginPage() {
   useEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search);
-      const redirectUrl = params.get("redirect") || "/dashboard";
+      const redirectUrl = params.get("redirect") || "/";
 
       if (params.get("mode") === "register") {
         router.replace(`/register?redirect=${encodeURIComponent(redirectUrl)}`);
@@ -122,7 +122,7 @@ export default function LoginPage() {
         window.dispatchEvent(new Event("sector_auth_change"));
         window.dispatchEvent(new Event("sector_bag_update"));
 
-        const redirectUrl = new URLSearchParams(window.location.search).get("redirect") || "/dashboard";
+        const redirectUrl = new URLSearchParams(window.location.search).get("redirect") || "/";
         router.push(redirectUrl);
       } else {
         const errObj = { password: "Invalid email or password." };
@@ -296,7 +296,6 @@ export default function LoginPage() {
 
                   <Link
                     href="/forgot-password"
-                    onClick={(e) => { e.preventDefault(); alert("Password reset protocol initiated via support archive."); }}
                     style={{ fontSize: "12px", letterSpacing: "0.14em", fontWeight: 700, fontFamily: "'Inter', -apple-system, sans-serif" }}
                     className="uppercase text-[#0A0A0A] underline hover:opacity-60 transition-opacity"
                   >

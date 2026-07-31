@@ -7,9 +7,9 @@ import AnimatedSection from "./AnimatedSection";
 export default function CampaignGallery() {
   return (
     <section id="campaign" className="relative w-full bg-[#0A0A0A]">
-      {/* Full-width Divider Line positioned right in the middle (80px top & 80px bottom clearance) */}
+      {/* Full-width Divider Line positioned right in the middle (40px top & bottom clearance) */}
       <div
-        style={{ marginTop: "80px", marginBottom: "80px" }}
+        style={{ marginTop: "20px", marginBottom: "0px" }}
         className="w-full h-[1px] bg-[#222222]"
       />
 

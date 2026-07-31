@@ -15,7 +15,7 @@ export default function BrandPage() {
       <Navbar mode="dark" activeLink="STORIES" />
 
       {/* ── HERO PROLOGUE STAGE (DARK CINEMATIC ATMOSPHERE) ── */}
-      <section style={{ paddingTop: "200px", paddingBottom: "100px" }} className="relative border-b border-[#222222]/70">
+      <section style={{ paddingTop: "200px", paddingBottom: "12px" }} className="relative border-b border-[#222222]/70">
         <div style={{ paddingLeft: "clamp(32px, 6vw, 80px)", paddingRight: "clamp(32px, 6vw, 80px)" }} className="max-w-[1720px] mx-auto">
           
           <motion.div
@@ -71,7 +71,7 @@ export default function BrandPage() {
       </section>
 
       {/* ── SECTION 01: INDIVIDUALITY & CREATIVITY ── */}
-      <section className="py-24 md:py-36 border-b border-[#222222]/70">
+      <section className="pt-12 md:pt-20 pb-24 md:pb-36 border-b border-[#222222]/70">
         <div style={{ paddingLeft: "clamp(32px, 6vw, 80px)", paddingRight: "clamp(32px, 6vw, 80px)" }} className="max-w-[1500px] mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 items-center">
             

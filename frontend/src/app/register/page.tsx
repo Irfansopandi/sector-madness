@@ -85,7 +85,7 @@ export default function RegisterPage() {
   useEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search);
-      const redirectUrl = params.get("redirect") || "/dashboard";
+      const redirectUrl = params.get("redirect") || "/";
 
       const userData = localStorage.getItem("sector_madness_user");
       if (userData) {
@@ -180,7 +180,7 @@ export default function RegisterPage() {
 
         window.dispatchEvent(new Event("sector_auth_change"));
 
-        const redirectUrl = new URLSearchParams(window.location.search).get("redirect") || "/dashboard";
+        const redirectUrl = new URLSearchParams(window.location.search).get("redirect") || "/";
         router.push(redirectUrl);
       } else {
         const errObj = { email: "Email already exists." };

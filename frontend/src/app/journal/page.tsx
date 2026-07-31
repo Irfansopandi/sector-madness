@@ -120,7 +120,7 @@ export default function JournalPage() {
       <Navbar mode="dark" activeLink="JOURNAL" />
 
       {/* ── JOURNAL PROLOGUE & PUBLICATION HEADER ── */}
-      <section style={{ paddingTop: "200px", paddingBottom: "100px" }} className="relative border-b border-[#222222]/70">
+      <section style={{ paddingTop: "200px", paddingBottom: "32px" }} className="relative border-b border-[#222222]/70">
         <div style={{ paddingLeft: "clamp(32px, 6vw, 80px)", paddingRight: "clamp(32px, 6vw, 80px)" }} className="max-w-[1780px] mx-auto">
           
           <motion.div
@@ -179,7 +179,7 @@ export default function JournalPage() {
       </section>
 
       {/* ── EDITORIAL MAGAZINE ARCHIVE GRID ── */}
-      <section className="py-16 md:py-28">
+      <section className="pt-10 md:pt-14 pb-16 md:pb-28">
         <div style={{ paddingLeft: "clamp(32px, 6vw, 80px)", paddingRight: "clamp(32px, 6vw, 80px)" }} className="max-w-[1780px] mx-auto">
           
           <AnimatePresence mode="wait">
@@ -194,7 +194,8 @@ export default function JournalPage() {
               {featuredArticle && (
                 <div
                   onClick={() => setSelectedArticle(featuredArticle)}
-                  className="group cursor-pointer mb-24 md:mb-36 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center pb-20 border-b border-[#222222]/70"
+                  style={{ marginBottom: "60px" }}
+                  className="group cursor-pointer grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-stretch pb-16 border-b border-[#222222]/70"
                 >
                   {/* Raw Photographic Canvas - ZERO Floating Badges / ZERO AI Slop over images */}
                   <div className="lg:col-span-8 relative w-full aspect-[16/10] bg-[#161616] overflow-hidden border border-[#222222]">
@@ -245,7 +246,7 @@ export default function JournalPage() {
               )}
 
               {/* 2. SECONDARY EDITORIAL GRID */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 md:gap-x-12 md:gap-y-24">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 md:gap-x-12 md:gap-y-12">
                 {gridArticles.map((item, idx) => (
                   <motion.div
                     key={item.id}
@@ -254,13 +255,13 @@ export default function JournalPage() {
                     viewport={{ once: true, margin: "-50px" }}
                     transition={{ duration: 0.6, delay: idx * 0.1 }}
                     onClick={() => setSelectedArticle(item)}
-                    className={`group cursor-pointer flex flex-col justify-between ${
+                    className={`group cursor-pointer flex flex-col justify-start ${
                       idx === 0 && gridArticles.length % 3 !== 0 ? "md:col-span-2 lg:col-span-2" : ""
                     }`}
                   >
                     <div>
                       {/* Clean Unfettered Photograph */}
-                      <div className={`relative w-full ${idx === 0 && gridArticles.length % 3 !== 0 ? "aspect-[16/9]" : "aspect-[4/3]"} bg-[#141414] overflow-hidden mb-6 border border-[#222222]`}>
+                      <div className={`relative w-full ${idx === 0 && gridArticles.length % 3 !== 0 ? "aspect-[16/9]" : "aspect-[4/3]"} bg-[#141414] overflow-hidden mb-8 border border-[#222222]`}>
                         <Image
                           src={item.image}
                           alt={item.title}
@@ -271,7 +272,7 @@ export default function JournalPage() {
                       </div>
 
                       {/* Typographic Metadata below photo */}
-                      <div className="flex items-center gap-3 text-[11.5px] text-[#A0A0A0] uppercase mb-3 tracking-[0.18em] font-medium">
+                      <div className="flex items-center gap-3 text-[11.5px] text-[#A0A0A0] uppercase mb-4 tracking-[0.18em] font-medium">
                         <span className="text-[#B6A47E] font-semibold">{item.category}</span>
                         <span>•</span>
                         <span>{item.issue}</span>
@@ -284,7 +285,7 @@ export default function JournalPage() {
                           fontWeight: 700,
                           letterSpacing: "-0.02em",
                         }}
-                        className="text-[#FFFFFF] group-hover:opacity-85 transition-opacity duration-300 mb-4"
+                        className="text-[#FFFFFF] group-hover:opacity-85 transition-opacity duration-300 mb-5"
                       >
                         {item.title}
                       </h3>
@@ -359,7 +360,7 @@ export default function JournalPage() {
               </div>
 
               {/* Editorial Article Body */}
-              <div className="px-6 sm:px-12 md:px-16 py-10 md:py-16 space-y-10">
+              <div style={{ paddingLeft: "clamp(32px, 5vw, 64px)", paddingRight: "clamp(32px, 5vw, 64px)" }} className="py-10 md:py-16 space-y-10">
                 
                 <div className="space-y-4 border-b border-[#222222] pb-8">
                   <div className="flex items-center gap-3 text-[12px] text-[#B6A47E] uppercase tracking-[0.2em] font-semibold">

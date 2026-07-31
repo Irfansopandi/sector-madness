@@ -538,4 +538,19 @@ export const authApiLogout = async () => {
   }
 };
 
+export const authApiSendOtp = async (data: { email: string }) => {
+  const res = await api.post("/forgot-password/send-otp", data);
+  return res.data;
+};
+
+export const authApiVerifyOtp = async (data: { email: string; otp: string }) => {
+  const res = await api.post("/forgot-password/verify-otp", data);
+  return res.data;
+};
+
+export const authApiResetPassword = async (data: { email: string; otp: string; password: string; password_confirmation: string }) => {
+  const res = await api.post("/forgot-password/reset", data);
+  return res.data;
+};
+
 export default api;
