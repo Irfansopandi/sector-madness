@@ -22,8 +22,8 @@ class ShippingAddressController extends Controller
                 $user = User::where('email', $memberEmail)->first();
             }
         }
-        if (!$user) {
-            $user = User::first();
+        if (!$user && !app()->environment('testing')) {
+            return null;
         }
         return $user;
     }
@@ -35,7 +35,13 @@ class ShippingAddressController extends Controller
     public function index(Request $request)
     {
         $user = $this->getUser($request);
-        $addresses = ShippingAddress::where('user_id', $user ? $user->id : null)
+        if (!$user) {
+            return response()->json([
+                'status' => true,
+                'data' => [],
+            ], 200);
+        }
+        $addresses = ShippingAddress::where('user_id', $user->id)
             ->orderBy('is_default', 'desc')
             ->orderBy('created_at', 'desc')
             ->get();

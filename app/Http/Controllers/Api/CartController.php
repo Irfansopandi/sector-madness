@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Validator;
 class CartController extends Controller
 {
     /**
-     * Dapatkan user aktif atau fallback ke customer demo untuk pengujian dinamis.
+     * Helper to retrieve active authenticated user.
      */
     private function getUser(Request $request)
     {
@@ -24,8 +24,8 @@ class CartController extends Controller
                 $user = User::where('email', $memberEmail)->first();
             }
         }
-        if (!$user) {
-            $user = User::first();
+        if (!$user && !app()->environment('testing')) {
+            return null;
         }
         return $user;
     }
@@ -37,7 +37,18 @@ class CartController extends Controller
     public function index(Request $request)
     {
         $user = $this->getUser($request);
-        $cart = Cart::firstOrCreate(['user_id' => $user ? $user->id : 1]);
+        if (!$user) {
+            return response()->json([
+                'status' => true,
+                'data' => [
+                    'cart_id'        => 0,
+                    'items'          => [],
+                    'total_quantity' => 0,
+                    'subtotal'       => 0,
+                ],
+            ]);
+        }
+        $cart = Cart::firstOrCreate(['user_id' => $user->id]);
 
         $cartItems = CartItem::with('product')->where('cart_id', $cart->id)->get();
         

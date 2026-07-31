@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { authApiLogout } from "@/utils/api";
 
 const navItems = [
   {
@@ -30,13 +31,23 @@ const navItems = [
     ),
   },
   {
-    label: "ORDERS",
+    label: "ORDERS & TRACKING",
     href: "/dashboard/orders",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-        <line x1="3" y1="6" x2="21" y2="6" />
+        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+        <path d="M3 6h18" />
         <path d="M16 10a4 4 0 0 1-8 0" />
+      </svg>
+    ),
+  },
+  {
+    label: "ORDER HISTORY",
+    href: "/dashboard/order-history",
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <circle cx="12" cy="12" r="10" />
+        <polyline points="12 6 12 12 16 14" />
       </svg>
     ),
   },
@@ -55,17 +66,7 @@ const navItems = [
     href: "/dashboard/wishlist",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-      </svg>
-    ),
-  },
-  {
-    label: "CHANGE PASSWORD",
-    href: "/dashboard/profile#password",
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
       </svg>
     ),
   },
@@ -80,7 +81,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (typeof window !== "undefined") {
       try {
         const userData = localStorage.getItem("sector_madness_user");
-        if (userData) {
+        const token = localStorage.getItem("sector_madness_token");
+        if (userData && token) {
           const parsed = JSON.parse(userData);
           return !!parsed?.loggedIn;
         }
@@ -93,7 +95,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     try {
       const userData = localStorage.getItem("sector_madness_user");
-      if (userData) {
+      const token = localStorage.getItem("sector_madness_token");
+      if (userData && token) {
         const parsed = JSON.parse(userData);
         if (parsed?.loggedIn) {
           setIsLoggedIn(true);
@@ -111,9 +114,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, [router]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await authApiLogout();
+    } catch {}
     localStorage.removeItem("sector_madness_user");
+    localStorage.removeItem("sector_madness_token");
+    localStorage.removeItem("sector_madness_wishlist");
+    sessionStorage.clear();
     window.dispatchEvent(new Event("sector_auth_change"));
+    window.dispatchEvent(new Event("sector_bag_update"));
+    window.dispatchEvent(new Event("sector_wishlist_update"));
     router.push("/login");
   };
 
@@ -147,9 +158,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               {navItems.map((item) => {
                 const isActive =
                   pathname === item.href ||
-                  (item.href !== "/dashboard" &&
-                    pathname?.startsWith(item.href) &&
-                    item.href !== "/dashboard/profile#password");
+                  (item.href !== "/dashboard" && pathname?.startsWith(item.href));
                 return (
                   <Link
                     key={item.label}

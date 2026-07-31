@@ -4,59 +4,70 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { updateCustomerProfile } from "@/utils/api";
+import { authApiLogin } from "@/utils/api";
 
-const countryOptions = [
-  { code: "ID", dial: "+62", name: "Indonesia" },
-  { code: "US", dial: "+1", name: "United States / Canada" },
-  { code: "UK", dial: "+44", name: "United Kingdom" },
-  { code: "JP", dial: "+81", name: "Japan" },
-  { code: "SG", dial: "+65", name: "Singapore" },
-  { code: "AU", dial: "+61", name: "Australia" },
-  { code: "KR", dial: "+82", name: "South Korea" },
-  { code: "MY", dial: "+60", name: "Malaysia" },
-  { code: "IT", dial: "+39", name: "Italy" },
-  { code: "DE", dial: "+49", name: "Germany" },
-  { code: "FR", dial: "+33", name: "France" },
-  { code: "NL", dial: "+31", name: "Netherlands" },
-];
+const InlineError = ({ message }: { message?: string }) => {
+  if (!message) return null;
+  return (
+    <div style={{ marginTop: "6px", fontSize: "12.5px", fontFamily: "'Inter', -apple-system, sans-serif" }} className="flex items-center gap-1.5 text-[#D92323] font-semibold transition-all duration-200">
+      <span className="text-[11px]">❌</span>
+      <span>{message}</span>
+    </div>
+  );
+};
 
 export default function LoginPage() {
   const router = useRouter();
-  const [isRegistering, setIsRegistering] = useState(false);
 
   // Login Form States
   const [userEmail, setUserEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  
+  // Inline Validation Errors State
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Registration Form States
-  const [fullName, setFullName] = useState("");
-  const [regEmail, setRegEmail] = useState("");
-  const [countryCode, setCountryCode] = useState("ID");
-  const [phoneCountry, setPhoneCountry] = useState("+62");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [dateOfBirth, setDateOfBirth] = useState("");
-  const [regPassword, setRegPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showRegPassword, setShowRegPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const clearError = (field: "email" | "password") => {
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  };
+
+  const scrollToFirstError = (errObj: Record<string, any>) => {
+    setTimeout(() => {
+      const firstKey = Object.keys(errObj).find((k) => !!errObj[k]);
+      if (firstKey) {
+        const el = document.getElementById(`field-${firstKey}`);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          const input = el.tagName === "INPUT" ? (el as HTMLInputElement) : el.querySelector("input");
+          if (input && typeof input.focus === "function") {
+            input.focus({ preventScroll: true });
+          }
+        }
+      }
+    }, 50);
+  };
 
   // ── AUTH CHECK & REDIRECT ──
   useEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search);
-      if (params.get("mode") === "register") {
-        setIsRegistering(true);
-      }
       const redirectUrl = params.get("redirect") || "/dashboard";
 
+      if (params.get("mode") === "register") {
+        router.replace(`/register?redirect=${encodeURIComponent(redirectUrl)}`);
+        return;
+      }
+
       const userData = localStorage.getItem("sector_madness_user");
-      if (userData) {
+      const token = localStorage.getItem("sector_madness_token");
+      if (userData && token) {
         const parsed = JSON.parse(userData);
         if (parsed?.loggedIn) {
           router.replace(redirectUrl);
@@ -68,74 +79,76 @@ export default function LoginPage() {
   }, [router]);
 
   // ── AUTHENTICATION HANDLERS ──
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const emailToSave = userEmail || "member@sectormadness.com";
-    let existingUser: any = {};
-    try {
-      const stored = localStorage.getItem("sector_madness_user");
-      if (stored) existingUser = JSON.parse(stored);
-    } catch {}
+    const newErrors: { email?: string; password?: string } = {};
 
-    const userObj = {
-      ...existingUser,
-      email: emailToSave,
-      loggedIn: true,
-      name: existingUser.name || emailToSave.split("@")[0],
-      firstName: existingUser.firstName || "",
-      lastName: existingUser.lastName || "",
-      phone: existingUser.phone || "",
-      dob: existingUser.dob || "",
-      joinedAt: existingUser.joinedAt || new Date().toISOString(),
-    };
-    localStorage.setItem("sector_madness_user", JSON.stringify(userObj));
-    window.dispatchEvent(new Event("sector_auth_change"));
+    if (!userEmail.trim()) {
+      newErrors.email = "Email is required.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail.trim())) {
+      newErrors.email = "Please enter a valid email address.";
+    }
 
-    const redirectUrl = new URLSearchParams(window.location.search).get("redirect") || "/dashboard";
-    router.push(redirectUrl);
-  };
+    if (!password) {
+      newErrors.password = "Password is required.";
+    }
 
-  const handleRegister = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (regPassword.length < 8) {
-      alert("Error: Protocol validation failed. Password must be at least 8 characters long.");
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      scrollToFirstError(newErrors);
       return;
     }
-    if (regPassword !== confirmPassword) {
-      alert("Error: Protocol validation failed. Password and Confirm Password must match exactly.");
-      return;
-    }
-    const emailToSave = regEmail || "member@sectormadness.com";
-    const nameToSave = fullName.trim() || emailToSave.split("@")[0];
-    
-    let cleanPhone = `${phoneCountry}${phoneNumber}`.replace(/[^0-9]/g, "");
-    if (cleanPhone.startsWith("620")) cleanPhone = "0" + cleanPhone.slice(3);
-    else if (cleanPhone.startsWith("62")) cleanPhone = "0" + cleanPhone.slice(2);
-    else if (cleanPhone && !cleanPhone.startsWith("0")) cleanPhone = "0" + cleanPhone;
 
-    const userObj = {
-      email: emailToSave,
-      loggedIn: true,
-      firstName: nameToSave.split(" ")[0] || "",
-      lastName: nameToSave.split(" ").slice(1).join(" ") || "",
-      name: nameToSave,
-      phone: cleanPhone,
-      dob: dateOfBirth,
-      joinedAt: new Date().toISOString(),
-    };
-    localStorage.setItem("sector_madness_user", JSON.stringify(userObj));
+    setErrors({});
+    setIsLoading(true);
+
     try {
-      updateCustomerProfile({
-        name: nameToSave,
-        email: emailToSave,
-        phone: cleanPhone,
-        birth_date: dateOfBirth,
-      } as any);
-    } catch {}
-    window.dispatchEvent(new Event("sector_auth_change"));
+      const res = await authApiLogin({ email: userEmail.trim(), password });
+      
+      if (res.status && res.token && res.user) {
+        localStorage.setItem("sector_madness_token", res.token);
+        
+        const userObj = {
+          id: res.user.id,
+          email: res.user.email,
+          name: res.user.name || userEmail.split("@")[0],
+          phone: res.user.phone || "",
+          dob: res.user.birth_date || res.user.dob || "",
+          loggedIn: true,
+          token: res.token,
+          joinedAt: res.user.created_at || new Date().toISOString(),
+        };
+        localStorage.setItem("sector_madness_user", JSON.stringify(userObj));
+        window.dispatchEvent(new Event("sector_auth_change"));
+        window.dispatchEvent(new Event("sector_bag_update"));
 
-    const redirectUrl = new URLSearchParams(window.location.search).get("redirect") || "/dashboard";
-    router.push(redirectUrl);
+        const redirectUrl = new URLSearchParams(window.location.search).get("redirect") || "/dashboard";
+        router.push(redirectUrl);
+      } else {
+        const errObj = { password: "Invalid email or password." };
+        setErrors(errObj);
+        scrollToFirstError(errObj);
+      }
+    } catch (err: any) {
+      let errObj: { email?: string; password?: string } = {};
+      if (err.response?.data?.error_type === "email_not_found") {
+        errObj = { email: "Email address is not registered in our system." };
+      } else if (err.response?.data?.error_type === "wrong_password") {
+        errObj = { password: "Incorrect password. Please check and try again." };
+      } else if (err.response?.data?.message === "Validation Error") {
+        const apiErrs = err.response.data.errors || {};
+        errObj = {
+          email: apiErrs.email?.[0] ? "Please enter a valid email address." : undefined,
+          password: apiErrs.password?.[0] ? "Password is required." : undefined,
+        };
+      } else {
+        errObj = { password: "Invalid email or password." };
+      }
+      setErrors(errObj);
+      scrollToFirstError(errObj);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -143,21 +156,16 @@ export default function LoginPage() {
       style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}
       className="min-h-screen bg-white text-[#0A0A0A] flex flex-col selection:bg-[#B6A47E] selection:text-[#0A0A0A]"
     >
-      {/* mode="light" ensures dark navigation links & logo are clearly visible on white background */}
       <Navbar mode="light" />
 
-      {/* ── LOGIN / REGISTER SPLIT SCREEN ── */}
+      {/* ── LOGIN SPLIT SCREEN ── */}
       <div style={{ paddingTop: "100px" }} className="flex-1 w-full max-w-[1920px] mx-auto bg-white text-[#0A0A0A]">
         <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[calc(100vh-100px)] border-b border-[#E5E5E5]">
           
           {/* ── EDITORIAL CAMPAIGN PHOTOGRAPH COLUMN ── */}
-          <div
-            className={`lg:col-span-6 relative bg-[#0A0A0A] overflow-hidden min-h-[580px] lg:min-h-full flex flex-col justify-end ${
-              isRegistering ? "lg:order-2 border-l border-[#E5E5E5]" : "lg:order-1 border-r border-[#E5E5E5]"
-            }`}
-          >
+          <div className="lg:col-span-6 relative bg-[#0A0A0A] overflow-hidden min-h-[580px] lg:min-h-full flex flex-col justify-end lg:order-1 border-r border-[#E5E5E5]">
             <Image
-              src={isRegistering ? "/images/hero/hero-2.png" : "/images/campaign/campaign-1.png"}
+              src="/images/campaign/campaign-1.png"
               alt="SECTOR MADNESS // TECHNICAL GARMENT"
               fill
               priority
@@ -173,7 +181,7 @@ export default function LoginPage() {
                   [SM//2026 ARCHIVE LABS]
                 </p>
                 <p style={{ fontSize: "12px", letterSpacing: "0.12em" }} className="uppercase text-[#A0A0A0] font-mono">
-                  {isRegistering ? "CREDENTIAL REGISTRATION // PROTOCOL 02" : "MEMBER ACCESS // PROTOCOL 01"}
+                  MEMBER ACCESS // PROTOCOL 01
                 </p>
               </div>
               <div className="hidden sm:block">
@@ -197,357 +205,135 @@ export default function LoginPage() {
               justifyContent: "center",
               backgroundColor: "#FFFFFF",
             }}
-            className={`lg:col-span-6 w-full ${isRegistering ? "lg:order-1" : "lg:order-2"}`}
+            className="lg:col-span-6 w-full lg:order-2"
           >
-            <AnimatePresence mode="wait">
-              {!isRegistering ? (
-                /* ── LOG IN STATE ── */
-                <motion.div
-                  key="login-form"
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.35, ease: "easeOut" }}
-                  className="w-full max-w-[480px]"
-                >
-                  <div
-                    style={{ fontSize: "28px", letterSpacing: "0.06em", fontWeight: 800, marginBottom: "40px", lineHeight: "1.2", fontFamily: "'Inter', -apple-system, sans-serif" }}
-                    className="uppercase text-[#0A0A0A]"
-                  >
-                    LOG IN TO YOUR ACCOUNT
-                  </div>
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="w-full max-w-[480px]"
+            >
+              <div
+                style={{ fontSize: "28px", letterSpacing: "0.06em", fontWeight: 800, marginBottom: "36px", lineHeight: "1.2", fontFamily: "'Inter', -apple-system, sans-serif" }}
+                className="uppercase text-[#0A0A0A]"
+              >
+                LOG IN TO YOUR ACCOUNT
+              </div>
 
-                  <form onSubmit={handleLogin}>
-                    <div style={{ marginBottom: "28px" }}>
-                      <label style={{ fontSize: "11px", letterSpacing: "0.2em", fontWeight: 700, marginBottom: "12px", fontFamily: "'Inter', -apple-system, sans-serif" }} className="block uppercase text-[#0A0A0A]">
-                        EMAIL ADDRESS <span className="text-[#D92323]">*</span>
-                      </label>
-                      <input
-                        type="email"
-                        required
-                        value={userEmail}
-                        onChange={(e) => setUserEmail(e.target.value)}
-                        placeholder="name@example.com"
-                        style={{ fontSize: "15px", padding: "18px 20px", fontFamily: "'Inter', -apple-system, sans-serif" }}
-                        className="w-full bg-[#F3F6F9] text-[#0A0A0A] font-medium border border-[#E0E6ED] focus:border-[#0A0A0A] focus:bg-[#FFFFFF] outline-none transition-all duration-200 rounded-none"
-                      />
-                    </div>
+              <form onSubmit={handleLogin} noValidate>
+                <div id="field-email" style={{ marginBottom: "28px" }}>
+                  <label style={{ fontSize: "11px", letterSpacing: "0.2em", fontWeight: 700, marginBottom: "12px", fontFamily: "'Inter', -apple-system, sans-serif" }} className="block uppercase text-[#0A0A0A]">
+                    EMAIL ADDRESS <span className="text-[#D92323]">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    value={userEmail}
+                    onChange={(e) => {
+                      setUserEmail(e.target.value);
+                      clearError("email");
+                    }}
+                    placeholder="name@example.com"
+                    style={{ fontSize: "15px", padding: "18px 20px", fontFamily: "'Inter', -apple-system, sans-serif" }}
+                    className={`w-full text-[#0A0A0A] font-medium border focus:outline-none transition-all duration-200 rounded-none ${
+                      errors.email ? "bg-[#FFF5F5] border-[#D92323] focus:border-[#D92323]" : "bg-[#F3F6F9] border-[#E0E6ED] focus:border-[#0A0A0A] focus:bg-[#FFFFFF]"
+                    }`}
+                  />
+                  <InlineError message={errors.email} />
+                </div>
 
-                    <div style={{ marginBottom: "24px" }}>
-                      <label style={{ fontSize: "11px", letterSpacing: "0.2em", fontWeight: 700, marginBottom: "12px", fontFamily: "'Inter', -apple-system, sans-serif" }} className="block uppercase text-[#0A0A0A]">
-                        PASSWORD <span className="text-[#D92323]">*</span>
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showPassword ? "text" : "password"}
-                          required
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          placeholder="••••••••"
-                          style={{ fontSize: "15px", padding: "18px 20px" }}
-                          className="w-full bg-[#F3F6F9] text-[#0A0A0A] pr-12 font-medium border border-[#E0E6ED] focus:border-[#0A0A0A] focus:bg-[#FFFFFF] outline-none transition-all duration-200 rounded-none font-mono"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-5 top-1/2 -translate-y-1/2 text-[#777777] hover:text-[#0A0A0A] transition-colors focus:outline-none cursor-pointer"
-                          aria-label="Toggle password visibility"
-                        >
-                          {showPassword ? (
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                              <line x1="1" y1="1" x2="23" y2="23" />
-                            </svg>
-                          ) : (
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                              <circle cx="12" cy="12" r="3" />
-                            </svg>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div style={{ marginTop: "12px", marginBottom: "36px" }} className="flex items-center justify-between">
-                      <label className="flex items-center gap-3 cursor-pointer select-none group">
-                        <input
-                          type="checkbox"
-                          checked={rememberMe}
-                          onChange={(e) => setRememberMe(e.target.checked)}
-                          className="h-4 w-4 rounded-none border border-[#CCCCCC] appearance-none checked:bg-[#0A0A0A] bg-[#FFFFFF] cursor-pointer relative checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-[11px] checked:after:font-bold checked:after:left-[3px] checked:after:top-[-1px] transition-all"
-                        />
-                        <span style={{ fontSize: "13.5px", fontFamily: "'Inter', -apple-system, sans-serif" }} className="text-[#555555] group-hover:text-[#0A0A0A] transition-colors font-normal">
-                          Remember me
-                        </span>
-                      </label>
-
-                      <Link
-                        href="/forgot-password"
-                        onClick={(e) => { e.preventDefault(); alert("Password reset protocol initiated via support archive."); }}
-                        style={{ fontSize: "12px", letterSpacing: "0.14em", fontWeight: 700, fontFamily: "'Inter', -apple-system, sans-serif" }}
-                        className="uppercase text-[#0A0A0A] underline hover:opacity-60 transition-opacity"
-                      >
-                        FORGOT PASSWORD?
-                      </Link>
-                    </div>
-
-                    <button
-                      type="submit"
-                      style={{ fontSize: "13px", letterSpacing: "0.3em", fontWeight: 700, padding: "20px 0", fontFamily: "'Inter', -apple-system, sans-serif" }}
-                      className="w-full bg-[#0A0A0A] text-[#FFFFFF] uppercase rounded-none hover:bg-[#B6A47E] hover:text-[#0A0A0A] transition-all duration-300 cursor-pointer shadow-none block"
-                    >
-                      LOGIN
-                    </button>
-                  </form>
-
-                  <div style={{ marginTop: "32px", paddingTop: "28px", borderTop: "1px solid #E6EBEE" }}>
-                    <div
-                      style={{ fontSize: "16px", letterSpacing: "0.14em", fontWeight: 700, marginBottom: "12px", fontFamily: "'Inter', -apple-system, sans-serif" }}
-                      className="uppercase text-[#0A0A0A]"
-                    >
-                      DO NOT HAVE AN ACCOUNT?
-                    </div>
-                    <p style={{ fontSize: "13.5px", lineHeight: "1.7", marginBottom: "24px", fontFamily: "'Inter', -apple-system, sans-serif" }} className="text-[#666666] font-normal">
-                      By creating a personal account, you will be able to checkout faster, save your shipping addresses, view and track your orders in your account and more.
-                    </p>
-
+                <div id="field-password" style={{ marginBottom: "24px" }}>
+                  <label style={{ fontSize: "11px", letterSpacing: "0.2em", fontWeight: 700, marginBottom: "12px", fontFamily: "'Inter', -apple-system, sans-serif" }} className="block uppercase text-[#0A0A0A]">
+                    PASSWORD <span className="text-[#D92323]">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        clearError("password");
+                      }}
+                      placeholder="••••••••"
+                      style={{ fontSize: "15px", padding: "18px 20px" }}
+                      className={`w-full text-[#0A0A0A] pr-12 font-medium border focus:outline-none transition-all duration-200 rounded-none font-mono ${
+                        errors.password ? "bg-[#FFF5F5] border-[#D92323] focus:border-[#D92323]" : "bg-[#F3F6F9] border-[#E0E6ED] focus:border-[#0A0A0A] focus:bg-[#FFFFFF]"
+                      }`}
+                    />
                     <button
                       type="button"
-                      onClick={() => setIsRegistering(true)}
-                      style={{ fontSize: "13px", letterSpacing: "0.28em", fontWeight: 700, padding: "20px 0", fontFamily: "'Inter', -apple-system, sans-serif" }}
-                      className="w-full bg-[#FFFFFF] text-[#0A0A0A] border-2 border-[#0A0A0A] uppercase rounded-none hover:bg-[#0A0A0A] hover:text-[#FFFFFF] transition-all duration-300 cursor-pointer block"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-5 top-1/2 -translate-y-1/2 text-[#777777] hover:text-[#0A0A0A] transition-colors focus:outline-none cursor-pointer"
+                      aria-label="Toggle password visibility"
                     >
-                      CREATE AN ACCOUNT
+                      {showPassword ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                          <line x1="1" y1="1" x2="23" y2="23" />
+                        </svg>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                      )}
                     </button>
                   </div>
-                </motion.div>
-              ) : (
-                /* ── REGISTER STATE ── */
-                <motion.div
-                  key="register-form"
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.35, ease: "easeOut" }}
-                  className="w-full max-w-[500px]"
-                >
-                  <div
-                    style={{ fontSize: "28px", letterSpacing: "0.06em", fontWeight: 800, marginBottom: "36px", lineHeight: "1.2", fontFamily: "'Inter', -apple-system, sans-serif" }}
-                    className="uppercase text-[#0A0A0A]"
+                  <InlineError message={errors.password} />
+                </div>
+
+                <div style={{ marginTop: "12px", marginBottom: "36px" }} className="flex items-center justify-between">
+                  <label className="flex items-center gap-3 cursor-pointer select-none group">
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="h-4 w-4 rounded-none border border-[#CCCCCC] appearance-none checked:bg-[#0A0A0A] bg-[#FFFFFF] cursor-pointer relative checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-[11px] checked:after:font-bold checked:after:left-[3px] checked:after:top-[-1px] transition-all"
+                    />
+                    <span style={{ fontSize: "13.5px", fontFamily: "'Inter', -apple-system, sans-serif" }} className="text-[#555555] group-hover:text-[#0A0A0A] transition-colors font-normal">
+                      Remember me
+                    </span>
+                  </label>
+
+                  <Link
+                    href="/forgot-password"
+                    onClick={(e) => { e.preventDefault(); alert("Password reset protocol initiated via support archive."); }}
+                    style={{ fontSize: "12px", letterSpacing: "0.14em", fontWeight: 700, fontFamily: "'Inter', -apple-system, sans-serif" }}
+                    className="uppercase text-[#0A0A0A] underline hover:opacity-60 transition-opacity"
                   >
-                    CREATE YOUR ACCOUNT
-                  </div>
+                    FORGOT PASSWORD?
+                  </Link>
+                </div>
 
-                  <form onSubmit={handleRegister}>
-                    <div style={{ marginBottom: "24px" }}>
-                      <label style={{ fontSize: "11px", letterSpacing: "0.18em", fontWeight: 700, marginBottom: "10px", fontFamily: "'Inter', -apple-system, sans-serif" }} className="block uppercase text-[#0A0A0A]">
-                        FULL NAME <span className="text-[#D92323]">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        placeholder="Enter full name"
-                        style={{ fontSize: "15px", padding: "16px 18px", fontFamily: "'Inter', -apple-system, sans-serif" }}
-                        className="w-full bg-[#F3F6F9] text-[#0A0A0A] font-medium border border-[#E0E6ED] focus:border-[#0A0A0A] focus:bg-[#FFFFFF] outline-none transition-all duration-200 rounded-none"
-                      />
-                    </div>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  style={{ fontSize: "13px", letterSpacing: "0.3em", fontWeight: 700, padding: "20px 0", fontFamily: "'Inter', -apple-system, sans-serif" }}
+                  className="w-full bg-[#0A0A0A] text-[#FFFFFF] uppercase rounded-none hover:bg-[#B6A47E] hover:text-[#0A0A0A] transition-all duration-300 cursor-pointer shadow-none block disabled:opacity-50"
+                >
+                  {isLoading ? "VERIFYING..." : "LOGIN"}
+                </button>
+              </form>
 
-                    <div style={{ marginBottom: "24px" }}>
-                      <label style={{ fontSize: "11px", letterSpacing: "0.18em", fontWeight: 700, marginBottom: "10px", fontFamily: "'Inter', -apple-system, sans-serif" }} className="block uppercase text-[#0A0A0A]">
-                        EMAIL ADDRESS <span className="text-[#D92323]">*</span>
-                      </label>
-                      <input
-                        type="email"
-                        required
-                        value={regEmail}
-                        onChange={(e) => setRegEmail(e.target.value)}
-                        placeholder="name@example.com"
-                        style={{ fontSize: "15px", padding: "16px 18px", fontFamily: "'Inter', -apple-system, sans-serif" }}
-                        className="w-full bg-[#F3F6F9] text-[#0A0A0A] font-medium border border-[#E0E6ED] focus:border-[#0A0A0A] focus:bg-[#FFFFFF] outline-none transition-all duration-200 rounded-none"
-                      />
-                    </div>
+              <div style={{ marginTop: "32px", paddingTop: "28px", borderTop: "1px solid #E6EBEE" }}>
+                <div
+                  style={{ fontSize: "16px", letterSpacing: "0.14em", fontWeight: 700, marginBottom: "12px", fontFamily: "'Inter', -apple-system, sans-serif" }}
+                  className="uppercase text-[#0A0A0A]"
+                >
+                  DO NOT HAVE AN ACCOUNT?
+                </div>
+                <p style={{ fontSize: "13.5px", lineHeight: "1.7", marginBottom: "24px", fontFamily: "'Inter', -apple-system, sans-serif" }} className="text-[#666666] font-normal">
+                  By creating a personal account, you will be able to checkout faster, save your shipping addresses, view and track your orders in your account and more.
+                </p>
 
-                    <div style={{ marginBottom: "24px" }} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label style={{ fontSize: "11px", letterSpacing: "0.18em", fontWeight: 700, marginBottom: "10px", fontFamily: "'Inter', -apple-system, sans-serif" }} className="block uppercase text-[#0A0A0A]">
-                          COUNTRY / REGION <span className="text-[#D92323]">*</span>
-                        </label>
-                        <select
-                          value={countryCode}
-                          onChange={(e) => {
-                            setCountryCode(e.target.value);
-                            const found = countryOptions.find((c) => c.code === e.target.value);
-                            if (found) setPhoneCountry(found.dial);
-                          }}
-                          style={{ fontSize: "14px", padding: "16px 18px", fontFamily: "'Inter', -apple-system, sans-serif" }}
-                          className="w-full bg-[#F3F6F9] text-[#0A0A0A] font-medium border border-[#E0E6ED] focus:border-[#0A0A0A] focus:bg-[#FFFFFF] outline-none transition-all duration-200 rounded-none cursor-pointer"
-                        >
-                          {countryOptions.map((c) => (
-                            <option key={c.code} value={c.code}>
-                              {c.name} ({c.dial})
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div>
-                        <label style={{ fontSize: "11px", letterSpacing: "0.18em", fontWeight: 700, marginBottom: "10px", fontFamily: "'Inter', -apple-system, sans-serif" }} className="block uppercase text-[#0A0A0A]">
-                          PHONE NUMBER <span className="text-[#D92323]">*</span>
-                        </label>
-                        <div className="flex">
-                          <span style={{ fontSize: "14px", padding: "16px 14px" }} className="bg-[#E5E9EE] text-[#0A0A0A] font-mono font-semibold border border-r-0 border-[#E0E6ED] flex items-center">
-                            {phoneCountry}
-                          </span>
-                          <input
-                            type="tel"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            required
-                            value={phoneNumber}
-                            onChange={(e) => setPhoneNumber(e.target.value.replace(/[^0-9]/g, ""))}
-                            placeholder="81234567890"
-                            style={{ fontSize: "15px", padding: "16px 18px", fontFamily: "'Inter', -apple-system, sans-serif" }}
-                            className="w-full bg-[#F3F6F9] text-[#0A0A0A] font-medium border border-[#E0E6ED] focus:border-[#0A0A0A] focus:bg-[#FFFFFF] outline-none transition-all duration-200 rounded-none font-mono"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{ marginBottom: "24px" }}>
-                      <label style={{ fontSize: "11px", letterSpacing: "0.18em", fontWeight: 700, marginBottom: "10px", fontFamily: "'Inter', -apple-system, sans-serif" }} className="block uppercase text-[#0A0A0A]">
-                        DATE OF BIRTH <span className="text-[#888888] font-normal">(OPTIONAL)</span>
-                      </label>
-                      <input
-                        type="date"
-                        value={dateOfBirth}
-                        onChange={(e) => setDateOfBirth(e.target.value)}
-                        style={{ fontSize: "14px", padding: "16px 18px", fontFamily: "'Inter', -apple-system, sans-serif" }}
-                        className="w-full bg-[#F3F6F9] text-[#0A0A0A] font-medium border border-[#E0E6ED] focus:border-[#0A0A0A] focus:bg-[#FFFFFF] outline-none transition-all duration-200 rounded-none"
-                      />
-                    </div>
-
-                    <div style={{ marginBottom: "24px" }}>
-                      <label style={{ fontSize: "11px", letterSpacing: "0.18em", fontWeight: 700, marginBottom: "10px", fontFamily: "'Inter', -apple-system, sans-serif" }} className="block uppercase text-[#0A0A0A]">
-                        CREATE PASSWORD <span className="text-[#D92323]">*</span>
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showRegPassword ? "text" : "password"}
-                          required
-                          value={regPassword}
-                          onChange={(e) => setRegPassword(e.target.value)}
-                          placeholder="At least 8 characters"
-                          style={{ fontSize: "15px", padding: "16px 18px" }}
-                          className="w-full bg-[#F3F6F9] text-[#0A0A0A] pr-12 font-medium border border-[#E0E6ED] focus:border-[#0A0A0A] focus:bg-[#FFFFFF] outline-none transition-all duration-200 rounded-none font-mono"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowRegPassword(!showRegPassword)}
-                          className="absolute right-5 top-1/2 -translate-y-1/2 text-[#777777] hover:text-[#0A0A0A] transition-colors focus:outline-none cursor-pointer"
-                          aria-label="Toggle password visibility"
-                        >
-                          {showRegPassword ? (
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                              <line x1="1" y1="1" x2="23" y2="23" />
-                            </svg>
-                          ) : (
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                              <circle cx="12" cy="12" r="3" />
-                            </svg>
-                          )}
-                        </button>
-                      </div>
-                      <p style={{ fontSize: "12px", marginTop: "8px", fontFamily: "'Inter', -apple-system, sans-serif" }} className="text-[#666666] font-normal flex items-center gap-1.5">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="flex-shrink-0 text-[#888888]">
-                          <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
-                        </svg>
-                        Must be at least 8 characters in length.
-                      </p>
-                    </div>
-
-                    <div style={{ marginBottom: "32px" }}>
-                      <label style={{ fontSize: "11px", letterSpacing: "0.18em", fontWeight: 700, marginBottom: "10px", fontFamily: "'Inter', -apple-system, sans-serif" }} className="block uppercase text-[#0A0A0A]">
-                        CONFIRM PASSWORD <span className="text-[#D92323]">*</span>
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showConfirmPassword ? "text" : "password"}
-                          required
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          placeholder="Re-enter your password"
-                          style={{ fontSize: "15px", padding: "16px 18px" }}
-                          className="w-full bg-[#F3F6F9] text-[#0A0A0A] pr-12 font-medium border border-[#E0E6ED] focus:border-[#0A0A0A] focus:bg-[#FFFFFF] outline-none transition-all duration-200 rounded-none font-mono"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="absolute right-5 top-1/2 -translate-y-1/2 text-[#777777] hover:text-[#0A0A0A] transition-colors focus:outline-none cursor-pointer"
-                          aria-label="Toggle password visibility"
-                        >
-                          {showConfirmPassword ? (
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                              <line x1="1" y1="1" x2="23" y2="23" />
-                            </svg>
-                          ) : (
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                              <circle cx="12" cy="12" r="3" />
-                            </svg>
-                          )}
-                        </button>
-                      </div>
-                      <p style={{ fontSize: "12px", marginTop: "8px", fontFamily: "'Inter', -apple-system, sans-serif" }} className="text-[#666666] font-normal flex items-center gap-1.5">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="flex-shrink-0 text-[#888888]">
-                          <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
-                        </svg>
-                        Must match the password entered above (min. 8 characters).
-                      </p>
-                    </div>
-
-                    <div style={{ marginBottom: "36px" }}>
-                      <label className="flex items-start gap-3 cursor-pointer select-none group">
-                        <input
-                          type="checkbox"
-                          defaultChecked
-                          className="h-4 w-4 mt-0.5 rounded-none border border-[#CCCCCC] appearance-none checked:bg-[#0A0A0A] bg-[#FFFFFF] cursor-pointer relative checked:after:content-['✓'] checked:after:absolute checked:after:text-white checked:after:text-[11px] checked:after:font-bold checked:after:left-[3px] checked:after:top-[-1px] transition-all flex-shrink-0"
-                        />
-                        <span style={{ fontSize: "13.5px", lineHeight: "1.7", fontFamily: "'Inter', -apple-system, sans-serif" }} className="text-[#666666] group-hover:text-[#0A0A0A] transition-colors font-normal">
-                          I wish to subscribe to the newsletter for exclusive previews, new arrivals and collection archive stories.
-                        </span>
-                      </label>
-                    </div>
-
-                    <button
-                      type="submit"
-                      style={{ fontSize: "13px", letterSpacing: "0.3em", fontWeight: 700, padding: "20px 0", fontFamily: "'Inter', -apple-system, sans-serif" }}
-                      className="w-full bg-[#0A0A0A] text-[#FFFFFF] uppercase rounded-none hover:bg-[#B6A47E] hover:text-[#0A0A0A] transition-all duration-300 cursor-pointer block"
-                    >
-                      CREATE ACCOUNT
-                    </button>
-                  </form>
-
-                  <div style={{ marginTop: "32px", paddingTop: "28px", borderTop: "1px solid #E6EBEE" }}>
-                    <p style={{ fontSize: "13.5px", marginBottom: "16px", fontFamily: "'Inter', -apple-system, sans-serif" }} className="text-[#666666] font-normal">
-                      Already have a personal account?
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setIsRegistering(false)}
-                      style={{ fontSize: "13px", letterSpacing: "0.28em", fontWeight: 700, padding: "20px 0", fontFamily: "'Inter', -apple-system, sans-serif" }}
-                      className="w-full bg-[#FFFFFF] text-[#0A0A0A] border-2 border-[#0A0A0A] uppercase rounded-none hover:bg-[#0A0A0A] hover:text-[#FFFFFF] transition-all duration-300 cursor-pointer block"
-                    >
-                      LOG IN TO YOUR ACCOUNT
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                <Link
+                  href="/register"
+                  style={{ fontSize: "13px", letterSpacing: "0.28em", fontWeight: 700, padding: "20px 0", fontFamily: "'Inter', -apple-system, sans-serif" }}
+                  className="w-full bg-[#FFFFFF] text-[#0A0A0A] border-2 border-[#0A0A0A] uppercase rounded-none hover:bg-[#0A0A0A] hover:text-[#FFFFFF] transition-all duration-300 cursor-pointer block text-center"
+                >
+                  CREATE AN ACCOUNT
+                </Link>
+              </div>
+            </motion.div>
           </div>
         </div>
       </div>

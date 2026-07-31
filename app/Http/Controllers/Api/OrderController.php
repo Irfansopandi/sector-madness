@@ -21,8 +21,8 @@ class OrderController extends Controller
                 $user = User::where('email', $memberEmail)->first();
             }
         }
-        if (!$user) {
-            $user = User::first();
+        if (!$user && !app()->environment('testing')) {
+            return null;
         }
         return $user;
     }
@@ -34,8 +34,14 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         $user = $this->getUser($request);
+        if (!$user) {
+            return response()->json([
+                'status' => true,
+                'data' => [],
+            ], 200);
+        }
         $orders = Order::with(['items', 'payment', 'shipment'])
-            ->where('user_id', $user ? $user->id : 1)
+            ->where('user_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -49,7 +55,7 @@ class OrderController extends Controller
                 'total'           => (float)$order->total_amount,
                 'payment_status'  => $pay ? $pay->payment_status : 'unpaid',
                 'payment_method'  => $pay ? strtoupper($pay->payment_type ?? 'QRIS') : 'QRIS',
-                'shipping_status' => $ship ? $ship->status : 'pending',
+                'shipping_status' => $order->status === 'cancel pending' ? 'cancel pending' : ($order->status === 'cancelled' ? 'cancelled' : ($ship ? $ship->status : 'pending')),
                 'tracking_number' => $ship ? ($ship->tracking_number ?: 'BS-TRACK-' . substr(md5($order->id), 0, 8)) : null,
                 'items_count'     => $order->items->sum('quantity'),
                 'snap_token'      => $pay ? $pay->snap_token : null,
@@ -173,7 +179,8 @@ class OrderController extends Controller
                     'snap_token'     => $pay ? $pay->snap_token : null,
                     'paid_at'        => $pay && $pay->payment_status === 'paid' ? $pay->updated_at->format('d F Y, H:i') : null,
                 ],
-                'shipping_status'   => $ship ? $ship->status : 'pending',
+                'status'            => $order->status,
+                'shipping_status'   => $order->status === 'cancel pending' ? 'cancel pending' : ($order->status === 'cancelled' ? 'cancelled' : ($ship ? $ship->status : 'pending')),
                 'timeline'          => $timeline,
             ],
         ], 200);
@@ -186,32 +193,34 @@ class OrderController extends Controller
     public function cancel(Request $request, $order_number)
     {
         $user = $this->getUser($request);
-        $order = Order::where('order_number', $order_number)
-            ->where('user_id', $user ? $user->id : 1)
-            ->first();
+        $order = Order::where('order_number', $order_number)->first();
 
         if (!$order) {
             return response()->json(['status' => false, 'message' => 'Order not found'], 404);
         }
 
-        if ($order->status !== 'pending') {
+        if (in_array(strtolower($order->status), ['delivered', 'completed', 'cancelled', 'dibatalkan'])) {
             return response()->json([
                 'status'  => false,
-                'message' => 'Only orders with pending status can be cancelled.',
+                'message' => 'This order cannot be cancelled at its current stage.',
             ], 400);
         }
 
-        $order->update(['status' => 'cancelled']);
-        if ($order->payment) {
-            $order->payment->update(['payment_status' => 'failed']);
-        }
+        // If order is already paid, requires admin verification ('cancel pending'). If unpaid, cancel instantly ('cancelled').
+        $isPaid = $order->payment && in_array(strtolower($order->payment->payment_status), ['paid', 'settled', 'success']);
+        $newStatus = $isPaid ? 'cancel pending' : 'cancelled';
+
+        $order->update(['status' => $newStatus]);
         if ($order->shipment) {
-            $order->shipment->update(['status' => 'cancelled']);
+            $order->shipment->update(['status' => $newStatus]);
+        }
+        if (!$isPaid && $order->payment) {
+            $order->payment->update(['payment_status' => 'cancelled']);
         }
 
         return response()->json([
             'status'  => true,
-            'message' => 'Order cancelled successfully',
+            'message' => 'Order cancellation request submitted successfully',
             'data'    => $order->load('items', 'payment', 'shipment'),
         ], 200);
     }
@@ -252,6 +261,9 @@ class OrderController extends Controller
 
         if ($request->has('order_status')) {
             $order->update(['status' => $request->order_status]);
+            if (in_array(strtolower($request->order_status), ['cancelled', 'dibatalkan']) && $order->payment) {
+                $order->payment->update(['payment_status' => 'cancelled']);
+            }
         }
 
         return response()->json([

@@ -746,6 +746,18 @@ function getRealtimeProvince(district: string = "", city: string = "", province:
   return province || "Indonesia";
 }
 
+function FieldError({ msg }: { msg?: string }) {
+  if (!msg) return null;
+  return (
+    <div style={{ marginTop: "-4px" }} className="text-[#FF3333] text-xs font-mono font-extrabold flex items-center gap-1.5 uppercase tracking-wider">
+      <svg className="w-4 h-4 shrink-0 text-[#FF3333]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+      </svg>
+      <span>{msg}</span>
+    </div>
+  );
+}
+
 export default function CheckoutPage() {
   return (
     <React.Suspense fallback={<div className="min-h-screen bg-[#0A0A0A] text-[#FFFFFF] flex items-center justify-center font-mono text-xs">LOADING ATELIER CONCIERGE...</div>}>
@@ -798,6 +810,14 @@ function CheckoutContent() {
   const [city, setCity] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [selectedAreaId, setSelectedAreaId] = useState<string>("");
+
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
+
+  const clearError = (field: string) => {
+    if (formErrors[field]) {
+      setFormErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  };
 
   // Auto-fill from authenticated profile & local session
   useEffect(() => {
@@ -880,8 +900,10 @@ function CheckoutContent() {
   const handleLocationInputChange = (val: string, field: "district" | "city") => {
     if (field === "district") {
       setAddressLine2(val);
+      clearError("addressLine2");
     } else {
       setCity(val);
+      clearError("city");
     }
     setLocationQuery(val);
     setShowLocationDropdown(true);
@@ -957,6 +979,7 @@ function CheckoutContent() {
     setStateProvince(loc.province);
     setPostalCode(loc.postal_code);
     if (loc.area_id) setSelectedAreaId(loc.area_id);
+    setFormErrors((prev) => ({ ...prev, addressLine2: "", city: "", stateProvince: "", postalCode: "" }));
     setShowLocationDropdown(false);
     setActiveDropdownField(null);
     showToast(`Real-time regional data loaded: ${loc.postal_code}`, "success", "AUTO-COMPLETE");
@@ -1130,10 +1153,33 @@ function CheckoutContent() {
      7. PLACE ORDER HANDLER (MIDTRANS SNAP)
   ==================================================== */
   const handlePlaceOrder = async () => {
-    if (!fullName.trim() || !phone.trim() || !email.trim() || !address.trim() || !city.trim()) {
-      error("Please complete all required Contact and Shipping details (*).");
+    const newErrors: { [key: string]: string } = {};
+    if (!fullName.trim()) newErrors.fullName = "Full Name is required.";
+    if (!phone.trim()) newErrors.phone = "Phone number is required.";
+    if (!email.trim()) {
+      newErrors.email = "Email address is required.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      newErrors.email = "Please enter a valid email address.";
+    }
+    if (!address.trim()) newErrors.address = "Street address is required.";
+    if (!addressLine2.trim()) newErrors.addressLine2 = "District is required.";
+    if (!stateProvince.trim()) newErrors.stateProvince = "State / Province is required.";
+    if (!city.trim()) newErrors.city = "City is required.";
+    if (!postalCode.trim()) newErrors.postalCode = "Postal Code is required.";
+
+    if (Object.keys(newErrors).length > 0) {
+      setFormErrors(newErrors);
+      error("Please complete all required Contact and Shipping details highlighted in red (*).");
+      setTimeout(() => {
+        const firstErrorElement = document.querySelector('[data-error="true"]');
+        if (firstErrorElement) {
+          firstErrorElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 100);
       return;
     }
+    setFormErrors({});
+
     if (!agreedToTerms) {
       error("Please agree to the Website Terms and Conditions before placing your order.");
       return;
@@ -1265,13 +1311,15 @@ function CheckoutContent() {
                     </label>
                     <input
                       type="text"
+                      data-error={!!formErrors.fullName}
                       value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
+                      onChange={(e) => { setFullName(e.target.value); clearError("fullName"); }}
                       placeholder="Enter full name"
                       required
                       style={{ padding: "18px 22px" }}
-                      className="w-full bg-[#141414] border border-[#2B2B2B] text-sm text-white placeholder:text-[#555555] focus:border-white outline-none transition-colors rounded-none font-sans font-medium"
+                      className={`w-full ${formErrors.fullName ? "bg-[#220B0B] border-[#FF3333] text-white focus:border-[#FF5555]" : "bg-[#141414] border-[#2B2B2B] text-white focus:border-white"} border text-sm placeholder:text-[#555555] outline-none transition-colors rounded-none font-sans font-medium`}
                     />
+                    <FieldError msg={formErrors.fullName} />
                   </div>
 
                   {/* Row 2: Phone & Email Address */}
@@ -1283,13 +1331,15 @@ function CheckoutContent() {
                       <input
                         type="tel"
                         inputMode="numeric"
+                        data-error={!!formErrors.phone}
                         value={phone}
-                        onChange={(e) => setPhone(e.target.value.replace(/[^0-9+]/g, ""))}
+                        onChange={(e) => { setPhone(e.target.value.replace(/[^0-9+]/g, "")); clearError("phone"); }}
                         placeholder="081234567890"
                         required
                         style={{ padding: "18px 22px" }}
-                        className="w-full bg-[#141414] border border-[#2B2B2B] text-sm text-white placeholder:text-[#555555] focus:border-white outline-none transition-colors rounded-none font-sans font-medium"
+                        className={`w-full ${formErrors.phone ? "bg-[#220B0B] border-[#FF3333] text-white focus:border-[#FF5555]" : "bg-[#141414] border-[#2B2B2B] text-white focus:border-white"} border text-sm placeholder:text-[#555555] outline-none transition-colors rounded-none font-sans font-medium`}
                       />
+                      <FieldError msg={formErrors.phone} />
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                       <label className="text-xs font-mono font-bold text-[#CCCCCC] uppercase tracking-wider block">
@@ -1297,13 +1347,15 @@ function CheckoutContent() {
                       </label>
                       <input
                         type="email"
+                        data-error={!!formErrors.email}
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(e) => { setEmail(e.target.value); clearError("email"); }}
                         placeholder="name@email.com"
                         required
                         style={{ padding: "18px 22px" }}
-                        className="w-full bg-[#141414] border border-[#2B2B2B] text-sm text-white placeholder:text-[#555555] focus:border-white outline-none transition-colors rounded-none font-sans font-medium"
+                        className={`w-full ${formErrors.email ? "bg-[#220B0B] border-[#FF3333] text-white focus:border-[#FF5555]" : "bg-[#141414] border-[#2B2B2B] text-white focus:border-white"} border text-sm placeholder:text-[#555555] outline-none transition-colors rounded-none font-sans font-medium`}
                       />
+                      <FieldError msg={formErrors.email} />
                     </div>
                   </div>
                 </div>
@@ -1353,14 +1405,16 @@ function CheckoutContent() {
                       STREET ADDRESS <span className="text-[#FF4444]">*</span>
                     </label>
                     <textarea
+                      data-error={!!formErrors.address}
                       value={address}
-                      onChange={(e) => setAddress(e.target.value)}
+                      onChange={(e) => { setAddress(e.target.value); clearError("address"); }}
                       placeholder="Street address, unit number, housing complex, etc."
                       rows={4}
                       required
                       style={{ padding: "20px 22px", minHeight: "135px" }}
-                      className="w-full bg-[#141414] border border-[#2B2B2B] text-sm text-white placeholder:text-[#555555] focus:border-white outline-none transition-colors rounded-none resize-y leading-relaxed font-bold"
+                      className={`w-full ${formErrors.address ? "bg-[#220B0B] border-[#FF3333] text-white focus:border-[#FF5555]" : "bg-[#141414] border-[#2B2B2B] text-white focus:border-white"} border text-sm placeholder:text-[#555555] outline-none transition-colors rounded-none resize-y leading-relaxed font-bold`}
                     />
+                    <FieldError msg={formErrors.address} />
                   </div>
 
                   {/* Row 3: Address Line 2 / District (With Real-Time Autocomplete) & State / Province */}
@@ -1378,8 +1432,9 @@ function CheckoutContent() {
                       </div>
                       <input
                         type="text"
+                        data-error={!!formErrors.addressLine2}
                         value={addressLine2}
-                        onChange={(e) => handleLocationInputChange(e.target.value, "district")}
+                        onChange={(e) => { handleLocationInputChange(e.target.value, "district"); clearError("addressLine2"); }}
                         onFocus={() => {
                           setLocationQuery(addressLine2 || "");
                           setShowLocationDropdown(true);
@@ -1390,8 +1445,9 @@ function CheckoutContent() {
                         }, 300)}
                         placeholder="Type district (e.g. Senopati, Menteng, Dago...)"
                         style={{ padding: "18px 22px" }}
-                        className="w-full bg-[#141414] border border-[#2B2B2B] text-sm text-white placeholder:text-[#555555] focus:border-white outline-none transition-colors rounded-none font-bold"
+                        className={`w-full ${formErrors.addressLine2 ? "bg-[#220B0B] border-[#FF3333] text-white focus:border-[#FF5555]" : "bg-[#141414] border-[#2B2B2B] text-white focus:border-white"} border text-sm placeholder:text-[#555555] outline-none transition-colors rounded-none font-bold`}
                       />
+                      <FieldError msg={formErrors.addressLine2} />
 
                       {/* District Autocomplete Dropdown */}
                       {showLocationDropdown && activeDropdownField === "district" && (
@@ -1432,13 +1488,15 @@ function CheckoutContent() {
                       </label>
                       <input
                         type="text"
+                        data-error={!!formErrors.stateProvince}
                         value={stateProvince}
-                        onChange={(e) => setStateProvince(e.target.value)}
+                        onChange={(e) => { setStateProvince(e.target.value); clearError("stateProvince"); }}
                         placeholder="DKI Jakarta"
                         required
                         style={{ padding: "18px 22px" }}
-                        className="w-full bg-[#141414] border border-[#2B2B2B] text-sm text-white placeholder:text-[#555555] focus:border-white outline-none transition-colors rounded-none font-bold"
+                        className={`w-full ${formErrors.stateProvince ? "bg-[#220B0B] border-[#FF3333] text-white focus:border-[#FF5555]" : "bg-[#141414] border-[#2B2B2B] text-white focus:border-white"} border text-sm placeholder:text-[#555555] outline-none transition-colors rounded-none font-bold`}
                       />
+                      <FieldError msg={formErrors.stateProvince} />
                     </div>
                   </div>
 
@@ -1457,8 +1515,9 @@ function CheckoutContent() {
                       </div>
                       <input
                         type="text"
+                        data-error={!!formErrors.city}
                         value={city}
-                        onChange={(e) => handleLocationInputChange(e.target.value, "city")}
+                        onChange={(e) => { handleLocationInputChange(e.target.value, "city"); clearError("city"); }}
                         onFocus={() => {
                           setLocationQuery(city || "");
                           setShowLocationDropdown(true);
@@ -1470,8 +1529,9 @@ function CheckoutContent() {
                         placeholder="Type city (e.g. Jakarta Selatan, Bandung, Surabaya...)"
                         required
                         style={{ padding: "18px 22px" }}
-                        className="w-full bg-[#141414] border border-[#2B2B2B] text-sm text-white placeholder:text-[#555555] focus:border-white outline-none transition-colors rounded-none font-bold"
+                        className={`w-full ${formErrors.city ? "bg-[#220B0B] border-[#FF3333] text-white focus:border-[#FF5555]" : "bg-[#141414] border-[#2B2B2B] text-white focus:border-white"} border text-sm placeholder:text-[#555555] outline-none transition-colors rounded-none font-bold`}
                       />
+                      <FieldError msg={formErrors.city} />
 
                       {/* City Autocomplete Dropdown */}
                       {showLocationDropdown && activeDropdownField === "city" && (
@@ -1518,13 +1578,15 @@ function CheckoutContent() {
                       <input
                         type="text"
                         inputMode="numeric"
+                        data-error={!!formErrors.postalCode}
                         value={postalCode}
-                        onChange={(e) => setPostalCode(e.target.value.replace(/[^0-9]/g, ""))}
+                        onChange={(e) => { setPostalCode(e.target.value.replace(/[^0-9]/g, "")); clearError("postalCode"); }}
                         placeholder="12110"
                         required
                         style={{ padding: "18px 22px" }}
-                        className="w-full bg-[#141414] border border-[#2B2B2B] text-sm text-white font-bold focus:border-white outline-none transition-colors rounded-none tracking-widest text-center"
+                        className={`w-full ${formErrors.postalCode ? "bg-[#220B0B] border-[#FF3333] text-white focus:border-[#FF5555]" : "bg-[#141414] border-[#2B2B2B] text-white focus:border-white"} border text-sm font-bold focus:border-white outline-none transition-colors rounded-none tracking-widest text-center`}
                       />
+                      <FieldError msg={formErrors.postalCode} />
                     </div>
                   </div>
 

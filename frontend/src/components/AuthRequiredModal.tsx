@@ -14,7 +14,7 @@ export default function AuthRequiredModal({ isOpen, onClose }: AuthRequiredModal
   const handleNavigate = (mode?: "register") => {
     const currentPath = typeof window !== "undefined" ? window.location.pathname + window.location.search : "/shop";
     const targetUrl = mode === "register"
-      ? `/login?mode=register&redirect=${encodeURIComponent(currentPath)}`
+      ? `/register?redirect=${encodeURIComponent(currentPath)}`
       : `/login?redirect=${encodeURIComponent(currentPath)}`;
     
     onClose();

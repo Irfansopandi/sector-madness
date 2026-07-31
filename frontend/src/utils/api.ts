@@ -463,6 +463,11 @@ export const getOrderDetail = async (orderNumber: string): Promise<OrderDetailDa
   return res.data.data;
 };
 
+export const cancelOrder = async (orderNumber: string): Promise<any> => {
+  const res = await api.post(`/orders/${orderNumber}/cancel`);
+  return res.data;
+};
+
 export const getShipmentTracking = async (trackingNumber: string): Promise<TrackingData> => {
   const res = await api.get(`/shipping/track/${trackingNumber}`);
   const raw = res.data.data || {};
@@ -511,5 +516,26 @@ export const getShipmentTracking = async (trackingNumber: string): Promise<Track
 function strtoupper(val: string) {
   return val ? val.toString().toUpperCase() : "";
 }
+
+// Authentication APIs
+export const authApiLogin = async (data: { email: string; password?: string }) => {
+  const res = await api.post("/login", data);
+  return res.data;
+};
+
+export const authApiRegister = async (data: { name: string; email: string; password?: string; phone?: string; birth_date?: string }) => {
+  const res = await api.post("/register", data);
+  return res.data;
+};
+
+export const authApiLogout = async () => {
+  try {
+    const res = await api.post("/logout");
+    return res.data;
+  } catch (e) {
+    // Ignore error if token expired or server unreachable during logout
+    return { status: true };
+  }
+};
 
 export default api;

@@ -9,6 +9,7 @@ import {
   getOrders,
   getOrderDetail,
   getShipmentTracking,
+  cancelOrder,
   type CustomerProfile,
   type OrderListItem,
   type OrderDetailData,
@@ -117,14 +118,31 @@ export default function DashboardOverviewPage() {
     setShowConfirmCancel(true);
   };
 
-  const executeCancellation = () => {
+  const executeCancellation = async () => {
     if (!selectedOrderDetail) return;
-    if (selectedOrderDetail.order_number) {
-      setSelectedOrderDetail({ ...selectedOrderDetail, shipping_status: "PENDING" });
+    try {
+      if (selectedOrderDetail.order_number) {
+        await cancelOrder(selectedOrderDetail.order_number);
+      }
+    } catch (err) {
+      console.error("Failed to submit cancellation to database:", err);
     }
-    setOrdersList((prev) =>
-      prev.map((ord) => (ord.order_number === selectedOrderDetail.order_number ? { ...ord, shipping_status: "PENDING", status: "PENDING" } : ord))
-    );
+
+    const payStatus = (selectedOrderDetail.payment_info?.payment_status || (selectedOrderDetail as any).payment_status || "").toUpperCase();
+    const isPaid = payStatus === "PAID" || payStatus === "SETTLED" || payStatus === "SUCCESS";
+    const newStatus = isPaid ? "CANCEL PENDING" : "CANCELLED";
+
+    if (selectedOrderDetail.order_number) {
+      setSelectedOrderDetail({ ...selectedOrderDetail, shipping_status: newStatus });
+    }
+    
+    if (newStatus === "CANCELLED") {
+      setOrdersList((prev) => prev.filter((ord) => ord.order_number !== selectedOrderDetail.order_number));
+    } else {
+      setOrdersList((prev) =>
+        prev.map((ord) => (ord.order_number === selectedOrderDetail.order_number ? { ...ord, shipping_status: newStatus, status: newStatus } : ord))
+      );
+    }
     
     setShowConfirmCancel(false);
     setCancelModalOpen(false);
@@ -159,7 +177,17 @@ export default function DashboardOverviewPage() {
       .catch(() => {});
 
     getOrders()
-      .then((data) => setOrdersList(data || []))
+      .then((data) => {
+        if (!data) return setOrdersList([]);
+        const activeOnly = data.filter((item) => {
+          const st = (item.shipping_status || item.status || "").toUpperCase();
+          const ordSt = (item.status || "").toUpperCase();
+          const isCancelled = st === "CANCELLED" || st === "DIBATALKAN" || ordSt === "CANCELLED" || ordSt === "DIBATALKAN";
+          const isDelivered = st === "DELIVERED" || st === "COMPLETED" || st === "RECEIVED" || st === "SELESAI" || st === "DITERIMA" || st === "SHIPPED";
+          return !isCancelled && !isDelivered;
+        });
+        setOrdersList(activeOnly);
+      })
       .catch(() => setOrdersList([]));
   }, []);
 
@@ -232,13 +260,16 @@ export default function DashboardOverviewPage() {
   const hasPendingOrder = ordersList.some((o) => {
     const pay = (o.payment_status || "").toLowerCase();
     const stat = (o.status || "").toLowerCase();
-    return pay === "unpaid" || pay === "pending" || pay === "challenge" || pay === "awaiting_payment" || stat === "pending";
+    const ship = (o.shipping_status || "").toLowerCase();
+    if (stat === "cancel pending" || ship === "cancel pending" || stat === "cancelled" || ship === "cancelled") return false;
+    return pay === "unpaid" || (pay === "pending" && stat !== "pending" && ship !== "pending") || pay === "challenge" || pay === "awaiting_payment" || ((stat === "pending" || ship === "pending") && (pay === "unpaid" || pay === "awaiting_payment"));
   });
 
   const hasProcessingOrder = ordersList.some((o) => {
     const pay = (o.payment_status || "").toLowerCase();
     const ship = (o.shipping_status || "").toLowerCase();
     const stat = (o.status || "").toLowerCase();
+    if (stat === "cancel pending" || ship === "cancel pending" || stat === "cancelled" || ship === "cancelled" || (ship === "pending" && pay === "paid") || (stat === "pending" && pay === "paid")) return false;
     return (pay === "paid" || pay === "settled" || pay === "success") && (ship === "processing" || ship === "allocated" || ship === "in process" || ship === "" || stat === "processing" || stat === "allocated");
   });
 
@@ -302,7 +333,7 @@ export default function DashboardOverviewPage() {
             <h3 className="text-sm font-extrabold text-[#F5F5F5] group-hover:text-[#B6A47E] transition-colors uppercase tracking-wider truncate">
               ORDERS
             </h3>
-            <p className="text-xs text-[#8A8A8A] mt-1.5 leading-relaxed truncate">View order history</p>
+            <p className="text-xs text-[#8A8A8A] mt-1.5 leading-relaxed truncate">View and track orders</p>
           </div>
         </Link>
 
@@ -346,20 +377,21 @@ export default function DashboardOverviewPage() {
 
         <div className="bg-[#141414] border border-white/[0.08] p-4 md:p-8 overflow-x-auto">
           {ordersList.length === 0 ? (
-            <div className="py-24 text-center space-y-6">
-              <div className="w-14 h-14 mx-auto flex items-center justify-center text-[#8A8A8A]">
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
+            <div style={{ padding: "72px 24px 88px 24px" }} className="w-full flex flex-col items-center justify-center text-center">
+              <div style={{ marginBottom: "28px" }} className="w-16 h-16 rounded-full bg-white/[0.03] border border-white/[0.08] flex items-center justify-center text-[#B6A47E] shadow-sm">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
                   <line x1="3" y1="6" x2="21" y2="6" />
                   <path d="M16 10a4 4 0 0 1-8 0" />
                 </svg>
               </div>
-              <p className="text-xs text-[#8A8A8A] font-mono uppercase tracking-widest">
+              <p style={{ marginBottom: "18px" }} className="text-sm font-mono uppercase tracking-[0.2em] text-[#8A8A8A] font-bold">
                 No orders yet
               </p>
               <Link
                 href="/shop"
-                className="inline-block px-8 py-3.5 bg-[#B6A47E] text-[#0A0A0A] font-mono text-xs uppercase font-bold tracking-[0.2em] hover:bg-white transition-colors"
+                style={{ padding: "16px 36px" }}
+                className="inline-block bg-[#B6A47E] text-[#0A0A0A] font-mono text-xs uppercase font-black tracking-[0.25em] hover:bg-white transition-all shadow-xl rounded-sm"
               >
                 START SHOPPING
               </Link>
@@ -386,11 +418,12 @@ export default function DashboardOverviewPage() {
                   const isPaid = payStatus === "PAID" || payStatus === "SETTLED" || payStatus === "SUCCESS";
 
                   const shipStatus = (order.shipping_status || order.status || "PROCESSING").toUpperCase();
+                  const isCancelPending = shipStatus === "CANCEL PENDING" || shipStatus === "CANCELLATION PENDING" || (shipStatus === "PENDING" && isPaid);
                   const isCancelled = shipStatus === "CANCELLED" || shipStatus === "DIBATALKAN";
                   const isDelivered = shipStatus === "DELIVERED" || shipStatus === "SHIPPED" || shipStatus === "COMPLETED" || shipStatus === "RECEIVED";
                   const isReady = shipStatus === "PACKED" || shipStatus === "READY_TO_SHIP" || shipStatus === "READY TO SHIP" || shipStatus === "READY FOR DISPATCH" || shipStatus === "SIAP KIRIM";
-                  const isInProcess = shipStatus === "ALLOCATED" || shipStatus === "PROCESSING" || shipStatus === "IN PROCESS";
-                  const displayStatus = isCancelled ? "CANCELLED" : isDelivered ? "DELIVERED" : isReady ? "READY TO SHIP" : isInProcess ? "IN PROCESS" : shipStatus;
+                  const isInProcess = !isCancelPending && !isCancelled && (shipStatus === "ALLOCATED" || shipStatus === "PROCESSING" || shipStatus === "IN PROCESS");
+                  const displayStatus = isCancelPending ? "CANCEL PENDING" : isCancelled ? "CANCELLED" : isDelivered ? "DELIVERED" : isReady ? "READY TO SHIP" : isInProcess ? "IN PROCESS" : shipStatus;
 
                   return (
                     <tr key={order.order_number} className="hover:bg-white/[0.02] transition-colors">
@@ -420,8 +453,8 @@ export default function DashboardOverviewPage() {
 
                       {/* Shipping Status Tag - Standardized to match Order Status Block */}
                       <td style={cellStyle} className="align-middle whitespace-nowrap">
-                        <span className={`inline-flex items-center gap-2 text-xs font-mono font-bold tracking-wider uppercase whitespace-nowrap ${isCancelled ? "text-red-500" : isDelivered ? "text-emerald-400" : isReady ? "text-sky-400" : isInProcess ? "text-[#B6A47E]" : "text-amber-400"}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${isCancelled ? "bg-red-500" : isDelivered ? "bg-emerald-400" : isReady ? "bg-sky-400" : isInProcess ? "bg-[#B6A47E]" : "bg-amber-400"} ${isInProcess || isReady ? "animate-pulse" : ""}`} />
+                        <span className={`inline-flex items-center gap-2 text-xs font-mono font-bold tracking-wider uppercase whitespace-nowrap ${isCancelled ? "text-red-500" : isCancelPending ? "text-red-400" : isDelivered ? "text-emerald-400" : isReady ? "text-sky-400" : isInProcess ? "text-[#B6A47E]" : "text-amber-400"}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${isCancelled ? "bg-red-500" : isCancelPending ? "bg-red-400 animate-pulse" : isDelivered ? "bg-emerald-400" : isReady ? "bg-sky-400" : isInProcess ? "bg-[#B6A47E]" : "bg-amber-400"} ${isInProcess || isReady ? "animate-pulse" : ""}`} />
                           {displayStatus}
                         </span>
                       </td>
@@ -548,6 +581,10 @@ export default function DashboardOverviewPage() {
                   <span className="text-[#F5F5F5] font-extrabold text-sm uppercase block">
                     {(() => {
                       const st = (selectedOrderDetail.shipping_status || "PROCESSING").toUpperCase();
+                      const pay = (selectedOrderDetail.payment_info?.payment_status || (selectedOrderDetail as any).payment_status || "").toUpperCase();
+                      const isPaid = pay === "PAID" || pay === "SETTLED" || pay === "SUCCESS";
+                      if (st === "CANCEL PENDING" || st === "CANCELLATION PENDING" || (st === "PENDING" && isPaid)) return <span className="text-red-400 font-bold">CANCEL PENDING</span>;
+                      if (st === "CANCELLED" || st === "DIBATALKAN") return <span className="text-red-500 font-bold">CANCELLED</span>;
                       if (st === "ALLOCATED" || st === "PROCESSING" || st === "IN PROCESS") return "IN PROCESS";
                       if (st === "PACKED" || st === "READY_TO_SHIP" || st === "READY TO SHIP" || st === "READY FOR DISPATCH" || st === "SIAP KIRIM") return "READY TO SHIP";
                       if (st === "DELIVERED" || st === "SHIPPED" || st === "COMPLETED" || st === "IN TRANSIT") return "DELIVERED";
@@ -558,11 +595,28 @@ export default function DashboardOverviewPage() {
                 </div>
                 <div className="space-y-2 text-left">
                   <span className="text-[10px] md:text-[11px] text-[#8A8A8A] uppercase tracking-wider block font-bold">COURIER</span>
-                  <span className="text-[#F5F5F5] font-extrabold text-sm uppercase block">{selectedOrderDetail.courier_info?.courier_name || "J&T EXPRESS"}</span>
+                  <span className="text-[#F5F5F5] font-extrabold text-sm uppercase block">
+                    {(() => {
+                      const st = (selectedOrderDetail.shipping_status || "PROCESSING").toUpperCase();
+                      const pay = (selectedOrderDetail.payment_info?.payment_status || (selectedOrderDetail as any).payment_status || "").toUpperCase();
+                      const isPaid = pay === "PAID" || pay === "SETTLED" || pay === "SUCCESS";
+                      if (st === "CANCELLED" || st === "DIBATALKAN" || !isPaid || st === "PENDING" || st === "UNPAID" || st === "PENDING PAYMENT") return "-";
+                      if (st === "CANCEL PENDING" || st === "CANCELLATION PENDING") return "ON HOLD";
+                      return selectedOrderDetail.courier_info?.courier_name || "J&T EXPRESS";
+                    })()}
+                  </span>
                 </div>
                 <div className="space-y-2 text-left">
                   <span className="text-[10px] md:text-[11px] text-[#8A8A8A] uppercase tracking-wider block font-bold">TRACKING NO.</span>
-                  <span className="text-[#B6A47E] font-extrabold text-sm uppercase block">{selectedOrderDetail.courier_info?.tracking_number || "BITESHIP-JNT-1725126548"}</span>
+                  <span className="text-[#B6A47E] font-extrabold text-sm uppercase block">
+                    {(() => {
+                      const st = (selectedOrderDetail.shipping_status || "PROCESSING").toUpperCase();
+                      const pay = (selectedOrderDetail.payment_info?.payment_status || (selectedOrderDetail as any).payment_status || "").toUpperCase();
+                      const isPaid = pay === "PAID" || pay === "SETTLED" || pay === "SUCCESS";
+                      if (!isPaid || st === "CANCEL PENDING" || st === "CANCELLATION PENDING" || st === "CANCELLED" || st === "DIBATALKAN" || st === "PENDING" || st === "UNPAID" || st === "PENDING PAYMENT") return "-";
+                      return selectedOrderDetail.courier_info?.tracking_number || "BITESHIP-JNT-1725126548";
+                    })()}
+                  </span>
                 </div>
               </div>
 
@@ -618,21 +672,23 @@ export default function DashboardOverviewPage() {
               <div className="flex flex-col sm:flex-row gap-4 pt-2">
                 {(() => {
                   const payStatus = (selectedOrderDetail.payment_info?.payment_status || (selectedOrderDetail as any).payment_status || "").toUpperCase();
-                  const isUnpaid = payStatus === "UNPAID" || payStatus === "PENDING" || payStatus === "AWAITING_PAYMENT";
+                  const isPaid = payStatus === "PAID" || payStatus === "SETTLED" || payStatus === "SUCCESS";
+                  const isUnpaid = payStatus === "UNPAID" || (payStatus === "PENDING" && !isPaid) || payStatus === "AWAITING_PAYMENT";
                   const st = (selectedOrderDetail.shipping_status || "PROCESSING").toUpperCase();
                   const isCancelled = st === "CANCELLED" || st === "DIBATALKAN";
+                  const isCancelPending = st === "CANCEL PENDING" || st === "CANCELLATION PENDING" || (st === "PENDING" && isPaid);
                   const isInProcessOrPending =
-                    st === "IN PROCESS" || st === "PROCESSING" || st === "ALLOCATED" ||
-                    st === "PENDING" || st === "PENDING PAYMENT" || st === "UNPAID";
+                    !isCancelPending && !isCancelled && (st === "IN PROCESS" || st === "PROCESSING" || st === "ALLOCATED" ||
+                    st === "PENDING" || st === "PENDING PAYMENT" || st === "UNPAID");
                   const isReadyToShip =
-                    st === "READY TO SHIP" || st === "READY_TO_SHIP" || st === "PACKED" || st === "READY FOR DISPATCH" || st === "SIAP KIRIM";
+                    !isCancelPending && !isCancelled && (st === "READY TO SHIP" || st === "READY_TO_SHIP" || st === "PACKED" || st === "READY FOR DISPATCH" || st === "SIAP KIRIM");
                   const isDelivered =
-                    st === "DELIVERED" || st === "COMPLETED" || st === "RECEIVED" || st === "SELESAI";
-                  const isShippedOrDelivered = !isInProcessOrPending && !isReadyToShip && !isCancelled;
+                    !isCancelPending && !isCancelled && (st === "DELIVERED" || st === "COMPLETED" || st === "RECEIVED" || st === "SELESAI");
+                  const isShippedOrDelivered = !isInProcessOrPending && !isReadyToShip && !isCancelled && !isCancelPending;
 
                   return (
                     <>
-                      {isUnpaid && !isCancelled && (
+                      {isUnpaid && !isCancelled && !isCancelPending && (
                         <Link
                           href={`/checkout?order_number=${selectedOrderDetail.order_number}`}
                           style={{ padding: "20px 0" }}
@@ -642,7 +698,7 @@ export default function DashboardOverviewPage() {
                         </Link>
                       )}
 
-                      {!isUnpaid && (
+                      {!isUnpaid && !isCancelPending && !isCancelled && (
                         <button
                           onClick={() => handleOpenTrackShipment(selectedOrderDetail.courier_info?.tracking_number)}
                           style={{ padding: "20px 0" }}
@@ -652,9 +708,9 @@ export default function DashboardOverviewPage() {
                         </button>
                       )}
 
-                      {isInProcessOrPending && (
+                      {isInProcessOrPending && !isCancelPending && !isCancelled && (
                         <button
-                          onClick={() => setCancelModalOpen(true)}
+                          onClick={() => isUnpaid ? setShowConfirmCancel(true) : setCancelModalOpen(true)}
                           style={{ padding: "20px 0" }}
                           className="flex-1 border border-white/[0.2] hover:border-red-500/80 text-[#8A8A8A] hover:text-red-400 font-mono text-xs uppercase font-extrabold tracking-[0.25em] transition-all duration-300 cursor-pointer rounded-sm block text-center"
                         >
@@ -662,7 +718,17 @@ export default function DashboardOverviewPage() {
                         </button>
                       )}
 
-                      {isShippedOrDelivered && !isDelivered && (
+                      {isCancelPending && (
+                        <div
+                          style={{ padding: "20px 0" }}
+                          className="w-full bg-red-500/10 border border-red-500/40 text-red-400 font-mono text-xs uppercase font-extrabold tracking-[0.25em] flex items-center justify-center gap-3 cursor-default rounded-sm shadow-inner text-center"
+                        >
+                          <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse shrink-0" />
+                          <span>CANCELLATION REQUEST PENDING</span>
+                        </div>
+                      )}
+
+                      {isShippedOrDelivered && !isDelivered && !isCancelPending && !isCancelled && (
                         <button
                           onClick={() => handleConfirmReceived(selectedOrderDetail.order_number)}
                           style={{ padding: "20px 0" }}
@@ -909,42 +975,49 @@ export default function DashboardOverviewPage() {
       {/* ── MODAL 5: CUSTOM CONFIRMATION MODAL ── */}
       <AnimatePresence>
         {showConfirmCancel && (
-          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
             <motion.div
               initial={{ opacity: 0, scale: 0.9, translateY: 10 }}
               animate={{ opacity: 1, scale: 1, translateY: 0 }}
               exit={{ opacity: 0, scale: 0.9, translateY: 10 }}
-              style={{ padding: "48px 40px" }}
-              className="bg-[#141414] border border-[#B6A47E]/40 text-[#F5F5F5] w-full max-w-lg flex flex-col items-center text-center shadow-2xl rounded-sm font-sans relative"
+              style={{ padding: "40px 36px" }}
+              className="bg-[#141414] border border-white/[0.12] text-[#F5F5F5] w-full max-w-[460px] flex flex-col items-center text-center shadow-2xl rounded-sm font-sans relative"
             >
-              <div className="mb-8">
-                <svg className="w-10 h-10 text-red-500/90 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.25}>
+              <div style={{ marginBottom: "28px" }} className="w-14 h-14 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center shadow-inner">
+                <svg className="w-7 h-7 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
                 </svg>
               </div>
 
-              <h3 className="text-xl font-bold uppercase tracking-widest text-[#F5F5F5] font-serif mb-6">
+              <h3 style={{ marginBottom: "16px" }} className="text-lg font-bold uppercase tracking-[0.15em] text-[#F5F5F5] font-serif">
                 CONFIRM CANCELLATION
               </h3>
 
-              <p className="text-xs sm:text-sm text-[#8A8A8A] font-mono leading-loose mb-8 max-w-sm">
-                Are you sure you want to submit a cancellation request for this order? Your request will be forwarded to our administrative team and your order status will be updated to <span className="text-[#B6A47E] font-bold">PENDING</span>.
+              <p style={{ marginBottom: "32px" }} className="text-xs sm:text-sm text-[#A0A0A0] font-sans font-normal leading-[1.8] px-2">
+                {(() => {
+                  const payStatus = (selectedOrderDetail?.payment_info?.payment_status || (selectedOrderDetail as any)?.payment_status || "").toUpperCase();
+                  const isPaid = payStatus === "PAID" || payStatus === "SETTLED" || payStatus === "SUCCESS";
+                  if (!isPaid) {
+                    return <span>Are you sure you want to cancel this order? Since this order has not been paid, it will be immediately <span className="text-red-400 font-semibold">CANCELLED</span> and moved to Order History.</span>;
+                  }
+                  return <span>Are you sure you want to submit a cancellation request for this order? Your request will be forwarded to our administrative team and your order status will be updated to <span className="text-red-400 font-semibold">CANCEL PENDING</span>.</span>;
+                })()}
               </p>
 
-              <div className="flex items-center gap-4 w-full pt-2">
+              <div className="flex items-center gap-3 w-full">
                 <button
                   type="button"
                   onClick={() => setShowConfirmCancel(false)}
-                  style={{ padding: "16px 0" }}
-                  className="flex-1 border border-white/15 hover:border-white/40 text-[#8A8A8A] hover:text-white font-mono text-xs uppercase font-bold tracking-widest rounded-sm transition-all cursor-pointer"
+                  style={{ padding: "14px 0" }}
+                  className="flex-1 border border-white/20 hover:border-white/50 text-[#A0A0A0] hover:text-white font-mono text-xs uppercase font-bold tracking-[0.15em] rounded-sm transition-all cursor-pointer"
                 >
                   CANCEL
                 </button>
                 <button
                   type="button"
                   onClick={executeCancellation}
-                  style={{ padding: "16px 0" }}
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-mono text-xs uppercase font-extrabold tracking-widest rounded-sm transition-all shadow-lg cursor-pointer"
+                  style={{ padding: "14px 0" }}
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-mono text-xs uppercase font-bold tracking-[0.15em] rounded-sm transition-all shadow-lg cursor-pointer"
                 >
                   YES, PROCEED
                 </button>
@@ -957,33 +1030,51 @@ export default function DashboardOverviewPage() {
       {/* ── MODAL 6: CUSTOM SUCCESS NOTIFICATION MODAL ── */}
       <AnimatePresence>
         {cancelSuccessModalOpen && (
-          <div className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
             <motion.div
               initial={{ opacity: 0, scale: 0.9, translateY: 10 }}
               animate={{ opacity: 1, scale: 1, translateY: 0 }}
               exit={{ opacity: 0, scale: 0.9, translateY: 10 }}
-              style={{ padding: "48px 40px" }}
-              className="bg-[#141414] border border-[#B6A47E]/40 text-[#F5F5F5] w-full max-w-lg flex flex-col items-center text-center shadow-2xl rounded-sm font-sans relative"
+              style={{ padding: "40px 36px" }}
+              className="bg-[#141414] border border-white/[0.12] text-[#F5F5F5] w-full max-w-[460px] flex flex-col items-center text-center shadow-2xl rounded-sm font-sans relative"
             >
-              <div className="mb-6">
-                <svg className="w-12 h-12 text-[#B6A47E] mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <div style={{ marginBottom: "28px" }} className="w-14 h-14 rounded-full bg-[#B6A47E]/10 border border-[#B6A47E]/30 flex items-center justify-center shadow-inner">
+                <svg className="w-7 h-7 text-[#B6A47E]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
 
-              <h3 className="text-xl font-bold uppercase tracking-widest text-[#F5F5F5] font-serif mb-4">
-                REQUEST SUBMITTED
+              <h3 style={{ marginBottom: "16px" }} className="text-lg font-bold uppercase tracking-[0.15em] text-[#F5F5F5] font-serif">
+                {(() => {
+                  const pay = (selectedOrderDetail?.payment_info?.payment_status || (selectedOrderDetail as any)?.payment_status || "").toUpperCase();
+                  const isPaid = pay === "PAID" || pay === "SETTLED" || pay === "SUCCESS";
+                  return isPaid ? "REQUEST SUBMITTED" : "ORDER CANCELLED";
+                })()}
               </h3>
 
-              <p className="text-xs sm:text-sm text-[#8A8A8A] font-mono leading-loose mb-8 max-w-sm">
-                Your cancellation and refund request has been successfully submitted to our administrative team. Your order status is currently <span className="text-[#B6A47E] font-bold">PENDING</span> and will be verified within 1 - 3 business days.
+              <p style={{ marginBottom: "32px" }} className="text-xs sm:text-sm text-[#A0A0A0] font-sans font-normal leading-[1.8] px-2">
+                {(() => {
+                  const pay = (selectedOrderDetail?.payment_info?.payment_status || (selectedOrderDetail as any)?.payment_status || "").toUpperCase();
+                  const isPaid = pay === "PAID" || pay === "SETTLED" || pay === "SUCCESS";
+                  if (!isPaid) {
+                    return <span>Your unpaid order has been successfully <span className="text-red-400 font-semibold">CANCELLED</span> and moved to Order History.</span>;
+                  }
+                  return <span>Your cancellation and refund request has been successfully submitted to our administrative team. Your order status is currently <span className="text-red-400 font-semibold">CANCEL PENDING</span> and will be verified within 1 - 3 business days.</span>;
+                })()}
               </p>
 
               <button
                 type="button"
-                onClick={() => setCancelSuccessModalOpen(false)}
-                style={{ padding: "16px 0" }}
-                className="w-full bg-[#B6A47E] hover:bg-white text-[#0A0A0A] font-mono text-xs uppercase font-extrabold tracking-widest rounded-sm transition-all shadow-lg cursor-pointer"
+                onClick={() => {
+                  setCancelSuccessModalOpen(false);
+                  const pay = (selectedOrderDetail?.payment_info?.payment_status || (selectedOrderDetail as any)?.payment_status || "").toUpperCase();
+                  const isPaid = pay === "PAID" || pay === "SETTLED" || pay === "SUCCESS";
+                  if (!isPaid) {
+                    setSelectedOrderDetail(null);
+                  }
+                }}
+                style={{ padding: "14px 0" }}
+                className="w-full bg-[#B6A47E] hover:bg-white text-[#0A0A0A] font-mono text-xs uppercase font-extrabold tracking-[0.15em] rounded-sm transition-all shadow-lg cursor-pointer"
               >
                 GOT IT & CLOSE
               </button>

@@ -34,8 +34,8 @@ class CheckoutController extends Controller
                 $user = User::where('email', $memberEmail)->first();
             }
         }
-        if (!$user) {
-            $user = User::first();
+        if (!$user && !app()->environment('testing')) {
+            return null;
         }
         return $user;
     }

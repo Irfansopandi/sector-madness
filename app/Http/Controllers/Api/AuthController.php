@@ -74,10 +74,19 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (!$user) {
             return response()->json([
                 'status'  => false,
-                'message' => 'Invalid email or password',
+                'error_type' => 'email_not_found',
+                'message' => 'Email address is not registered in our system.',
+            ], 401);
+        }
+
+        if (!Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'status'  => false,
+                'error_type' => 'wrong_password',
+                'message' => 'Incorrect password. Please check and try again.',
             ], 401);
         }
 
@@ -177,14 +186,12 @@ class AuthController extends Controller
         if (!$user) {
             $memberEmail = $request->header('X-Member-Email');
             if ($memberEmail) {
-                $user = User::firstOrCreate(
-                    ['email' => $memberEmail],
-                    ['name' => explode('@', $memberEmail)[0], 'password' => bcrypt('password')]
-                );
+                $user = User::where('email', $memberEmail)->first();
             }
         }
+
         if (!$user) {
-            $user = User::first();
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
         }
 
         // Jika nomor telepon pengguna masih kosong (misal pada akun lama), cari dari daftar alamat atau pesanan
@@ -212,18 +219,12 @@ class AuthController extends Controller
         if (!$user) {
             $memberEmail = $request->header('X-Member-Email');
             if ($memberEmail) {
-                $user = User::firstOrCreate(
-                    ['email' => $memberEmail],
-                    ['name' => explode('@', $memberEmail)[0], 'password' => bcrypt('password')]
-                );
+                $user = User::where('email', $memberEmail)->first();
             }
-        }
-        if (!$user) {
-            $user = User::first();
         }
 
         if (!$user) {
-            return response()->json(['status' => false, 'message' => 'User not found'], 404);
+            return response()->json(['status' => false, 'message' => 'Unauthorized or User not found'], 401);
         }
 
         $validator = Validator::make($request->all(), [
