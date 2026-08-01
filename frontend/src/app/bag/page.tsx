@@ -287,6 +287,8 @@ export default function ShoppingBagPage() {
                 const imageSrc = staticProduct ? staticProduct.image : (item.product_image || "/collection1.png");
                 const productLink = staticProduct ? `/product/${staticProduct.slug}` : `/product/${item.product_id}`;
 
+                const itemCategory = (item.category || staticProduct?.collectionCode || staticProduct?.collection || "T-SHIRT").toUpperCase();
+
                 return (
                   <motion.div
                     key={item.id}
@@ -320,11 +322,9 @@ export default function ShoppingBagPage() {
                         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                           <div className="space-y-2">
                             <div className="flex items-center gap-3">
-                              {item.category && (
-                                <span className="text-[10px] font-mono tracking-[0.2em] uppercase text-[#888888]">
-                                  {item.category}
-                                </span>
-                              )}
+                              <span className="text-[10px] font-mono tracking-[0.2em] uppercase text-[#888888]">
+                                {itemCategory}
+                              </span>
                               {isOutOfStock && (
                                 <span className="text-[10px] font-mono tracking-[0.2em] uppercase bg-[#881111] text-white px-2 py-0.5 font-bold">
                                   OUT OF STOCK

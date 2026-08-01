@@ -50,7 +50,7 @@ class OrderController extends Controller
             $pay = $order->payment;
             return [
                 'order_number'    => $order->order_number,
-                'order_date'      => $order->created_at->format('d M Y, H:i'),
+                'order_date'      => \Carbon\Carbon::parse($order->getRawOriginal('created_at') ?? $order->created_at, 'UTC')->setTimezone('Asia/Jakarta')->format('d M Y, H:i'),
                 'status'          => $order->status,
                 'total'           => (float)$order->total_amount,
                 'payment_status'  => $pay ? $pay->payment_status : 'unpaid',
@@ -130,7 +130,7 @@ class OrderController extends Controller
             'status' => true,
             'data'   => [
                 'order_number'      => $order->order_number,
-                'order_date'        => $order->created_at->format('d F Y, H:i') . ' WIB',
+                'order_date'        => \Carbon\Carbon::parse($order->getRawOriginal('created_at') ?? $order->created_at, 'UTC')->setTimezone('Asia/Jakarta')->format('d F Y, H:i') . ' WIB',
                 'customer_info'     => [
                     'name'  => $addr['receiver_name'] ?? ($user ? $user->name : ($order->user ? $order->user->name : 'Customer')),
                     'email' => $user ? $user->email : ($order->user ? $order->user->email : ''),

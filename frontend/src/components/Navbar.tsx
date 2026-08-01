@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { products } from "@/data/products";
 import { getBagItems } from "@/utils/bag";
 import { getCart } from "@/utils/api";
@@ -55,10 +55,13 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
   const lastScrollY = useRef(0);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: cartData } = useQuery({
+  const queryClient = useQueryClient();
+
+  const { data: cartData, refetch: refetchCart } = useQuery({
     queryKey: ["cart"],
     queryFn: getCart,
     retry: 1,
+    refetchInterval: 15000,
   });
 
   const actualBagCount = cartData ? cartData.total_quantity : bagCount;
@@ -87,17 +90,23 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
       } catch {
         setBagCount(0);
       }
+
+      // Instantly invalidate and refetch cart data so badge count updates immediately
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+      refetchCart();
     };
     checkLoginAndBag();
     window.addEventListener("storage", checkLoginAndBag);
     window.addEventListener("sector_auth_change", checkLoginAndBag);
     window.addEventListener("sector_bag_change", checkLoginAndBag);
+    window.addEventListener("sector_bag_update", checkLoginAndBag);
     return () => {
       window.removeEventListener("storage", checkLoginAndBag);
       window.removeEventListener("sector_auth_change", checkLoginAndBag);
       window.removeEventListener("sector_bag_change", checkLoginAndBag);
+      window.removeEventListener("sector_bag_update", checkLoginAndBag);
     };
-  }, []);
+  }, [queryClient, refetchCart]);
 
   useEffect(() => {
     const handleScroll = () => {

@@ -72,6 +72,22 @@ class CheckoutController extends Controller
                 'is_active'   => true,
             ],
             [
+                'id'          => 'dana',
+                'name'        => 'DANA',
+                'category'    => 'E-Wallet',
+                'description' => 'Digital Wallet authorization & DANA Protection',
+                'icon'        => 'wallet',
+                'is_active'   => true,
+            ],
+            [
+                'id'          => 'ovo',
+                'name'        => 'OVO',
+                'category'    => 'E-Wallet',
+                'description' => 'Instant push notification payment to OVO mobile number',
+                'icon'        => 'wallet',
+                'is_active'   => true,
+            ],
+            [
                 'id'          => 'bca_va',
                 'name'        => 'BCA Virtual Account',
                 'category'    => 'Virtual Account',
@@ -208,7 +224,11 @@ class CheckoutController extends Controller
             $itemTotal = $priceIdr * $item->quantity;
             $subtotal += $itemTotal;
 
-            $stock = $product ? (int)$product->stock : 0;
+            $variant = $product ? \App\Models\ProductVariant::where('product_id', $product->id)
+                ->where('color', $item->color ?: 'Default')
+                ->where('size', $item->size ?: 'M')
+                ->first() : null;
+            $stock = $variant ? $variant->stock : 0;
             if ($stock < $item->quantity) {
                 $hasOutOfStock = true;
             }
@@ -360,10 +380,16 @@ class CheckoutController extends Controller
                 return response()->json(['status' => false, 'message' => "An item in your bag is no longer active in catalog."], 422);
             }
 
-            if ($product->stock < $item->quantity) {
+            $variant = \App\Models\ProductVariant::where('product_id', $product->id)
+                ->where('color', $item->color ?: 'Default')
+                ->where('size', $item->size ?: 'M')
+                ->first();
+            $variantStock = $variant ? $variant->stock : 0;
+
+            if ($variantStock < $item->quantity) {
                 return response()->json([
                     'status'  => false,
-                    'message' => "Insufficient stock for product '{$product->name}'. Only {$product->stock} available.",
+                    'message' => "Insufficient stock for product '{$product->name}' ({$item->color} / {$item->size}). Only {$variantStock} available.",
                 ], 422);
             }
 
@@ -673,11 +699,20 @@ class CheckoutController extends Controller
                         $order->payment->update(['payment_status' => 'paid']);
                     }
 
-                    // Kurangi stok produk SETELAH pembayaran dikonfirmasi
+                    // Kurangi stok produk & variant SETELAH pembayaran dikonfirmasi
                     foreach ($order->items as $item) {
                         $product = \App\Models\Product::find($item->product_id);
                         if ($product) {
                             $product->decrement('stock', $item->quantity);
+
+                            // Decrement variant stock
+                            $variant = \App\Models\ProductVariant::where('product_id', $product->id)
+                                ->where('color', $item->color ?: 'Default')
+                                ->where('size', $item->size ?: 'M')
+                                ->first();
+                            if ($variant) {
+                                $variant->decrement('stock', $item->quantity);
+                            }
                         }
                     }
                     

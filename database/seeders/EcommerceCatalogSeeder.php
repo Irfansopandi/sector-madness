@@ -299,6 +299,15 @@ class EcommerceCatalogSeeder extends Seeder
         ];
 
         foreach ($products as $p) {
+            $guide = [];
+            foreach ($p['sizes'] as $s) {
+                if ($s == 'S') $guide[] = ['size' => 'S', 'chest' => '90 - 95', 'waist' => '75 - 80'];
+                if ($s == 'M') $guide[] = ['size' => 'M', 'chest' => '96 - 101', 'waist' => '81 - 86'];
+                if ($s == 'L') $guide[] = ['size' => 'L', 'chest' => '102 - 107', 'waist' => '87 - 92'];
+                if ($s == 'XL') $guide[] = ['size' => 'XL', 'chest' => '108 - 113', 'waist' => '93 - 98'];
+                if ($s == 'XXL') $guide[] = ['size' => 'XXL', 'chest' => '114 - 119', 'waist' => '99 - 104'];
+            }
+            $p['size_guide'] = $guide;
             Product::firstOrCreate(['slug' => $p['slug']], $p);
         }
 

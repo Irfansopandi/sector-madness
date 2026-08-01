@@ -50,14 +50,18 @@ class CartController extends Controller
         }
         $cart = Cart::firstOrCreate(['user_id' => $user->id]);
 
-        $cartItems = CartItem::with('product')->where('cart_id', $cart->id)->get();
+        $cartItems = CartItem::with('product.category')->where('cart_id', $cart->id)->get();
         
         $formattedItems = $cartItems->map(function ($item) {
             $product = $item->product;
             $priceIdr = (float)($item->price * 15000);
             $discountIdr = 0; // default discount per item
             $subtotalIdr = ($priceIdr - $discountIdr) * $item->quantity;
-            $stock = $product ? (int)$product->stock : 15;
+            $variant = $product ? \App\Models\ProductVariant::where('product_id', $product->id)
+                ->where('color', $item->color ?: 'Default')
+                ->where('size', $item->size ?: 'M')
+                ->first() : null;
+            $stock = $variant ? $variant->stock : ($product ? (int)$product->stock : 15);
             $remainingStock = max(0, $stock - $item->quantity);
             
             return [
@@ -65,7 +69,7 @@ class CartController extends Controller
                 'product_id'      => $item->product_id,
                 'product_image'   => $product ? $product->image : '/collection1.png',
                 'product_name'    => $product ? $product->name : 'Technical Garment',
-                'category'        => $product ? ($product->collection ?? 'ATELIER SERIES') : 'ATELIER SERIES',
+                'category'        => $product ? ($product->category ? $product->category->name : ($product->collection_code ?? 'T-SHIRT')) : 'T-SHIRT',
                 'variant'         => ($item->color ? "Color: {$item->color}" : '') . ($item->size ? " | Size: {$item->size}" : ''),
                 'color'           => $item->color ?? 'Obsidian Black',
                 'size'            => $item->size ?? 'L',
@@ -141,10 +145,16 @@ class CartController extends Controller
 
         $qty = $request->quantity ?: 1;
 
-        if ($product->stock < $qty) {
+        $variant = $product ? \App\Models\ProductVariant::where('product_id', $product->id)
+            ->where('color', $request->color ?: 'Default')
+            ->where('size', $request->size ?: 'M')
+            ->first() : null;
+        $variantStock = $variant ? $variant->stock : ($product ? $product->stock : 0);
+
+        if ($variantStock < $qty) {
             return response()->json([
                 'status'  => false,
-                'message' => 'Insufficient stock for this product.',
+                'message' => 'Insufficient stock for this variant.',
             ], 422);
         }
 
@@ -156,10 +166,10 @@ class CartController extends Controller
 
         if ($cartItem) {
             $newQty = $cartItem->quantity + $qty;
-            if ($product->stock < $newQty) {
+            if ($variantStock < $newQty) {
                 return response()->json([
                     'status' => false,
-                    'message' => 'Cannot add more quantity than available stock.',
+                    'message' => 'Cannot add more quantity than available stock for this variant.',
                 ], 422);
             }
             $cartItem->quantity = $newQty;
@@ -210,10 +220,16 @@ class CartController extends Controller
         }
 
         $product = $cartItem->product;
-        if ($product && $product->stock < $request->quantity) {
+        $variant = $product ? \App\Models\ProductVariant::where('product_id', $product->id)
+            ->where('color', $cartItem->color ?: 'Default')
+            ->where('size', $cartItem->size ?: 'M')
+            ->first() : null;
+        $variantStock = $variant ? $variant->stock : ($product ? $product->stock : 0);
+
+        if ($product && $variantStock < $request->quantity) {
             return response()->json([
                 'status'  => false,
-                'message' => 'Requested quantity exceeds available stock (' . $product->stock . ').',
+                'message' => 'Requested quantity exceeds available variant stock (' . $variantStock . ').',
             ], 422);
         }
 

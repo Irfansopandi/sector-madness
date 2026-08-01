@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ShippingController;
 use App\Http\Controllers\Api\ShippingAddressController;
+use App\Http\Controllers\Api\WishlistController;
 
 /*
 |--------------------------------------------------------------------------
@@ -36,6 +37,7 @@ Route::get('/categories/{slug}', [CategoryController::class, 'show']);
 
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{slug}', [ProductController::class, 'show']);
+Route::get('/products/{slug}/variants', [ProductController::class, 'variants']);
 
 // Biteship Area, Rates, Tracking & Warehouse Database Info
 Route::get('/warehouse', [ShippingController::class, 'getWarehouseInfo']);
@@ -77,6 +79,12 @@ Route::put('/cart/items/{id}', [CartController::class, 'update']);
 Route::delete('/cart/{id}', [CartController::class, 'destroy']);
 Route::delete('/cart/items/{id}', [CartController::class, 'destroy']);
 Route::delete('/cart', [CartController::class, 'clear']);
+
+// Wishlist API
+Route::get('/wishlist', [WishlistController::class, 'index']);
+Route::post('/wishlist', [WishlistController::class, 'store']);
+Route::delete('/wishlist/{product_id}', [WishlistController::class, 'destroy']);
+Route::get('/wishlist/check/{product_id}', [WishlistController::class, 'check']);
 
 // Checkout, Voucher & Payment Methods API
 Route::get('/checkout/summary', [CheckoutController::class, 'summary']);

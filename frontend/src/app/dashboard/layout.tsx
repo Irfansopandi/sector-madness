@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import LogoutConfirmModal from "@/components/LogoutConfirmModal";
 import { authApiLogout } from "@/utils/api";
 
 const navItems = [
@@ -31,7 +32,7 @@ const navItems = [
     ),
   },
   {
-    label: "ORDERS & TRACKING",
+    label: "ORDERS",
     href: "/dashboard/orders",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -52,7 +53,7 @@ const navItems = [
     ),
   },
   {
-    label: "ADDRESS BOOK",
+    label: "ADDRESS",
     href: "/dashboard/addresses",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -92,6 +93,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return true;
   });
 
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
   useEffect(() => {
     try {
       const userData = localStorage.getItem("sector_madness_user");
@@ -114,7 +118,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, [router]);
 
-  const handleLogout = async () => {
+  const handleLogoutClick = () => {
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = async () => {
+    setIsLoggingOut(true);
     try {
       await authApiLogout();
     } catch {}
@@ -125,6 +134,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     window.dispatchEvent(new Event("sector_auth_change"));
     window.dispatchEvent(new Event("sector_bag_update"));
     window.dispatchEvent(new Event("sector_wishlist_update"));
+    setShowLogoutModal(false);
+    setIsLoggingOut(false);
     router.push("/login");
   };
 
@@ -178,7 +189,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
               {/* Logout Button */}
               <button
-                onClick={handleLogout}
+                onClick={handleLogoutClick}
                 style={{ paddingLeft: "18px" }}
                 className="flex items-center gap-3.5 pr-5 py-3.5 text-sm tracking-[0.15em] uppercase text-[#8A8A8A] border-l-[3.5px] border-transparent hover:border-red-500/50 hover:text-[#FF6666] hover:bg-red-950/20 transition-all duration-200 cursor-pointer font-semibold w-full text-left mt-3 border-t border-white/[0.08] pt-6"
               >
@@ -199,6 +210,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         </div>
       </div>
+
+      <LogoutConfirmModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={confirmLogout}
+        isLoading={isLoggingOut}
+      />
 
       <Footer />
     </main>

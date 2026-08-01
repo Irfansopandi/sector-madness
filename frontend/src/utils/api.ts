@@ -79,6 +79,20 @@ export interface CartData {
   subtotal: number;
 }
 
+export interface WishlistItem {
+  id: number;
+  product_id: number;
+  name: string;
+  slug: string;
+  price: number;
+  category: string;
+  image: string;
+  in_stock: boolean;
+  stock_quantity?: number;
+  size?: string;
+  color?: string;
+}
+
 export interface CustomerProfile {
   id: number;
   name: string;
@@ -306,6 +320,33 @@ export const clearCart = async () => {
   const res = await api.delete("/cart");
   if (typeof window !== "undefined") window.dispatchEvent(new Event("sector_bag_change"));
   return res.data;
+};
+
+// Wishlist API
+export const getWishlist = async (): Promise<WishlistItem[]> => {
+  const res = await api.get("/wishlist");
+  return res.data;
+};
+
+export const addToWishlist = async (productId: number, size?: string, color?: string) => {
+  const res = await api.post("/wishlist", { product_id: productId, size, color });
+  if (typeof window !== "undefined") window.dispatchEvent(new Event("sector_wishlist_change"));
+  return res.data;
+};
+
+export const removeFromWishlist = async (productId: number, size?: string, color?: string) => {
+  const res = await api.delete(`/wishlist/${productId}`, { data: { size, color } });
+  if (typeof window !== "undefined") window.dispatchEvent(new Event("sector_wishlist_change"));
+  return res.data;
+};
+
+export const checkWishlistStatus = async (productId: number, size?: string, color?: string): Promise<boolean> => {
+  const params = new URLSearchParams();
+  if (size) params.append("size", size);
+  if (color) params.append("color", color);
+  const qs = params.toString() ? `?${params.toString()}` : "";
+  const res = await api.get(`/wishlist/check/${productId}${qs}`);
+  return res.data?.in_wishlist || false;
 };
 
 // Catalog API

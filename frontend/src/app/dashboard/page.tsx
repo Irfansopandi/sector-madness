@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   getCustomerProfile,
@@ -16,7 +17,35 @@ import {
   type TrackingData,
 } from "@/utils/api";
 
+function getDynamicGreeting(): string {
+  const hours = new Date().getHours();
+  if (hours >= 5 && hours < 12) {
+    return "HI, GOOD MORNING";
+  } else if (hours >= 12 && hours < 18) {
+    return "HI, GOOD AFTERNOON";
+  } else {
+    return "HI, GOOD NIGHT";
+  }
+}
+
 export default function DashboardOverviewPage() {
+  const [greeting, setGreeting] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return getDynamicGreeting();
+    }
+    return "Good Morning";
+  });
+
+  useEffect(() => {
+    setGreeting(getDynamicGreeting());
+    const interval = setInterval(() => {
+      const current = getDynamicGreeting();
+      setGreeting((prev) => (prev !== current ? current : prev));
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const [userEmail, setUserEmail] = useState(() => {
     if (typeof window !== "undefined") {
       try {
@@ -47,6 +76,9 @@ export default function DashboardOverviewPage() {
 
   const [ordersList, setOrdersList] = useState<OrderListItem[]>([]);
   const [selectedOrderDetail, setSelectedOrderDetail] = useState<OrderDetailData | null>(null);
+
+  const searchParams = useSearchParams();
+  const paramOrderNo = searchParams ? (searchParams.get("order") || searchParams.get("order_number")) : null;
 
   // Shipment Tracking Modal State
   const [trackingModalOpen, setTrackingModalOpen] = useState(false);
@@ -163,6 +195,10 @@ export default function DashboardOverviewPage() {
           "Member";
         setUserName(resolved);
       }
+      const cachedOrders = localStorage.getItem("sector_madness_active_orders");
+      if (cachedOrders) {
+        setOrdersList(JSON.parse(cachedOrders));
+      }
     } catch {
       // ignore
     }
@@ -178,7 +214,7 @@ export default function DashboardOverviewPage() {
 
     getOrders()
       .then((data) => {
-        if (!data) return setOrdersList([]);
+        if (!data) return;
         const activeOnly = data.filter((item) => {
           const st = (item.shipping_status || item.status || "").toUpperCase();
           const ordSt = (item.status || "").toUpperCase();
@@ -187,9 +223,18 @@ export default function DashboardOverviewPage() {
           return !isCancelled && !isDelivered;
         });
         setOrdersList(activeOnly);
+        try {
+          localStorage.setItem("sector_madness_active_orders", JSON.stringify(activeOnly));
+        } catch {}
       })
-      .catch(() => setOrdersList([]));
+      .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (paramOrderNo) {
+      handleViewOrderDetails(paramOrderNo);
+    }
+  }, [paramOrderNo]);
 
   const handleViewOrderDetails = async (orderNumber: string) => {
     try {
@@ -288,10 +333,19 @@ export default function DashboardOverviewPage() {
   return (
     <div className="pb-24">
       
-      {/* ── GREETING (Balanced Bottom Distance to Summary Cards) ── */}
+      {/* ── GREETING (Initial Elegant Serif Font for Username with Original Registration Casing) ── */}
       <div style={{ marginBottom: "36px" }} className="pb-6 border-b border-white/[0.08]">
-        <h2 suppressHydrationWarning className="text-2xl md:text-4xl font-extrabold uppercase tracking-wide text-[#F5F5F5]">
-          HI, {userName}
+        <span
+          suppressHydrationWarning
+          className="text-sm sm:text-base md:text-lg font-bold text-[#CCCCCC] tracking-[0.2em] uppercase block mb-1.5 font-[family-name:var(--font-body)]"
+        >
+          {greeting}
+        </span>
+        <h2
+          suppressHydrationWarning
+          className="text-2xl sm:text-3xl md:text-4xl font-normal text-[#F5F5F5] tracking-wide font-[family-name:var(--font-display)]"
+        >
+          {userName}
         </h2>
         <p suppressHydrationWarning className="text-xs font-mono text-[#8A8A8A] mt-2.5 tracking-wider">
           {userEmail || "member@sectormadness.com"}
@@ -349,7 +403,7 @@ export default function DashboardOverviewPage() {
           </div>
           <div className="text-left min-w-0">
             <h3 className="text-sm font-extrabold text-[#F5F5F5] group-hover:text-[#B6A47E] transition-colors uppercase tracking-wider truncate">
-              ADDRESS BOOK
+              ADDRESS
             </h3>
             <p className="text-xs text-[#8A8A8A] mt-1.5 leading-relaxed truncate">Manage your addresses</p>
           </div>
@@ -391,7 +445,7 @@ export default function DashboardOverviewPage() {
               <Link
                 href="/shop"
                 style={{ padding: "16px 36px" }}
-                className="inline-block bg-[#B6A47E] text-[#0A0A0A] font-mono text-xs uppercase font-black tracking-[0.25em] hover:bg-white transition-all shadow-xl rounded-sm"
+                className="inline-block bg-white text-[#0A0A0A] font-mono text-xs uppercase font-black tracking-[0.25em] hover:bg-[#B6A47E] transition-all shadow-xl rounded-sm"
               >
                 START SHOPPING
               </Link>

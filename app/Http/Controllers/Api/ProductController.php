@@ -80,7 +80,7 @@ class ProductController extends Controller
      */
     public function show($slug)
     {
-        $product = Product::with('category')->where('slug', $slug)->first();
+        $product = Product::with(['category', 'variants'])->where('slug', $slug)->first();
 
         if (!$product) {
             return response()->json([
@@ -97,5 +97,22 @@ class ProductController extends Controller
             'data'    => $product,
             'related' => $relatedProducts,
         ], 200);
+    }
+
+    /**
+     * Get all variants for a product
+     * Endpoint: GET /api/products/{slug}/variants
+     */
+    public function variants($slug)
+    {
+        $product = Product::where('slug', $slug)->first();
+        if (!$product) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Product not found',
+            ], 404);
+        }
+
+        return response()->json($product->variants);
     }
 }

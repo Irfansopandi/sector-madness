@@ -221,7 +221,7 @@ export default function OrdersPage() {
           <Link
             href="/shop"
             style={{ padding: "16px 36px" }}
-            className="inline-block bg-[#B6A47E] text-[#0A0A0A] font-mono text-xs uppercase font-black tracking-[0.25em] hover:bg-white transition-all shadow-xl rounded-sm"
+            className="inline-block bg-white text-[#0A0A0A] font-mono text-xs uppercase font-black tracking-[0.25em] hover:bg-[#B6A47E] transition-all shadow-xl rounded-sm"
           >
             START SHOPPING
           </Link>

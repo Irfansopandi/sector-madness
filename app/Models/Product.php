@@ -24,6 +24,7 @@ class Product extends Model
         'gallery',
         'colors',
         'sizes',
+        'size_guide',
         'details',
         'story',
         'limited',
@@ -33,13 +34,14 @@ class Product extends Model
     protected function casts(): array
     {
         return [
-            'gallery' => 'array',
-            'colors'  => 'array',
-            'sizes'   => 'array',
-            'details' => 'array',
-            'limited' => 'boolean',
-            'price'   => 'float',
-            'stock'   => 'integer',
+            'gallery'    => 'array',
+            'colors'     => 'array',
+            'sizes'      => 'array',
+            'size_guide' => 'array',
+            'details'    => 'array',
+            'limited'    => 'boolean',
+            'price'      => 'float',
+            'stock'      => 'integer',
         ];
     }
 
@@ -51,5 +53,10 @@ class Product extends Model
     public function cartItems()
     {
         return $this->hasMany(CartItem::class);
+    }
+
+    public function variants()
+    {
+        return $this->hasMany(ProductVariant::class);
     }
 }

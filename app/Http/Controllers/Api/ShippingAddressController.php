@@ -42,8 +42,7 @@ class ShippingAddressController extends Controller
             ], 200);
         }
         $addresses = ShippingAddress::where('user_id', $user->id)
-            ->orderBy('is_default', 'desc')
-            ->orderBy('created_at', 'desc')
+            ->orderBy('id', 'asc')
             ->get();
 
         return response()->json([

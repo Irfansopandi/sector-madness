@@ -12,11 +12,12 @@ import Footer from "@/components/Footer";
 import AnimatedSection from "@/components/AnimatedSection";
 import Container from "@/components/Container";
 import { addItemToBag } from "@/utils/bag";
-import { addToCart } from "@/utils/api";
-import AuthRequiredModal from "@/components/AuthRequiredModal";
 import BagToast from "@/components/BagToast";
+import WishlistToast from "@/components/WishlistToast";
+import AuthRequiredModal from "@/components/AuthRequiredModal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getProductBySlug } from "@/utils/api";
+import { getProductBySlug, checkWishlistStatus, addToWishlist, removeFromWishlist, addToCart } from "@/utils/api";
+import { useEffect } from "react";
 
 export default function ProductPage({
   params,
@@ -51,7 +52,9 @@ export default function ProductPage({
     story: apiProduct.story || apiProduct.description,
     limited: Boolean(apiProduct.limited),
     stock: apiProduct.stock ?? 25,
-  } : localProduct;
+    size_guide: (apiProduct as any).size_guide || [],
+    variants: (apiProduct as any).variants || [],
+  } : (localProduct ? { ...localProduct, size_guide: [], variants: [] } : null);
 
   if (!targetProduct) {
     notFound();
@@ -68,16 +71,98 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
   const [openAccordion, setOpenAccordion] = useState<string | null>("description");
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [showWishlistToast, setShowWishlistToast] = useState(false);
+  const [wishlistToastMsg, setWishlistToastMsg] = useState("");
+  const [isInWishlist, setIsInWishlist] = useState(false);
+  const [isWishlistLoading, setIsWishlistLoading] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
-  const handleAddToBag = () => {
-    const size = selectedSize || product.sizes[0] || "M";
-    const color = selectedColor || (product.colors && product.colors.length > 0 ? product.colors[0].name : "DEFAULT");
-    if (!selectedSize) {
-      setSelectedSize(size);
+  // currentSize/currentColor are for display & bag — always have a value
+  const currentSize = selectedSize || product.sizes[0] || "M";
+  const currentColor = selectedColor || (product.colors && product.colors.length > 0 ? product.colors[0].name : "DEFAULT");
+
+  // wishlistSize/wishlistColor: ONLY what the user explicitly clicked — null if not yet chosen
+  const wishlistSize = selectedSize;
+  const wishlistColor = selectedColor;
+
+  useEffect(() => {
+    const checkWishlist = async () => {
+      const token = localStorage.getItem("sector_madness_token");
+      if (token && product.id && wishlistSize && wishlistColor) {
+        try {
+          const status = await checkWishlistStatus(parseInt(product.id, 10), wishlistSize, wishlistColor);
+          setIsInWishlist(status);
+        } catch {
+          // ignore
+        }
+      }
+    };
+    checkWishlist();
+  }, [product.id, wishlistSize, wishlistColor]);
+
+  const handleToggleWishlist = async () => {
+    const token = localStorage.getItem("sector_madness_token");
+    if (!token) {
+      setShowAuthModal(true);
+      return;
+    }
+
+    // Validate: must select size and color first
+    if (!selectedSize && product.sizes && product.sizes.length > 0) {
+      setValidationError("Please select a SIZE before adding to Wishlist.");
+      setTimeout(() => setValidationError(null), 3500);
+      return;
     }
     if (!selectedColor && product.colors && product.colors.length > 0) {
-      setSelectedColor(color);
+      setValidationError("Please select a COLOR before adding to Wishlist.");
+      setTimeout(() => setValidationError(null), 3500);
+      return;
     }
+
+    if (isWishlistLoading || !product.id) return;
+
+    // Require explicit user selection before saving to wishlist
+    const sizeToSave = selectedSize || currentSize;
+    const colorToSave = selectedColor || currentColor;
+
+    setValidationError(null);
+    setIsWishlistLoading(true);
+    try {
+      const productId = parseInt(product.id, 10);
+      if (isInWishlist) {
+        await removeFromWishlist(productId, sizeToSave, colorToSave);
+        setIsInWishlist(false);
+        setWishlistToastMsg("REMOVED FROM WISHLIST");
+        setShowWishlistToast(true);
+      } else {
+        await addToWishlist(productId, sizeToSave, colorToSave);
+        setIsInWishlist(true);
+        setWishlistToastMsg(`ADDED TO WISHLIST — ${sizeToSave} / ${colorToSave}`);
+        setShowWishlistToast(true);
+      }
+    } catch {
+      // Keep previous state if failed
+    } finally {
+      setIsWishlistLoading(false);
+    }
+  };
+
+  const handleAddToBag = () => {
+    // Validate: must select size and color first
+    if (!selectedSize && product.sizes && product.sizes.length > 0) {
+      setValidationError("Please select a SIZE before adding to Bag.");
+      setTimeout(() => setValidationError(null), 3500);
+      return;
+    }
+    if (!selectedColor && product.colors && product.colors.length > 0) {
+      setValidationError("Please select a COLOR before adding to Bag.");
+      setTimeout(() => setValidationError(null), 3500);
+      return;
+    }
+
+    setValidationError(null);
+    const size = selectedSize || product.sizes[0] || "M";
+    const color = selectedColor || (product.colors && product.colors.length > 0 ? product.colors[0].name : "DEFAULT");
     const res = addItemToBag(
       {
         slug: product.slug,
@@ -111,8 +196,38 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
     }
   };
 
-  const totalCatalogStock = getTotalStock(product.slug);
-  const variantStock = getVariantStock(product.slug, selectedColor, selectedSize);
+  const totalCatalogStock = (product as any).variants && (product as any).variants.length > 0
+    ? (product as any).variants.reduce((sum: number, v: any) => sum + v.stock, 0)
+    : getTotalStock(product.slug);
+
+  const activeVariant = (product as any).variants?.find(
+    (v: any) =>
+      v.color.toLowerCase() === (selectedColor || "").toLowerCase() &&
+      v.size.toLowerCase() === (selectedSize || "").toLowerCase()
+  );
+
+  const variantStock = selectedColor && selectedSize
+    ? (activeVariant ? activeVariant.stock : 0)
+    : 0;
+
+  // Helper to get stock for a specific size (and optional selected color)
+  const getDbSizeStock = (sizeName: string) => {
+    if (!(product as any).variants || (product as any).variants.length === 0) {
+      return getSizeStock(product.slug, sizeName, selectedColor);
+    }
+    if (selectedColor) {
+      const v = (product as any).variants.find(
+        (variant: any) =>
+          variant.color.toLowerCase() === selectedColor.toLowerCase() &&
+          variant.size.toLowerCase() === sizeName.toLowerCase()
+      );
+      return v ? v.stock : 0;
+    }
+    // Sum for all colors of this size
+    return (product as any).variants
+      .filter((variant: any) => variant.size.toLowerCase() === sizeName.toLowerCase())
+      .reduce((sum: number, variant: any) => sum + variant.stock, 0);
+  };
 
   const nextImage = () => {
     setActiveImage((prev) => (prev + 1) % product.gallery.length);
@@ -236,6 +351,30 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
             className="lg:col-span-5 lg:sticky lg:top-28 self-start"
           >
             <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+              {/* Breadcrumb / Back Link */}
+              <div>
+                <Link
+                  href="/shop"
+                  className="inline-flex items-center gap-2 text-[10px] font-mono tracking-[0.25em] text-[#8A8A8A] hover:text-[#B6A47E] transition-colors uppercase mb-1 group cursor-pointer"
+                >
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="transition-transform group-hover:-translate-x-1"
+                  >
+                    <line x1="19" y1="12" x2="5" y2="12" />
+                    <polyline points="12 19 5 12 12 5" />
+                  </svg>
+                  BACK TO CATALOG
+                </Link>
+              </div>
+
               {/* Category & Title Block */}
               <div>
                 <span className="text-[11px] tracking-[0.3em] uppercase text-[#8A8A8A] font-[family-name:var(--font-body)] font-light block mb-2">
@@ -259,12 +398,12 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
                   </div>
 
                   {/* Dynamic Selected Variant Stock Indicator */}
-                  <div className="flex items-center justify-between gap-4 text-xs font-mono tracking-wider bg-[#111111] border border-[#262626] flex-wrap sm:flex-nowrap" style={{ padding: "14px 20px" }}>
-                    <span className="text-[#999999] uppercase whitespace-nowrap">
-                      SELECTED VARIANT: <strong className="text-white font-extrabold">{selectedColor || product.colors[0]?.name || "DEFAULT"}</strong> / <strong className="text-white font-extrabold">{selectedSize || product.sizes[0] || "M"}</strong>
+                  <div className="flex items-center justify-between gap-4 text-xs font-mono tracking-wider bg-[#111111] border border-[#262626] flex-wrap sm:flex-nowrap" style={{ padding: "14px 16px" }}>
+                    <span className="text-[#999999] uppercase text-[10px] sm:text-xs">
+                      SELECTED: <strong className="text-white font-extrabold">{selectedColor || "NOT SELECTED"}</strong> / <strong className="text-white font-extrabold">{selectedSize || "NOT SELECTED"}</strong>
                     </span>
-                    <span className="text-white font-black tracking-widest bg-[#222222] px-3.5 py-1 border border-[#333333] whitespace-nowrap shrink-0">
-                      {variantStock} AVAILABLE
+                    <span className="text-white font-black tracking-widest bg-[#222222] px-2.5 py-1 border border-[#333333] whitespace-nowrap shrink-0 text-[9px] sm:text-xs">
+                      {selectedColor && selectedSize ? `${variantStock} AVAILABLE` : "SELECT"}
                     </span>
                   </div>
                 </div>
@@ -273,7 +412,7 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
 
               {/* COLOR SELECTOR */}
               <div>
-                <span className="text-xs tracking-[0.25em] uppercase text-[#8A8A8A] font-[family-name:var(--font-body)] block mb-3 font-medium">
+                <span className="text-xs tracking-[0.25em] uppercase text-[#8A8A8A] font-[family-name:var(--font-body)] block font-medium" style={{ marginBottom: "18px" }}>
                   COLOR: <span className="text-[#F5F5F5] font-bold">{selectedColor || "SELECT COLOR"}</span>
                 </span>
                 <div className="flex items-center gap-4 border-b border-[#222222]" style={{ paddingBottom: "20px" }}>
@@ -311,8 +450,8 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
                 {/* Connected Border Size Row with Per-Size Stock Breakdown */}
                 <div className="flex border border-[#222222] divide-x divide-[#222222]">
                   {product.sizes.map((size) => {
-                    const sizeStock = getSizeStock(product.slug, size, selectedColor);
-                    const isSelected = (selectedSize || product.sizes[0]) === size;
+                    const sizeStock = getDbSizeStock(size);
+                    const isSelected = selectedSize === size;
                     return (
                       <button
                         key={size}
@@ -337,6 +476,18 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
                 </div>
               </div>
 
+              {/* Validation Error */}
+              {validationError && (
+                <div className="flex items-center gap-2 px-4 py-3 border border-[#CC3333]/40 bg-[#CC3333]/10 text-[#FF6666] text-[11px] font-mono font-bold uppercase tracking-widest">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                  {validationError}
+                </div>
+              )}
+
               {/* Action Buttons */}
               <div style={{ display: "flex", flexDirection: "column", gap: "12px", paddingTop: "4px", paddingBottom: "4px" }}>
                 <motion.button
@@ -349,10 +500,16 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
                 </motion.button>
 
                 <button
-                  className="w-full border border-[#262626] bg-transparent text-[#F5F5F5] text-xs tracking-[0.3em] uppercase font-[family-name:var(--font-body)] font-medium hover:border-[#8A8A8A] transition-all duration-300 cursor-pointer"
+                  onClick={handleToggleWishlist}
+                  disabled={isWishlistLoading}
+                  className={`w-full border border-[#262626] text-xs tracking-[0.3em] uppercase font-[family-name:var(--font-body)] font-medium transition-all duration-300 cursor-pointer ${
+                    isInWishlist
+                      ? "bg-[#B6A47E] text-[#0A0A0A] hover:bg-white"
+                      : "bg-transparent text-[#F5F5F5] hover:border-[#8A8A8A]"
+                  } ${isWishlistLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                   style={{ padding: "18px 0px" }}
                 >
-                  ADD TO WISHLIST
+                  {isWishlistLoading ? "PLEASE WAIT..." : isInWishlist ? "ADDED TO WISHLIST" : "ADD TO WISHLIST"}
                 </button>
               </div>
 
@@ -459,6 +616,71 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
                   </AnimatePresence>
                 </div>
 
+                {/* Accordion: Size Guide */}
+                <div>
+                  <button
+                    onClick={() => toggleAccordion("size_guide")}
+                    className="w-full py-8 flex items-center justify-between text-left cursor-pointer group"
+                  >
+                    <span className="text-xs tracking-[0.25em] uppercase text-[#F5F5F5] font-[family-name:var(--font-body)] font-bold">
+                      SIZE GUIDE
+                    </span>
+                    <span className="text-[#8A8A8A] group-hover:text-[#F5F5F5] text-base font-bold">
+                      {openAccordion === "size_guide" ? "−" : "+"}
+                    </span>
+                  </button>
+                  <AnimatePresence>
+                    {openAccordion === "size_guide" && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="overflow-hidden pb-6 space-y-3 text-[12px] text-[#8A8A8A] font-[family-name:var(--font-body)] font-light leading-[1.8]"
+                      >
+                        {(() => {
+                          const guideData = (product as any).size_guide && (product as any).size_guide.length > 0
+                            ? (product as any).size_guide
+                            : [
+                                { size: "S", chest: "90 - 95", waist: "75 - 80" },
+                                { size: "M", chest: "96 - 101", waist: "81 - 86" },
+                                { size: "L", chest: "102 - 107", waist: "87 - 92" },
+                                { size: "XL", chest: "108 - 113", waist: "93 - 98" },
+                                { size: "XXL", chest: "114 - 119", waist: "99 - 104" }
+                              ];
+
+                          return (
+                            <table className="w-full text-center border-collapse border border-[#222222] text-[11px] font-mono tracking-wider mt-2">
+                              <thead>
+                                <tr className="border-b border-[#222222] bg-[#111111]">
+                                  <th className="py-2 px-3 text-white font-bold uppercase text-center notranslate" translate="no">SIZE</th>
+                                  <th className="py-2 px-3 text-white font-bold uppercase text-center">CHEST (CM)</th>
+                                  <th className="py-2 px-3 text-white font-bold uppercase text-center">WAIST (CM)</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-[#222222]">
+                                {guideData.map((row: any) => (
+                                  <tr key={row.size}>
+                                    <td className="py-2.5 px-3 font-bold text-white bg-[#141414] text-center notranslate" translate="no">
+                                      {row.size}
+                                    </td>
+                                    <td className="py-2.5 px-3 text-[#999999] text-center">
+                                      {row.chest}
+                                    </td>
+                                    <td className="py-2.5 px-3 text-[#999999] text-center">
+                                      {row.waist}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          );
+                        })()}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
                 {/* Accordion 4: Shipping & Returns */}
                 <div>
                   <button
@@ -466,7 +688,7 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
                     className="w-full py-8 flex items-center justify-between text-left cursor-pointer group"
                   >
                     <span className="text-xs tracking-[0.25em] uppercase text-[#F5F5F5] font-[family-name:var(--font-body)] font-bold">
-                      SHIPPING & RETURNS
+                      SHIPPING & CANCEL
                     </span>
                     <span className="text-[#8A8A8A] group-hover:text-[#F5F5F5] text-base font-bold">
                       {openAccordion === "shipping" ? "−" : "+"}
@@ -481,8 +703,8 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
                         transition={{ duration: 0.3 }}
                         className="overflow-hidden pb-6 space-y-2 text-[12px] text-[#8A8A8A] font-[family-name:var(--font-body)] font-light"
                       >
-                        <p>Complimentary express shipping on orders over Rp 3.000.000.</p>
-                        <p>Returns accepted within 14 days of delivery in original condition.</p>
+                        <p>Shipping rates are calculated automatically at checkout based on your destination address.</p>
+                        <p>For paid orders, cancellation refunds are processed within 1-3 working days and will be visible in the user dashboard.</p>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -507,6 +729,7 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
 
       <AuthRequiredModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
       <BagToast show={showToast} onClose={() => setShowToast(false)} />
+      <WishlistToast show={showWishlistToast} onClose={() => setShowWishlistToast(false)} message={wishlistToastMsg} />
       <Footer />
     </main>
   );

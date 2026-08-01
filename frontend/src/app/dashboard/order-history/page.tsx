@@ -16,9 +16,16 @@ export default function OrderHistoryPage() {
   const [selectedOrderDetail, setSelectedOrderDetail] = useState<OrderDetailData | null>(null);
 
   useEffect(() => {
+    try {
+      const cached = localStorage.getItem("sector_madness_history_orders");
+      if (cached) {
+        setOrdersList(JSON.parse(cached));
+      }
+    } catch {}
+
     getOrders()
       .then((data) => {
-        if (!data) return setOrdersList([]);
+        if (!data) return;
         const finishedOnly = data.filter((item) => {
           const st = (item.shipping_status || item.status || "").toUpperCase();
           const ordSt = (item.status || "").toUpperCase();
@@ -36,8 +43,11 @@ export default function OrderHistoryPage() {
           );
         });
         setOrdersList(finishedOnly);
+        try {
+          localStorage.setItem("sector_madness_history_orders", JSON.stringify(finishedOnly));
+        } catch {}
       })
-      .catch(() => setOrdersList([]));
+      .catch(() => {});
   }, []);
 
   const handleViewOrderDetails = async (orderNumber: string) => {
@@ -126,7 +136,7 @@ export default function OrderHistoryPage() {
           <Link
             href="/shop"
             style={{ padding: "16px 36px" }}
-            className="inline-block bg-[#B6A47E] text-[#0A0A0A] font-mono text-xs uppercase font-black tracking-[0.25em] hover:bg-white transition-all shadow-xl rounded-sm"
+            className="inline-block bg-white text-[#0A0A0A] font-mono text-xs uppercase font-black tracking-[0.25em] hover:bg-[#B6A47E] transition-all shadow-xl rounded-sm"
           >
             START SHOPPING
           </Link>
