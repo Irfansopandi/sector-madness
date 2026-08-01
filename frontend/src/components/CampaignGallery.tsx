@@ -9,7 +9,7 @@ export default function CampaignGallery() {
     <section id="campaign" className="relative w-full bg-[#0A0A0A]">
       {/* Full-width Divider Line positioned right in the middle (40px top & bottom clearance) */}
       <div
-        style={{ marginTop: "20px", marginBottom: "0px" }}
+        style={{ marginTop: "70px", marginBottom: "0px" }}
         className="w-full h-[1px] bg-[#222222]"
       />
 

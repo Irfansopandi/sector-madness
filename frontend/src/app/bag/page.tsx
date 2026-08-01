@@ -110,17 +110,32 @@ export default function ShoppingBagPage() {
       {/* FULL-WIDTH HEADER SECTION WITH EDGE-TO-EDGE BORDER LINE */}
       <div style={{ paddingTop: "140px" }} className="w-full border-b border-[#262626] pb-8">
         <div className="max-w-[1480px] mx-auto px-8 md:px-14 lg:px-20">
-          <div style={{ paddingLeft: "60px", paddingRight: "60px" }} className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div style={{ paddingLeft: "60px", paddingRight: "60px" }} className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            {/* Left Column: Breadcrumb & Title */}
             <div>
-              <span className="text-[11px] font-mono tracking-[0.25em] text-[#8A8A8A] uppercase block mb-2 font-bold">
-                SECTOR // ATELIER VAULT
-              </span>
+              {/* Breadcrumb Navigation replacing SECTOR // ATELIER VAULT */}
+              <div className="flex items-center gap-2.5 text-xs md:text-sm font-mono tracking-[0.2em] uppercase mb-3 font-bold">
+                <Link
+                  href="/"
+                  className="group text-[#A0A0A0] hover:text-[#B6A47E] transition-colors font-bold flex items-center gap-1.5 py-1 pr-2 -ml-1 rounded cursor-pointer"
+                >
+                  <span className="text-base leading-none transition-transform duration-300 group-hover:-translate-x-1">
+                    ←
+                  </span>
+                  <span>HOME</span>
+                </Link>
+                <span className="text-[#555555]">//</span>
+                <span className="text-white font-bold">SHOPPING BAG</span>
+              </div>
+
               <h1 className="text-3xl lg:text-5xl font-extrabold uppercase tracking-[0.08em] text-white">
                 SHOPPING BAG
               </h1>
             </div>
-            <div className="text-right font-mono text-sm tracking-[0.15em] text-[#A0A0A0]">
-              TOTAL ITEMS: <span className="text-white font-bold">{cartData?.total_quantity || 0}</span>
+
+            {/* Right Column: Total Items Count */}
+            <div className="font-mono text-sm tracking-[0.15em] text-[#A0A0A0] shrink-0 whitespace-nowrap md:text-right pb-1">
+              TOTAL ITEMS: <span className="text-white font-bold ml-1">{cartData?.total_quantity || 0}</span>
             </div>
           </div>
         </div>

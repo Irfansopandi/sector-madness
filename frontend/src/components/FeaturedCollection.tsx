@@ -18,7 +18,7 @@ export default function FeaturedCollection() {
     <section id="collection" className="relative w-full bg-[#0A0A0A] pt-[220px] md:pt-[280px] lg:pt-[350px] pb-4">
       {/* Top Header Row - Aligned 60px with Navbar & Footer */}
       <div
-        style={{ marginBottom: "60px", paddingLeft: "60px", paddingRight: "60px" }}
+        style={{ marginBottom: "60px", paddingLeft: "60px", paddingRight: "60px", marginTop: "30px"}}
         className="w-full flex items-center justify-between"
       >
         <div>
@@ -83,7 +83,7 @@ export default function FeaturedCollection() {
 
       {/* Full-width Divider Line */}
       <div
-        style={{ marginTop: "90px", marginBottom: "80px" }}
+        style={{ marginTop: "75px", marginBottom: "30px" }}
         className="w-full h-[1px] bg-[#222222]"
       />
     </section>

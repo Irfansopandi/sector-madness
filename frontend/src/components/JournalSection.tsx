@@ -34,7 +34,7 @@ export default function JournalSection() {
       <div style={{ paddingLeft: "clamp(32px, 6vw, 80px)", paddingRight: "clamp(32px, 6vw, 80px)" }} className="max-w-[1720px] mx-auto">
         
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16 md:mb-24 border-b border-[#222222]/50 pb-10">
+        <div style={{ paddingTop: "30px", marginBottom: "15px" }} className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-4">
           <div>
             <AnimatedSection>
               <span style={{ fontSize: "11px", letterSpacing: "0.25em", fontWeight: 600 }} className="uppercase text-[#8A8A8A] block mb-4">
@@ -78,7 +78,7 @@ export default function JournalSection() {
               className="group flex flex-col justify-between"
             >
               <Link href="/journal" className="block cursor-pointer">
-                <div className="relative w-full aspect-[4/3] bg-[#141414] overflow-hidden mb-8 border border-[#222222]">
+                <div className="relative w-full aspect-[4/3] bg-[#141414] overflow-hidden mb-8">
                   <Image
                     src={article.image}
                     alt={article.title}
@@ -111,17 +111,6 @@ export default function JournalSection() {
               </Link>
             </AnimatedSection>
           ))}
-        </div>
-
-        {/* Bottom CTA */}
-        <div style={{ marginTop: "28px", paddingTop: "24px" }} className="border-t border-[#222222]/40 text-center">
-          <Link
-            href="/journal"
-            style={{ fontSize: "12px", letterSpacing: "0.25em", fontWeight: 700, padding: "18px 48px" }}
-            className="inline-block bg-[#F5F5F5] text-[#0A0A0A] uppercase hover:bg-[#B6A47E] hover:text-[#0A0A0A] transition-all duration-300 rounded-none cursor-pointer"
-          >
-            OPEN JOURNAL PUBLICATION →
-          </Link>
         </div>
       </div>
     </section>

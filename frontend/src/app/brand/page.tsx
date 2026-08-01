@@ -47,24 +47,24 @@ export default function BrandPage() {
               style={{ fontSize: "clamp(1.2rem, 2.5vw, 2.4rem)", letterSpacing: "0.02em", fontWeight: 300 }}
               className="text-[#B6A47E] mt-2 max-w-3xl leading-snug"
             >
-              Beyond Trends. Beyond Identity.
+              Sector Madness. We Trust Quality.
             </p>
           </motion.div>
 
-          {/* Panoramic Editorial Banner - Pure unobstructed campaign photography */}
+          {/* Panoramic Editorial Banner - Full Unobstructed Photo */}
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
-            className="relative w-full aspect-[21/9] min-h-[480px] bg-[#161616] overflow-hidden border border-[#222222]"
+            className="relative w-full aspect-[21/9] min-h-[380px] md:min-h-[480px] bg-[#141414] overflow-hidden border border-[#222222]"
           >
             <Image
-              src="/images/hero/hero-2.png"
-              alt="SECTOR MADNESS Campaign"
+              src="/images/story/judul.webp"
+              alt="SECTOR MADNESS Hero Banner"
               fill
               priority
               sizes="100vw"
-              className="object-cover object-center scale-105 hover:scale-100 transition-transform duration-1000 ease-out"
+              className="object-cover object-center"
             />
           </motion.div>
         </div>
@@ -81,101 +81,266 @@ export default function BrandPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 0.8 }}
-              className="lg:col-span-7 space-y-8"
+              style={{ paddingTop: "36px" }}
+              className="lg:col-span-6 space-y-8"
             >
               <span className="inline-block h-[2px] w-16 bg-[#B6A47E] mb-2" />
               
               <p
                 style={{
                   fontSize: "clamp(1.4rem, 2.8vw, 2.5rem)",
-                  lineHeight: "1.4",
-                  fontWeight: 400,
+                  lineHeight: "1.35",
+                  fontWeight: 500,
                   letterSpacing: "-0.01em",
                 }}
-                className="text-[#FFFFFF]"
+                className="text-[#FFFFFF] mb-6"
               >
-                SECTOR MADNESS was created for those who refuse to be defined by trends.
+                Sector Madness was born from experience, memories, and a passion for creating something meaningful.
               </p>
               
               <p
-                style={{ fontSize: "16.5px", lineHeight: "1.9", fontWeight: 300 }}
-                className="text-[#999999] max-w-2xl text-justify md:text-left"
+                style={{ fontSize: "17.5px", lineHeight: "1.85", fontWeight: 300 }}
+                className="text-[#A3A3A3] max-w-2xl text-justify md:text-left"
               >
-                Every collection explores a different sector of creativity, individuality, and movement—transforming clothing into a statement of identity rather than a seasonal product. Our focus remains centered on lasting presence, allowing each silhouette to stand independently as a confident, permanent addition to the wardrobe.
+                The name Sector was inspired by Sector Tiga, a place that holds a special meaning in the founder&apos;s journey. Madness represents the courage to think differently, explore without limits, and create with purpose.
               </p>
+
+              <p
+                style={{ fontSize: "17.5px", lineHeight: "1.85", fontWeight: 300 }}
+                className="text-[#A3A3A3] max-w-2xl text-justify md:text-left"
+              >
+                We believe quality clothing should never rely solely on a name or a trend. Every product should deliver comfort, durability, and craftsmanship that can be appreciated every day. Inspired by streetwear culture and everyday life, each collection is thoughtfully developed with careful attention to materials, construction, and finishing details, creating garments made to stand the test of time.
+              </p>
+
+              <div className="py-5 my-4 border-l-2 border-[#B6A47E] pl-6 bg-[#111111]/40 max-w-2xl">
+                <p
+                  style={{ fontSize: "18.5px", lineHeight: "1.65", fontWeight: 400 }}
+                  className="text-[#F5F5F5] italic"
+                >
+                  &ldquo;To us, clothing is more than what you wear. It is an expression of character and a part of every story you create.&rdquo;
+                </p>
+              </div>
             </motion.div>
 
-            {/* Right Column: Unobstructed Editorial Photograph */}
+            {/* Right Column: Story Description Photograph */}
             <motion.div
               initial={{ opacity: 0, x: 40 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="lg:col-span-5 relative w-full aspect-[3/4] bg-[#141414] overflow-hidden border border-[#222222]"
+              className="lg:col-span-6 relative w-full aspect-[4/5] bg-[#141414] overflow-hidden border border-[#222222]"
             >
               <Image
-                src="/images/campaign/campaign-1.png"
-                alt="SECTOR MADNESS Silhouette"
+                src="/images/story/deskripsi.webp"
+                alt="SECTOR MADNESS Story"
                 fill
-                sizes="(max-width: 1024px) 100vw, 40vw"
-                className="object-cover object-top"
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-cover object-center"
               />
             </motion.div>
           </div>
         </div>
       </section>
 
-      {/* ── SECTION 02: THOUGHTFUL DESIGN & CONSTRUCTION ── */}
-      <section className="py-24 md:py-40 bg-[#060606] relative border-b border-[#222222]/70">
+      {/* ── SECTION 02: VISI & MISI ── */}
+      <section className="py-24 md:py-32 bg-[#060606] relative border-b border-[#222222]/70">
         <div style={{ paddingLeft: "clamp(32px, 6vw, 80px)", paddingRight: "clamp(32px, 6vw, 80px)" }} className="max-w-[1500px] mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 items-center">
             
-            {/* Left Column: Clean Atelier Photograph */}
+            {/* Left Column: Vision & Mission Model Photograph */}
             <motion.div
               initial={{ opacity: 0, x: -40 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 0.8 }}
-              className="lg:col-span-6 order-2 lg:order-1 relative w-full aspect-[16/11] bg-[#111111] overflow-hidden border border-[#262626]"
+              className="lg:col-span-6 order-2 lg:order-1 relative w-full aspect-[4/5] bg-[#111111] overflow-hidden border border-[#262626]"
             >
               <Image
-                src="/images/story/brand-story.png"
-                alt="SECTOR MADNESS Materials and Craftsmanship"
+                src="/images/story/vision-mission.webp"
+                alt="SECTOR MADNESS Vision & Mission"
                 fill
                 sizes="(max-width: 1024px) 100vw, 50vw"
-                className="object-cover"
+                className="object-cover object-center"
               />
             </motion.div>
 
-            {/* Right Column: Editorial Copy */}
+            {/* Right Column: Vision & Mission Content */}
             <motion.div
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 0.8, delay: 0.15 }}
-              className="lg:col-span-6 order-1 lg:order-2 space-y-8"
+              className="lg:col-span-6 order-1 lg:order-2"
             >
-              <span className="text-[11.5px] font-semibold tracking-[0.22em] text-[#B6A47E] uppercase block">
-                CRAFTSMANSHIP & MATERIALS
-              </span>
+              {/* TITLE HEADER */}
+              <div style={{ paddingTop: "24px", marginBottom: "16px" }} className="space-y-3">
+                <span className="text-[11.5px] font-semibold tracking-[0.25em] text-[#B6A47E] uppercase block">
+                  PURPOSE & DIRECTION
+                </span>
 
-              <h2
-                style={{
-                  fontSize: "clamp(1.6rem, 3.2vw, 2.8rem)",
-                  lineHeight: "1.25",
-                  fontWeight: 700,
-                  letterSpacing: "-0.02em",
-                  fontFamily: "'Inter', -apple-system, sans-serif",
-                }}
-                className="text-[#FFFFFF]"
-              >
-                We believe great garments are built through thoughtful design, quality materials, and purposeful construction.
-              </h2>
+                <h2
+                  style={{
+                    fontSize: "clamp(2.2rem, 4vw, 3.5rem)",
+                    lineHeight: "1.1",
+                    fontWeight: 800,
+                    letterSpacing: "-0.03em",
+                    fontFamily: "'Inter', -apple-system, sans-serif",
+                  }}
+                  className="text-[#FFFFFF] uppercase tracking-tight"
+                >
+                  VISION &amp; MISSION
+                </h2>
+              </div>
               
-              <p style={{ fontSize: "16.5px", lineHeight: "1.9", fontWeight: 300 }} className="text-[#999999]">
-                Every piece is designed to become part of a larger story rather than simply another product. We emphasize enduring structural textiles, careful fit geometry, and refined stitching—ensuring that every garment retains its physical integrity and aesthetic clarity over extended wear.
-              </p>
+              {/* VISION BLOCK */}
+              <div
+                style={{
+                  borderTop: "1px solid #222222",
+                  paddingTop: "18px",
+                  paddingBottom: "16px",
+                }}
+              >
+                <div style={{ marginBottom: "16px" }} className="flex items-center gap-3">
+                  <span className="h-[2px] w-8 bg-[#B6A47E]" />
+                  <span className="text-[12px] font-bold tracking-[0.25em] text-[#B6A47E] uppercase">
+                    OUR VISION
+                  </span>
+                </div>
+                <p
+                  style={{ fontSize: "16.5px", lineHeight: "1.8", fontWeight: 300 }}
+                  className="text-[#F0F0F0] pl-1"
+                >
+                  To become a leading local streetwear brand recognized for quality, comfort, and distinctive characterful design.
+                </p>
+              </div>
+
+              {/* MISSION BLOCK */}
+              <div
+                style={{
+                  borderTop: "1px solid #222222",
+                  paddingTop: "24px",
+                }}
+              >
+                <div style={{ marginBottom: "16px" }} className="flex items-center gap-3">
+                  <span className="h-[2px] w-8 bg-[#B6A47E]" />
+                  <span className="text-[12px] font-bold tracking-[0.25em] text-[#B6A47E] uppercase">
+                    OUR MISSION
+                  </span>
+                </div>
+                
+                <ul className="space-y-5">
+                  <li className="flex items-start gap-4">
+                    <span className="text-[12px] font-mono font-bold text-[#B6A47E] pt-1">01</span>
+                    <span style={{ fontSize: "15.5px", lineHeight: "1.75", fontWeight: 300 }} className="text-[#A3A3A3]">
+                      Deliver high-quality products at a fair, proportional value.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-4">
+                    <span className="text-[12px] font-mono font-bold text-[#B6A47E] pt-1">02</span>
+                    <span style={{ fontSize: "15.5px", lineHeight: "1.75", fontWeight: 300 }} className="text-[#A3A3A3]">
+                      Create simple, functional, and versatile designs for diverse daily activities.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-4">
+                    <span className="text-[12px] font-mono font-bold text-[#B6A47E] pt-1">03</span>
+                    <span style={{ fontSize: "15.5px", lineHeight: "1.75", fontWeight: 300 }} className="text-[#A3A3A3]">
+                      Maintain rigorous quality control across every stage, from material selection to production.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-4">
+                    <span className="text-[12px] font-mono font-bold text-[#B6A47E] pt-1">04</span>
+                    <span style={{ fontSize: "15.5px", lineHeight: "1.75", fontWeight: 300 }} className="text-[#A3A3A3]">
+                      Build lasting customer trust through consistent product quality and reliable service.
+                    </span>
+                  </li>
+                </ul>
+              </div>
             </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── SECTION 03: BRAND VALUES & UNIQUENESS ── */}
+      <section className="py-12 md:py-20 bg-[#0A0A0A] relative border-b border-[#222222]/70">
+        <div style={{ paddingLeft: "clamp(32px, 6vw, 80px)", paddingRight: "clamp(32px, 6vw, 80px)" }} className="max-w-[1500px] mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 items-center">
+            
+            {/* Left Column: Text Content */}
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.8 }}
+              className="lg:col-span-6 order-1"
+            >
+              {/* TITLE HEADER */}
+              <div style={{ paddingTop: "24px", marginBottom: "16px" }} className="space-y-3">
+                <span className="text-[11.5px] font-semibold tracking-[0.25em] text-[#B6A47E] uppercase block">
+                  IDENTITY &amp; CHARACTER
+                </span>
+
+                <h2
+                  style={{
+                    fontSize: "clamp(2rem, 3.8vw, 3.2rem)",
+                    lineHeight: "1.15",
+                    fontWeight: 800,
+                    letterSpacing: "-0.03em",
+                    fontFamily: "'Inter', -apple-system, sans-serif",
+                  }}
+                  className="text-[#FFFFFF] uppercase tracking-tight"
+                >
+                  BRAND VALUES &amp; UNIQUENESS
+                </h2>
+              </div>
+
+              {/* CONTENT BODY */}
+              <div
+                style={{
+                  borderTop: "1px solid #222222",
+                  paddingTop: "18px",
+                }}
+                className="space-y-6"
+              >
+                <p
+                  style={{ fontSize: "clamp(1.2rem, 1.8vw, 1.6rem)", lineHeight: "1.45", fontWeight: 500 }}
+                  className="text-[#FFFFFF] tracking-tight"
+                >
+                  Sector Madness was born from the core principle: &ldquo;We Trust Quality.&rdquo;
+                </p>
+
+                <p
+                  style={{ fontSize: "16.5px", lineHeight: "1.85", fontWeight: 300 }}
+                  className="text-[#A3A3A3]"
+                >
+                  We believe that exceptional products must offer value that is fully proportional to their quality.
+                </p>
+
+                <p
+                  style={{ fontSize: "16.5px", lineHeight: "1.85", fontWeight: 300 }}
+                  className="text-[#A3A3A3]"
+                >
+                  Every collection is thoughtfully designed with an uncompromised focus on comfort, enduring quality, and versatile aesthetic suited for diverse daily activities.
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Right Column: Campaign Photograph (Image on the Right) */}
+            <motion.div
+              initial={{ opacity: 0, x: 40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="lg:col-span-6 order-2 relative w-full aspect-[4/5] bg-[#141414] overflow-hidden border border-[#222222]"
+            >
+              <Image
+                src="/images/story/BRAND_VALUES.webp"
+                alt="Sector Madness Brand Values & Uniqueness"
+                fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-cover object-center"
+              />
+            </motion.div>
+
           </div>
         </div>
       </section>
@@ -192,21 +357,21 @@ export default function BrandPage() {
           >
             <p
               style={{
-                fontSize: "clamp(2rem, 4.5vw, 4.2rem)",
-                lineHeight: "1.2",
+                fontSize: "clamp(1.8rem, 3.6vw, 3.2rem)",
+                lineHeight: "1.3",
                 fontWeight: 800,
                 letterSpacing: "-0.03em",
                 fontFamily: "'Inter', -apple-system, sans-serif",
               }}
               className="text-[#FFFFFF] tracking-tight"
             >
-              &ldquo;This is more than fashion. It is a movement shaped by expression, confidence, and individuality.&rdquo;
+              &ldquo;Because quality is not just a standard, it is our commitment. Sector Madness. Built from Experience. Made for Every Story.&rdquo;
             </p>
 
             <div className="w-20 h-[1px] bg-[#B6A47E]/60 mx-auto" />
 
             <p className="text-[12px] tracking-[0.25em] uppercase text-[#8A8A8A] font-medium">
-              SECTOR MADNESS STUDIO
+              SECTOR MADNESS
             </p>
 
             <div className="pt-10">

@@ -8,7 +8,7 @@ export default function BrandStory() {
   return (
     <section id="story" className="relative w-full bg-[#0A0A0A] border-b border-[#222222]/70 text-[#F5F5F5]">
       {/* Full-width container with symmetrical padding matching Featured Products & Footer */}
-      <div style={{ paddingLeft: "clamp(32px, 6vw, 80px)", paddingRight: "clamp(32px, 6vw, 80px)" }} className="w-full max-w-[1720px] mx-auto py-24 md:py-36">
+      <div style={{ paddingLeft: "clamp(32px, 6vw, 80px)", paddingRight: "clamp(32px, 6vw, 80px)" }} className="w-full max-w-[1720px] mx-auto pt-3 md:pt-4 pb-24 md:pb-36">
         
         {/* Section Header */}
         <div className="pb-16 md:pb-24 border-b border-[#222222]/40 mb-16 md:mb-24">
@@ -43,58 +43,63 @@ export default function BrandStory() {
               style={{ fontSize: "clamp(1.2rem, 2.2vw, 2rem)", letterSpacing: "0.02em", fontWeight: 300 }}
               className="text-[#B6A47E] leading-relaxed max-w-2xl"
             >
-              Beyond Trends. Beyond Identity.
+              Sector Madness. We Trust Quality.
             </p>
           </AnimatedSection>
         </div>
 
-        {/* Editorial Magazine Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-start">
+        {/* Editorial Magazine Layout - Synchronized with Brand Page Section 01 */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-center">
           
-          {/* Pure Cinematic Imagery Container without artificial badges */}
+          {/* Left Column: Pure Cinematic Imagery Container */}
           <AnimatedSection
             className="lg:col-span-6 relative w-full aspect-[4/5] overflow-hidden border border-[#222222] bg-[#141414]"
             delay={0.1}
           >
             <Image
-              src="/images/story/brand-story.png"
-              alt="SECTOR MADNESS Atelier"
+              src="/images/story/deskripsi.webp"
+              alt="SECTOR MADNESS Story"
               fill
-              className="object-cover"
+              className="object-cover object-center"
               sizes="(max-width: 1024px) 100vw, 50vw"
               quality={90}
             />
           </AnimatedSection>
 
-          {/* Impactful Editorial Copy */}
-          <div className="lg:col-span-6 flex flex-col justify-between h-full space-y-12 py-2">
+          {/* Right Column: Impactful Editorial Copy */}
+          <div style={{ paddingTop: "36px" }} className="lg:col-span-6 flex flex-col justify-between h-full space-y-10 pb-2">
             <AnimatedSection delay={0.2}>
-              <div className="space-y-8 max-w-xl">
+              <div className="space-y-8 max-w-2xl">
                 <p
-                  style={{ fontSize: "clamp(1.2rem, 1.8vw, 1.6rem)", lineHeight: "1.45", fontWeight: 500 }}
+                  style={{ fontSize: "clamp(1.5rem, 2.8vw, 2.25rem)", lineHeight: "1.35", fontWeight: 500 }}
                   className="text-[#FFFFFF] tracking-tight"
                 >
-                  SECTOR MADNESS was created for those who refuse to be defined by trends.
+                  Sector Madness was born from experience, memories, and a passion for creating something meaningful.
                 </p>
 
-                <p style={{ fontSize: "16px", lineHeight: "1.85", fontWeight: 300 }} className="text-[#999999]">
-                  Every collection explores a different sector of creativity, individuality, and movement—transforming clothing into a statement of identity rather than a seasonal product.
+                <p style={{ fontSize: "18.5px", lineHeight: "1.85", fontWeight: 300 }} className="text-[#A3A3A3]">
+                  The name Sector was inspired by Sector Tiga, a place that holds a special meaning in the founder&apos;s journey. Madness represents the courage to think differently, explore without limits, and create with purpose.
                 </p>
 
-                <p style={{ fontSize: "16px", lineHeight: "1.85", fontWeight: 300 }} className="text-[#999999]">
-                  We believe great garments are built through thoughtful design, quality materials, and purposeful construction. Every piece is designed to become part of a larger story rather than simply another product.
+                <p style={{ fontSize: "18.5px", lineHeight: "1.85", fontWeight: 300 }} className="text-[#A3A3A3]">
+                  We believe quality clothing should never rely solely on a name or a trend. Every product should deliver comfort, durability, and craftsmanship that can be appreciated every day.
                 </p>
 
-                <div className="py-6 my-4 border-l-2 border-[#B6A47E] pl-6 bg-[#111111]/30">
+                <p style={{ fontSize: "18.5px", lineHeight: "1.85", fontWeight: 300 }} className="text-[#A3A3A3]">
+                  Inspired by streetwear culture and everyday life, each collection is thoughtfully developed with careful attention to materials, construction, and finishing details, creating garments made to stand the test of time.
+                </p>
+
+                <div className="py-5 my-3 border-l-2 border-[#B6A47E] pl-6 bg-[#111111]/40">
                   <p
-                    style={{ fontSize: "18px", lineHeight: "1.5", fontWeight: 600 }}
-                    className="text-[#F5F5F5]"
+                    style={{ fontSize: "19.5px", lineHeight: "1.65", fontWeight: 400 }}
+                    className="text-[#F5F5F5] italic"
                   >
-                    &ldquo;This is more than fashion. It is a movement shaped by expression, confidence, and individuality.&rdquo;
+                    &ldquo;To us, clothing is more than what you wear. It is an expression of character and a part of every story you create.&rdquo;
                   </p>
                 </div>
               </div>
             </AnimatedSection>
+
             <AnimatedSection delay={0.3} className="pt-8 border-t border-[#222222]/70">
               <Link
                 href="/brand"
