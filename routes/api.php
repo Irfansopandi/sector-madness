@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\ContactSettingController;
 use App\Http\Controllers\Api\SortOptionController;
 use App\Http\Controllers\Api\CollectionController;
 use App\Http\Controllers\Api\HeroBannerController;
+use App\Http\Controllers\Api\JournalController;
 
 /*
 |--------------------------------------------------------------------------
@@ -70,6 +71,13 @@ Route::get('/size-guides', [SizeGuideController::class, 'index']);
 Route::post('/admin/size-guides', [SizeGuideController::class, 'store']);
 Route::put('/admin/size-guides/{id}', [SizeGuideController::class, 'update']);
 Route::delete('/admin/size-guides/{id}', [SizeGuideController::class, 'destroy']);
+
+// Journal API (Public & Admin Management)
+Route::get('/journals', [JournalController::class, 'index']);
+Route::get('/journals/{slug}', [JournalController::class, 'show']);
+Route::post('/admin/journals', [JournalController::class, 'store']);
+Route::put('/admin/journals/{id}', [JournalController::class, 'update']);
+Route::delete('/admin/journals/{id}', [JournalController::class, 'destroy']);
 
 // Contact Settings API (Public & Admin Management)
 Route::get('/contact-settings', [ContactSettingController::class, 'index']);

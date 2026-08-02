@@ -195,6 +195,10 @@ function DashboardOverviewContent() {
       const userData = localStorage.getItem("sector_madness_user");
       if (userData) {
         const parsed = JSON.parse(userData);
+        if (parsed?.isAdmin || parsed?.is_admin || parsed?.role === "admin" || parsed?.role === "administrator") {
+          window.location.href = "/admin";
+          return;
+        }
         if (parsed.email) setUserEmail(parsed.email);
         const resolved =
           [parsed.firstName, parsed.lastName].filter(Boolean).join(" ") ||

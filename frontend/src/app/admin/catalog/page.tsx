@@ -3,17 +3,18 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import AdminSidebar from "../components/AdminSidebar";
+import AdminHeader from "../components/AdminHeader";
 import {
   getCategories, createCategory, updateCategory, deleteCategory, CategoryItem,
   getCollections, createCollection, updateCollection, deleteCollection, CollectionItem,
   getSortOptions, createSortOption, updateSortOption, deleteSortOption, SortOptionItem,
+  getJournals, createJournal, updateJournal, deleteJournal, JournalArticle,
 } from "@/utils/api";
 
 export default function AdminCatalogPage() {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<"categories" | "collections" | "sort">("categories");
+  const [activeTab, setActiveTab] = useState<"categories" | "collections" | "sort" | "journals">("categories");
 
   // Modal / Form state
   const [modalMode, setModalMode] = useState<"add" | "edit" | null>(null);
@@ -22,6 +23,10 @@ export default function AdminCatalogPage() {
   const [formCode, setFormCode] = useState("");
   const [formDescription, setFormDescription] = useState("");
   const [formSortOrder, setFormSortOrder] = useState<number>(0);
+  const [formIssue, setFormIssue] = useState("");
+  const [formCategory, setFormCategory] = useState("Collection Stories");
+  const [formImage, setFormImage] = useState("");
+  const [formQuote, setFormQuote] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
 
   // Queries
@@ -38,6 +43,11 @@ export default function AdminCatalogPage() {
   const { data: sortOptions = [], isLoading: loadingSorts } = useQuery({
     queryKey: ["sortOptions"],
     queryFn: getSortOptions,
+  });
+
+  const { data: journals = [], isLoading: loadingJournals } = useQuery({
+    queryKey: ["journals"],
+    queryFn: () => getJournals(),
   });
 
   // Category Mutations
@@ -121,27 +131,62 @@ export default function AdminCatalogPage() {
     },
   });
 
+  // Journal Mutations
+  const addJournalMut = useMutation({
+    mutationFn: createJournal,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["journals"] });
+      closeModal();
+      showStatus("Journal article created successfully!");
+    },
+  });
+
+  const updateJournalMut = useMutation({
+    mutationFn: ({ id, data }: { id: number | string; data: any }) => updateJournal(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["journals"] });
+      closeModal();
+      showStatus("Journal article updated successfully!");
+    },
+  });
+
+  const deleteJournalMut = useMutation({
+    mutationFn: deleteJournal,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["journals"] });
+      showStatus("Journal article deleted successfully!");
+    },
+  });
+
   const showStatus = (msg: string) => {
     setStatusMessage(msg);
     setTimeout(() => setStatusMessage(""), 4000);
   };
 
   const openAddModal = () => {
+    setModalMode("add");
     setSelectedItem(null);
     setFormName("");
     setFormCode("");
     setFormDescription("");
     setFormSortOrder(0);
-    setModalMode("add");
+    setFormIssue("VOL. 01");
+    setFormCategory("Collection Stories");
+    setFormImage("/images/campaign/campaign-1.png");
+    setFormQuote("");
   };
 
   const openEditModal = (item: any) => {
-    setSelectedItem(item);
-    setFormName(item.name || "");
-    setFormCode(item.code || "");
-    setFormDescription(item.description || "");
-    setFormSortOrder(item.sort_order || 0);
     setModalMode("edit");
+    setSelectedItem(item);
+    setFormName(item.name || item.title || "");
+    setFormCode(item.code || "");
+    setFormDescription(item.description || item.summary || "");
+    setFormSortOrder(item.sort_order ?? 0);
+    setFormIssue(item.issue || "VOL. 01");
+    setFormCategory(item.category || "Collection Stories");
+    setFormImage(item.image || "/images/campaign/campaign-1.png");
+    setFormQuote(item.quote || "");
   };
 
   const closeModal = () => {
@@ -151,6 +196,9 @@ export default function AdminCatalogPage() {
     setFormCode("");
     setFormDescription("");
     setFormSortOrder(0);
+    setFormIssue("");
+    setFormImage("");
+    setFormQuote("");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -175,32 +223,36 @@ export default function AdminCatalogPage() {
       } else if (modalMode === "edit" && selectedItem) {
         updateSortMut.mutate({ id: selectedItem.id, data: { name: formName, code: formCode, sort_order: formSortOrder } });
       }
+    } else if (activeTab === "journals") {
+      const journalPayload = {
+        title: formName,
+        category: formCategory,
+        issue: formIssue,
+        summary: formDescription,
+        image: formImage,
+        quote: formQuote,
+        sort_order: formSortOrder,
+      };
+
+      if (modalMode === "add") {
+        addJournalMut.mutate(journalPayload);
+      } else if (modalMode === "edit" && selectedItem) {
+        updateJournalMut.mutate({ id: selectedItem.id, data: journalPayload });
+      }
     }
   };
 
   return (
-    <div className="bg-[#FFFFFF] text-[#0A0A0A] min-h-screen flex flex-col font-[family-name:var(--font-body)]">
-      <Navbar mode="light" activeLink="ADMIN" />
+    <div className="flex flex-col lg:flex-row min-h-screen bg-[#F9F9F9] font-[family-name:var(--font-body)]">
+      <AdminSidebar activeTab="catalog" />
 
-      <main className="flex-1" style={{ paddingTop: "120px", paddingBottom: "120px" }}>
-        <div className="max-w-[1200px] mx-auto px-6 md:px-12 w-full">
-          {/* Header */}
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-8 pb-6 border-b border-[#E5E5E5]">
-            <div>
-              <span className="text-[10px] tracking-[0.25em] uppercase text-[#777777] font-semibold block mb-1">
-                ADMIN CONTROL CENTER
-              </span>
-              <h1 className="text-2xl md:text-3xl font-bold tracking-tight uppercase text-[#0A0A0A]">
-                SHOP FILTERS & CATEGORIES MANAGEMENT
-              </h1>
-            </div>
-            <Link
-              href="/shop"
-              className="text-xs uppercase tracking-[0.15em] font-semibold px-4 py-2 border border-[#0A0A0A] hover:bg-[#0A0A0A] hover:text-white transition-colors"
-            >
-              VIEW LIVE SHOP →
-            </Link>
-          </div>
+      <div className="flex-1 flex flex-col min-w-0">
+        <AdminHeader
+          title="CATALOG & CATEGORIES MANAGEMENT"
+          subtitle="Manage product categories, Focus On collections, and shop sort filters"
+        />
+
+        <main className="px-6 py-8 md:px-8 md:py-10 w-full max-w-[1400px] mx-auto">
 
           {/* Toast Alert */}
           {statusMessage && (
@@ -211,11 +263,12 @@ export default function AdminCatalogPage() {
           )}
 
           {/* Navigation Tabs */}
-          <div className="flex items-center gap-3 mb-8 border-b border-[#EEEEEE]">
+          <div className="flex flex-wrap items-center gap-4 mb-8 border-b border-[#EEEEEE]">
             {[
               { id: "categories", label: `CATEGORIES (${categories.length})` },
               { id: "collections", label: `FOCUS ON COLLECTIONS (${collections.length})` },
               { id: "sort", label: `SORT BY OPTIONS (${sortOptions.length})` },
+              { id: "journals", label: `JOURNAL ARTICLES (${journals.length})` },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -237,6 +290,7 @@ export default function AdminCatalogPage() {
               {activeTab === "categories" && "Manage product categories visible in Shop filters & Navbar menu."}
               {activeTab === "collections" && "Manage Focus On collections featured in Navbar dropdown."}
               {activeTab === "sort" && "Manage Sort By filter options in the Shop page drawer."}
+              {activeTab === "journals" && "Manage publication articles, stories, and editorial posts."}
             </p>
             <button
               onClick={openAddModal}
@@ -408,13 +462,69 @@ export default function AdminCatalogPage() {
               </table>
             </div>
           )}
-        </div>
-      </main>
+
+          {/* JOURNALS TABLE */}
+          {activeTab === "journals" && (
+            <div className="border border-[#E5E5E5] overflow-x-auto">
+              <table className="w-full text-left text-xs uppercase tracking-wider">
+                <thead className="bg-[#F8F8F8] border-b border-[#E5E5E5] text-[#555555]">
+                  <tr>
+                    <th className="p-4 font-bold">ID</th>
+                    <th className="p-4 font-bold">TITLE</th>
+                    <th className="p-4 font-bold">CATEGORY</th>
+                    <th className="p-4 font-bold">ISSUE</th>
+                    <th className="p-4 font-bold">SUMMARY</th>
+                    <th className="p-4 font-bold text-right">ACTIONS</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#EEEEEE]">
+                  {loadingJournals ? (
+                    <tr>
+                      <td colSpan={6} className="p-8 text-center text-[#888888]">Loading journal articles...</td>
+                    </tr>
+                  ) : journals.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="p-8 text-center text-[#888888]">No journal articles found. Click "+ ADD NEW" to create one.</td>
+                    </tr>
+                  ) : (
+                    journals.map((art: JournalArticle) => (
+                      <tr key={art.id} className="hover:bg-[#FAFAFA]">
+                        <td className="p-4 font-mono font-bold">{art.id}</td>
+                        <td className="p-4 font-bold text-[#0A0A0A]">{art.title}</td>
+                        <td className="p-4 font-semibold text-[#B6A47E]">{art.category}</td>
+                        <td className="p-4 font-mono text-[#666666]">{art.issue || "—"}</td>
+                        <td className="p-4 text-[#777777] max-w-xs truncate">{art.summary || "—"}</td>
+                        <td className="p-4 text-right space-x-3">
+                          <button
+                            onClick={() => openEditModal(art)}
+                            className="font-bold text-[#0A0A0A] hover:underline cursor-pointer"
+                          >
+                            EDIT
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm(`Are you sure you want to delete article "${art.title}"?`)) {
+                                deleteJournalMut.mutate(art.id);
+                              }
+                            }}
+                            className="font-bold text-red-600 hover:underline cursor-pointer"
+                          >
+                            DELETE
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </main>
 
       {/* MODAL FORM */}
       {modalMode && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white w-full max-w-md p-6 border border-[#E5E5E5] shadow-2xl">
+          <div className="bg-white w-full max-w-md p-6 border border-[#E5E5E5] shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6 pb-4 border-b border-[#EEEEEE]">
               <h3 className="text-sm font-bold tracking-wider uppercase text-[#0A0A0A]">
                 {modalMode === "add" ? "ADD NEW" : "EDIT"} {activeTab.toUpperCase().slice(0, -1)}
@@ -425,17 +535,77 @@ export default function AdminCatalogPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-[11px] font-bold tracking-wider uppercase text-[#444] mb-1">
-                  NAME *
+                  TITLE / NAME *
                 </label>
                 <input
                   type="text"
                   required
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  placeholder="e.g. OUTERWEAR"
+                  placeholder="e.g. The Origin of Sector 001"
                   className="w-full p-2.5 text-xs border border-[#CCCCCC] focus:border-[#0A0A0A] outline-none uppercase font-semibold"
                 />
               </div>
+
+              {activeTab === "journals" && (
+                <>
+                  <div>
+                    <label className="block text-[11px] font-bold tracking-wider uppercase text-[#444] mb-1">
+                      CATEGORY *
+                    </label>
+                    <select
+                      value={formCategory}
+                      onChange={(e) => setFormCategory(e.target.value)}
+                      className="w-full p-2.5 text-xs border border-[#CCCCCC] focus:border-[#0A0A0A] outline-none font-semibold uppercase bg-white"
+                    >
+                      <option value="Collection Stories">Collection Stories</option>
+                      <option value="Brand Philosophy">Brand Philosophy</option>
+                      <option value="Materials & Craftsmanship">Materials & Craftsmanship</option>
+                      <option value="Campaign">Campaign</option>
+                      <option value="Archive">Archive</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold tracking-wider uppercase text-[#444] mb-1">
+                      ISSUE / VOL (OPTIONAL)
+                    </label>
+                    <input
+                      type="text"
+                      value={formIssue}
+                      onChange={(e) => setFormIssue(e.target.value)}
+                      placeholder="e.g. VOL. 01"
+                      className="w-full p-2.5 text-xs border border-[#CCCCCC] focus:border-[#0A0A0A] outline-none font-semibold uppercase"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold tracking-wider uppercase text-[#444] mb-1">
+                      IMAGE PATH / URL
+                    </label>
+                    <input
+                      type="text"
+                      value={formImage}
+                      onChange={(e) => setFormImage(e.target.value)}
+                      placeholder="/images/campaign/campaign-1.png"
+                      className="w-full p-2.5 text-xs border border-[#CCCCCC] focus:border-[#0A0A0A] outline-none font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold tracking-wider uppercase text-[#444] mb-1">
+                      EDITORIAL QUOTE (OPTIONAL)
+                    </label>
+                    <input
+                      type="text"
+                      value={formQuote}
+                      onChange={(e) => setFormQuote(e.target.value)}
+                      placeholder="e.g. True luxury is found in permanence..."
+                      className="w-full p-2.5 text-xs border border-[#CCCCCC] focus:border-[#0A0A0A] outline-none font-medium"
+                    />
+                  </div>
+                </>
+              )}
 
               {(activeTab === "collections" || activeTab === "sort") && (
                 <div>
@@ -452,7 +622,7 @@ export default function AdminCatalogPage() {
                 </div>
               )}
 
-              {activeTab === "sort" && (
+              {(activeTab === "sort" || activeTab === "journals") && (
                 <div>
                   <label className="block text-[11px] font-bold tracking-wider uppercase text-[#444] mb-1">
                     SORT ORDER
@@ -466,16 +636,16 @@ export default function AdminCatalogPage() {
                 </div>
               )}
 
-              {(activeTab === "categories" || activeTab === "collections") && (
+              {(activeTab === "categories" || activeTab === "collections" || activeTab === "journals") && (
                 <div>
                   <label className="block text-[11px] font-bold tracking-wider uppercase text-[#444] mb-1">
-                    DESCRIPTION
+                    {activeTab === "journals" ? "SUMMARY / DESCRIPTION" : "DESCRIPTION"}
                   </label>
                   <textarea
                     rows={3}
                     value={formDescription}
                     onChange={(e) => setFormDescription(e.target.value)}
-                    placeholder="Optional description..."
+                    placeholder="Summary text..."
                     className="w-full p-2.5 text-xs border border-[#CCCCCC] focus:border-[#0A0A0A] outline-none font-medium"
                   />
                 </div>
@@ -500,8 +670,7 @@ export default function AdminCatalogPage() {
           </div>
         </div>
       )}
-
-      <Footer />
+      </div>
     </div>
   );
 }

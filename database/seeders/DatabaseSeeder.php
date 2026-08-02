@@ -95,9 +95,10 @@ class DatabaseSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        // 6. Jalankan Seeder FAQ, Size Guide & Contact Settings
+        // 6. Jalankan Seeder FAQ, Size Guide, Contact Settings & Journal
         $this->call(FaqSeeder::class);
         $this->call(SizeGuideSeeder::class);
         $this->call(ContactSettingSeeder::class);
+        $this->call(JournalSeeder::class);
     }
 }

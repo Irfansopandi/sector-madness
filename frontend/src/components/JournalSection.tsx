@@ -2,33 +2,47 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
+import { getJournals, JournalArticle } from "@/utils/api";
 import AnimatedSection from "./AnimatedSection";
 
-const previewArticles = [
+const fallbackArticles = [
   {
+    slug: "origin-sector-001",
     title: "The Origin of Sector 001",
     category: "Collection Stories",
-    date: "VOL. 01",
+    issue: "VOL. 01",
     summary: "A closer look at the inspiration behind our first collection and the ideas that shaped every silhouette.",
     image: "/images/campaign/campaign-1.png",
   },
   {
+    slug: "designed-beyond-trends",
     title: "Designed Beyond Trends",
     category: "Brand Philosophy",
-    date: "VOL. 02",
+    issue: "VOL. 02",
     summary: "Why timeless design creates stronger identity than seasonal fashion.",
     image: "/images/story/brand-story.png",
   },
   {
+    slug: "inside-the-fabric",
     title: "Inside the Fabric",
     category: "Materials & Craftsmanship",
-    date: "VOL. 03",
+    issue: "VOL. 03",
     summary: "Exploring heavyweight cotton, garment construction, and the importance of premium materials.",
     image: "/images/hero/hero-1.png",
   },
 ];
 
 export default function JournalSection() {
+  const { data: apiJournals } = useQuery({
+    queryKey: ["journals"],
+    queryFn: () => getJournals(),
+  });
+
+  const displayArticles = (apiJournals && apiJournals.length > 0)
+    ? apiJournals.slice(0, 3)
+    : fallbackArticles;
+
   return (
     <section id="journal" className="relative w-full bg-[#0A0A0A] text-[#F5F5F5] pt-24 md:pt-36 pb-24 md:pb-32">
       <div style={{ paddingLeft: "clamp(32px, 6vw, 80px)", paddingRight: "clamp(32px, 6vw, 80px)" }} className="max-w-[1720px] mx-auto">
@@ -71,16 +85,16 @@ export default function JournalSection() {
 
         {/* 3-Column Magazine Grid without floating overlay boxes */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-14">
-          {previewArticles.map((article, idx) => (
+          {displayArticles.map((article, idx) => (
             <AnimatedSection
-              key={article.title}
+              key={article.slug || article.title}
               delay={0.15 + idx * 0.12}
               className="group flex flex-col justify-between"
             >
               <Link href="/journal" className="block cursor-pointer">
                 <div className="relative w-full aspect-[4/3] bg-[#141414] overflow-hidden mb-8">
                   <Image
-                    src={article.image}
+                    src={article.image || "/images/campaign/campaign-1.png"}
                     alt={article.title}
                     fill
                     sizes="(max-width: 768px) 100vw, 33vw"

@@ -32,6 +32,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
   const [bagCount, setBagCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const lastScrollY = useRef(0);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -84,11 +85,14 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
         if (userData) {
           const parsed = JSON.parse(userData);
           setIsLoggedIn(!!parsed?.loggedIn);
+          setIsAdmin(!!parsed?.isAdmin || !!parsed?.is_admin || parsed?.role === "admin" || parsed?.role === "administrator");
         } else {
           setIsLoggedIn(false);
+          setIsAdmin(false);
         }
       } catch {
         setIsLoggedIn(false);
+        setIsAdmin(false);
       }
 
       try {
@@ -352,9 +356,9 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
 
               {/* Login / Account Link */}
               <Link
-                href={isLoggedIn ? "/dashboard" : "/login"}
+                href={isLoggedIn ? (isAdmin ? "/admin" : "/dashboard") : "/login"}
                 className="hidden md:block cursor-pointer group"
-                aria-label={isLoggedIn ? "Account" : "Login"}
+                aria-label={isLoggedIn ? (isAdmin ? "Admin Panel" : "Account") : "Login"}
               >
                 <span
                   className={`text-xs uppercase tracking-[0.15em] transition-colors duration-300 font-medium ${
@@ -363,7 +367,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                       : "text-gray-300 group-hover:text-white"
                   }`}
                 >
-                  {isLoggedIn ? "ACCOUNT" : "LOGIN"}
+                  {isLoggedIn ? (isAdmin ? "ADMIN PANEL" : "ACCOUNT") : "LOGIN"}
                 </span>
               </Link>
 
@@ -572,11 +576,11 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                   Search
                 </span>
                 <Link
-                  href={isLoggedIn ? "/dashboard" : "/login"}
+                  href={isLoggedIn ? (isAdmin ? "/admin" : "/dashboard") : "/login"}
                   onClick={() => setMobileOpen(false)}
                   className="text-[11px] tracking-[0.2em] uppercase text-[#8A8A8A] cursor-pointer hover:text-[#F5F5F5] transition-colors duration-300"
                 >
-                  {isLoggedIn ? "Account" : "Login"}
+                  {isLoggedIn ? (isAdmin ? "Admin Panel" : "Account") : "Login"}
                 </Link>
               </motion.div>
             </nav>

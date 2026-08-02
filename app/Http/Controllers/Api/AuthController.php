@@ -75,6 +75,26 @@ class AuthController extends Controller
         $user = User::where('email', $request->email)->first();
 
         if (!$user) {
+            // Check Admin model fallback
+            $admin = Admin::where('email', $request->email)->first();
+            if ($admin && Hash::check($request->password, $admin->password)) {
+                $admin->update(['last_login_at' => now()]);
+                $token = $admin->createToken('admin_token', ['admin'])->plainTextToken;
+
+                return response()->json([
+                    'status'   => true,
+                    'message'  => 'Admin login successful',
+                    'is_admin' => true,
+                    'token'    => $token,
+                    'user'     => [
+                        'id'       => $admin->id,
+                        'name'     => $admin->name,
+                        'email'    => $admin->email,
+                        'is_admin' => true,
+                    ],
+                ], 200);
+            }
+
             return response()->json([
                 'status'  => false,
                 'error_type' => 'email_not_found',

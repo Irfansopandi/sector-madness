@@ -797,4 +797,127 @@ export const deleteSortOption = async (id: number) => {
   return res.data;
 };
 
+/* ====================================================
+   JOURNAL ARTICLES API
+==================================================== */
+export interface JournalArticle {
+  id: number | string;
+  slug: string;
+  title: string;
+  category: string;
+  issue?: string;
+  date?: string;
+  summary?: string;
+  image?: string;
+  featured?: boolean;
+  content?: string[] | string;
+  quote?: string;
+  sort_order?: number;
+  is_published?: boolean;
+  created_at?: string;
+}
+
+export const getJournals = async (category?: string): Promise<JournalArticle[]> => {
+  try {
+    const url = category && category !== "ALL" ? `/journals?category=${encodeURIComponent(category)}` : "/journals";
+    const res = await api.get(url);
+    if (Array.isArray(res.data)) {
+      return res.data;
+    }
+  } catch (error) {
+    console.error("Failed to fetch journals from API:", error);
+  }
+  return [];
+};
+
+export const createJournal = async (data: Partial<JournalArticle>) => {
+  const res = await api.post("/admin/journals", data);
+  return res.data;
+};
+
+export const updateJournal = async (id: number | string, data: Partial<JournalArticle>) => {
+  const res = await api.put(`/admin/journals/${id}`, data);
+  return res.data;
+};
+
+export const deleteJournal = async (id: number | string) => {
+  const res = await api.delete(`/admin/journals/${id}`);
+  return res.data;
+};
+
+/* ====================================================
+   ADMIN MANAGEMENT API
+==================================================== */
+export interface AdminOrder {
+  id: number;
+  order_number: string;
+  user_id?: number;
+  customer_name?: string;
+  customer_email?: string;
+  total: number;
+  payment_status: string;
+  shipping_status: string;
+  courier?: string;
+  tracking_number?: string;
+  created_at: string;
+  items_count?: number;
+}
+
+export const getAdminOrders = async (): Promise<AdminOrder[]> => {
+  try {
+    const res = await api.get("/admin/orders");
+    if (Array.isArray(res.data)) {
+      return res.data;
+    }
+  } catch (error) {
+    console.error("Failed to fetch admin orders:", error);
+  }
+  return [];
+};
+
+export const updateAdminShipment = async (
+  orderNumber: string,
+  data: { shipping_status?: string; courier?: string; tracking_number?: string }
+) => {
+  const res = await api.put(`/admin/orders/${orderNumber}/shipment`, data);
+  return res.data;
+};
+
+export interface AdminHeroBanner {
+  id: number;
+  title?: string;
+  subtitle?: string;
+  image_path: string;
+  link_url?: string;
+  sort_order: number;
+  is_active: boolean;
+}
+
+export const getAdminHeroBanners = async (): Promise<AdminHeroBanner[]> => {
+  try {
+    const res = await api.get("/admin/hero-banners");
+    if (Array.isArray(res.data)) {
+      return res.data;
+    }
+  } catch (error) {
+    console.error("Failed to fetch admin hero banners:", error);
+  }
+  return [];
+};
+
+export const createAdminHeroBanner = async (data: Partial<AdminHeroBanner>) => {
+  const res = await api.post("/admin/hero-banners", data);
+  return res.data;
+};
+
+export const updateAdminHeroBanner = async (id: number, data: Partial<AdminHeroBanner>) => {
+  const res = await api.put(`/admin/hero-banners/${id}`, data);
+  return res.data;
+};
+
+export const deleteAdminHeroBanner = async (id: number) => {
+  const res = await api.delete(`/admin/hero-banners/${id}`);
+  return res.data;
+};
+
 export default api;

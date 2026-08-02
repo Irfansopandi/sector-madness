@@ -108,13 +108,16 @@ export default function LoginPage() {
       if (res.status && res.token && res.user) {
         localStorage.setItem("sector_madness_token", res.token);
         
+        const isAdmin = !!res.is_admin || !!res.user?.is_admin || res.user?.role === "admin" || res.role === "admin" || res.user?.role === "administrator";
         const userObj = {
           id: res.user.id,
           email: res.user.email,
           name: res.user.name || userEmail.split("@")[0],
           phone: res.user.phone || "",
           dob: res.user.birth_date || res.user.dob || "",
+          role: res.user.role || (isAdmin ? "admin" : "customer"),
           loggedIn: true,
+          isAdmin: isAdmin,
           token: res.token,
           joinedAt: res.user.created_at || new Date().toISOString(),
         };
@@ -122,7 +125,11 @@ export default function LoginPage() {
         window.dispatchEvent(new Event("sector_auth_change"));
         window.dispatchEvent(new Event("sector_bag_update"));
 
-        const redirectUrl = new URLSearchParams(window.location.search).get("redirect") || "/";
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirectUrl = isAdmin
+          ? "/admin"
+          : (urlParams.get("redirect") || "/");
+
         router.push(redirectUrl);
       } else {
         const errObj = { password: "Invalid email or password." };
