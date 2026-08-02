@@ -15,7 +15,7 @@ export default function BrandPage() {
       <Navbar mode="dark" activeLink="STORIES" />
 
       {/* ── HERO PROLOGUE STAGE (DARK CINEMATIC ATMOSPHERE) ── */}
-      <section style={{ paddingTop: "200px", paddingBottom: "12px" }} className="relative border-b border-[#222222]/70">
+      <section style={{ paddingTop: "130px", paddingBottom: "12px" }} className="relative border-b border-[#222222]/70">
         <div style={{ paddingLeft: "clamp(32px, 6vw, 80px)", paddingRight: "clamp(32px, 6vw, 80px)" }} className="max-w-[1720px] mx-auto">
           
           <motion.div

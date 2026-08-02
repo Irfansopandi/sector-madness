@@ -45,7 +45,7 @@ export default function JournalPage() {
       <Navbar mode="dark" activeLink="JOURNAL" />
 
       {/* ── JOURNAL PROLOGUE & PUBLICATION HEADER ── */}
-      <section style={{ paddingTop: "200px", paddingBottom: "32px" }} className="relative border-b border-[#222222]/70">
+      <section style={{ paddingTop: "130px", paddingBottom: "32px" }} className="relative border-b border-[#222222]/70">
         <div style={{ paddingLeft: "clamp(32px, 6vw, 80px)", paddingRight: "clamp(32px, 6vw, 80px)" }} className="max-w-[1780px] mx-auto">
           
           <motion.div
