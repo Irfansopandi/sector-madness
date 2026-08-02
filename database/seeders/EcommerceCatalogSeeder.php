@@ -4,42 +4,95 @@ namespace Database\Seeders;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Collection;
+use App\Models\SortOption;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class EcommerceCatalogSeeder extends Seeder
 {
     public function run(): void
     {
         // 1. Buat Kategori Katalog
-        $outerwear = Category::firstOrCreate([
-            'slug' => 'outerwear',
-        ], [
-            'name' => 'OUTERWEAR',
-            'description' => 'Weatherproof tactical jackets, anoraks, and coats engineered for urban performance.',
-        ]);
+        $catNames = [
+            'ACCESSORIES',
+            'JACKETS',
+            'SWEATSHIRTS',
+            'SHORTS & TROUSERS',
+            'POLO SHIRTS',
+            'T-SHIRT',
+            'SHIRTS',
+            'OUTERWEAR',
+            'BOTTOMS',
+            'HOODIE',
+            'CARGO',
+            'TROUSERS',
+            'SWEATS',
+            'KNIT',
+            'VEST',
+            'ANORAK',
+            'NEW ARRIVALS',
+            'SALE',
+            'FW026',
+            'ATELIER ARCHIVE',
+            'TACTICAL SERIES',
+        ];
 
-        $tshirts = Category::firstOrCreate([
-            'slug' => 't-shirt',
-        ], [
-            'name' => 'T-SHIRT',
-            'description' => 'Heavyweight organic cotton tees featuring structural seams and relaxed technical silhouettes.',
-        ]);
+        $categoryMap = [];
+        foreach ($catNames as $cName) {
+            $cat = Category::firstOrCreate([
+                'slug' => Str::slug($cName),
+            ], [
+                'name' => strtoupper($cName),
+                'description' => 'Collection of ' . $cName,
+            ]);
+            $categoryMap[$cName] = $cat;
+        }
 
-        $bottoms = Category::firstOrCreate([
-            'slug' => 'bottoms',
-        ], [
-            'name' => 'BOTTOMS',
-            'description' => 'Utility cargos, structured trousers, and tactical shorts with articulated mobility.',
-        ]);
+        $outerwear = $categoryMap['OUTERWEAR'] ?? Category::first();
+        $tshirts = $categoryMap['T-SHIRT'] ?? Category::first();
+        $bottoms = $categoryMap['BOTTOMS'] ?? Category::first();
+        $accessories = $categoryMap['ACCESSORIES'] ?? Category::first();
 
-        $accessories = Category::firstOrCreate([
-            'slug' => 'accessories',
-        ], [
-            'name' => 'ACCESSORIES',
-            'description' => 'Technical headwear, modular harnesses, and rugged utility essentials.',
-        ]);
+        // 2. Buat Collections (Focus On items)
+        $focusItems = [
+            ['name' => 'ZESTY', 'code' => 'ZESTY'],
+            ['name' => 'PRISTINE', 'code' => 'PRISTINE'],
+            ['name' => 'LOFTY', 'code' => 'LOFTY'],
+            ['name' => 'FANCY', 'code' => 'FANCY'],
+            ['name' => 'FROLIC', 'code' => 'FROLIC'],
+            ['name' => 'SECTOR MADNESS | ORIGIN', 'code' => 'SECTOR MADNESS'],
+        ];
 
-        // 2. Insert Katalog Produk SECTOR MADNESS persis dengan spesifikasi frontend
+        foreach ($focusItems as $fItem) {
+            Collection::firstOrCreate([
+                'slug' => Str::slug($fItem['name']),
+            ], [
+                'name' => strtoupper($fItem['name']),
+                'code' => $fItem['code'],
+                'is_active' => true,
+            ]);
+        }
+
+        // 3. Buat Filter Sort Options
+        $sortItems = [
+            ['name' => 'SELECTED', 'code' => 'SELECTED', 'sort_order' => 1],
+            ['name' => 'PRICE LOW TO HIGH', 'code' => 'PRICE_ASC', 'sort_order' => 2],
+            ['name' => 'PRICE HIGH TO LOW', 'code' => 'PRICE_DESC', 'sort_order' => 3],
+            ['name' => 'NEW IN', 'code' => 'NEWEST', 'sort_order' => 4],
+        ];
+
+        foreach ($sortItems as $sItem) {
+            SortOption::firstOrCreate([
+                'code' => $sItem['code'],
+            ], [
+                'name' => $sItem['name'],
+                'sort_order' => $sItem['sort_order'],
+                'is_active' => true,
+            ]);
+        }
+
+        // 4. Insert Katalog Produk SECTOR MADNESS
         $products = [
             [
                 'category_id'     => $tshirts->id,
@@ -52,6 +105,10 @@ class EcommerceCatalogSeeder extends Seeder
                 'material'        => '100% Premium Heavy Cotton',
                 'weight'          => '480 GSM',
                 'price'           => 285,
+                'original_price'  => 355,
+                'discount_percentage' => 20,
+                'discount_expires_at' => now()->addDays(2)->addHours(4)->addMinutes(15),
+                'is_flash_sale'   => true,
                 'image'           => '/images/products/product-1.png',
                 'gallery'         => ['/images/products/product-1.png', '/images/campaign/campaign-1.png', '/images/campaign/campaign-3.png'],
                 'colors'          => [
@@ -81,6 +138,10 @@ class EcommerceCatalogSeeder extends Seeder
                 'material'        => 'Technical Shell / Cotton Lining',
                 'weight'          => '360 GSM Shell',
                 'price'           => 425,
+                'original_price'  => 500,
+                'discount_percentage' => 15,
+                'discount_expires_at' => now()->addDays(1)->addHours(18)->addMinutes(45),
+                'is_flash_sale'   => true,
                 'image'           => '/images/products/product-2.png',
                 'gallery'         => ['/images/products/product-2.png', '/images/campaign/campaign-2.png', '/images/campaign/campaign-4.png'],
                 'colors'          => [
@@ -111,6 +172,10 @@ class EcommerceCatalogSeeder extends Seeder
                 'material'        => '100% Premium Cotton',
                 'weight'          => '300 GSM',
                 'price'           => 145,
+                'original_price'  => 195,
+                'discount_percentage' => 25,
+                'discount_expires_at' => now()->addDays(3)->addHours(12),
+                'is_flash_sale'   => true,
                 'image'           => '/images/products/product-3.png',
                 'gallery'         => ['/images/products/product-3.png', '/images/hero/hero-3.png'],
                 'colors'          => [
@@ -140,6 +205,10 @@ class EcommerceCatalogSeeder extends Seeder
                 'material'        => 'Cotton Twill / Ripstop',
                 'weight'          => '320 GSM',
                 'price'           => 345,
+                'original_price'  => 410,
+                'discount_percentage' => 15,
+                'discount_expires_at' => now()->addDays(4)->addHours(8),
+                'is_flash_sale'   => true,
                 'image'           => '/images/products/product-4.png',
                 'gallery'         => ['/images/products/product-4.png', '/images/campaign/campaign-4.png'],
                 'colors'          => [
@@ -308,7 +377,7 @@ class EcommerceCatalogSeeder extends Seeder
                 if ($s == 'XXL') $guide[] = ['size' => 'XXL', 'chest' => '114 - 119', 'waist' => '99 - 104'];
             }
             $p['size_guide'] = $guide;
-            Product::firstOrCreate(['slug' => $p['slug']], $p);
+            Product::updateOrCreate(['slug' => $p['slug']], $p);
         }
 
         // 3. Seed Primary Warehouse / Office Hub Location

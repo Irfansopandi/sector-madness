@@ -1,11 +1,39 @@
 "use client";
 
 import { useRef } from "react";
-import { products } from "@/data/products";
+import { useQuery } from "@tanstack/react-query";
+import { getProducts } from "@/utils/api";
+import { products as localProducts } from "@/data/products";
 import ProductCard from "./ProductCard";
 
 export default function FeaturedCollection() {
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const { data: apiProducts } = useQuery({
+    queryKey: ["products"],
+    queryFn: getProducts,
+  });
+
+  const productsList = apiProducts && apiProducts.length > 0 ? apiProducts.map(p => ({
+    id: String(p.id).padStart(3, '0'),
+    slug: p.slug,
+    name: p.name,
+    collection: p.collection || "The Atelier Series",
+    collectionCode: p.collection_code || "SECTOR 001",
+    tagline: p.tagline || p.name,
+    description: p.description || "",
+    material: p.material || "Technical Blend",
+    weight: p.weight || "450 GSM",
+    price: typeof p.price === 'number' ? (p.price > 1000 ? p.price / 15000 : p.price) : 285,
+    originalPrice: p.original_price ? (p.original_price > 1000 ? p.original_price / 15000 : p.original_price) : undefined,
+    discountPercentage: p.discount_percentage,
+    discountExpiresAt: p.discount_expires_at,
+    isFlashSale: p.is_flash_sale,
+    image: p.image || "/images/products/product-1.png",
+    limited: Boolean(p.limited),
+  })) : localProducts;
+
+  const featuredProducts = productsList.slice(0, 10);
 
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {
@@ -29,6 +57,9 @@ export default function FeaturedCollection() {
             FEATURED PRODUCTS
           </h2>
         </div>
+        <span className="text-[10px] md:text-[11px] font-mono tracking-[0.2em] uppercase text-[#B6A47E] font-medium hidden sm:inline-block">
+          TOP {featuredProducts.length} SELECTIONS
+        </span>
       </div>
 
       {/* 100% Full Screen Viewport Width Carousel Wrapper */}
@@ -58,7 +89,7 @@ export default function FeaturedCollection() {
             style={{ scrollbarWidth: "none", msOverflowStyle: "none", touchAction: "pan-x" }}
             className="w-full flex overflow-x-auto overflow-y-hidden gap-4 md:gap-5 lg:gap-6 scrollbar-none snap-x snap-mandatory scroll-smooth pb-6 select-none"
           >
-            {products.slice(0, 10).map((product, index) => (
+            {featuredProducts.map((product, index) => (
               <div
                 key={product.id}
                 className="flex-none w-[270px] sm:w-[310px] md:w-[340px] lg:w-[360px] snap-start"
@@ -71,6 +102,10 @@ export default function FeaturedCollection() {
                   material={product.material}
                   weight={product.weight}
                   price={product.price}
+                  originalPrice={product.originalPrice}
+                  discountPercentage={product.discountPercentage}
+                  discountExpiresAt={product.discountExpiresAt}
+                  isFlashSale={product.isFlashSale}
                   image={product.image}
                   limited={product.limited}
                   index={index}

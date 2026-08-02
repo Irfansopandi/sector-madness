@@ -50,9 +50,21 @@ export interface Product {
   slug: string;
   name: string;
   collection?: string;
+  collection_code?: string;
+  description?: string;
+  material?: string;
   price: number;
+  original_price?: number;
+  discount_percentage?: number;
+  discount_expires_at?: string;
+  is_flash_sale?: boolean;
   image: string;
   stock: number;
+  category?: {
+    id: number;
+    name: string;
+    slug: string;
+  };
 }
 
 export interface CartItem {
@@ -270,9 +282,25 @@ export interface TrackingData {
   }[];
 }
 
+export interface HeroBanner {
+  id: number;
+  image_path: string;
+  sort_order: number;
+  is_active: boolean;
+}
+
 /* ====================================================
    API SERVICES & METHODS
 ==================================================== */
+
+export const getHeroBanners = async (): Promise<HeroBanner[]> => {
+  try {
+    const res = await api.get("/hero-banners");
+    return res.data.data || [];
+  } catch {
+    return [];
+  }
+};
 
 // Shopping Bag
 export const getCart = async (): Promise<CartData> => {
@@ -365,6 +393,17 @@ export const getProductBySlug = async (slug: string): Promise<any> => {
     return res.data.data;
   } catch {
     return null;
+  }
+};
+
+// FAQ API
+export const getFaqs = async (): Promise<any[]> => {
+  try {
+    const res = await api.get("/faqs");
+    return res.data?.data || [];
+  } catch (e) {
+    console.warn("Failed to fetch FAQs from API:", e);
+    return [];
   }
 };
 
@@ -591,6 +630,170 @@ export const authApiVerifyOtp = async (data: { email: string; otp: string }) => 
 
 export const authApiResetPassword = async (data: { email: string; otp: string; password: string; password_confirmation: string }) => {
   const res = await api.post("/forgot-password/reset", data);
+  return res.data;
+};
+
+export interface SizeGuideItem {
+  id: number;
+  category: string;
+  category_code: string;
+  fit_description?: string;
+  description?: string;
+  columns: string[];
+  rows: Record<string, string>[];
+  sort_order?: number;
+  is_active?: boolean;
+}
+
+export const getSizeGuides = async (): Promise<SizeGuideItem[]> => {
+  try {
+    const res = await api.get("/size-guides");
+    if (res.data && res.data.status === "success" && Array.isArray(res.data.data)) {
+      return res.data.data;
+    }
+  } catch (error) {
+    console.error("Failed to fetch size guides from API:", error);
+  }
+  return [];
+};
+
+export interface ContactSettingItem {
+  id: number;
+  type: "channel" | "warehouse";
+  code?: string;
+  title: string;
+  subtitle?: string;
+  value: string;
+  link?: string;
+  note?: string;
+  latitude?: number;
+  longitude?: number;
+  sort_order?: number;
+  is_active?: boolean;
+}
+
+export const getContactSettings = async (): Promise<ContactSettingItem[]> => {
+  try {
+    const res = await api.get("/contact-settings");
+    if (res.data && res.data.status === "success" && Array.isArray(res.data.data)) {
+      return res.data.data;
+    }
+  } catch (error) {
+    console.error("Failed to fetch contact settings from API:", error);
+  }
+  return [];
+};
+
+/* ====================================================
+   CATEGORIES, COLLECTIONS & SORT OPTIONS API
+==================================================== */
+
+export interface CategoryItem {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string;
+  products_count?: number;
+}
+
+export interface CollectionItem {
+  id: number;
+  name: string;
+  slug: string;
+  code?: string;
+  description?: string;
+  is_active?: boolean;
+}
+
+export interface SortOptionItem {
+  id: number;
+  name: string;
+  code: string;
+  sort_order?: number;
+  is_active?: boolean;
+}
+
+// Categories API
+export const getCategories = async (): Promise<CategoryItem[]> => {
+  try {
+    const res = await api.get("/categories");
+    if (res.data && res.data.status && Array.isArray(res.data.data)) {
+      return res.data.data;
+    }
+  } catch (error) {
+    console.error("Failed to fetch categories from API:", error);
+  }
+  return [];
+};
+
+export const createCategory = async (data: { name: string; description?: string }) => {
+  const res = await api.post("/admin/categories", data);
+  return res.data;
+};
+
+export const updateCategory = async (id: number, data: { name: string; description?: string }) => {
+  const res = await api.put(`/admin/categories/${id}`, data);
+  return res.data;
+};
+
+export const deleteCategory = async (id: number) => {
+  const res = await api.delete(`/admin/categories/${id}`);
+  return res.data;
+};
+
+// Collections / Focus On API
+export const getCollections = async (): Promise<CollectionItem[]> => {
+  try {
+    const res = await api.get("/collections");
+    if (res.data && res.data.status && Array.isArray(res.data.data)) {
+      return res.data.data;
+    }
+  } catch (error) {
+    console.error("Failed to fetch collections from API:", error);
+  }
+  return [];
+};
+
+export const createCollection = async (data: { name: string; code?: string; description?: string }) => {
+  const res = await api.post("/admin/collections", data);
+  return res.data;
+};
+
+export const updateCollection = async (id: number, data: { name: string; code?: string; description?: string; is_active?: boolean }) => {
+  const res = await api.put(`/admin/collections/${id}`, data);
+  return res.data;
+};
+
+export const deleteCollection = async (id: number) => {
+  const res = await api.delete(`/admin/collections/${id}`);
+  return res.data;
+};
+
+// Sort Options API
+export const getSortOptions = async (): Promise<SortOptionItem[]> => {
+  try {
+    const res = await api.get("/sort-options");
+    if (res.data && res.data.status && Array.isArray(res.data.data)) {
+      return res.data.data;
+    }
+  } catch (error) {
+    console.error("Failed to fetch sort options from API:", error);
+  }
+  return [];
+};
+
+export const createSortOption = async (data: { name: string; code?: string; sort_order?: number }) => {
+  const res = await api.post("/admin/sort-options", data);
+  return res.data;
+};
+
+export const updateSortOption = async (id: number, data: { name: string; code?: string; sort_order?: number; is_active?: boolean }) => {
+  const res = await api.put(`/admin/sort-options/${id}`, data);
+  return res.data;
+};
+
+export const deleteSortOption = async (id: number) => {
+  const res = await api.delete(`/admin/sort-options/${id}`);
   return res.data;
 };
 

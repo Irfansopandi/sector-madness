@@ -90,19 +90,29 @@ export default function Footer() {
               </h4>
               <ul className="space-y-4 md:space-y-5">
                 {[
-                  { label: "Shipping", href: "#" },
-                  { label: "Returns", href: "#" },
-                  { label: "Size Guide", href: "#" },
-                  { label: "FAQ", href: "#" },
-                  { label: "Contact", href: "#" },
+                  { label: "Shipping", href: "/shipping" },
+                  { label: "Size Guide", href: "/size-guide" },
+                  { label: "FAQ", href: "/faq" },
+                  { label: "Contact", href: "/contact" },
                 ].map((item) => (
                   <li key={item.label}>
-                    <a
-                      href={item.href}
-                      className="text-[13px] md:text-[14px] font-[family-name:var(--font-body)] font-light text-[#8A8A8A] hover:text-[#F5F5F5] hover:translate-x-[4px] transition-all duration-300 ease-out inline-block leading-[1.6]"
-                    >
-                      {item.label}
-                    </a>
+                    {item.href.startsWith("/") ? (
+                      <Link
+                        href={item.href}
+                        className="text-[13px] md:text-[14px] font-[family-name:var(--font-body)] font-light text-[#8A8A8A] hover:text-[#F5F5F5] hover:translate-x-[4px] transition-all duration-300 ease-out inline-block leading-[1.6]"
+                      >
+                        {item.label}
+                      </Link>
+                    ) : (
+                      <a
+                        href={item.href}
+                        target={item.href.startsWith("http") ? "_blank" : undefined}
+                        rel={item.href.startsWith("http") ? "noopener noreferrer" : undefined}
+                        className="text-[13px] md:text-[14px] font-[family-name:var(--font-body)] font-light text-[#8A8A8A] hover:text-[#F5F5F5] hover:translate-x-[4px] transition-all duration-300 ease-out inline-block leading-[1.6]"
+                      >
+                        {item.label}
+                      </a>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -117,8 +127,8 @@ export default function Footer() {
                 {[
                   { label: "Stories", href: "/brand" },
                   { label: "Journal", href: "/journal" },
-                  { label: "Terms & Conditions", href: "#" },
-                  { label: "Privacy Policy", href: "#" },
+                  { label: "Terms & Conditions", href: "/terms" },
+                  { label: "Privacy Policy", href: "/privacy" },
                 ].map((item) => (
                   <li key={item.label}>
                     <Link

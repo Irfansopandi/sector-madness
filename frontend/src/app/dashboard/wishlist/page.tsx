@@ -4,10 +4,12 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { getWishlist, removeFromWishlist, addToCart, type WishlistItem } from "@/utils/api";
+import { useQuery } from "@tanstack/react-query";
+import { getWishlist, removeFromWishlist, addToCart, getProducts, type WishlistItem } from "@/utils/api";
 import { products, getVariantStock } from "@/data/products";
 import BagToast from "@/components/BagToast";
 import WishlistToast from "@/components/WishlistToast";
+import CountdownTimer from "@/components/CountdownTimer";
 
 export default function WishlistPage() {
   const [wishlistProducts, setWishlistProducts] = useState<WishlistItem[]>([]);
@@ -15,6 +17,11 @@ export default function WishlistPage() {
   const [bagToastMsg, setBagToastMsg] = useState("");
   const [showWishlistToast, setShowWishlistToast] = useState(false);
   const [wishlistToastMsg, setWishlistToastMsg] = useState("");
+
+  const { data: apiProducts = [] } = useQuery({
+    queryKey: ["products"],
+    queryFn: getProducts,
+  });
 
   useEffect(() => {
     try {
@@ -98,18 +105,27 @@ export default function WishlistPage() {
         ) : (
           <div>
             {wishlistProducts.map((prod, idx) => {
-              // Match against local product catalog for accurate image & price — same strategy as Shopping Bag
+              // Match against API & local product catalog for accurate image, price, and discount fields
+              const matchedApiProduct = apiProducts.find(
+                (p) => p.id === Number(prod.product_id) || p.slug === prod.slug || p.name === prod.name
+              );
               const staticProduct = products.find(
                 (p) =>
                   parseInt(p.id, 10) === Number(prod.product_id) ||
                   p.slug === prod.slug ||
                   p.name === prod.name
               );
-              const resolvedImage = staticProduct?.image || prod.image || "/images/campaign/campaign-1.png";
-              const resolvedPrice = staticProduct?.price ?? prod.price ?? 0;
-              const resolvedName = staticProduct?.name || prod.name;
-              const productLink = staticProduct ? `/product/${staticProduct.slug}` : `/product/${prod.slug || prod.product_id}`;
-              const itemCategory = (prod.category || staticProduct?.collectionCode || staticProduct?.collection || "T-SHIRT").toUpperCase();
+
+              const resolvedImage = matchedApiProduct?.image || staticProduct?.image || prod.image || "/images/campaign/campaign-1.png";
+              const rawPrice = matchedApiProduct?.price ?? staticProduct?.price ?? prod.price ?? 0;
+              const resolvedPrice = typeof rawPrice === 'number' ? (rawPrice > 1000 ? rawPrice / 15000 : rawPrice) : 285;
+              const rawOriginalPrice = matchedApiProduct?.original_price ?? staticProduct?.originalPrice;
+              const originalPrice = rawOriginalPrice ? (rawOriginalPrice > 1000 ? rawOriginalPrice / 15000 : rawOriginalPrice) : undefined;
+              const discountPercentage = matchedApiProduct?.discount_percentage ?? staticProduct?.discountPercentage;
+              const discountExpiresAt = matchedApiProduct?.discount_expires_at ?? staticProduct?.discountExpiresAt;
+              const resolvedName = matchedApiProduct?.name || staticProduct?.name || prod.name;
+              const productLink = matchedApiProduct ? `/product/${matchedApiProduct.slug}` : (staticProduct ? `/product/${staticProduct.slug}` : `/product/${prod.slug || prod.product_id}`);
+              const itemCategory = (prod.category || matchedApiProduct?.collection_code || staticProduct?.collectionCode || "T-SHIRT").toUpperCase();
 
               return (
                 <motion.div
@@ -145,10 +161,13 @@ export default function WishlistPage() {
                       {/* Top: Info & Price */}
                       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                         <div className="space-y-2">
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-3 flex-wrap">
                             <span className="text-[10px] font-mono tracking-[0.2em] uppercase text-[#888888]">
                               {itemCategory}
                             </span>
+                            {discountExpiresAt && (
+                              <CountdownTimer expiresAt={discountExpiresAt} compact />
+                            )}
                             {!prod.in_stock && (
                               <span className="text-[10px] font-mono tracking-[0.2em] uppercase bg-[#881111] text-white px-2 py-0.5 font-bold">
                                 OUT OF STOCK
@@ -193,12 +212,19 @@ export default function WishlistPage() {
                           </div>
                         </div>
 
-                        <div className="text-left sm:text-right shrink-0 space-y-1" style={{ paddingRight: "12px" }}>
+                        {/* Price Section */}
+                        <div className="text-left sm:text-right shrink-0 flex flex-col items-start sm:items-end gap-0.5" style={{ paddingRight: "12px" }}>
+                          {/* Top: Promo / Discounted Price (BOLD) */}
                           <p className="text-base font-bold font-mono text-white tracking-wide">
-                            Rp {staticProduct
-                              ? (resolvedPrice * 15000).toLocaleString("id-ID")
-                              : resolvedPrice.toLocaleString("id-ID")}
+                            Rp {(resolvedPrice * 15000).toLocaleString("id-ID")}
                           </p>
+
+                          {/* Bottom: Normal / Original Price (NOT BOLD, CROSSED OUT) */}
+                          {originalPrice && originalPrice > resolvedPrice && (
+                            <span className="text-xs font-mono font-normal text-[#888888] line-through">
+                              Rp {(originalPrice * 15000).toLocaleString("id-ID")}
+                            </span>
+                          )}
                         </div>
                       </div>
 

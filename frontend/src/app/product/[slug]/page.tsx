@@ -11,6 +11,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import AnimatedSection from "@/components/AnimatedSection";
 import Container from "@/components/Container";
+import CountdownTimer from "@/components/CountdownTimer";
 import { addItemToBag } from "@/utils/bag";
 import BagToast from "@/components/BagToast";
 import WishlistToast from "@/components/WishlistToast";
@@ -44,6 +45,10 @@ export default function ProductPage({
     material: apiProduct.material || "Technical Blend",
     weight: apiProduct.weight || "450 GSM",
     price: typeof apiProduct.price === 'number' ? (apiProduct.price > 1000 ? apiProduct.price / 15000 : apiProduct.price) : 285,
+    originalPrice: apiProduct.original_price ? (apiProduct.original_price > 1000 ? apiProduct.original_price / 15000 : apiProduct.original_price) : undefined,
+    discountPercentage: apiProduct.discount_percentage,
+    discountExpiresAt: apiProduct.discount_expires_at,
+    isFlashSale: apiProduct.is_flash_sale,
     image: apiProduct.image || "/images/products/product-1.png",
     gallery: apiProduct.gallery || [apiProduct.image || "/images/products/product-1.png"],
     colors: apiProduct.colors || [{ name: "Black", hex: "#0A0A0A" }],
@@ -388,10 +393,29 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
               {/* Price & Stock Display Row */}
               <div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "16px" }}>
+                  {/* Flash sale live countdown timer */}
+                  {(product as any).discountExpiresAt && (
+                    <CountdownTimer expiresAt={(product as any).discountExpiresAt} />
+                  )}
+
                   <div className="flex items-center justify-between gap-4 flex-wrap sm:flex-nowrap">
-                    <p className="text-[24px] sm:text-[26px] text-[#F5F5F5] font-[family-name:var(--font-body)] font-light whitespace-nowrap shrink-0">
-                      Rp {(product.price * 15000).toLocaleString("id-ID")}
-                    </p>
+                    <div className="flex flex-col gap-1">
+                      {(product as any).originalPrice && (product as any).originalPrice > product.price && (
+                        <div className="flex items-center gap-2">
+                          {(product as any).discountPercentage && (product as any).discountPercentage > 0 && (
+                            <span className="bg-[#FF3B30] text-white text-[9px] font-bold tracking-[0.15em] px-2 py-0.5 uppercase">
+                              -{(product as any).discountPercentage}% OFF
+                            </span>
+                          )}
+                          <p className="text-[13px] sm:text-[14px] text-[#888888] line-through font-[family-name:var(--font-body)]">
+                            Rp {((product as any).originalPrice * 15000).toLocaleString("id-ID")}
+                          </p>
+                        </div>
+                      )}
+                      <p className="text-[26px] sm:text-[28px] text-[#F5F5F5] font-[family-name:var(--font-body)] font-[600] whitespace-nowrap shrink-0">
+                        Rp {(product.price * 15000).toLocaleString("id-ID")}
+                      </p>
+                    </div>
                     <span className="text-[10px] sm:text-[11px] tracking-[0.2em] uppercase font-[family-name:var(--font-body)] text-[#B6A47E] font-medium bg-[#141414] px-3.5 py-1.5 border border-[#2B2B2B] whitespace-nowrap shrink-0">
                       FULL CATALOG STOCK: {totalCatalogStock} UNITS
                     </span>

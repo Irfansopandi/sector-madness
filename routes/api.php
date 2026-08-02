@@ -13,6 +13,12 @@ use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ShippingController;
 use App\Http\Controllers\Api\ShippingAddressController;
 use App\Http\Controllers\Api\WishlistController;
+use App\Http\Controllers\Api\FaqController;
+use App\Http\Controllers\Api\SizeGuideController;
+use App\Http\Controllers\Api\ContactSettingController;
+use App\Http\Controllers\Api\SortOptionController;
+use App\Http\Controllers\Api\CollectionController;
+use App\Http\Controllers\Api\HeroBannerController;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,17 +29,53 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/admin/login', [AuthController::class, 'adminLogin']);
 
+// Hero Banners API (Public & Admin Management)
+Route::get('/hero-banners', [HeroBannerController::class, 'index']);
+Route::get('/admin/hero-banners', [HeroBannerController::class, 'adminIndex']);
+Route::post('/admin/hero-banners', [HeroBannerController::class, 'store']);
+Route::put('/admin/hero-banners/{id}', [HeroBannerController::class, 'update']);
+Route::delete('/admin/hero-banners/{id}', [HeroBannerController::class, 'destroy']);
+
 Route::post('/forgot-password/send-otp', [ForgotPasswordController::class, 'sendOtp']);
 Route::post('/forgot-password/verify-otp', [ForgotPasswordController::class, 'verifyOtp']);
 Route::post('/forgot-password/reset', [ForgotPasswordController::class, 'resetPassword']);
 
-/*
-|--------------------------------------------------------------------------
-| Public E-Commerce Catalog & Integrations
-|--------------------------------------------------------------------------
-*/
+// Categories API (Public & Admin Management)
 Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/categories/{slug}', [CategoryController::class, 'show']);
+Route::post('/admin/categories', [CategoryController::class, 'store']);
+Route::put('/admin/categories/{id}', [CategoryController::class, 'update']);
+Route::delete('/admin/categories/{id}', [CategoryController::class, 'destroy']);
+
+// Collections / Focus On API (Public & Admin Management)
+Route::get('/collections', [CollectionController::class, 'index']);
+Route::post('/admin/collections', [CollectionController::class, 'store']);
+Route::put('/admin/collections/{id}', [CollectionController::class, 'update']);
+Route::delete('/admin/collections/{id}', [CollectionController::class, 'destroy']);
+
+// Sort Options API (Public & Admin Management)
+Route::get('/sort-options', [SortOptionController::class, 'index']);
+Route::post('/admin/sort-options', [SortOptionController::class, 'store']);
+Route::put('/admin/sort-options/{id}', [SortOptionController::class, 'update']);
+Route::delete('/admin/sort-options/{id}', [SortOptionController::class, 'destroy']);
+
+// FAQ API (Public & Admin Management)
+Route::get('/faqs', [FaqController::class, 'index']);
+Route::post('/admin/faqs', [FaqController::class, 'store']);
+Route::put('/admin/faqs/{id}', [FaqController::class, 'update']);
+Route::delete('/admin/faqs/{id}', [FaqController::class, 'destroy']);
+
+// Size Guide API (Public & Admin Management)
+Route::get('/size-guides', [SizeGuideController::class, 'index']);
+Route::post('/admin/size-guides', [SizeGuideController::class, 'store']);
+Route::put('/admin/size-guides/{id}', [SizeGuideController::class, 'update']);
+Route::delete('/admin/size-guides/{id}', [SizeGuideController::class, 'destroy']);
+
+// Contact Settings API (Public & Admin Management)
+Route::get('/contact-settings', [ContactSettingController::class, 'index']);
+Route::post('/admin/contact-settings', [ContactSettingController::class, 'store']);
+Route::put('/admin/contact-settings/{id}', [ContactSettingController::class, 'update']);
+Route::delete('/admin/contact-settings/{id}', [ContactSettingController::class, 'destroy']);
 
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{slug}', [ProductController::class, 'show']);

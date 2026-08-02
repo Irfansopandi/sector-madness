@@ -5,10 +5,12 @@ import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { getProducts } from "@/utils/api";
+import { getProducts, getCategories, getSortOptions } from "@/utils/api";
 import { products as localProducts } from "@/data/products";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+
+import CountdownTimer from "@/components/CountdownTimer";
 
 function ShopContent() {
   const searchParams = useSearchParams();
@@ -30,6 +32,10 @@ function ShopContent() {
     material: p.material || "Technical Blend",
     weight: p.weight || "450 GSM",
     price: typeof p.price === 'number' ? (p.price > 1000 ? p.price / 15000 : p.price) : 285,
+    originalPrice: p.original_price ? (p.original_price > 1000 ? p.original_price / 15000 : p.original_price) : undefined,
+    discountPercentage: p.discount_percentage,
+    discountExpiresAt: p.discount_expires_at,
+    isFlashSale: p.is_flash_sale,
     image: p.image || "/images/products/product-1.png",
     gallery: p.gallery || [p.image || "/images/products/product-1.png"],
     colors: p.colors || [{ name: "Black", hex: "#0A0A0A" }],
@@ -41,7 +47,7 @@ function ShopContent() {
   })) : localProducts;
 
   const [activeCategory, setActiveCategory] = useState(categoryParam ? categoryParam.toUpperCase() : "ALL");
-  const [gridCols, setGridCols] = useState<3 | 4 | 5 | 6>(4);
+  const [gridCols, setGridCols] = useState<4 | 6>(4);
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState("SELECTED");
 
@@ -54,29 +60,23 @@ function ShopContent() {
     }
   }, [categoryParam]);
 
-  // Extract unique categories from product names/collections
-  const categories = [
-    "ALL",
-    "NEW ARRIVALS",
-    "OUTERWEAR",
-    "T-SHIRT",
-    "BOTTOMS",
-    "ACCESSORIES",
-    "SALE",
-    "FW026",
-    "ATELIER ARCHIVE",
-    "TACTICAL SERIES",
-    "HOODIE",
-    "JACKETS",
-    "BOMBER",
-    "POLO SHIRT",
-    "CARGO",
-    "TROUSERS",
-    "SWEATS",
-    "KNIT",
-    "VEST",
-    "ANORAK",
-  ];
+  const { data: apiCategories } = useQuery({
+    queryKey: ["categories"],
+    queryFn: getCategories,
+  });
+
+  const { data: apiSortOptions } = useQuery({
+    queryKey: ["sortOptions"],
+    queryFn: getSortOptions,
+  });
+
+  const dynamicCategories = (apiCategories && apiCategories.length > 0)
+    ? ["ALL", ...apiCategories.map(c => c.name.toUpperCase())]
+    : ["ALL"];
+
+  const dynamicSortOptions = (apiSortOptions && apiSortOptions.length > 0)
+    ? apiSortOptions.map(s => s.name.toUpperCase())
+    : ["SELECTED"];
 
   // Filter products logic
   const filteredProducts = productsList.filter((p) => {
@@ -96,9 +96,10 @@ function ShopContent() {
 
   // Sort products
   const sortedProducts = [...filteredProducts].sort((a, b) => {
-    if (sortBy === "PRICE LOW TO HIGH") return a.price - b.price;
-    if (sortBy === "PRICE HIGH TO LOW") return b.price - a.price;
-    if (sortBy === "NEW IN") return Number(b.id) - Number(a.id);
+    const sortUpper = sortBy.toUpperCase();
+    if (sortUpper.includes("LOW TO HIGH") || sortUpper === "PRICE_ASC") return a.price - b.price;
+    if (sortUpper.includes("HIGH TO LOW") || sortUpper === "PRICE_DESC") return b.price - a.price;
+    if (sortUpper.includes("NEW") || sortUpper === "NEWEST") return Number(b.id) - Number(a.id);
     return 0; // SELECTED = default order
   });
 
@@ -168,22 +169,7 @@ function ShopContent() {
               {/* Separator */}
               <span className="w-px h-4 bg-[#D0D0D0]" />
 
-              {/* 3-column grid icon */}
-              <button
-                onClick={() => setGridCols(3)}
-                className={`cursor-pointer transition-opacity ${
-                  gridCols === 3 ? "opacity-100" : "opacity-30 hover:opacity-70"
-                }`}
-                aria-label="3 Column Grid"
-              >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                  <rect x="0" y="0" width="4" height="16" />
-                  <rect x="6" y="0" width="4" height="16" />
-                  <rect x="12" y="0" width="4" height="16" />
-                </svg>
-              </button>
-
-              {/* 4-column grid icon */}
+              {/* 4-column grid icon (2 rows of 4 rects) */}
               <button
                 onClick={() => setGridCols(4)}
                 className={`cursor-pointer transition-opacity ${
@@ -191,15 +177,43 @@ function ShopContent() {
                 }`}
                 aria-label="4 Column Grid"
               >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                  <rect x="0" y="0" width="3" height="7" />
-                  <rect x="4.3" y="0" width="3" height="7" />
-                  <rect x="8.7" y="0" width="3" height="7" />
-                  <rect x="13" y="0" width="3" height="7" />
-                  <rect x="0" y="9" width="3" height="7" />
-                  <rect x="4.3" y="9" width="3" height="7" />
-                  <rect x="8.7" y="9" width="3" height="7" />
-                  <rect x="13" y="9" width="3" height="7" />
+                <svg width="18" height="16" viewBox="0 0 18 16" fill="currentColor">
+                  {/* Top row */}
+                  <rect x="0" y="0" width="3.2" height="7" />
+                  <rect x="4.9" y="0" width="3.2" height="7" />
+                  <rect x="9.8" y="0" width="3.2" height="7" />
+                  <rect x="14.7" y="0" width="3.2" height="7" />
+                  {/* Bottom row */}
+                  <rect x="0" y="9" width="3.2" height="7" />
+                  <rect x="4.9" y="9" width="3.2" height="7" />
+                  <rect x="9.8" y="9" width="3.2" height="7" />
+                  <rect x="14.7" y="9" width="3.2" height="7" />
+                </svg>
+              </button>
+
+              {/* 6-column grid icon (2 rows of 6 rects) */}
+              <button
+                onClick={() => setGridCols(6)}
+                className={`cursor-pointer transition-opacity ${
+                  gridCols === 6 ? "opacity-100" : "opacity-30 hover:opacity-70"
+                }`}
+                aria-label="6 Column Grid"
+              >
+                <svg width="26" height="16" viewBox="0 0 26 16" fill="currentColor">
+                  {/* Top row */}
+                  <rect x="0" y="0" width="3.2" height="7" />
+                  <rect x="4.5" y="0" width="3.2" height="7" />
+                  <rect x="9.0" y="0" width="3.2" height="7" />
+                  <rect x="13.5" y="0" width="3.2" height="7" />
+                  <rect x="18.0" y="0" width="3.2" height="7" />
+                  <rect x="22.5" y="0" width="3.2" height="7" />
+                  {/* Bottom row */}
+                  <rect x="0" y="9" width="3.2" height="7" />
+                  <rect x="4.5" y="9" width="3.2" height="7" />
+                  <rect x="9.0" y="9" width="3.2" height="7" />
+                  <rect x="13.5" y="9" width="3.2" height="7" />
+                  <rect x="18.0" y="9" width="3.2" height="7" />
+                  <rect x="22.5" y="9" width="3.2" height="7" />
                 </svg>
               </button>
             </div>
@@ -207,10 +221,10 @@ function ShopContent() {
 
           {/* Product Grid */}
           <div
-            className={`grid gap-x-5 gap-y-12 transition-all duration-300 ${
-              gridCols === 3
-                ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-                : "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+            className={`grid gap-y-12 transition-all duration-300 ${
+              gridCols === 6
+                ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-3"
+                : "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5"
             }`}
           >
             {sortedProducts.map((product) => (
@@ -232,7 +246,21 @@ function ShopContent() {
                   />
 
                   {/* Limited label */}
-                  {product.limited && (
+                  {/* Discount percentage badge */}
+                  {product.discountPercentage && product.discountPercentage > 0 && (
+                    <div className="absolute top-3 left-3 bg-[#FF3B30] text-white text-[9px] font-bold tracking-[0.15em] uppercase px-2 py-1 z-10 shadow-sm">
+                      -{product.discountPercentage}% OFF
+                    </div>
+                  )}
+
+                  {/* Flash sale countdown badge */}
+                  {product.discountExpiresAt && (
+                    <div className="absolute top-3 right-3 z-10">
+                      <CountdownTimer expiresAt={product.discountExpiresAt} compact />
+                    </div>
+                  )}
+
+                  {product.limited && (!product.discountPercentage || product.discountPercentage === 0) && (
                     <div className="absolute top-4 left-4">
                       <span className="text-[9px] tracking-[0.2em] uppercase text-[#B6A47E] font-[family-name:var(--font-body)]">
                         Limited Release
@@ -262,9 +290,16 @@ function ShopContent() {
                   <p className="text-[11px] text-[#8A8A8A] font-[family-name:var(--font-body)] font-light">
                     {product.material} · {product.weight}
                   </p>
-                  <p className="text-[13px] text-[#0A0A0A] font-[family-name:var(--font-body)] font-light pt-1">
-                    Rp {(product.price * 15000).toLocaleString("id-ID")}
-                  </p>
+                  <div className="flex items-center gap-2 pt-1 flex-wrap">
+                    <span className="text-[13px] text-[#0A0A0A] font-[family-name:var(--font-body)] font-medium">
+                      Rp {(product.price * 15000).toLocaleString("id-ID")}
+                    </span>
+                    {product.originalPrice && product.originalPrice > product.price && (
+                      <span className="text-[11px] text-[#999999] line-through font-[family-name:var(--font-body)]">
+                        Rp {(product.originalPrice * 15000).toLocaleString("id-ID")}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </Link>
             ))}
@@ -330,7 +365,7 @@ function ShopContent() {
                 SORT BY
               </h3>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginBottom: "48px" }}>
-                {["SELECTED", "PRICE LOW TO HIGH", "PRICE HIGH TO LOW", "NEW IN"].map((sort) => (
+                {dynamicSortOptions.map((sort) => (
                   <button
                     key={sort}
                     onClick={() => setSortBy(sort)}
@@ -341,8 +376,8 @@ function ShopContent() {
                       fontWeight: 600,
                       borderRadius: "30px",
                       border: "1.5px solid #0A0A0A",
-                      backgroundColor: sortBy === sort ? "#0A0A0A" : "#FFFFFF",
-                      color: sortBy === sort ? "#FFFFFF" : "#0A0A0A",
+                      backgroundColor: sortBy.toUpperCase() === sort.toUpperCase() ? "#0A0A0A" : "#FFFFFF",
+                      color: sortBy.toUpperCase() === sort.toUpperCase() ? "#FFFFFF" : "#0A0A0A",
                       cursor: "pointer",
                       transition: "all 0.2s ease",
                     }}
@@ -368,7 +403,7 @@ function ShopContent() {
                 <span style={{ fontSize: "18px", color: "#999", lineHeight: 1 }}>—</span>
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
-                {categories.map((cat) => (
+                {dynamicCategories.map((cat) => (
                   <button
                     key={cat}
                     onClick={() => setActiveCategory(cat)}
@@ -379,8 +414,8 @@ function ShopContent() {
                       fontWeight: 600,
                       borderRadius: "30px",
                       border: "1.5px solid #0A0A0A",
-                      backgroundColor: activeCategory === cat ? "#0A0A0A" : "#FFFFFF",
-                      color: activeCategory === cat ? "#FFFFFF" : "#0A0A0A",
+                      backgroundColor: activeCategory.toUpperCase() === cat.toUpperCase() ? "#0A0A0A" : "#FFFFFF",
+                      color: activeCategory.toUpperCase() === cat.toUpperCase() ? "#FFFFFF" : "#0A0A0A",
                       cursor: "pointer",
                       transition: "all 0.2s ease",
                     }}

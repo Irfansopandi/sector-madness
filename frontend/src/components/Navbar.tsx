@@ -8,32 +8,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { products } from "@/data/products";
 import { getBagItems } from "@/utils/bag";
-import { getCart } from "@/utils/api";
+import { getCart, getCategories, getCollections, getProducts } from "@/utils/api";
 
 const navLinks = [
   { label: "SHOP", href: "/shop", hasDropdown: true },
   { label: "JOURNAL", href: "/journal", hasDropdown: false },
   { label: "STORIES", href: "/brand", hasDropdown: false },
-];
-
-const productCategories = [
-  { label: "> ALL PRODUCTS", filter: "ALL" },
-  { label: "> ACCESSORIES", filter: "ACCESSORIES" },
-  { label: "> JACKETS", filter: "JACKETS" },
-  { label: "> SWEATSHIRTS", filter: "SWEATS" },
-  { label: "> SHORTS & TROUSERS", filter: "TROUSERS" },
-  { label: "> POLO SHIRTS", filter: "POLO SHIRT" },
-  { label: "> T-SHIRT", filter: "T-SHIRT" },
-  { label: "> SHIRTS", filter: "SHIRT" },
-];
-
-const focusOnItems = [
-  { label: "> ZESTY", filter: "ZESTY" },
-  { label: "> PRISTINE", filter: "PRISTINE" },
-  { label: "> LOFTY", filter: "LOFTY" },
-  { label: "> FANCY", filter: "FANCY" },
-  { label: "> FROLIC", filter: "FROLIC" },
-  { label: "> SECTOR MADNESS | ORIGIN", filter: "SECTOR MADNESS" },
 ];
 
 interface NavbarProps {
@@ -63,6 +43,34 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
     retry: 1,
     refetchInterval: 15000,
   });
+
+  const [hoveredFilter, setHoveredFilter] = useState<string>("ALL");
+
+  const { data: apiProducts = [] } = useQuery({
+    queryKey: ["products"],
+    queryFn: getProducts,
+  });
+
+  const { data: apiCategories } = useQuery({
+    queryKey: ["categories"],
+    queryFn: getCategories,
+  });
+
+  const { data: apiCollections } = useQuery({
+    queryKey: ["collections"],
+    queryFn: getCollections,
+  });
+
+  const dynamicCategories = (apiCategories && apiCategories.length > 0)
+    ? [
+        { label: "> ALL PRODUCTS", filter: "ALL" },
+        ...apiCategories.slice(0, 6).map(c => ({ label: `> ${c.name.toUpperCase()}`, filter: c.name }))
+      ]
+    : [{ label: "> ALL PRODUCTS", filter: "ALL" }];
+
+  const dynamicFocusOn = (apiCollections && apiCollections.length > 0)
+    ? apiCollections.map(c => ({ label: `> ${c.name.toUpperCase()}`, filter: c.code || c.name }))
+    : [];
 
   const actualBagCount = cartData ? cartData.total_quantity : bagCount;
 
@@ -173,7 +181,70 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
     );
   });
 
-  const featuredShopProduct = products[hoveredProductIndex] || products[0];
+  const activeProducts = (apiProducts && apiProducts.length > 0) ? apiProducts : products;
+
+  const featuredShopProduct = (() => {
+    if (!activeProducts || activeProducts.length === 0) return null;
+    if (!hoveredFilter || hoveredFilter === "ALL") return activeProducts[0];
+
+    const cat = hoveredFilter.toUpperCase();
+
+    // 1. Check Category Matches
+    if (cat === "OUTERWEAR" || cat === "JACKETS") {
+      const match = activeProducts.find(p => p.name.toLowerCase().match(/(bomber|trench|anorak|vest|jacket|coat)/i));
+      if (match) return match;
+    }
+    if (cat === "T-SHIRT" || cat === "T-SHIRTS" || cat === "POLO SHIRT" || cat === "SHIRTS") {
+      const match = activeProducts.find(p => p.name.toLowerCase().match(/(tee|t-shirt|shirt|polo)/i));
+      if (match) return match;
+    }
+    if (cat === "BOTTOMS" || cat === "CARGO" || cat === "TROUSERS" || cat === "SHORTS & TROUSERS") {
+      const match = activeProducts.find(p => p.name.toLowerCase().match(/(cargo|trousers|pants|shorts)/i));
+      if (match) return match;
+    }
+    if (cat === "SWEATSHIRTS" || cat === "HOODIE") {
+      const match = activeProducts.find(p => p.name.toLowerCase().match(/(hoodie|sweat|sweatshirt|zip)/i));
+      if (match) return match;
+    }
+    if (cat === "ACCESSORIES") {
+      const match = activeProducts.find(p => p.name.toLowerCase().match(/(vest|cap|accessory|bag|belt)/i));
+      if (match) return match;
+    }
+
+    // 2. Check Specific Focus On Item Mappings
+    if (cat === "ZESTY") return activeProducts[1 % activeProducts.length];
+    if (cat === "PRISTINE") return activeProducts[2 % activeProducts.length];
+    if (cat === "LOFTY") return activeProducts[3 % activeProducts.length];
+    if (cat === "FANCY") return activeProducts[4 % activeProducts.length];
+    if (cat === "FROLIC") return activeProducts[5 % activeProducts.length];
+    if (cat === "SECTOR MADNESS" || cat === "SECTOR MADNESS | ORIGIN") return activeProducts[0];
+
+    // 3. Search match for custom Focus On / Collections / Admin tags
+    const search = cat.toLowerCase();
+    const searchMatch = activeProducts.find((p) => {
+      const name = (p.name || "").toLowerCase();
+      const desc = (p.description || "").toLowerCase();
+      const coll = (p.collection || "").toLowerCase();
+      const collCode = (p.collection_code || "").toLowerCase();
+      const catName = (p.category?.name || "").toLowerCase();
+      return (
+        name.includes(search) ||
+        coll.includes(search) ||
+        collCode.includes(search) ||
+        desc.includes(search) ||
+        catName.includes(search)
+      );
+    });
+
+    if (searchMatch) return searchMatch;
+
+    // 4. Deterministic Index Fallback for any custom item
+    let hash = 0;
+    for (let i = 0; i < cat.length; i++) {
+      hash = (hash + cat.charCodeAt(i)) % activeProducts.length;
+    }
+    return activeProducts[hash] || activeProducts[0];
+  })();
 
   return (
     <>
@@ -375,19 +446,19 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
           >
             <div
               style={{ paddingLeft: "60px", paddingRight: "60px" }}
-              className="max-w-[1480px] mx-auto px-8 md:px-14 lg:px-20 pt-8 pb-12 lg:pt-10 lg:pb-14 grid grid-cols-12 gap-8 items-start"
+              className="max-w-[1480px] mx-auto px-8 md:px-14 lg:px-20 pt-8 pb-16 lg:pt-10 lg:pb-20 grid grid-cols-12 gap-8 items-start"
             >
               {/* Column 1: PRODUCTS List */}
               <div className="col-span-5 border-r border-[#EEEEEE] pr-10">
-                <h4 style={{ marginBottom: "36px" }} className="font-[family-name:var(--font-display)] text-[13px] md:text-[14px] tracking-[0.2em] font-medium text-[#777777] uppercase">
+                <h4 style={{ marginBottom: "28px" }} className="font-[family-name:var(--font-display)] text-[13px] md:text-[14px] tracking-[0.2em] font-medium text-[#777777] uppercase">
                   PRODUCTS
                 </h4>
-                <ul className="flex flex-col gap-5">
-                  {productCategories.map((cat, idx) => (
+                <ul className="flex flex-col gap-4">
+                  {dynamicCategories.map((cat) => (
                     <li key={cat.label}>
                       <Link
                         href={`/shop?category=${encodeURIComponent(cat.filter)}`}
-                        onMouseEnter={() => setHoveredProductIndex(idx % products.length)}
+                        onMouseEnter={() => setHoveredFilter(cat.filter)}
                         className="text-xs md:text-[13px] tracking-[0.2em] uppercase font-sans text-gray-500 font-normal hover:text-black hover:font-bold transition-all block cursor-pointer"
                       >
                         {cat.label}
@@ -399,15 +470,15 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
 
               {/* Column 2: FOCUS ON List */}
               <div className="col-span-5 border-r border-[#EEEEEE] pr-10 pl-10">
-                <h4 style={{ marginBottom: "36px" }} className="font-[family-name:var(--font-display)] text-[13px] md:text-[14px] tracking-[0.2em] font-medium text-[#777777] uppercase">
+                <h4 style={{ marginBottom: "28px" }} className="font-[family-name:var(--font-display)] text-[13px] md:text-[14px] tracking-[0.2em] font-medium text-[#777777] uppercase">
                   FOCUS ON
                 </h4>
-                <ul className="flex flex-col gap-5">
-                  {focusOnItems.map((item, idx) => (
+                <ul className="flex flex-col gap-4">
+                  {dynamicFocusOn.map((item) => (
                     <li key={item.label}>
                       <Link
                         href={`/shop?category=${encodeURIComponent(item.filter)}`}
-                        onMouseEnter={() => setHoveredProductIndex((idx + 2) % products.length)}
+                        onMouseEnter={() => setHoveredFilter(item.filter)}
                         className="text-xs md:text-[13px] tracking-[0.2em] uppercase font-sans text-gray-500 font-normal hover:text-black hover:font-bold transition-all block cursor-pointer"
                       >
                         {item.label}
@@ -419,27 +490,41 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
 
               {/* Column 3: Featured Product Preview */}
               <div className="col-span-2 pl-6 flex flex-col items-center justify-center">
-                <Link
-                  href={`/product/${featuredShopProduct.slug}`}
-                  className="group block w-full max-w-[260px]"
-                >
-                  <div className="relative aspect-[3/4] w-full bg-[#F4F4F4] overflow-hidden mb-3 border border-[#E5E5E5] flex items-center justify-center p-4">
-                    <Image
-                      src={featuredShopProduct.image}
-                      alt={featuredShopProduct.name}
-                      fill
-                      className="object-contain transition-transform duration-500 group-hover:scale-105"
-                    />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-[11px] font-semibold tracking-[0.1em] uppercase text-[#0A0A0A] line-clamp-1">
-                      {featuredShopProduct.name}
-                    </p>
-                    <p className="text-[10px] tracking-[0.15em] text-[#777777] uppercase mt-0.5">
-                      Rp {(featuredShopProduct.price * 15000).toLocaleString("id-ID")}
-                    </p>
-                  </div>
-                </Link>
+                {featuredShopProduct ? (
+                  <Link
+                    href={`/product/${featuredShopProduct.slug}`}
+                    className="group block w-full max-w-[260px]"
+                  >
+                    <div className="relative aspect-[3/4] w-full bg-[#F4F4F4] overflow-hidden mb-3 border border-[#E5E5E5] flex items-center justify-center p-4">
+                      <Image
+                        src={featuredShopProduct.image}
+                        alt={featuredShopProduct.name}
+                        fill
+                        className="object-contain transition-transform duration-500 group-hover:scale-105"
+                      />
+                      {featuredShopProduct.discount_percentage && featuredShopProduct.discount_percentage > 0 && (
+                        <div className="absolute top-2 left-2 bg-[#FF3B30] text-white text-[8px] font-bold tracking-[0.1em] uppercase px-1.5 py-0.5 z-10 shadow-sm">
+                          -{featuredShopProduct.discount_percentage}% OFF
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-center">
+                      <p className="text-[11px] font-semibold tracking-[0.1em] uppercase text-[#0A0A0A] line-clamp-1">
+                        {featuredShopProduct.name}
+                      </p>
+                      <div className="flex items-center justify-center gap-1.5 mt-0.5 flex-wrap">
+                        <p className="text-[10px] tracking-[0.15em] text-[#0A0A0A] font-semibold uppercase">
+                          Rp {(featuredShopProduct.price * 15000).toLocaleString("id-ID")}
+                        </p>
+                        {featuredShopProduct.original_price && featuredShopProduct.original_price > featuredShopProduct.price && (
+                          <p className="text-[9px] tracking-[0.1em] text-[#999999] line-through uppercase">
+                            Rp {(featuredShopProduct.original_price * 15000).toLocaleString("id-ID")}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                ) : null}
               </div>
             </div>
           </motion.div>
@@ -531,17 +616,16 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                 {/* Top Header: Centered Logo & Close Button (100% identical structural size and positioning as main Navbar) */}
                 <div className="w-full border-b border-[#E5E5E5]/40">
                   <div className="max-w-[1480px] mx-auto px-8 md:px-14 lg:px-20">
-                    <div className="flex justify-between items-center h-[88px] md:h-[116px]">
-                      {/* Bagian Kiri (Senada dengan padding navbar utama) */}
-                      <div className="flex-1 hidden lg:flex items-center justify-start" style={{ paddingLeft: "60px" }}></div>
-                      <div className="flex-1 lg:hidden flex items-center justify-start"></div>
+                    <div className="relative flex justify-between items-center h-[88px] md:h-[116px]">
+                      {/* Bagian Kiri (Placeholder senada dengan navbar utama) */}
+                      <div className="hidden lg:flex items-center gap-8 justify-start z-10" style={{ paddingLeft: "50px" }}></div>
 
-                      {/* Bagian Tengah (Logo Presisi Sama PERSIS seperti Navbar) */}
-                      <div className="flex-1 flex items-center justify-center">
+                      {/* Bagian Tengah (Logo Presisi 100% Sama PERSIS seperti Navbar) */}
+                      <div className="absolute left-1/2 top-1/2 pointer-events-none" style={{ transform: "translate(calc(-50% + 25px), -50%)" }}>
                         <Link
                           href="/"
                           onClick={() => setIsSearchOpen(false)}
-                          className="relative z-50 cursor-pointer flex items-center justify-center"
+                          className="relative z-50 cursor-pointer flex items-center justify-center pointer-events-auto"
                         >
                           <Image
                             src="/images/logo.png"
@@ -555,7 +639,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                       </div>
 
                       {/* Bagian Kanan (Tombol Close) */}
-                      <div className="flex-1 flex items-center justify-end" style={{ paddingRight: "60px" }}>
+                      <div className="flex items-center gap-8 justify-end z-10" style={{ paddingLeft: "50px" }}>
                         <button
                           onClick={() => setIsSearchOpen(false)}
                           style={{ fontSize: "12px", letterSpacing: "0.2em", fontWeight: 700 }}
@@ -601,6 +685,8 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                           </button>
                         )}
                       </div>
+
+                      {/* Quick Service Links removed from top */}
                     </div>
 
                     {/* Suggestions & Results Layout with guaranteed vertical whitespace */}
@@ -672,7 +758,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                             {searchResults.length === 0 ? (
                               <div style={{ padding: "80px 0" }} className="text-center border-t border-b border-[#EEEEEE]">
                                 <p style={{ fontSize: "14px", letterSpacing: "0.15em" }} className="uppercase text-[#666666]">
-                                  No matching items found in the Sector Madness database.
+                                  No matching items found.
                                 </p>
                               </div>
                             ) : (
@@ -714,15 +800,21 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                 <div className="w-full border-t border-[#E5E5E5] bg-[#FFFFFF]">
                   <div className="max-w-[1480px] mx-auto px-8 md:px-14 lg:px-20 py-6">
                     <div style={{ paddingLeft: "60px", paddingRight: "60px" }} className="flex flex-wrap items-center justify-start gap-12">
-                      {["CLIENT SERVICE", "CONTACT US", "OUR SERVICES", "STORE LOCATOR"].map((service) => (
+                      {[
+                        { name: "SHOP", href: "/shop" },
+                        { name: "SIZE GUIDE", href: "/size-guide" },
+                        { name: "CONTACT US", href: "/contact" },
+                        { name: "SHIPPING", href: "/shipping" },
+                        { name: "FAQ", href: "/faq" },
+                      ].map((item) => (
                         <Link
-                          key={service}
-                          href="/"
+                          key={item.name}
+                          href={item.href}
                           onClick={() => setIsSearchOpen(false)}
                           style={{ fontSize: "12px", letterSpacing: "0.18em", fontWeight: 700 }}
                           className="uppercase text-[#0A0A0A] hover:opacity-60 transition-opacity cursor-pointer"
                         >
-                          {service}
+                          {item.name}
                         </Link>
                       ))}
                     </div>

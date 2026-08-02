@@ -20,6 +20,10 @@ class Product extends Model
         'material',
         'weight',
         'price',
+        'original_price',
+        'discount_percentage',
+        'discount_expires_at',
+        'is_flash_sale',
         'image',
         'gallery',
         'colors',
@@ -34,14 +38,18 @@ class Product extends Model
     protected function casts(): array
     {
         return [
-            'gallery'    => 'array',
-            'colors'     => 'array',
-            'sizes'      => 'array',
-            'size_guide' => 'array',
-            'details'    => 'array',
-            'limited'    => 'boolean',
-            'price'      => 'float',
-            'stock'      => 'integer',
+            'gallery'             => 'array',
+            'colors'              => 'array',
+            'sizes'               => 'array',
+            'size_guide'          => 'array',
+            'details'             => 'array',
+            'limited'             => 'boolean',
+            'is_flash_sale'       => 'boolean',
+            'price'               => 'float',
+            'original_price'      => 'float',
+            'discount_percentage' => 'integer',
+            'discount_expires_at' => 'datetime',
+            'stock'               => 'integer',
         ];
     }
 

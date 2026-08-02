@@ -94,5 +94,10 @@ class DatabaseSeeder extends Seeder
             'minimum_purchase' => 1000000,
             'is_active' => true,
         ]);
+
+        // 6. Jalankan Seeder FAQ, Size Guide & Contact Settings
+        $this->call(FaqSeeder::class);
+        $this->call(SizeGuideSeeder::class);
+        $this->call(ContactSettingSeeder::class);
     }
 }

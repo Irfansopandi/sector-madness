@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -29,6 +29,14 @@ function getDynamicGreeting(): string {
 }
 
 export default function DashboardOverviewPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#0A0A0A]" />}>
+      <DashboardOverviewContent />
+    </Suspense>
+  );
+}
+
+function DashboardOverviewContent() {
   const [greeting, setGreeting] = useState<string>(() => {
     if (typeof window !== "undefined") {
       return getDynamicGreeting();

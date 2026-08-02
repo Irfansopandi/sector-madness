@@ -14,6 +14,10 @@ export interface Product {
   material: string;
   weight: string;
   price: number;
+  originalPrice?: number;
+  discountPercentage?: number;
+  discountExpiresAt?: string;
+  isFlashSale?: boolean;
   image: string;
   gallery: string[];
   colors: ProductColor[];

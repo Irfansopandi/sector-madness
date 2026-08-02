@@ -1596,26 +1596,26 @@ function CheckoutContent() {
                 <div className="flex flex-col gap-6 font-mono">
                   <p className="text-[11px] text-[#777777] leading-[1.8] uppercase tracking-wider">
                     YOUR PERSONAL DATA WILL BE USED TO PROCESS YOUR ORDER, SUPPORT YOUR EXPERIENCE THROUGHOUT THIS WEBSITE, AND FOR OTHER PURPOSES DESCRIBED IN OUR{" "}
-                    <button
-                      type="button"
-                      onClick={() => setPolicyModal("privacy")}
-                      className="text-white underline underline-offset-4 decoration-[#666666] hover:decoration-white cursor-pointer transition-colors font-bold inline"
+                    <Link
+                      href="/privacy"
+                      target="_blank"
+                      className="text-white underline underline-offset-4 decoration-[#666666] hover:decoration-white hover:text-[#B6A47E] cursor-pointer transition-colors font-bold inline"
                     >
                       PRIVACY POLICY
-                    </button>
+                    </Link>
                     .
                   </p>
 
-                  <label
-                    className="w-full max-w-full box-border flex items-center cursor-pointer select-none bg-[#101010] border border-[#222222] hover:border-[#444444] transition-colors"
-                    style={{ padding: "14px 16px", gap: "12px" }}
-                  >
-                    <div className="relative flex items-center justify-center shrink-0">
+                  <label className="flex items-center gap-3 cursor-pointer select-none group w-full py-1">
+                    <div className="relative flex items-center justify-center w-4 h-4 shrink-0">
                       <input
                         type="checkbox"
                         checked={agreedToTerms}
-                        onChange={(e) => setAgreedToTerms(e.target.checked)}
-                        className="peer appearance-none w-4 h-4 bg-[#080808] border border-[#555555] checked:border-white checked:bg-white cursor-pointer rounded-none transition-colors"
+                        onChange={(e) => {
+                          setAgreedToTerms(e.target.checked);
+                          if (e.target.checked) setFormErrors((prev) => ({ ...prev, terms: "" }));
+                        }}
+                        className="peer appearance-none w-4 h-4 border border-[#444444] bg-[#121212] checked:bg-white checked:border-white transition-all cursor-pointer rounded-none"
                       />
                       <svg className="absolute w-3 h-3 text-black pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity font-bold" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
                         <path strokeLinecap="square" strokeLinejoin="miter" d="M5 13l4 4L19 7" />
@@ -1623,17 +1623,13 @@ function CheckoutContent() {
                     </div>
                     <span className="text-[10px] lg:text-[10.5px] xl:text-[11px] text-[#E0E0E0] font-medium uppercase tracking-[0.03em] whitespace-nowrap shrink-0">
                       I HAVE READ AND AGREE TO THE{" "}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setPolicyModal("terms");
-                        }}
+                      <Link
+                        href="/terms"
+                        target="_blank"
                         className="text-white font-extrabold underline underline-offset-4 decoration-white hover:text-[#B6A47E] cursor-pointer transition-colors inline"
                       >
                         TERMS AND CONDITIONS
-                      </button>{" "}
+                      </Link>{" "}
                       *
                     </span>
                   </label>
@@ -1692,99 +1688,6 @@ function CheckoutContent() {
         vaNumber={paymentTxData?.vaNumber}
         qrString={paymentTxData?.qrString}
       />
-
-      {/* Interactive Terms & Privacy Policy Modal */}
-      <AnimatePresence>
-        {policyModal !== null && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 15 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              transition={{ duration: 0.25 }}
-              className="relative w-full max-w-2xl bg-[#0D0D0D] border border-[#262626] text-[#E0E0E0] shadow-2xl p-8 sm:p-10 font-sans max-h-[85vh] flex flex-col justify-between"
-            >
-              {/* Close Button */}
-              <button
-                type="button"
-                onClick={() => setPolicyModal(null)}
-                className="absolute top-6 right-6 text-[#777777] hover:text-white transition-colors cursor-pointer text-lg font-mono"
-              >
-                ✕
-              </button>
-
-              <div>
-                <div className="border-b border-[#222222] pb-4 mb-6">
-                  <span className="text-[10px] font-mono tracking-[0.25em] uppercase text-[#B6A47E] font-bold block mb-1">
-                    SECTOR MADNESS // LEGAL PROTOCOL
-                  </span>
-                  <h3 className="text-xl sm:text-2xl font-bold uppercase tracking-wider text-white">
-                    {policyModal === "terms" ? "TERMS & CONDITIONS" : "PRIVACY POLICY"}
-                  </h3>
-                </div>
-
-                <div className="overflow-y-auto max-h-[55vh] pr-3 space-y-5 text-xs text-[#AAAAAA] leading-[1.9] tracking-wide">
-                  {policyModal === "terms" ? (
-                    <>
-                      <p className="text-white font-medium">
-                        Welcome to Sector Madness. By placing an order or accessing our online archive platform, you agree to comply with and be bound by the following terms and conditions.
-                      </p>
-                      <div>
-                        <h4 className="text-white font-bold text-xs uppercase mb-1">1. LIMITED ATELIER RELEASES</h4>
-                        <p>All Sector Madness products marked as Limited Edition are produced in strictly capped quantities. Orders are processed on a first-come, first-served basis.</p>
-                      </div>
-                      <div>
-                        <h4 className="text-white font-bold text-xs uppercase mb-1">2. PAYMENT GATEWAY ENCRYPTION</h4>
-                        <p>Payments are authorization-secured via Midtrans Core API. We accept Bank Virtual Accounts (BCA, BNI, BRI, Mandiri, Permata, CIMB) and QRIS / e-Wallets (GoPay, ShopeePay, OVO, DANA).</p>
-                      </div>
-                      <div>
-                        <h4 className="text-white font-bold text-xs uppercase mb-1">3. SHIPPING & LOGISTICS</h4>
-                        <p>Courier shipping rates and delivery schedules are calculated real-time via Biteship logistics API. Shipping times are estimated based on courier service selection.</p>
-                      </div>
-                      <div>
-                        <h4 className="text-white font-bold text-xs uppercase mb-1">4. RETURNS & EXCHANGES</h4>
-                        <p>Garments may be returned or exchanged within 7 days of delivery, provided items are unworn, undamaged, and retain all original tags and technical packaging.</p>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-white font-medium">
-                        Sector Madness respects your personal privacy. This policy outlines how your data is handled during purchase transactions and site interactions.
-                      </p>
-                      <div>
-                        <h4 className="text-white font-bold text-xs uppercase mb-1">1. DATA COLLECTION & USE</h4>
-                        <p>We collect essential identity details including your name, contact phone number, shipping address, and email address strictly to process transactions and dispatch orders.</p>
-                      </div>
-                      <div>
-                        <h4 className="text-white font-bold text-xs uppercase mb-1">2. PAYMENT SECURITY</h4>
-                        <p>Financial details, credit card numbers, and banking credentials are never stored on Sector Madness servers. All payment flows are processed securely via PCI-DSS compliant Midtrans gateways.</p>
-                      </div>
-                      <div>
-                        <h4 className="text-white font-bold text-xs uppercase mb-1">3. THIRD-PARTY DISCLOSURE</h4>
-                        <p>Your address and phone information are transmitted securely to authorized courier partners (JNE, Sicepat, POS, etc.) via Biteship API solely for shipping fulfillment.</p>
-                      </div>
-                      <div>
-                        <h4 className="text-white font-bold text-xs uppercase mb-1">4. YOUR RIGHTS</h4>
-                        <p>You may request modification or deletion of your member account records at any time by contacting our support team.</p>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              <div className="pt-6 border-t border-[#222222] mt-6 flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setPolicyModal(null)}
-                  className="px-8 py-3 bg-white text-black text-xs font-bold uppercase tracking-[0.2em] hover:bg-[#E0E0E0] transition-colors cursor-pointer"
-                >
-                  I UNDERSTAND
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
       <AddressModal
         isOpen={isAddressModalOpen}

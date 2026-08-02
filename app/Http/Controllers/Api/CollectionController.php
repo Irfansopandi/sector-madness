@@ -3,34 +3,18 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Category;
+use App\Models\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
-class CategoryController extends Controller
+class CollectionController extends Controller
 {
     public function index()
     {
-        $categories = Category::withCount('products')->get();
+        $collections = Collection::where('is_active', true)->get();
         return response()->json([
             'status' => true,
-            'data'   => $categories,
-        ], 200);
-    }
-
-    public function show($slug)
-    {
-        $category = Category::where('slug', $slug)->with('products')->first();
-        if (!$category) {
-            return response()->json([
-                'status'  => false,
-                'message' => 'Category not found',
-            ], 404);
-        }
-
-        return response()->json([
-            'status' => true,
-            'data'   => $category,
+            'data' => $collections,
         ], 200);
     }
 
@@ -38,81 +22,88 @@ class CategoryController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
+            'code' => 'nullable|string|max:255',
             'description' => 'nullable|string',
         ]);
 
         $slug = Str::slug($request->name);
         $originalSlug = $slug;
         $count = 1;
-        while (Category::where('slug', $slug)->exists()) {
+        while (Collection::where('slug', $slug)->exists()) {
             $slug = $originalSlug . '-' . $count++;
         }
 
-        $category = Category::create([
+        $collection = Collection::create([
             'name' => strtoupper($request->name),
             'slug' => $slug,
+            'code' => $request->code ? strtoupper($request->code) : strtoupper($request->name),
             'description' => $request->description,
+            'is_active' => true,
         ]);
 
         return response()->json([
             'status' => true,
-            'message' => 'Category created successfully',
-            'data' => $category,
+            'message' => 'Collection created successfully',
+            'data' => $collection,
         ], 201);
     }
 
     public function update(Request $request, $id)
     {
-        $category = Category::find($id);
-        if (!$category) {
+        $collection = Collection::find($id);
+        if (!$collection) {
             return response()->json([
                 'status' => false,
-                'message' => 'Category not found',
+                'message' => 'Collection not found',
             ], 404);
         }
 
         $request->validate([
             'name' => 'required|string|max:255',
+            'code' => 'nullable|string|max:255',
             'description' => 'nullable|string',
+            'is_active' => 'nullable|boolean',
         ]);
 
         $slug = Str::slug($request->name);
-        if ($slug !== $category->slug) {
+        if ($slug !== $collection->slug) {
             $originalSlug = $slug;
             $count = 1;
-            while (Category::where('slug', $slug)->where('id', '!=', $id)->exists()) {
+            while (Collection::where('slug', $slug)->where('id', '!=', $id)->exists()) {
                 $slug = $originalSlug . '-' . $count++;
             }
         }
 
-        $category->update([
+        $collection->update([
             'name' => strtoupper($request->name),
             'slug' => $slug,
+            'code' => $request->code ? strtoupper($request->code) : strtoupper($request->name),
             'description' => $request->description,
+            'is_active' => $request->has('is_active') ? $request->is_active : $collection->is_active,
         ]);
 
         return response()->json([
             'status' => true,
-            'message' => 'Category updated successfully',
-            'data' => $category,
+            'message' => 'Collection updated successfully',
+            'data' => $collection,
         ], 200);
     }
 
     public function destroy($id)
     {
-        $category = Category::find($id);
-        if (!$category) {
+        $collection = Collection::find($id);
+        if (!$collection) {
             return response()->json([
                 'status' => false,
-                'message' => 'Category not found',
+                'message' => 'Collection not found',
             ], 404);
         }
 
-        $category->delete();
+        $collection->delete();
 
         return response()->json([
             'status' => true,
-            'message' => 'Category deleted successfully',
+            'message' => 'Collection deleted successfully',
         ], 200);
     }
 }

@@ -2,75 +2,66 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { getHeroBanners, type HeroBanner } from "@/utils/api";
 import Container from "./Container";
-
-const heroImages = [
-  "/images/hero/hero-1.png",
-  "/images/hero/hero-2.png",
-  "/images/hero/hero-3.png",
-];
 
 export default function Hero() {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [prevIndex, setPrevIndex] = useState<number | null>(null);
+
+  const { data: heroBanners = [] } = useQuery({
+    queryKey: ["hero-banners"],
+    queryFn: getHeroBanners,
+  });
+
+  const activeBanners: HeroBanner[] = heroBanners.length > 0 ? heroBanners : [
+    { id: 1, image_path: "/images/hero/hero-1.png", sort_order: 1, is_active: true },
+    { id: 2, image_path: "/images/hero/hero-2.png", sort_order: 2, is_active: true },
+    { id: 3, image_path: "/images/hero/hero-3.png", sort_order: 3, is_active: true },
+  ];
 
   const transition = useCallback(() => {
-    setPrevIndex(currentIndex);
-    setCurrentIndex((prev) => (prev + 1) % heroImages.length);
-  }, [currentIndex]);
+    if (activeBanners.length === 0) return;
+    setCurrentIndex((prev) => (prev + 1) % activeBanners.length);
+  }, [activeBanners.length]);
 
   useEffect(() => {
-    const timer = setInterval(transition, 6000);
+    if (activeBanners.length <= 1) return;
+    const timer = setInterval(transition, 5000);
     return () => clearInterval(timer);
-  }, [transition]);
+  }, [transition, activeBanners.length]);
 
-  // Clear prevIndex after crossfade completes
-  useEffect(() => {
-    if (prevIndex !== null) {
-      const timeout = setTimeout(() => setPrevIndex(null), 1600);
-      return () => clearTimeout(timeout);
-    }
-  }, [prevIndex]);
+  const currentBanner = activeBanners[currentIndex % activeBanners.length];
 
   return (
-    <section className="relative h-screen w-full overflow-hidden">
-      {/* Background Images with Ken Burns + Crossfade */}
-      {heroImages.map((src, index) => {
-        const isActive = index === currentIndex;
-        const isPrev = index === prevIndex;
-        const isVisible = isActive || isPrev;
-
-        return (
-          <div
-            key={src}
-            className="absolute inset-0 transition-opacity ease-in-out"
-            style={{
-              opacity: isActive ? 1 : isPrev ? 0 : 0,
-              transitionDuration: "1.5s",
-              zIndex: isActive ? 2 : isPrev ? 1 : 0,
-              visibility: isVisible ? "visible" : "hidden",
+    <section className="relative h-screen w-full overflow-hidden bg-[#0A0A0A]">
+      {/* Background Images with Continuous Smooth Ken Burns Crossfade */}
+      <AnimatePresence mode="sync">
+        {currentBanner && (
+          <motion.div
+            key={currentBanner.id || currentBanner.image_path || currentIndex}
+            initial={{ opacity: 0, scale: 1.05 }}
+            animate={{ opacity: 1, scale: 1.15 }}
+            exit={{ opacity: 0, scale: 1.20 }}
+            transition={{
+              opacity: { duration: 1.8, ease: "easeInOut" },
+              scale: { duration: 7, ease: [0.25, 0.1, 0.25, 1] },
             }}
+            className="absolute inset-0 z-[1]"
           >
-            <div
-              className="absolute inset-0"
-              style={{
-                animation: isActive ? "kenBurns 8s ease-out forwards" : "none",
-              }}
-            >
-              <Image
-                src={src}
-                alt="SECTOR MADNESS Campaign"
-                fill
-                className="object-cover"
-                priority={index === 0}
-                sizes="100vw"
-                quality={90}
-              />
-            </div>
-          </div>
-        );
-      })}
+            <Image
+              src={currentBanner.image_path}
+              alt="SECTOR MADNESS Campaign"
+              fill
+              className="object-cover"
+              priority
+              sizes="100vw"
+              quality={90}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/50 z-[3]" />
