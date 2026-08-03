@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -8,22 +8,54 @@ import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { getCart, updateCartQuantity, deleteCartItem, clearCart, addToCart } from "@/utils/api";
+import { getCart, updateCartQuantity, deleteCartItem, clearCart, addToCart, getImageUrl, getProducts } from "@/utils/api";
 import { getBagItems, saveBagItems } from "@/utils/bag";
 import { BagItemSkeleton, ErrorState } from "@/components/UIState";
 import { useToast } from "@/components/Toast";
-import { products } from "@/data/products";
 
 export default function ShoppingBagPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { showToast, success, error } = useToast();
 
-  // Load cart directly from Laravel API
-  const { data: cartData, isLoading, isError, refetch } = useQuery({
-    queryKey: ["cart"],
-    queryFn: getCart,
+  const { data: realProducts = [] } = useQuery({
+    queryKey: ["products"],
+    queryFn: getProducts,
   });
+
+  const currentToken = typeof window !== "undefined" ? localStorage.getItem("sector_madness_token") : null;
+  const [editingQty, setEditingQty] = useState<Record<string | number, string>>({});
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Load cart directly from Laravel API with real-time sync
+  const { data: cartData, isLoading, isError, refetch } = useQuery({
+    queryKey: ["cart", currentToken ?? "guest"],
+    queryFn: getCart,
+    refetchInterval: currentToken ? 3000 : false,
+    refetchOnWindowFocus: true,
+    enabled: !!currentToken,
+  });
+
+  useEffect(() => {
+    const handleBagUpdate = () => {
+      refetch();
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+    };
+
+    window.addEventListener("sector_bag_change", handleBagUpdate);
+    window.addEventListener("sector_bag_update", handleBagUpdate);
+    window.addEventListener("storage", handleBagUpdate);
+
+    return () => {
+      window.removeEventListener("sector_bag_change", handleBagUpdate);
+      window.removeEventListener("sector_bag_update", handleBagUpdate);
+      window.removeEventListener("storage", handleBagUpdate);
+    };
+  }, [refetch, queryClient]);
 
   // Automatically sync any items waiting in browser localStorage into Laravel MySQL API
   useEffect(() => {
@@ -34,8 +66,8 @@ export default function ShoppingBagPage() {
           await addToCart({
             slug: item.slug,
             name: item.name,
-            color: item.color || "Obsidian Black",
-            size: item.size || "M",
+            color: (item.color && !["default", "none", "n/a", "null", ""].includes(item.color.toLowerCase())) ? item.color : undefined,
+            size: (item.size && !["default", "none", "n/a", "null", ""].includes(item.size.toLowerCase())) ? item.size : undefined,
             quantity: item.quantity,
           }).catch(() => {});
         })
@@ -144,7 +176,7 @@ export default function ShoppingBagPage() {
       {/* CONTENT SECTION BELOW THE FULL-WIDTH LINE */}
       <div className="flex-1 w-full max-w-[1480px] mx-auto px-8 md:px-14 lg:px-20 py-16 pb-36">
         <div style={{ paddingLeft: "60px", paddingRight: "60px" }}>
-          {isLoading ? (
+          {!mounted || isLoading ? (
             <div className="space-y-6 pt-2">
               <BagItemSkeleton />
               <BagItemSkeleton />
@@ -224,55 +256,62 @@ export default function ShoppingBagPage() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-5 gap-y-12">
-                  {products.slice(0, 3).map((product, idx) => (
-                    <motion.div
-                      key={product.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.4, delay: 0.15 * idx }}
-                    >
-                      <Link
-                        href={`/product/${product.slug}`}
-                        className="group block"
+                  {(realProducts && realProducts.length > 0 ? realProducts : []).slice(0, 3).map((product: any, idx: number) => {
+                    const productImg = getImageUrl(product.image);
+                    const collectionCode = product.collection_code || product.collection || "SECTOR 001";
+                    const materialWeight = [product.material, product.weight].filter(Boolean).join(" · ") || "Technical Blend";
+                    const priceVal = typeof product.price === 'number' ? (product.price < 1000 ? product.price * 1000 : product.price) : 285000;
+
+                    return (
+                      <motion.div
+                        key={product.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: 0.15 * idx }}
                       >
-                        <div className="relative aspect-[3/4] overflow-hidden bg-[#161616] mb-5">
-                          <Image
-                            src={product.image}
-                            alt={product.name}
-                            fill
-                            className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
-                          />
-                          {product.limited && (
-                            <div className="absolute top-4 left-4">
-                              <span className="text-[9px] tracking-[0.2em] uppercase text-[#B6A47E]">
-                                Limited Release
+                        <Link
+                          href={`/product/${product.slug}`}
+                          className="group block"
+                        >
+                          <div className="relative aspect-[3/4] overflow-hidden bg-[#161616] mb-5">
+                            <Image
+                              src={productImg}
+                              alt={product.name}
+                              fill
+                              className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+                            />
+                            {product.limited && (
+                              <div className="absolute top-4 left-4">
+                                <span className="text-[9px] tracking-[0.2em] uppercase text-[#B6A47E]">
+                                  Limited Release
+                                </span>
+                              </div>
+                            )}
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-500" />
+                            <div className="absolute bottom-0 left-0 right-0 p-5 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out">
+                              <span className="text-[10px] tracking-[0.2em] uppercase text-[#F5F5F5]">
+                                View Product →
                               </span>
                             </div>
-                          )}
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-500" />
-                          <div className="absolute bottom-0 left-0 right-0 p-5 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out">
-                            <span className="text-[10px] tracking-[0.2em] uppercase text-[#F5F5F5]">
-                              View Product →
-                            </span>
                           </div>
-                        </div>
-                        <div className="space-y-2">
-                          <span className="text-[9px] tracking-[0.25em] uppercase text-[#8A8A8A] block">
-                            {product.collectionCode}
-                          </span>
-                          <h3 className="text-[14px] md:text-[15px] text-[#E0E0E0] font-light tracking-wide">
-                            {product.name}
-                          </h3>
-                          <p className="text-[11px] text-[#666666] font-light">
-                            {product.material} · {product.weight}
-                          </p>
-                          <p className="text-[13px] text-[#CCCCCC] font-light pt-1">
-                            Rp {(product.price * 15000).toLocaleString("id-ID")}
-                          </p>
-                        </div>
-                      </Link>
-                    </motion.div>
-                  ))}
+                          <div className="space-y-2">
+                            <span className="text-[9px] tracking-[0.25em] uppercase text-[#8A8A8A] block">
+                              {collectionCode}
+                            </span>
+                            <h3 className="text-[14px] md:text-[15px] text-[#E0E0E0] font-light tracking-wide">
+                              {product.name}
+                            </h3>
+                            <p className="text-[11px] text-[#666666] font-light">
+                              {materialWeight}
+                            </p>
+                            <p className="text-[13px] text-[#CCCCCC] font-light pt-1">
+                              Rp {priceVal.toLocaleString("id-ID")}
+                            </p>
+                          </div>
+                        </Link>
+                      </motion.div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -280,29 +319,61 @@ export default function ShoppingBagPage() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-start pt-4">
             {/* Left Column: Cart Items */}
             <div className="lg:col-span-8">
-              <div className="flex items-center justify-between pb-6 border-b border-[#222222] font-mono text-[10px] tracking-[0.2em] text-[#666666] uppercase">
+              <div
+                style={{
+                  paddingTop: "15px",
+                  paddingBottom: "20px",
+                  marginTop: "12px",
+                  marginBottom: "15px",
+                  borderBottom: "1px solid #222222",
+                }}
+                className="flex items-center justify-between font-mono text-[12px] font-bold tracking-[0.2em] text-[#999999] uppercase"
+              >
                 <span>ITEMS IN YOUR BAG</span>
                 <button
                   onClick={() => clearMutation.mutate()}
                   disabled={clearMutation.isPending}
-                  className="hover:text-white transition-colors uppercase cursor-pointer disabled:opacity-50"
+                  className="flex items-center gap-2 hover:text-[#FF6666] transition-colors uppercase cursor-pointer disabled:opacity-50 font-bold border-0 bg-transparent p-0"
                 >
-                  CLEAR ALL
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                  </svg>
+                  <span>CLEAR ALL</span>
                 </button>
               </div>
 
               <div>
               {items.map((item, idx) => {
                 const isOutOfStock = item.stock <= 0;
-                // Perfectly match against frontend catalog (@/data/products) to ensure authentic name, image, and link
-                const staticProduct = products.find(
-                  (p) => parseInt(p.id, 10) === Number(item.product_id) || p.slug === (item as any).slug || p.name === item.product_name
+                const productName = item.product_name || "Technical Garment";
+                const matchingProduct = (realProducts && realProducts.length > 0 ? realProducts : []).find(
+                  (p: any) =>
+                    (item as any).slug === p.slug ||
+                    (p.name && p.name.toLowerCase() === productName.toLowerCase()) ||
+                    String(p.id) === String(item.product_id) ||
+                    String(p.id).padStart(3, "0") === String(item.product_id).padStart(3, "0")
                 );
-                const productName = staticProduct ? staticProduct.name : item.product_name;
-                const imageSrc = staticProduct ? staticProduct.image : (item.product_image || "/collection1.png");
-                const productLink = staticProduct ? `/product/${staticProduct.slug}` : `/product/${item.product_id}`;
-
-                const itemCategory = (item.category || staticProduct?.collectionCode || staticProduct?.collection || "T-SHIRT").toUpperCase();
+                const rawImage =
+                  item.product_image && item.product_image.trim() !== ""
+                    ? item.product_image
+                    : matchingProduct?.image || "/images/products/product-1.png";
+                const imageSrc = getImageUrl(rawImage);
+                const productSlug = (item as any).slug || matchingProduct?.slug || item.product_id;
+                const productLink = `/product/${productSlug}`;
+                const itemCategory = (item.category || "T-SHIRT").toUpperCase();
+                const hasColor =
+                  item.color &&
+                  !["default", "none", "n/a", "null", "undefined", ""].includes(
+                    item.color.trim().toLowerCase()
+                  );
+                const hasSize =
+                  item.size &&
+                  !["default", "none", "n/a", "null", "undefined", "one size", "onsize", ""].includes(
+                    item.size.trim().toLowerCase()
+                  );
 
                 return (
                   <motion.div
@@ -315,8 +386,8 @@ export default function ShoppingBagPage() {
                       updateMutation.isPending ? "opacity-70" : "opacity-100"
                     } ${isOutOfStock ? "bg-[#1A0C0C]/30 p-6 rounded-none" : ""}`}
                     style={{
-                      paddingBottom: '40px',
-                      marginBottom: '40px',
+                      paddingTop: '20px',
+                      paddingBottom: '35px',
                       borderBottom: idx !== items.length - 1 ? '1px solid #222222' : 'none'
                     }}
                   >
@@ -352,10 +423,18 @@ export default function ShoppingBagPage() {
                             </h3>
 
                             <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-[#888888] tracking-wider pt-1">
-                              <span>COLOR: <strong className="text-[#EDEDED] font-normal">{item.color}</strong></span>
-                              <span className="text-[#333333]">|</span>
-                              <span>SIZE: <strong className="text-[#EDEDED] font-normal">{item.size}</strong></span>
-                              <span className="text-[#333333]">|</span>
+                              {hasColor && (
+                                <>
+                                  <span>COLOR: <strong className="text-[#EDEDED] font-normal">{item.color}</strong></span>
+                                  <span className="text-[#333333]">|</span>
+                                </>
+                              )}
+                              {hasSize && (
+                                <>
+                                  <span>SIZE: <strong className="text-[#EDEDED] font-normal">{item.size}</strong></span>
+                                  <span className="text-[#333333]">|</span>
+                                </>
+                              )}
                               <span className="text-[#B6A47E] font-medium bg-[#141414] px-2 py-0.5 border border-[#262626]">
                                 REMAINING STOCK: <strong className="text-white font-bold">{Math.max(0, item.stock - item.quantity)} UNITS</strong>
                               </span>
@@ -363,18 +442,18 @@ export default function ShoppingBagPage() {
                           </div>
 
                           {/* Price block */}
-                          <div className="text-left sm:text-right shrink-0 space-y-1">
-                            {item.discount > 0 && (
-                              <p className="text-[11px] font-mono text-[#38A169] tracking-wider">
-                                −Rp {item.discount.toLocaleString("id-ID")}
-                              </p>
-                            )}
+                          <div className="text-left sm:text-right shrink-0 space-y-1 pt-8 sm:pt-12">
+                            {/* TOP: Final Discounted Subtotal Price */}
                             <p className="text-base font-bold font-mono text-white tracking-wide">
                               Rp {item.subtotal.toLocaleString("id-ID")}
                             </p>
-                            <p className="text-[11px] font-mono text-[#666666] tracking-wider">
-                              Rp {item.price.toLocaleString("id-ID")} each
-                            </p>
+
+                            {/* BOTTOM: Normal / Original Price (strike-through) */}
+                            {item.discount > 0 && (
+                              <p className="text-[11px] font-mono text-[#777777] line-through tracking-wider">
+                                Rp {((item.original_price || (item.price + item.discount)) * item.quantity).toLocaleString("id-ID")}
+                              </p>
+                            )}
                           </div>
                         </div>
 
@@ -389,9 +468,44 @@ export default function ShoppingBagPage() {
                             >
                               −
                             </button>
-                            <span className="w-11 text-center font-mono text-sm font-bold text-white">
-                              {item.quantity}
-                            </span>
+                            {(() => {
+                              const displayQty = editingQty[item.id] !== undefined ? editingQty[item.id] : String(item.quantity);
+                              return (
+                                <input
+                                  type="text"
+                                  inputMode="numeric"
+                                  pattern="[0-9]*"
+                                  value={displayQty}
+                                  onFocus={(e) => e.target.select()}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val === "" || /^\d+$/.test(val)) {
+                                      setEditingQty((prev: Record<string | number, string>) => ({ ...prev, [item.id]: val }));
+                                    }
+                                  }}
+                                  onBlur={() => {
+                                    const rawVal = editingQty[item.id];
+                                    if (rawVal !== undefined) {
+                                      const parsed = parseInt(rawVal, 10);
+                                      setEditingQty((prev: Record<string | number, string>) => {
+                                        const copy = { ...prev };
+                                        delete copy[item.id];
+                                        return copy;
+                                      });
+                                      if (!isNaN(parsed) && parsed > 0 && parsed !== item.quantity) {
+                                        handleQuantityChange(item.id, Math.min(parsed, item.stock), item.stock);
+                                      }
+                                    }
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                      (e.target as HTMLInputElement).blur();
+                                    }
+                                  }}
+                                  className="w-12 text-center font-mono text-sm font-bold text-white bg-transparent border-0 outline-none focus:outline-none focus:ring-0 p-0"
+                                />
+                              );
+                            })()}
                             <button
                               type="button"
                               onClick={() => handleQuantityChange(item.id, item.quantity + 1, item.stock)}

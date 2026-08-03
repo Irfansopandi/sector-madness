@@ -17,13 +17,15 @@ class CartController extends Controller
      */
     private function getUser(Request $request)
     {
+        // Only trust Sanctum token authentication — no header fallback
         $user = $request->user('sanctum') ?: $request->user();
-        if (!$user) {
-            $memberEmail = $request->header('X-Member-Email');
-            if ($memberEmail) {
-                $user = User::where('email', $memberEmail)->first();
-            }
+
+        // CRITICAL: Admin model has separate ID space from User model.
+        // Admin(id=1) != User(id=1). Reject Admin models to prevent cart leakage.
+        if ($user && !($user instanceof \App\Models\User)) {
+            return null;
         }
+
         if (!$user && !app()->environment('testing')) {
             return null;
         }
@@ -54,29 +56,62 @@ class CartController extends Controller
         
         $formattedItems = $cartItems->map(function ($item) {
             $product = $item->product;
-            $priceIdr = (float)($item->price * 15000);
-            $discountIdr = 0; // default discount per item
-            $subtotalIdr = ($priceIdr - $discountIdr) * $item->quantity;
-            $variant = $product ? \App\Models\ProductVariant::where('product_id', $product->id)
-                ->where('color', $item->color ?: 'Default')
-                ->where('size', $item->size ?: 'M')
-                ->first() : null;
-            $stock = $variant ? $variant->stock : ($product ? (int)$product->stock : 15);
+
+            if ($product && $product->discount_expires_at && \Carbon\Carbon::parse($product->discount_expires_at)->isPast()) {
+                if ($product->original_price && $product->original_price > $product->price) {
+                    $product->price = $product->original_price;
+                }
+                $product->original_price = null;
+                $product->discount_percentage = null;
+                $product->discount_expires_at = null;
+                $product->is_flash_sale = false;
+                $product->save();
+            }
+
+            $rawPrice = $product ? (float)$product->price : (float)$item->price;
+            $priceIdr = $rawPrice < 1000 ? $rawPrice * 1000 : $rawPrice;
+            
+            $origPrice = $product && $product->original_price ? (float)$product->original_price : 0;
+            $origPriceIdr = $origPrice > 0 ? ($origPrice < 1000 ? $origPrice * 1000 : $origPrice) : 0;
+            $discountIdr = ($origPriceIdr > $priceIdr) ? ($origPriceIdr - $priceIdr) : 0;
+            
+            $subtotalIdr = $priceIdr * $item->quantity;
+
+            $variant = null;
+            if ($product && $item->color && $item->size && $item->color !== 'DEFAULT' && $item->color !== 'Default') {
+                $variant = \App\Models\ProductVariant::where('product_id', $product->id)
+                    ->where('color', $item->color)
+                    ->where('size', $item->size)
+                    ->first();
+            }
+            $stock = $variant ? $variant->stock : ($product ? (int)$product->stock : 49);
             $remainingStock = max(0, $stock - $item->quantity);
             
+            $itemColor = $item->color;
+            if ($itemColor && in_array(strtolower(trim($itemColor)), ['default', 'none', 'n/a', 'null', ''])) {
+                $itemColor = null;
+            }
+
+            $itemSize = $item->size;
+            if ($itemSize && in_array(strtolower(trim($itemSize)), ['default', 'none', 'n/a', 'null', ''])) {
+                $itemSize = null;
+            }
+
             return [
                 'id'              => $item->id,
                 'product_id'      => $item->product_id,
-                'product_image'   => $product ? $product->image : '/collection1.png',
+                'slug'            => $product ? $product->slug : '',
+                'product_image'   => $product ? $product->image : '/images/products/product-1.png',
                 'product_name'    => $product ? $product->name : 'Technical Garment',
                 'category'        => $product ? ($product->category ? $product->category->name : ($product->collection_code ?? 'T-SHIRT')) : 'T-SHIRT',
-                'variant'         => ($item->color ? "Color: {$item->color}" : '') . ($item->size ? " | Size: {$item->size}" : ''),
-                'color'           => $item->color ?? 'Obsidian Black',
-                'size'            => $item->size ?? 'L',
+                'variant'         => ($itemColor ? "Color: {$itemColor}" : '') . ($itemSize ? " | Size: {$itemSize}" : ''),
+                'color'           => $itemColor,
+                'size'            => $itemSize,
                 'quantity'        => $item->quantity,
                 'stock'           => $stock,
                 'remaining_stock' => $remainingStock,
                 'price'           => $priceIdr,
+                'original_price'  => $origPriceIdr > 0 ? $origPriceIdr : ($priceIdr + $discountIdr),
                 'discount'        => $discountIdr,
                 'subtotal'        => $subtotalIdr,
             ];
@@ -120,7 +155,14 @@ class CartController extends Controller
         }
 
         $user = $this->getUser($request);
-        $cart = Cart::firstOrCreate(['user_id' => $user ? $user->id : 1]);
+        if (!$user) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Unauthenticated. Please log in to add items to bag.',
+            ], 401);
+        }
+
+        $cart = Cart::firstOrCreate(['user_id' => $user->id]);
         
         $product = null;
         if ($request->filled('product_id') && is_numeric($request->product_id)) {
@@ -158,10 +200,13 @@ class CartController extends Controller
             ], 422);
         }
 
+        $colorVal = ($request->color && !in_array(strtolower(trim($request->color)), ['default', 'none', 'n/a', 'null', ''])) ? $request->color : null;
+        $sizeVal = ($request->size && !in_array(strtolower(trim($request->size)), ['default', 'none', 'n/a', 'null', ''])) ? $request->size : null;
+
         $cartItem = CartItem::where('cart_id', $cart->id)
             ->where('product_id', $product->id)
-            ->where('color', $request->color)
-            ->where('size', $request->size)
+            ->where('color', $colorVal)
+            ->where('size', $sizeVal)
             ->first();
 
         if ($cartItem) {
@@ -178,8 +223,8 @@ class CartController extends Controller
             $cartItem = CartItem::create([
                 'cart_id'    => $cart->id,
                 'product_id' => $product->id,
-                'color'      => $request->color,
-                'size'       => $request->size,
+                'color'      => $colorVal,
+                'size'       => $sizeVal,
                 'quantity'   => $qty,
                 'price'      => $product->price,
             ]);
@@ -211,7 +256,13 @@ class CartController extends Controller
         }
 
         $user = $this->getUser($request);
-        $cart = Cart::firstOrCreate(['user_id' => $user ? $user->id : 1]);
+        if (!$user) {
+            return response()->json(['status' => false, 'message' => 'Unauthenticated.'], 401);
+        }
+        $cart = Cart::where('user_id', $user->id)->first();
+        if (!$cart) {
+            return response()->json(['status' => false, 'message' => 'Cart not found'], 404);
+        }
 
         $cartItem = CartItem::with('product')->where('cart_id', $cart->id)->where('id', $id)->first();
 
@@ -249,7 +300,10 @@ class CartController extends Controller
     public function destroy(Request $request, $id)
     {
         $user = $this->getUser($request);
-        $cart = Cart::where('user_id', $user ? $user->id : 1)->first();
+        if (!$user) {
+            return response()->json(['status' => false, 'message' => 'Unauthenticated.'], 401);
+        }
+        $cart = Cart::where('user_id', $user->id)->first();
 
         if ($cart) {
             CartItem::where('cart_id', $cart->id)->where('id', $id)->delete();
@@ -268,7 +322,10 @@ class CartController extends Controller
     public function clear(Request $request)
     {
         $user = $this->getUser($request);
-        $cart = Cart::where('user_id', $user ? $user->id : 1)->first();
+        if (!$user) {
+            return response()->json(['status' => false, 'message' => 'Unauthenticated.'], 401);
+        }
+        $cart = Cart::where('user_id', $user->id)->first();
         if ($cart) {
             CartItem::where('cart_id', $cart->id)->delete();
         }

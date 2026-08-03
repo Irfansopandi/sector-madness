@@ -271,10 +271,12 @@ class ShippingController extends Controller
         $shippingAddress = $order->shipping_address;
         $itemsPayload = [];
         foreach ($order->items as $item) {
+            $rawP = (float)$item->price;
+            $valIdr = (int)($rawP < 1000 ? $rawP * 1000 : $rawP);
             $itemsPayload[] = [
-                'name'        => substr($item->product_name . ' (' . $item->color . '-' . $item->size . ')', 0, 50),
+                'name'        => substr($item->product_name . ($item->color || $item->size ? ' (' . implode('-', array_filter([$item->color, $item->size])) . ')' : ''), 0, 50),
                 'description' => 'Sector Madness Technical Garment',
-                'value'       => (int)($item->price * 15000),
+                'value'       => $valIdr,
                 'quantity'    => $item->quantity,
                 'weight'      => 800 * $item->quantity, // gram per item
             ];

@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, CheckCircle2, Clock, Eye, EyeOff } from "lucide-react";
+import { X, CheckCircle2, Clock, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { authApiSendOtp, authApiVerifyOtp, authApiResetPassword } from "@/utils/api";
@@ -208,7 +208,7 @@ export default function ForgotPasswordPage() {
           {/* ── IMAGE COLUMN ── */}
           <div className="lg:col-span-6 relative bg-[#0A0A0A] overflow-hidden min-h-[400px] lg:min-h-full flex flex-col justify-end lg:order-1 border-r border-[#E5E5E5]">
             <Image
-              src="/images/campaign/campaign-2.png" // using a different aesthetic image if available, fallback handled in CSS if missing, but standard Next.js Image needs existing path. Using campaign-1 just to be safe if campaign-2 doesn't exist, wait, they have /images/campaign/campaign-1.png and /images/hero/hero-2.png
+              src="/images/login/forgot.webp" // using a different aesthetic image if available, fallback handled in CSS if missing, but standard Next.js Image needs existing path. Using campaign-1 just to be safe if campaign-2 doesn't exist, wait, they have /images/campaign/campaign-1.png and /images/hero/hero-2.png
               alt="SECTOR MADNESS // RESET ARCHIVE"
               fill
               priority
@@ -216,13 +216,28 @@ export default function ForgotPasswordPage() {
               className="object-cover object-top transition-all duration-700 ease-in-out opacity-80"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A]/90 via-[#0A0A0A]/40 to-transparent pointer-events-none" />
-            <div className="relative z-10 p-8 md:p-12 border-t border-[#FFFFFF]/15">
-              <p style={{ fontSize: "11px", letterSpacing: "0.25em", fontWeight: 700, marginBottom: "6px" }} className="uppercase text-[#FFFFFF] font-mono">
-                [SM//RECOVERY PROTOCOL]
-              </p>
-              <p style={{ fontSize: "12px", letterSpacing: "0.12em" }} className="uppercase text-[#A0A0A0] font-mono">
-                IDENTITY RESTORATION // SYS.03
-              </p>
+            <div
+              style={{
+                paddingLeft: "clamp(15px, 5vw, 25px)",
+                paddingRight: "clamp(15px, 5vw, 25px)",
+                paddingTop: "15px",
+                paddingBottom: "15px",
+              }}
+              className="relative z-10 border-t border-[#FFFFFF]/15 flex items-end justify-between gap-4"
+            >
+              <div>
+                <p style={{ fontSize: "11px", letterSpacing: "0.25em", fontWeight: 700, marginBottom: "6px" }} className="uppercase text-[#FFFFFF] font-mono">
+                  [SM//2026 ARCHIVE LABS]
+                </p>
+                <p style={{ fontSize: "12px", letterSpacing: "0.12em" }} className="uppercase text-[#A0A0A0] font-mono">
+                  PASSWORD RECOVERY // PROTOCOL 03
+                </p>
+              </div>
+              <div className="hidden sm:block">
+                <span className="inline-block px-3 py-1.5 bg-white/10 text-[#FFFFFF] text-[10px] uppercase tracking-[0.2em] backdrop-blur-md border border-white/20 font-mono">
+                  LAB TESTED CERTIFIED
+                </span>
+              </div>
             </div>
           </div>
 
@@ -269,8 +284,13 @@ export default function ForgotPasswordPage() {
                       </button>
                       
                       <div className="mt-8 text-center border-t border-[#E6EBEE] pt-6">
-                        <Link href="/login" style={{ fontSize: "12px", letterSpacing: "0.15em", fontWeight: 600 }} className="uppercase text-[#555555] hover:text-[#0A0A0A] underline transition-colors">
-                          RETURN TO LOGIN
+                        <Link
+                          href="/login"
+                          style={{ fontSize: "12px", letterSpacing: "0.15em", fontWeight: 700 }}
+                          className="group inline-flex items-center gap-2 uppercase text-[#555555] hover:text-[#B6A47E] transition-colors duration-200"
+                        >
+                          <ArrowLeft size={14} className="transition-transform duration-200 group-hover:-translate-x-1.5" />
+                          <span>RETURN TO LOGIN</span>
                         </Link>
                       </div>
                     </form>

@@ -6,9 +6,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { products } from "@/data/products";
 import { getBagItems } from "@/utils/bag";
-import { getCart, getCategories, getCollections, getProducts } from "@/utils/api";
+import { getCart, getCategories, getCollections, getProducts, getImageUrl } from "@/utils/api";
 
 const navLinks = [
   { label: "SHOP", href: "/shop", hasDropdown: true },
@@ -38,11 +37,19 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
 
   const queryClient = useQueryClient();
 
+  const [currentToken, setCurrentToken] = useState<string | null>(() =>
+    typeof window !== "undefined" ? localStorage.getItem("sector_madness_token") : null
+  );
+
+  const hasToken = !!currentToken;
+
   const { data: cartData, refetch: refetchCart } = useQuery({
-    queryKey: ["cart"],
+    queryKey: ["cart", currentToken ?? "guest"],
     queryFn: getCart,
     retry: 1,
-    refetchInterval: 15000,
+    refetchInterval: hasToken ? 3000 : false,
+    refetchOnWindowFocus: true,
+    enabled: hasToken,
   });
 
   const [hoveredFilter, setHoveredFilter] = useState<string>("ALL");
@@ -73,26 +80,39 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
     ? apiCollections.map(c => ({ label: `> ${c.name.toUpperCase()}`, filter: c.code || c.name }))
     : [];
 
-  const actualBagCount = cartData ? cartData.total_quantity : bagCount;
+  const actualBagCount = hasToken && cartData ? cartData.total_quantity : bagCount;
 
   const isLightMode = mode === "light";
 
   useEffect(() => {
     setMounted(true);
     const checkLoginAndBag = () => {
+      const token = localStorage.getItem("sector_madness_token");
+      // Sync reactive token state — this changes the cart query key per user
+      setCurrentToken(token);
+
       try {
         const userData = localStorage.getItem("sector_madness_user");
-        if (userData) {
+        if (userData && token) {
           const parsed = JSON.parse(userData);
           setIsLoggedIn(!!parsed?.loggedIn);
           setIsAdmin(!!parsed?.isAdmin || !!parsed?.is_admin || parsed?.role === "admin" || parsed?.role === "administrator");
         } else {
           setIsLoggedIn(false);
           setIsAdmin(false);
+          setBagCount(0);
         }
       } catch {
         setIsLoggedIn(false);
         setIsAdmin(false);
+        setBagCount(0);
+      }
+
+      if (!token) {
+        setBagCount(0);
+        // Remove ALL cart cache entries (old user tokens included)
+        queryClient.removeQueries({ queryKey: ["cart"] });
+        return;
       }
 
       try {
@@ -103,8 +123,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
         setBagCount(0);
       }
 
-      // Instantly invalidate and refetch cart data so badge count updates immediately
-      queryClient.invalidateQueries({ queryKey: ["cart"] });
+      // Refetch cart for the now-active user
       refetchCart();
     };
     checkLoginAndBag();
@@ -112,11 +131,13 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
     window.addEventListener("sector_auth_change", checkLoginAndBag);
     window.addEventListener("sector_bag_change", checkLoginAndBag);
     window.addEventListener("sector_bag_update", checkLoginAndBag);
+    window.addEventListener("sector_wishlist_change", checkLoginAndBag);
     return () => {
       window.removeEventListener("storage", checkLoginAndBag);
       window.removeEventListener("sector_auth_change", checkLoginAndBag);
       window.removeEventListener("sector_bag_change", checkLoginAndBag);
       window.removeEventListener("sector_bag_update", checkLoginAndBag);
+      window.removeEventListener("sector_wishlist_change", checkLoginAndBag);
     };
   }, [queryClient, refetchCart]);
 
@@ -173,19 +194,19 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isSearchOpen]);
 
-  // Filter products based on search query
-  const searchResults = products.filter((p) => {
+  // Filter products based on search query using real-time API products
+  const activeProducts = apiProducts && apiProducts.length > 0 ? apiProducts : [];
+
+  const searchResults = activeProducts.filter((p: any) => {
     if (!searchQuery.trim()) return false;
     const q = searchQuery.toLowerCase();
     return (
-      p.name.toLowerCase().includes(q) ||
-      p.collection.toLowerCase().includes(q) ||
-      p.description.toLowerCase().includes(q) ||
-      p.material.toLowerCase().includes(q)
+      (p.name && p.name.toLowerCase().includes(q)) ||
+      (p.collection && p.collection.toLowerCase().includes(q)) ||
+      (p.description && p.description.toLowerCase().includes(q)) ||
+      (p.material && p.material.toLowerCase().includes(q))
     );
   });
-
-  const activeProducts = (apiProducts && apiProducts.length > 0) ? apiProducts : products;
 
   const featuredShopProduct = (() => {
     if (!activeProducts || activeProducts.length === 0) return null;
@@ -501,7 +522,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                   >
                     <div className="relative aspect-[3/4] w-full bg-[#F4F4F4] overflow-hidden mb-3 border border-[#E5E5E5] flex items-center justify-center p-4">
                       <Image
-                        src={featuredShopProduct.image}
+                        src={getImageUrl(featuredShopProduct.image)}
                         alt={featuredShopProduct.name}
                         fill
                         className="object-contain transition-transform duration-500 group-hover:scale-105"
@@ -518,11 +539,11 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                       </p>
                       <div className="flex items-center justify-center gap-1.5 mt-0.5 flex-wrap">
                         <p className="text-[10px] tracking-[0.15em] text-[#0A0A0A] font-semibold uppercase">
-                          Rp {(featuredShopProduct.price * 15000).toLocaleString("id-ID")}
+                          Rp {(featuredShopProduct.price < 1000 ? featuredShopProduct.price * 1000 : featuredShopProduct.price).toLocaleString("id-ID")}
                         </p>
                         {featuredShopProduct.original_price && featuredShopProduct.original_price > featuredShopProduct.price && (
                           <p className="text-[9px] tracking-[0.1em] text-[#999999] line-through uppercase">
-                            Rp {(featuredShopProduct.original_price * 15000).toLocaleString("id-ID")}
+                            Rp {(featuredShopProduct.original_price < 1000 ? featuredShopProduct.original_price * 1000 : featuredShopProduct.original_price).toLocaleString("id-ID")}
                           </p>
                         )}
                       </div>
@@ -727,7 +748,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                         {!searchQuery.trim() ? (
                           /* Default Recommendations (Clean Stone Island Reference Style) */
                           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10">
-                            {products.slice(0, 3).map((prod, idx) => (
+                            {activeProducts.slice(0, 3).map((prod: any, idx: number) => (
                               <Link
                                 key={prod.id}
                                 href={`/product/${prod.slug}`}
@@ -737,7 +758,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                                 {/* Clean image container without disturbing box borders */}
                                 <div className="relative aspect-[4/5] w-full bg-[#F5F5F5] overflow-hidden mb-5 flex items-center justify-center">
                                   <Image
-                                    src={prod.image}
+                                    src={getImageUrl(prod.image)}
                                     alt={prod.name}
                                     fill
                                     className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
@@ -745,10 +766,10 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                                   />
                                 </div>
                                 <h5 style={{ fontSize: "14px", letterSpacing: "0.15em", fontWeight: 700 }} className="uppercase text-[#0A0A0A] group-hover:underline mb-1">
-                                  {idx === 0 ? "NEW ARRIVALS" : idx === 1 ? "SECTOR MADNESS | ORIGIN" : "VENTILE® COLLECTION"}
+                                  {prod.name}
                                 </h5>
                                 <p style={{ fontSize: "12px", letterSpacing: "0.1em" }} className="text-[#666666] uppercase">
-                                  EXPLORE COLLECTION →
+                                  EXPLORE ITEM →
                                 </p>
                               </Link>
                             ))}
@@ -776,7 +797,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                                   >
                                     <div className="relative aspect-[4/5] w-full bg-[#F5F5F5] overflow-hidden mb-4 flex items-center justify-center">
                                       <Image
-                                        src={prod.image}
+                                        src={getImageUrl(prod.image)}
                                         alt={prod.name}
                                         fill
                                         className="object-cover group-hover:scale-105 transition-transform duration-500"
@@ -787,7 +808,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                                       {prod.name}
                                     </h5>
                                     <p style={{ fontSize: "13px", letterSpacing: "0.05em", marginTop: "4px", color: "#555555" }}>
-                                      Rp {(prod.price * 15000).toLocaleString("id-ID")}
+                                      Rp {(prod.price < 1000 ? prod.price * 1000 : prod.price).toLocaleString("id-ID")}
                                     </p>
                                   </Link>
                                 ))}

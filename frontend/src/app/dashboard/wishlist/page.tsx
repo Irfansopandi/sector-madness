@@ -4,15 +4,15 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
-import { getWishlist, removeFromWishlist, addToCart, getProducts, type WishlistItem } from "@/utils/api";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getWishlist, removeFromWishlist, addToCart, getProducts, getImageUrl, type WishlistItem } from "@/utils/api";
 import { products, getVariantStock } from "@/data/products";
 import BagToast from "@/components/BagToast";
 import WishlistToast from "@/components/WishlistToast";
 import CountdownTimer from "@/components/CountdownTimer";
 
 export default function WishlistPage() {
-  const [wishlistProducts, setWishlistProducts] = useState<WishlistItem[]>([]);
+  const queryClient = useQueryClient();
   const [showBagToast, setShowBagToast] = useState(false);
   const [bagToastMsg, setBagToastMsg] = useState("");
   const [showWishlistToast, setShowWishlistToast] = useState(false);
@@ -23,27 +23,29 @@ export default function WishlistPage() {
     queryFn: getProducts,
   });
 
-  useEffect(() => {
-    try {
-      const cached = localStorage.getItem("sector_madness_wishlist");
-      if (cached) {
-        setWishlistProducts(JSON.parse(cached));
-      }
-    } catch {}
+  const { data: wishlistData = [], refetch } = useQuery({
+    queryKey: ["wishlist"],
+    queryFn: getWishlist,
+    refetchInterval: 2000,
+    refetchOnWindowFocus: true,
+  });
 
-    const fetchWishlist = async () => {
-      try {
-        const data = await getWishlist();
-        setWishlistProducts(data);
-        if (typeof window !== "undefined") {
-          localStorage.setItem("sector_madness_wishlist", JSON.stringify(data));
-        }
-      } catch (err) {
-        // Silent error fallback
-      }
+  useEffect(() => {
+    const handleWishlistUpdate = () => {
+      refetch();
+      queryClient.invalidateQueries({ queryKey: ["wishlist"] });
     };
-    fetchWishlist();
-  }, []);
+
+    window.addEventListener("sector_wishlist_change", handleWishlistUpdate);
+    window.addEventListener("storage", handleWishlistUpdate);
+
+    return () => {
+      window.removeEventListener("sector_wishlist_change", handleWishlistUpdate);
+      window.removeEventListener("storage", handleWishlistUpdate);
+    };
+  }, [refetch, queryClient]);
+
+  const wishlistProducts = wishlistData;
 
   const handleMoveWishlistItemToBag = async (product: WishlistItem) => {
     try {
@@ -51,8 +53,10 @@ export default function WishlistPage() {
         product_id: product.product_id,
         quantity: 1,
         size: product.size || "M",
-        color: product.color || "DEFAULT",
+        color: (product.color && !["default", "none", "n/a", "null", ""].includes(product.color.toLowerCase())) ? product.color : undefined,
       });
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+      queryClient.invalidateQueries({ queryKey: ["wishlist"] });
       setBagToastMsg(`"${product.name}" added to Shopping Bag.`);
       setShowBagToast(true);
     } catch {
@@ -64,7 +68,7 @@ export default function WishlistPage() {
   const handleRemoveWishlistItem = async (prod: WishlistItem) => {
     try {
       await removeFromWishlist(prod.product_id, prod.size, prod.color);
-      setWishlistProducts((prev) => prev.filter((p) => p.id !== prod.id));
+      queryClient.invalidateQueries({ queryKey: ["wishlist"] });
       setWishlistToastMsg(`"${prod.name}" removed from Wishlist.`);
       setShowWishlistToast(true);
     } catch {
@@ -116,16 +120,29 @@ export default function WishlistPage() {
                   p.name === prod.name
               );
 
-              const resolvedImage = matchedApiProduct?.image || staticProduct?.image || prod.image || "/images/campaign/campaign-1.png";
+              // Resolve image: prefer API product image, prepend backend URL for /storage/ paths
+              const rawImage = matchedApiProduct?.image || staticProduct?.image || prod.image || "/images/campaign/campaign-1.png";
+              const resolvedImage = getImageUrl(rawImage);
               const rawPrice = matchedApiProduct?.price ?? staticProduct?.price ?? prod.price ?? 0;
-              const resolvedPrice = typeof rawPrice === 'number' ? (rawPrice > 1000 ? rawPrice / 15000 : rawPrice) : 285;
+              const resolvedPrice = typeof rawPrice === 'number' ? (rawPrice < 1000 ? rawPrice * 1000 : rawPrice) : 285000;
               const rawOriginalPrice = matchedApiProduct?.original_price ?? staticProduct?.originalPrice;
-              const originalPrice = rawOriginalPrice ? (rawOriginalPrice > 1000 ? rawOriginalPrice / 15000 : rawOriginalPrice) : undefined;
+              const originalPrice = rawOriginalPrice ? (rawOriginalPrice < 1000 ? rawOriginalPrice * 1000 : rawOriginalPrice) : undefined;
               const discountPercentage = matchedApiProduct?.discount_percentage ?? staticProduct?.discountPercentage;
               const discountExpiresAt = matchedApiProduct?.discount_expires_at ?? staticProduct?.discountExpiresAt;
               const resolvedName = matchedApiProduct?.name || staticProduct?.name || prod.name;
               const productLink = matchedApiProduct ? `/product/${matchedApiProduct.slug}` : (staticProduct ? `/product/${staticProduct.slug}` : `/product/${prod.slug || prod.product_id}`);
               const itemCategory = (prod.category || matchedApiProduct?.collection_code || staticProduct?.collectionCode || "T-SHIRT").toUpperCase();
+
+              // Real-time stock: prefer API variant stock, then wishlist API stock, then static as last resort
+              const resolvedStock: number | null = (() => {
+                // 1. From wishlist API response (already variant-aware from backend)
+                if (prod.stock_quantity !== null && prod.stock_quantity !== undefined) return prod.stock_quantity;
+                // 2. From matched API product stock
+                if (matchedApiProduct?.stock !== null && matchedApiProduct?.stock !== undefined) return matchedApiProduct.stock;
+                // 3. Static product variant stock
+                if (staticProduct) return getVariantStock(staticProduct.slug, prod.color || null, prod.size || null);
+                return null;
+              })();
 
               return (
                 <motion.div
@@ -135,7 +152,7 @@ export default function WishlistPage() {
                   exit={{ opacity: 0, y: -15 }}
                   transition={{ duration: 0.35 }}
                   style={{
-                    paddingTop: idx === 0 ? "24px" : "0px",
+                    paddingTop: "24px",
                     paddingBottom: "24px",
                     marginBottom: "0px",
                     borderBottom: idx !== wishlistProducts.length - 1 ? "1px solid #222222" : "none",
@@ -179,36 +196,31 @@ export default function WishlistPage() {
                             <Link href={productLink}>{resolvedName}</Link>
                           </h3>
                           <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-[#888888] tracking-wider pt-1">
-                            <span>
-                              COLOR: <strong className="text-[#EDEDED] font-normal">{prod.color || "—"}</strong>
-                            </span>
-                            <span className="text-[#333333]">|</span>
+                            {prod.color && !["default", "none", "n/a", "null", "undefined", ""].includes(prod.color.trim().toLowerCase()) && (
+                              <>
+                                <span>
+                                  COLOR: <strong className="text-[#EDEDED] font-normal">{prod.color}</strong>
+                                </span>
+                                <span className="text-[#333333]">|</span>
+                              </>
+                            )}
                             <span>
                               SIZE: <strong className="text-[#EDEDED] font-normal">{prod.size || "—"}</strong>
                             </span>
                             <span className="text-[#333333]">|</span>
-                            {(() => {
-                              const variantStock = staticProduct
-                                ? getVariantStock(staticProduct.slug, prod.color || null, prod.size || null)
-                                : (prod.stock_quantity ?? null);
-                              return (
-                                <span className="text-[#B6A47E] font-medium bg-[#141414] px-2 py-0.5 border border-[#262626]">
-                                  {variantStock !== null && variantStock !== undefined ? (
-                                    variantStock > 0 ? (
-                                      <strong className="text-white font-bold">{variantStock} UNITS IN STOCK</strong>
-                                    ) : (
-                                      <strong className="text-[#FF6666] font-bold">SOLD OUT</strong>
-                                    )
-                                  ) : prod.in_stock ? (
-                                    <strong className="text-white font-bold">
-                                      {prod.stock_quantity ? `${prod.stock_quantity} UNITS IN STOCK` : "AVAILABLE IN STOCK"}
-                                    </strong>
-                                  ) : (
-                                    <strong className="text-[#FF6666] font-bold">SOLD OUT</strong>
-                                  )}
-                                </span>
-                              );
-                            })()}
+                            <span className="text-[#B6A47E] font-medium bg-[#141414] px-2 py-0.5 border border-[#262626]">
+                              {resolvedStock !== null && resolvedStock !== undefined ? (
+                                resolvedStock > 0 ? (
+                                  <strong className="text-white font-bold">{resolvedStock} UNITS IN STOCK</strong>
+                                ) : (
+                                  <strong className="text-[#FF6666] font-bold">SOLD OUT</strong>
+                                )
+                              ) : prod.in_stock ? (
+                                <strong className="text-white font-bold">AVAILABLE IN STOCK</strong>
+                              ) : (
+                                <strong className="text-[#FF6666] font-bold">SOLD OUT</strong>
+                              )}
+                            </span>
                           </div>
                         </div>
 
@@ -216,13 +228,13 @@ export default function WishlistPage() {
                         <div className="text-left sm:text-right shrink-0 flex flex-col items-start sm:items-end gap-0.5" style={{ paddingRight: "12px" }}>
                           {/* Top: Promo / Discounted Price (BOLD) */}
                           <p className="text-base font-bold font-mono text-white tracking-wide">
-                            Rp {(resolvedPrice * 15000).toLocaleString("id-ID")}
+                            Rp {(resolvedPrice).toLocaleString("id-ID")}
                           </p>
 
                           {/* Bottom: Normal / Original Price (NOT BOLD, CROSSED OUT) */}
                           {originalPrice && originalPrice > resolvedPrice && (
                             <span className="text-xs font-mono font-normal text-[#888888] line-through">
-                              Rp {(originalPrice * 15000).toLocaleString("id-ID")}
+                              Rp {(originalPrice).toLocaleString("id-ID")}
                             </span>
                           )}
                         </div>

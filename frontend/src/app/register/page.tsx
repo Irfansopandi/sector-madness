@@ -217,7 +217,7 @@ export default function RegisterPage() {
           {/* ── EDITORIAL CAMPAIGN PHOTOGRAPH COLUMN ── */}
           <div className="lg:col-span-6 relative bg-[#0A0A0A] overflow-hidden min-h-[580px] lg:min-h-full flex flex-col justify-end lg:order-2 border-l border-[#E5E5E5]">
             <Image
-              src="/images/hero/hero-2.png"
+              src="/images/login/register.webp"
               alt="SECTOR MADNESS // TECHNICAL GARMENT"
               fill
               priority
@@ -227,13 +227,21 @@ export default function RegisterPage() {
             
             <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A]/85 via-[#0A0A0A]/20 to-transparent pointer-events-none" />
 
-            <div className="relative z-10 p-8 md:p-12 border-t border-[#FFFFFF]/15 flex items-end justify-between gap-4">
+            <div
+              style={{
+                paddingLeft: "clamp(15px, 5vw, 25px)",
+                paddingRight: "clamp(15px, 5vw, 25px)",
+                paddingTop: "15px",
+                paddingBottom: "15px",
+              }}
+              className="relative z-10 border-t border-[#FFFFFF]/15 flex items-end justify-between gap-4"
+            >
               <div>
                 <p style={{ fontSize: "11px", letterSpacing: "0.25em", fontWeight: 700, marginBottom: "6px" }} className="uppercase text-[#FFFFFF] font-mono">
                   [SM//2026 ARCHIVE LABS]
                 </p>
                 <p style={{ fontSize: "12px", letterSpacing: "0.12em" }} className="uppercase text-[#A0A0A0] font-mono">
-                  CREDENTIAL REGISTRATION // PROTOCOL 02
+                  MEMBER REGISTRATION // PROTOCOL 02
                 </p>
               </div>
               <div className="hidden sm:block">

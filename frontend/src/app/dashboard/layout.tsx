@@ -7,6 +7,8 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import LogoutConfirmModal from "@/components/LogoutConfirmModal";
 import { authApiLogout } from "@/utils/api";
+import { clearAllLocalBags } from "@/utils/bag";
+import { useQueryClient } from "@tanstack/react-query";
 
 const navItems = [
   {
@@ -95,6 +97,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     try {
@@ -127,10 +130,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     try {
       await authApiLogout();
     } catch {}
+    clearAllLocalBags();
     localStorage.removeItem("sector_madness_user");
     localStorage.removeItem("sector_madness_token");
     localStorage.removeItem("sector_madness_wishlist");
     sessionStorage.clear();
+    try {
+      queryClient.clear();
+    } catch {}
     window.dispatchEvent(new Event("sector_auth_change"));
     window.dispatchEvent(new Event("sector_bag_update"));
     window.dispatchEvent(new Event("sector_wishlist_update"));
@@ -155,17 +162,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="grid grid-cols-1 lg:grid-cols-[250px_1fr] gap-12 lg:gap-16 items-start">
           
           {/* ── LEFT SIDEBAR COLUMN (Sticky on scroll) ── */}
-          <aside className="w-full lg:sticky lg:top-[140px] self-start z-10">
-            {/* Page Title - Sans-Serif Bold directly above sidebar list with clean 36px bottom margin */}
-            <h1
-              style={{ fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif", marginBottom: "36px" }}
-              className="text-2xl md:text-3xl font-black uppercase tracking-[0.1em] text-[#F5F5F5]"
-            >
-              DASHBOARD
-            </h1>
+          <aside className="w-full h-full">
+            <div className="lg:sticky lg:top-[120px] z-10">
+              {/* Page Title - Sans-Serif Bold directly above sidebar list with clean 36px bottom margin */}
+              <h1
+                style={{ fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif", marginBottom: "30px" }}
+                className="text-2xl md:text-3xl font-black uppercase tracking-[0.1em] text-[#F5F5F5]"
+              >
+                DASHBOARD
+              </h1>
 
-            {/* Sidebar Menu List */}
-            <nav className="flex flex-col gap-3">
+              {/* Sidebar Menu List */}
+              <nav className="flex flex-col gap-2">
               {navItems.map((item) => {
                 const isActive =
                   pathname === item.href ||
@@ -174,8 +182,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <Link
                     key={item.label}
                     href={item.href}
-                    style={{ paddingLeft: "18px" }}
-                    className={`flex items-center gap-3.5 pr-5 py-3.5 text-sm tracking-[0.15em] uppercase transition-all duration-200 cursor-pointer font-semibold whitespace-nowrap text-left border-l-[3.5px] ${
+                    style={{
+                      paddingLeft: "20px",
+                      paddingTop: "8px",
+                      paddingBottom: "8px",
+                      minHeight: "15px",
+                    }}
+                    className={`flex items-center gap-3.5 pr-5 text-sm tracking-[0.15em] uppercase transition-all duration-200 cursor-pointer font-semibold whitespace-nowrap text-left border-l-[3.5px] ${
                       isActive
                         ? "bg-white/[0.08] text-[#F5F5F5] font-bold border-[#B6A47E] shadow-sm"
                         : "border-transparent text-[#8A8A8A] hover:bg-white/[0.05] hover:text-[#F5F5F5] hover:border-white/40"
@@ -190,8 +203,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               {/* Logout Button */}
               <button
                 onClick={handleLogoutClick}
-                style={{ paddingLeft: "18px" }}
-                className="flex items-center gap-3.5 pr-5 py-3.5 text-sm tracking-[0.15em] uppercase text-[#8A8A8A] border-l-[3.5px] border-transparent hover:border-red-500/50 hover:text-[#FF6666] hover:bg-red-950/20 transition-all duration-200 cursor-pointer font-semibold w-full text-left mt-3 border-t border-white/[0.08] pt-6"
+                style={{
+                  paddingLeft: "20px",
+                  paddingTop: "8px",
+                  paddingBottom: "8px",
+                  minHeight: "15px",
+                }}
+                className="flex items-center gap-3.5 pr-5 text-sm tracking-[0.15em] uppercase text-[#8A8A8A] border-l-[3.5px] border-transparent hover:border-red-500/50 hover:text-[#FF6666] hover:bg-red-950/20 transition-all duration-200 cursor-pointer font-semibold w-full text-left mt-3 border-t border-white/[0.08]"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -201,7 +219,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <span>LOGOUT</span>
               </button>
             </nav>
-          </aside>
+          </div>
+        </aside>
 
           {/* ── RIGHT MAIN CONTENT COLUMN ── */}
           <section className="w-full min-w-0 pt-1 lg:pt-0">

@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { getOrderDetail } from "@/utils/api";
+import { getOrderDetail, getImageUrl } from "@/utils/api";
 import { OrderDetailSkeleton, ErrorState } from "@/components/UIState";
 import { useToast } from "@/components/Toast";
 
@@ -198,7 +198,7 @@ function CheckoutSuccessContent() {
                       <div className="w-14 h-16 bg-[#141414] border border-[#262626] shrink-0 relative overflow-hidden flex items-center justify-center">
                         {item.product_image ? (
                           <img
-                            src={item.product_image}
+                            src={getImageUrl(item.product_image)}
                             alt={item.product_name}
                             className="w-full h-full object-cover"
                           />
@@ -212,7 +212,13 @@ function CheckoutSuccessContent() {
                           {item.product_name}
                         </h5>
                         <p className="text-[11px] text-[#777777] uppercase tracking-wider pt-0.5">
-                          SIZE: <strong className="text-[#CCCCCC]">{item.size || "M"}</strong> &nbsp;|&nbsp; COLOR: <strong className="text-[#CCCCCC]">{item.color || "BLACK"}</strong> &nbsp;|&nbsp; QTY: <strong className="text-[#CCCCCC]">{item.quantity || 1}</strong>
+                          {item.size && !["default","none","n/a","null",""].includes(item.size.trim().toLowerCase()) && (
+                            <>SIZE: <strong className="text-[#CCCCCC]">{item.size}</strong> &nbsp;|&nbsp;</>
+                          )}
+                          {item.color && !["default","none","n/a","null",""].includes(item.color.trim().toLowerCase()) && (
+                            <>COLOR: <strong className="text-[#CCCCCC]">{item.color}</strong> &nbsp;|&nbsp;</>
+                          )}
+                          QTY: <strong className="text-[#CCCCCC]">{item.quantity || 1}</strong>
                         </p>
                       </div>
                     </div>

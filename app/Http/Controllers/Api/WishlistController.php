@@ -47,6 +47,17 @@ class WishlistController extends Controller
             $product = $item->product;
             if (!$product) return null;
 
+            if ($product->discount_expires_at && \Carbon\Carbon::parse($product->discount_expires_at)->isPast()) {
+                if ($product->original_price && $product->original_price > $product->price) {
+                    $product->price = $product->original_price;
+                }
+                $product->original_price = null;
+                $product->discount_percentage = null;
+                $product->discount_expires_at = null;
+                $product->is_flash_sale = false;
+                $product->save();
+            }
+
             // Resolve the best image URL from product columns
             $imageValue = $product->image;
             if (is_array($product->gallery) && count($product->gallery) > 0) {

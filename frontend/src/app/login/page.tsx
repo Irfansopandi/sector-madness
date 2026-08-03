@@ -8,6 +8,8 @@ import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { authApiLogin } from "@/utils/api";
+import { clearAllLocalBags } from "@/utils/bag";
+import { useQueryClient } from "@tanstack/react-query";
 
 const InlineError = ({ message }: { message?: string }) => {
   if (!message) return null;
@@ -21,6 +23,7 @@ const InlineError = ({ message }: { message?: string }) => {
 
 export default function LoginPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   // Login Form States
   const [userEmail, setUserEmail] = useState("");
@@ -106,6 +109,12 @@ export default function LoginPage() {
       const res = await authApiLogin({ email: userEmail.trim(), password });
       
       if (res.status && res.token && res.user) {
+        // Clear previous user's local bag items and React Query cache to prevent cross-account leakage
+        clearAllLocalBags();
+        try {
+          queryClient.clear();
+        } catch {}
+
         localStorage.setItem("sector_madness_token", res.token);
         
         const isAdmin = !!res.is_admin || !!res.user?.is_admin || res.user?.role === "admin" || res.role === "admin" || res.user?.role === "administrator";
@@ -122,6 +131,9 @@ export default function LoginPage() {
           joinedAt: res.user.created_at || new Date().toISOString(),
         };
         localStorage.setItem("sector_madness_user", JSON.stringify(userObj));
+        if (isAdmin) {
+          sessionStorage.removeItem("admin_welcome_shown");
+        }
         window.dispatchEvent(new Event("sector_auth_change"));
         window.dispatchEvent(new Event("sector_bag_update"));
 
@@ -172,7 +184,7 @@ export default function LoginPage() {
           {/* ── EDITORIAL CAMPAIGN PHOTOGRAPH COLUMN ── */}
           <div className="lg:col-span-6 relative bg-[#0A0A0A] overflow-hidden min-h-[580px] lg:min-h-full flex flex-col justify-end lg:order-1 border-r border-[#E5E5E5]">
             <Image
-              src="/images/campaign/campaign-1.png"
+              src="/images/login/login.webp"
               alt="SECTOR MADNESS // TECHNICAL GARMENT"
               fill
               priority
@@ -182,7 +194,15 @@ export default function LoginPage() {
             
             <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A]/85 via-[#0A0A0A]/20 to-transparent pointer-events-none" />
 
-            <div className="relative z-10 p-8 md:p-12 border-t border-[#FFFFFF]/15 flex items-end justify-between gap-4">
+            <div
+              style={{
+                paddingLeft: "clamp(15px, 5vw, 25px)",
+                paddingRight: "clamp(15px, 5vw, 25px)",
+                paddingTop: "15px",
+                paddingBottom: "15px",
+              }}
+              className="relative z-10 border-t border-[#FFFFFF]/15 flex items-end justify-between gap-4"
+            >
               <div>
                 <p style={{ fontSize: "11px", letterSpacing: "0.25em", fontWeight: 700, marginBottom: "6px" }} className="uppercase text-[#FFFFFF] font-mono">
                   [SM//2026 ARCHIVE LABS]

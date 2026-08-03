@@ -107,3 +107,20 @@ export function removeItemFromBag(id: string): void {
   const filtered = currentItems.filter((i) => i.id !== id);
   saveBagItems(filtered);
 }
+
+// Clear all local bag items from localStorage (on logout or account switch)
+export function clearAllLocalBags(): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem("sector_madness_bag");
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith("sector_madness_bag")) {
+        localStorage.removeItem(key);
+      }
+    }
+    window.dispatchEvent(new Event("sector_bag_change"));
+  } catch {
+    // ignore
+  }
+}

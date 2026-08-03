@@ -37,26 +37,31 @@ class PaymentController extends Controller
 
             $itemDetails = [];
             foreach ($order->items as $item) {
+                $rawP = (float)$item->price;
+                $itemP = (int)($rawP < 1000 ? $rawP * 1000 : $rawP);
                 $itemDetails[] = [
                     'id'       => $item->product_id ? (string)$item->product_id : 'SM-001',
-                    'price'    => (int)($item->price * 15000), // konversi estimasi ke IDR bila USD
+                    'price'    => $itemP,
                     'quantity' => $item->quantity,
-                    'name'     => substr($item->product_name . ' (' . $item->color . ', ' . $item->size . ')', 0, 48),
+                    'name'     => substr($item->product_name . ($item->color || $item->size ? ' (' . implode(', ', array_filter([$item->color, $item->size])) . ')' : ''), 0, 48),
                 ];
             }
             if ($order->shipment && $order->shipment->shipping_cost > 0) {
                 $itemDetails[] = [
                     'id'       => 'SHIPPING',
-                    'price'    => (int)($order->shipment->shipping_cost * 15000),
+                    'price'    => (int)$order->shipment->shipping_cost,
                     'quantity' => 1,
                     'name'     => 'Shipping Cost (' . $order->shipment->courier_company . ')',
                 ];
             }
 
+            $rawTotal = (float)$order->total_amount;
+            $grossAmount = (int)($rawTotal < 1000 ? $rawTotal * 1000 : $rawTotal);
+
             $payload = [
                 'transaction_details' => [
                     'order_id'     => $order->order_number,
-                    'gross_amount' => (int)($order->total_amount * 15000),
+                    'gross_amount' => $grossAmount,
                 ],
                 'customer_details' => [
                     'first_name' => $order->user ? $order->user->name : 'Customer',
@@ -185,7 +190,8 @@ class PaymentController extends Controller
         $calculatedTotal = 0;
 
         foreach ($items as $item) {
-            $priceIdr = (int)($item['price'] * 15000);
+            $rawP = (float)($item['price'] ?? 0);
+            $priceIdr = (int)($rawP < 1000 ? $rawP * 1000 : $rawP);
             $qty = (int)($item['quantity'] ?? 1);
             $itemDetails[] = [
                 'id'       => $item['id'] ?? 'SM-ITEM',

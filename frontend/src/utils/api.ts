@@ -13,32 +13,39 @@ const api = axios.create({
   timeout: 15000,
 });
 
-// Request interceptor to attach Sanctum Token or Member Email
+// Request interceptor to attach Sanctum Token — ONLY from sector_madness_token
 api.interceptors.request.use(
   (config) => {
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("sector_madness_token");
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
-      } else {
-        const userStr = localStorage.getItem("sector_madness_user");
-        if (userStr) {
-          try {
-            const parsed = JSON.parse(userStr);
-            if (parsed?.token) {
-              config.headers.Authorization = `Bearer ${parsed.token}`;
-            } else if (parsed?.email) {
-              config.headers["X-Member-Email"] = parsed.email;
-            }
-          } catch {
-            // ignore JSON errors
-          }
-        }
       }
+      // Do NOT fall back to sector_madness_user.token or X-Member-Email
+      // That caused cross-account cart leakage
     }
     return config;
   },
   (error) => Promise.reject(error)
+);
+
+// Response interceptor: auto-clear stale auth on 401
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401 && typeof window !== "undefined") {
+      // Token is invalid/expired — clean up client state to prevent leakage
+      const currentPath = window.location.pathname;
+      // Don't clear on login/register pages (those are expected 401s)
+      if (!currentPath.startsWith("/login") && !currentPath.startsWith("/register")) {
+        localStorage.removeItem("sector_madness_token");
+        localStorage.removeItem("sector_madness_user");
+        window.dispatchEvent(new Event("sector_auth_change"));
+        window.dispatchEvent(new Event("sector_bag_update"));
+      }
+    }
+    return Promise.reject(error);
+  }
 );
 
 /* ====================================================
@@ -79,6 +86,7 @@ export interface CartItem {
   quantity: number;
   stock: number;
   price: number;
+  original_price?: number;
   discount: number;
   subtotal: number;
   slug?: string;
@@ -157,7 +165,7 @@ export interface SummaryData {
   subtotal: number;
   shipping: number;
   discount: number;
-  tax: number;
+  tax?: number;
   grand_total: number;
   items_count: number;
   items?: {
@@ -241,7 +249,7 @@ export interface OrderDetailData {
     subtotal: number;
     shipping: number;
     discount: number;
-    tax: number;
+    tax?: number;
     grand_total: number;
   };
   payment_info: {
@@ -251,6 +259,7 @@ export interface OrderDetailData {
     paid_at?: string;
   };
   shipping_status: string;
+  status?: string;
   timeline: OrderTimeline[];
   created_at?: string;
   payment_status?: string;
@@ -314,10 +323,10 @@ export const getCart = async (): Promise<CartData> => {
       if (staticProduct) {
         return {
           ...item,
-          product_name: staticProduct.name,
-          product_image: staticProduct.image,
-          slug: staticProduct.slug,
-          category: staticProduct.collection || item.category,
+          product_name: item.product_name || staticProduct.name,
+          product_image: item.product_image || staticProduct.image,
+          slug: item.slug || staticProduct.slug,
+          category: item.category || staticProduct.collection,
         };
       }
       return item;
@@ -548,6 +557,75 @@ export const cancelOrder = async (orderNumber: string): Promise<any> => {
   return res.data;
 };
 
+export const confirmOrderReceived = async (orderNumber: string): Promise<any> => {
+  const res = await api.post(`/orders/${orderNumber}/confirm-received`);
+  return res.data;
+};
+
+export function isOrderActive(item: { shipping_status?: string; status?: string; created_at?: string; updated_at?: string }): boolean {
+  const st = (item.shipping_status || item.status || "").toUpperCase();
+  const ordSt = (item.status || "").toUpperCase();
+
+  const isCancelled =
+    st === "CANCELLED" ||
+    st === "DIBATALKAN" ||
+    ordSt === "CANCELLED" ||
+    ordSt === "DIBATALKAN";
+
+  const isCompleted =
+    st === "COMPLETED" ||
+    st === "RECEIVED" ||
+    st === "SELESAI" ||
+    st === "DITERIMA" ||
+    ordSt === "COMPLETED" ||
+    ordSt === "RECEIVED";
+
+  let isDeliveredAutoFinished = false;
+  if (st === "DELIVERED" || ordSt === "DELIVERED") {
+    const timeRef = (item as any).updated_at || item.created_at || "";
+    if (timeRef) {
+      const updateTime = new Date(timeRef).getTime();
+      if (!isNaN(updateTime) && Date.now() - updateTime > 24 * 60 * 60 * 1000) {
+        isDeliveredAutoFinished = true;
+      }
+    }
+  }
+
+  return !isCancelled && !isCompleted && !isDeliveredAutoFinished;
+}
+
+export function isOrderFinished(item: { shipping_status?: string; status?: string; created_at?: string; updated_at?: string }): boolean {
+  const st = (item.shipping_status || item.status || "").toUpperCase();
+  const ordSt = (item.status || "").toUpperCase();
+
+  const isCancelled =
+    st === "CANCELLED" ||
+    st === "DIBATALKAN" ||
+    ordSt === "CANCELLED" ||
+    ordSt === "DIBATALKAN";
+
+  const isCompleted =
+    st === "COMPLETED" ||
+    st === "RECEIVED" ||
+    st === "SELESAI" ||
+    st === "DITERIMA" ||
+    ordSt === "COMPLETED" ||
+    ordSt === "RECEIVED";
+
+  let isDeliveredAutoFinished = false;
+  if (st === "DELIVERED" || ordSt === "DELIVERED") {
+    const timeRef = (item as any).updated_at || item.created_at || "";
+    if (timeRef) {
+      const updateTime = new Date(timeRef).getTime();
+      if (!isNaN(updateTime) && Date.now() - updateTime > 24 * 60 * 60 * 1000) {
+        isDeliveredAutoFinished = true;
+      }
+    }
+  }
+
+  return isCompleted || isCancelled || isDeliveredAutoFinished;
+}
+
 export const getShipmentTracking = async (trackingNumber: string): Promise<TrackingData> => {
   const res = await api.get(`/shipping/track/${trackingNumber}`);
   const raw = res.data.data || {};
@@ -614,6 +692,16 @@ export const authApiLogout = async () => {
     return res.data;
   } catch (e) {
     // Ignore error if token expired or server unreachable during logout
+    return { status: true };
+  }
+};
+
+export const adminApiLogout = async () => {
+  try {
+    const res = await api.post("/admin/logout");
+    return res.data;
+  } catch (e) {
+    // Ignore error — clear session regardless
     return { status: true };
   }
 };
@@ -866,6 +954,9 @@ export interface AdminOrder {
 export const getAdminOrders = async (): Promise<AdminOrder[]> => {
   try {
     const res = await api.get("/admin/orders");
+    if (res.data?.data && Array.isArray(res.data.data)) {
+      return res.data.data;
+    }
     if (Array.isArray(res.data)) {
       return res.data;
     }
@@ -896,6 +987,10 @@ export interface AdminHeroBanner {
 export const getAdminHeroBanners = async (): Promise<AdminHeroBanner[]> => {
   try {
     const res = await api.get("/admin/hero-banners");
+    // Backend returns { status: 'success', data: [...] }
+    if (res.data?.data && Array.isArray(res.data.data)) {
+      return res.data.data;
+    }
     if (Array.isArray(res.data)) {
       return res.data;
     }
@@ -918,6 +1013,112 @@ export const updateAdminHeroBanner = async (id: number, data: Partial<AdminHeroB
 export const deleteAdminHeroBanner = async (id: number) => {
   const res = await api.delete(`/admin/hero-banners/${id}`);
   return res.data;
+};
+
+/**
+ * Upload an image file to the backend.
+ * Returns the public path string (e.g. /storage/uploads/uuid.jpg)
+ */
+export const uploadAdminImage = async (file: File, folder: string = "uploads"): Promise<string> => {
+  const formData = new FormData();
+  formData.append("image", file);
+  formData.append("folder", folder);
+
+  const res = await axios.post(`${API_URL}/admin/upload`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+      Accept: "application/json",
+    },
+    timeout: 30000,
+  });
+
+  if (res.data?.path) {
+    return res.data.path;
+  }
+  throw new Error("Upload gagal: respons tidak valid dari server.");
+};
+
+export interface AdminProduct {
+  id: number;
+  slug: string;
+  name: string;
+  category_id?: number;
+  collection_id?: number;
+  collection?: string;
+  collection_code?: string;
+  description?: string;
+  material?: string;
+  weight?: string;
+  details?: string[] | string;
+  size_guide?: any;
+  story?: string;
+  price: number;
+  original_price?: number;
+  discount_percentage?: number;
+  discount_expires_at?: string;
+  is_flash_sale?: boolean;
+  limited?: boolean;
+  image: string;
+  gallery?: string[];
+  colors?: string[];
+  sizes?: string[];
+  stock: number;
+  variants?: any[];
+  is_active?: boolean;
+  category?: {
+    id: number;
+    name: string;
+    slug: string;
+  };
+}
+
+export const getAdminProducts = async (): Promise<AdminProduct[]> => {
+  try {
+    const res = await api.get("/admin/products");
+    if (res.data?.data && Array.isArray(res.data.data)) {
+      return res.data.data;
+    }
+    if (Array.isArray(res.data)) {
+      return res.data;
+    }
+  } catch (error) {
+    try {
+      const res = await api.get("/products");
+      if (res.data?.data && Array.isArray(res.data.data)) {
+        return res.data.data;
+      }
+      if (Array.isArray(res.data)) {
+        return res.data;
+      }
+    } catch (err) {
+      console.error("Failed to fetch products:", err);
+    }
+  }
+  return [];
+};
+
+export const createAdminProduct = async (data: Partial<AdminProduct>) => {
+  const res = await api.post("/admin/products", data);
+  return res.data;
+};
+
+export const updateAdminProduct = async (id: number, data: Partial<AdminProduct>) => {
+  const res = await api.put(`/admin/products/${id}`, data);
+  return res.data;
+};
+
+export const deleteAdminProduct = async (id: number) => {
+  const res = await api.delete(`/admin/products/${id}`);
+  return res.data;
+};
+
+export const getImageUrl = (path?: string): string => {
+  if (!path) return "/images/placeholder.png";
+  if (path.startsWith("http://") || path.startsWith("https://")) return path;
+  const baseUrl = API_URL.replace(/\/api\/?$/, "");
+  if (path.startsWith("/storage/")) return `${baseUrl}${path}`;
+  if (path.startsWith("storage/")) return `${baseUrl}/${path}`;
+  return path;
 };
 
 export default api;

@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\SortOptionController;
 use App\Http\Controllers\Api\CollectionController;
 use App\Http\Controllers\Api\HeroBannerController;
 use App\Http\Controllers\Api\JournalController;
+use App\Http\Controllers\Api\UploadController;
 
 /*
 |--------------------------------------------------------------------------
@@ -36,6 +37,9 @@ Route::get('/admin/hero-banners', [HeroBannerController::class, 'adminIndex']);
 Route::post('/admin/hero-banners', [HeroBannerController::class, 'store']);
 Route::put('/admin/hero-banners/{id}', [HeroBannerController::class, 'update']);
 Route::delete('/admin/hero-banners/{id}', [HeroBannerController::class, 'destroy']);
+
+// Admin Image Upload
+Route::post('/admin/upload', [UploadController::class, 'uploadImage']);
 
 Route::post('/forgot-password/send-otp', [ForgotPasswordController::class, 'sendOtp']);
 Route::post('/forgot-password/verify-otp', [ForgotPasswordController::class, 'verifyOtp']);
@@ -85,9 +89,14 @@ Route::post('/admin/contact-settings', [ContactSettingController::class, 'store'
 Route::put('/admin/contact-settings/{id}', [ContactSettingController::class, 'update']);
 Route::delete('/admin/contact-settings/{id}', [ContactSettingController::class, 'destroy']);
 
+// Products API (Public & Admin Management)
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{slug}', [ProductController::class, 'show']);
 Route::get('/products/{slug}/variants', [ProductController::class, 'variants']);
+Route::get('/admin/products', [ProductController::class, 'index']);
+Route::post('/admin/products', [ProductController::class, 'store']);
+Route::put('/admin/products/{id}', [ProductController::class, 'update']);
+Route::delete('/admin/products/{id}', [ProductController::class, 'destroy']);
 
 // Biteship Area, Rates, Tracking & Warehouse Database Info
 Route::get('/warehouse', [ShippingController::class, 'getWarehouseInfo']);
@@ -149,6 +158,7 @@ Route::post('/checkout', [CheckoutController::class, 'createPayment']);
 Route::get('/orders', [OrderController::class, 'index']);
 Route::get('/orders/{order_number}', [OrderController::class, 'show']);
 Route::post('/orders/{order_number}/cancel', [OrderController::class, 'cancel']);
+Route::post('/orders/{order_number}/confirm-received', [OrderController::class, 'confirmReceived']);
 
 // Admin Order & Shipment Tracking Control API
 Route::get('/admin/orders', [OrderController::class, 'adminOrders']);

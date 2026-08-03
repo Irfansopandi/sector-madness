@@ -10,7 +10,7 @@ import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CustomPaymentModal from "@/components/CustomPaymentModal";
-import { getOrderDetail, clearCart } from "@/utils/api";
+import { getOrderDetail, confirmOrderReceived, clearCart, getImageUrl } from "@/utils/api";
 import api from "@/utils/api";
 import { OrderDetailSkeleton, ErrorState } from "@/components/UIState";
 import { useToast } from "@/components/Toast";
@@ -32,6 +32,8 @@ export default function OrderDetailPage() {
     queryKey: ["order-detail", orderNumber],
     queryFn: () => getOrderDetail(orderNumber),
     enabled: !!orderNumber,
+    refetchInterval: 3000,
+    refetchOnWindowFocus: true,
   });
 
   const cancelMutation = useMutation({
@@ -46,6 +48,23 @@ export default function OrderDetailPage() {
     },
     onError: (err: any) => {
       error(err.response?.data?.message || "Failed to cancel order.");
+    },
+  });
+
+  const confirmReceivedMutation = useMutation({
+    mutationFn: async () => {
+      return await confirmOrderReceived(orderNumber);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["order-detail", orderNumber] });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      success("Terima kasih! Pesanan Anda telah dikonfirmasi diterima dan dipindahkan ke Riwayat Pesanan.", "PESANAN DITERIMA");
+      setTimeout(() => {
+        window.location.href = "/dashboard/order-history";
+      }, 1500);
+    },
+    onError: (err: any) => {
+      error(err.response?.data?.message || "Gagal mengonfirmasi penerimaan pesanan.");
     },
   });
 
@@ -156,6 +175,22 @@ export default function OrderDetailPage() {
                     </button>
                   </>
                 )}
+
+                {((order.shipping_status || order.status || "").toUpperCase() === "SHIPPED" ||
+                  (order.shipping_status || order.status || "").toUpperCase() === "DELIVERED") && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (confirm("Apakah Anda telah menerima produk pesanan ini dengan baik?")) {
+                        confirmReceivedMutation.mutate();
+                      }
+                    }}
+                    disabled={confirmReceivedMutation.isPending}
+                    className="px-8 py-3.5 bg-[#00E676] hover:bg-[#00C853] text-[#0A0A0A] font-mono text-xs font-black uppercase tracking-[0.2em] transition-all cursor-pointer shadow-lg"
+                  >
+                    {confirmReceivedMutation.isPending ? "MEMPROSES..." : "✓ TERIMA PESANAN"}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -199,12 +234,19 @@ export default function OrderDetailPage() {
                   <div key={item.id} className="p-6 border-b border-[#1F1F1F] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
                     <div className="flex items-center gap-6">
                       <div className="relative w-20 h-24 bg-[#171717] border border-[#333] shrink-0 overflow-hidden">
-                        <Image src={item.product_image || "/collection1.png"} alt={item.product_name} fill className="object-cover" />
+                        <Image src={getImageUrl(item.product_image) || "/collection1.png"} alt={item.product_name} fill className="object-cover" />
                       </div>
                       <div className="space-y-1 font-mono">
                         <h3 className="text-base font-bold text-white uppercase tracking-wider">{item.product_name}</h3>
                         <p className="text-xs text-[#8A8A8A] uppercase">
-                          COLOR: <span className="text-white font-bold">{item.color || "Obsidian"}</span> // SIZE: <span className="text-white font-bold">{item.size || "M"}</span>
+                          {(() => {
+                            const validColor = item.color && !["default","none","n/a","null",""].includes(item.color.trim().toLowerCase());
+                            const validSize = item.size && !["default","none","n/a","null",""].includes(item.size.trim().toLowerCase());
+                            const parts: React.ReactNode[] = [];
+                            if (validColor) parts.push(<>COLOR: <span className="text-white font-bold">{item.color}</span></>);
+                            if (validSize) parts.push(<>SIZE: <span className="text-white font-bold">{item.size}</span></>);
+                            return parts.length > 0 ? parts.reduce((prev, curr, i) => <>{prev} // {curr}</>) : null;
+                          })()}
                         </p>
                         <p className="text-xs text-[#CCCCCC]">QTY: <strong className="text-[#D4AF37] font-bold">{item.quantity} PCS</strong></p>
                       </div>
@@ -267,10 +309,7 @@ export default function OrderDetailPage() {
                     <span className="font-bold">−Rp {(order.summary?.discount || 0).toLocaleString("id-ID")}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-[#BBBBBB]">
-                  <span>EST. VAT (PPN 11%)</span>
-                  <span className="font-bold">Rp {(order.summary?.tax || 0).toLocaleString("id-ID")}</span>
-                </div>
+
                 <div className="pt-4 border-t border-[#333] flex justify-between items-baseline">
                   <span className="text-sm font-black text-white">GRAND TOTAL</span>
                   <span className="text-2xl font-black text-[#D4AF37]">Rp {(order.summary?.grand_total || 0).toLocaleString("id-ID")}</span>

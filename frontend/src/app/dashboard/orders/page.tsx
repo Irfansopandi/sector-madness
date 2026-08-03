@@ -9,6 +9,9 @@ import {
   getOrderDetail,
   getShipmentTracking,
   cancelOrder,
+  confirmOrderReceived,
+  isOrderActive,
+  getImageUrl,
   type OrderListItem,
   type OrderDetailData,
   type TrackingData,
@@ -34,20 +37,18 @@ export default function OrdersPage() {
   const [cancelNotes, setCancelNotes] = useState("");
   const [cancelErrorMsg, setCancelErrorMsg] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchOrders = () => {
     getOrders()
       .then((data) => {
         if (!data) return setOrdersList([]);
-        const activeOnly = data.filter((item) => {
-          const st = (item.shipping_status || item.status || "").toUpperCase();
-          const ordSt = (item.status || "").toUpperCase();
-          const isCancelled = st === "CANCELLED" || st === "DIBATALKAN" || ordSt === "CANCELLED" || ordSt === "DIBATALKAN";
-          const isDelivered = st === "DELIVERED" || st === "COMPLETED" || st === "RECEIVED" || st === "SELESAI" || st === "DITERIMA" || st === "SHIPPED";
-          return !isCancelled && !isDelivered;
-        });
+        const activeOnly = data.filter(isOrderActive);
         setOrdersList(activeOnly);
       })
       .catch(() => setOrdersList([]));
+  };
+
+  useEffect(() => {
+    fetchOrders();
   }, []);
 
   const handleViewOrderDetails = async (orderNumber: string) => {
@@ -188,22 +189,22 @@ export default function OrdersPage() {
   };
 
   const cellStyle = {
-    paddingTop: "22px",
-    paddingBottom: "22px",
-    paddingLeft: "28px",
-    paddingRight: "28px",
+    paddingTop: "20px",
+    paddingBottom: "20px",
+    paddingLeft: "16px",
+    paddingRight: "16px",
   };
 
   const headerStyle = {
-    paddingTop: "18px",
-    paddingBottom: "18px",
-    paddingLeft: "28px",
-    paddingRight: "28px",
+    paddingTop: "16px",
+    paddingBottom: "16px",
+    paddingLeft: "16px",
+    paddingRight: "16px",
   };
 
   return (
-    <div className="bg-[#141414] border border-white/[0.08] p-8 md:p-10 lg:p-12 space-y-8 shadow-2xl">
-      <div style={{ paddingTop: "24px", paddingBottom: "24px", paddingLeft: "28px", paddingRight: "28px" }} className="border-b border-white/[0.08]">
+    <div className="bg-[#141414] border border-white/[0.08] p-6 sm:p-8 space-y-6 shadow-2xl">
+      <div style={{ paddingTop: "20px", paddingBottom: "20px", paddingLeft: "16px", paddingRight: "16px" }} className="border-b border-white/[0.08]">
         <h2 className="text-xl md:text-2xl font-black uppercase tracking-wider text-[#F5F5F5]">ORDERS</h2>
         <p className="text-xs text-[#8A8A8A] mt-1 font-mono">Manage and track the status of your fashion orders</p>
       </div>
@@ -251,10 +252,12 @@ export default function OrdersPage() {
                 const shipStatus = (order.shipping_status || order.status || "PROCESSING").toUpperCase();
                 const isCancelPending = shipStatus === "CANCEL PENDING" || shipStatus === "CANCELLATION PENDING" || (shipStatus === "PENDING" && isPaid);
                 const isCancelled = shipStatus === "CANCELLED" || shipStatus === "DIBATALKAN";
-                const isDelivered = shipStatus === "DELIVERED" || shipStatus === "SHIPPED" || shipStatus === "COMPLETED" || shipStatus === "RECEIVED";
-                const isReady = shipStatus === "PACKED" || shipStatus === "READY_TO_SHIP" || shipStatus === "READY TO SHIP" || shipStatus === "READY FOR DISPATCH" || shipStatus === "SIAP KIRIM";
+                const isCompleted = shipStatus === "COMPLETED" || shipStatus === "RECEIVED" || shipStatus === "SELESAI" || shipStatus === "DITERIMA";
+                const isDelivered = shipStatus === "DELIVERED";
+                const isShipped = shipStatus === "SHIPPED" || shipStatus === "IN TRANSIT" || shipStatus === "IN_TRANSIT" || shipStatus === "PACKED" || shipStatus === "READY_TO_SHIP" || shipStatus === "READY TO SHIP" || shipStatus === "READY FOR DISPATCH" || shipStatus === "SIAP KIRIM";
+                const isReady = isShipped;
                 const isInProcess = !isCancelPending && !isCancelled && (shipStatus === "ALLOCATED" || shipStatus === "PROCESSING" || shipStatus === "IN PROCESS");
-                const displayStatus = isCancelPending ? "CANCEL PENDING" : isCancelled ? "CANCELLED" : isDelivered ? "DELIVERED" : isReady ? "READY TO SHIP" : isInProcess ? "IN PROCESS" : shipStatus;
+                const displayStatus = isCancelPending ? "CANCEL PENDING" : isCancelled ? "CANCELLED" : isCompleted ? "COMPLETED" : isDelivered ? "DELIVERED" : isShipped ? "READY TO SHIP" : isInProcess ? "IN PROCESS" : shipStatus;
 
                 return (
                   <tr key={order.order_number} className="hover:bg-white/[0.02] transition-colors">
@@ -361,8 +364,9 @@ export default function OrdersPage() {
                       if (st === "CANCEL PENDING" || st === "CANCELLATION PENDING" || (st === "PENDING" && isPaid)) return <span className="text-red-400 font-bold">CANCEL PENDING</span>;
                       if (st === "CANCELLED" || st === "DIBATALKAN") return <span className="text-red-500 font-bold">CANCELLED</span>;
                       if (st === "ALLOCATED" || st === "PROCESSING" || st === "IN PROCESS") return "IN PROCESS";
-                      if (st === "PACKED" || st === "READY_TO_SHIP" || st === "READY TO SHIP" || st === "READY FOR DISPATCH" || st === "SIAP KIRIM") return "READY TO SHIP";
-                      if (st === "DELIVERED" || st === "SHIPPED" || st === "COMPLETED" || st === "IN TRANSIT") return "DELIVERED";
+                      if (st === "PACKED" || st === "READY_TO_SHIP" || st === "READY TO SHIP" || st === "READY FOR DISPATCH" || st === "SIAP KIRIM" || st === "SHIPPED" || st === "IN TRANSIT") return <span className="text-sky-400 font-bold">READY TO SHIP</span>;
+                      if (st === "DELIVERED") return <span className="text-emerald-400 font-bold">DELIVERED</span>;
+                      if (st === "COMPLETED" || st === "RECEIVED") return <span className="text-emerald-500 font-bold">COMPLETED</span>;
                       if (st === "PENDING" || st === "UNPAID") return "PENDING PAYMENT";
                       return st;
                     })()}
@@ -377,7 +381,7 @@ export default function OrdersPage() {
                       const isPaid = pay === "PAID" || pay === "SETTLED" || pay === "SUCCESS";
                       if (st === "CANCELLED" || st === "DIBATALKAN" || !isPaid || st === "PENDING" || st === "UNPAID" || st === "PENDING PAYMENT") return "-";
                       if (st === "CANCEL PENDING" || st === "CANCELLATION PENDING") return "ON HOLD";
-                      return selectedOrderDetail.courier_info?.courier_name || "J&T EXPRESS";
+                      return selectedOrderDetail.courier_info?.courier_name || (selectedOrderDetail as any).courier || "-";
                     })()}
                   </span>
                 </div>
@@ -389,13 +393,13 @@ export default function OrdersPage() {
                       const pay = (selectedOrderDetail.payment_info?.payment_status || (selectedOrderDetail as any).payment_status || "").toUpperCase();
                       const isPaid = pay === "PAID" || pay === "SETTLED" || pay === "SUCCESS";
                       if (!isPaid || st === "CANCEL PENDING" || st === "CANCELLATION PENDING" || st === "CANCELLED" || st === "DIBATALKAN" || st === "PENDING" || st === "UNPAID" || st === "PENDING PAYMENT") return "-";
-                      return selectedOrderDetail.courier_info?.tracking_number || "BITESHIP-JNT-1725126548";
+                      return selectedOrderDetail.courier_info?.tracking_number || (selectedOrderDetail as any).tracking_number || "PENDING ALLOCATION";
                     })()}
                   </span>
                 </div>
               </div>
 
-              {/* ITEM LIST */}
+              {/* PRODUCT LIST WITH THUMBNAIL, NAME, COLOR, SIZE & QTY */}
               <div style={{ gap: "20px" }} className="flex flex-col text-left">
                 <span className="text-xs font-mono text-[#8A8A8A] uppercase tracking-[0.25em] block font-bold">
                   ORDERED PRODUCTS
@@ -403,9 +407,9 @@ export default function OrdersPage() {
                 <div style={{ gap: "20px" }} className="flex flex-col">
                   {(selectedOrderDetail.products || (selectedOrderDetail as any).items || [])?.map((item: any, idx: number) => {
                     const prodName = item.product_name || item.name || "SECTOR 002 OVERSIZED TRENCH";
-                    const prodImg = item.product_image || (idx % 2 === 0 ? "/images/hero/hero-1.png" : "/images/campaign/campaign-1.png");
-                    const color = item.color || "Midnight Navy";
-                    const size = item.size || "S";
+                    const prodImg = getImageUrl(item.product_image) || (idx % 2 === 0 ? "/images/hero/hero-1.png" : "/images/campaign/campaign-1.png");
+                    const validColor = item.color && !["default","none","n/a","null",""].includes(item.color.trim().toLowerCase()) ? item.color : null;
+                    const validSize = item.size && !["default","none","n/a","null",""].includes(item.size.trim().toLowerCase()) ? item.size : null;
                     const qty = item.quantity || 1;
                     const price = (item.price || 0) * qty;
 
@@ -423,7 +427,7 @@ export default function OrdersPage() {
                             {prodName}
                           </h4>
                           <p style={{ marginBottom: "14px" }} className="text-xs font-mono text-[#8A8A8A] tracking-widest uppercase">
-                            {color} // {size} // QTY: {qty}
+                            {[validColor, validSize, `QTY: ${qty}`].filter(Boolean).join(" // ")}
                           </p>
                           <p className="text-base font-mono text-[#B6A47E] font-black">
                             Rp {price.toLocaleString("id-ID")}
@@ -455,11 +459,7 @@ export default function OrdersPage() {
                   const isInProcessOrPending =
                     !isCancelPending && !isCancelled && (st === "IN PROCESS" || st === "PROCESSING" || st === "ALLOCATED" ||
                     st === "PENDING" || st === "PENDING PAYMENT" || st === "UNPAID");
-                  const isReadyToShip =
-                    !isCancelPending && !isCancelled && (st === "READY TO SHIP" || st === "READY_TO_SHIP" || st === "PACKED" || st === "READY FOR DISPATCH" || st === "SIAP KIRIM");
-                  const isDelivered =
-                    !isCancelPending && !isCancelled && (st === "DELIVERED" || st === "COMPLETED" || st === "RECEIVED" || st === "SELESAI");
-                  const isShippedOrDelivered = !isInProcessOrPending && !isReadyToShip && !isCancelled && !isCancelPending;
+                  const isDeliveredOnly = !isCancelPending && !isCancelled && (st === "DELIVERED");
 
                   return (
                     <>
@@ -503,7 +503,7 @@ export default function OrdersPage() {
                         </div>
                       )}
 
-                      {isShippedOrDelivered && !isDelivered && !isCancelPending && !isCancelled && (
+                      {isDeliveredOnly && (
                         <button
                           onClick={() => handleConfirmReceived(selectedOrderDetail.order_number)}
                           style={{ padding: "20px 0" }}

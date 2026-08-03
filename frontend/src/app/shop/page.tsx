@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { getProducts, getCategories, getSortOptions } from "@/utils/api";
+import { getProducts, getCategories, getSortOptions, getImageUrl } from "@/utils/api";
 import { products as localProducts } from "@/data/products";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -31,20 +31,41 @@ function ShopContent() {
     description: p.description || "",
     material: p.material || "Technical Blend",
     weight: p.weight || "450 GSM",
-    price: typeof p.price === 'number' ? (p.price > 1000 ? p.price / 15000 : p.price) : 285,
-    originalPrice: p.original_price ? (p.original_price > 1000 ? p.original_price / 15000 : p.original_price) : undefined,
-    discountPercentage: p.discount_percentage,
-    discountExpiresAt: p.discount_expires_at,
-    isFlashSale: p.is_flash_sale,
-    image: p.image || "/images/products/product-1.png",
-    gallery: p.gallery || [p.image || "/images/products/product-1.png"],
-    colors: p.colors || [{ name: "Black", hex: "#0A0A0A" }],
-    sizes: p.sizes || ["S", "M", "L", "XL"],
-    details: p.details || ["Technical Construction"],
+    price: (() => {
+      const isExp = p.discount_expires_at ? new Date(p.discount_expires_at).getTime() <= Date.now() : false;
+      const basePr = typeof p.price === 'number' ? (p.price < 1000 ? p.price * 1000 : p.price) : 285000;
+      let origPr = p.original_price ? (p.original_price < 1000 ? p.original_price * 1000 : p.original_price) : undefined;
+      if (origPr && origPr <= basePr) origPr = basePr + origPr;
+      if (isExp && origPr && origPr > basePr) return origPr;
+      return basePr;
+    })(),
+    originalPrice: (() => {
+      const isExp = p.discount_expires_at ? new Date(p.discount_expires_at).getTime() <= Date.now() : false;
+      if (isExp) return undefined;
+      const pr = typeof p.price === 'number' ? (p.price < 1000 ? p.price * 1000 : p.price) : 285000;
+      let opr = p.original_price ? (p.original_price < 1000 ? p.original_price * 1000 : p.original_price) : undefined;
+      if (opr && opr <= pr) return pr + opr;
+      return opr;
+    })(),
+    discountPercentage: (() => {
+      const isExp = p.discount_expires_at ? new Date(p.discount_expires_at).getTime() <= Date.now() : false;
+      if (isExp) return undefined;
+      const pr = typeof p.price === 'number' ? (p.price < 1000 ? p.price * 1000 : p.price) : 285000;
+      let opr = p.original_price ? (p.original_price < 1000 ? p.original_price * 1000 : p.original_price) : undefined;
+      if (opr && opr <= pr) opr = pr + opr;
+      if (opr && opr > pr) return Math.round(((opr - pr) / opr) * 100);
+      return p.discount_percentage;
+    })(),
+    discountExpiresAt: p.discount_expires_at && new Date(p.discount_expires_at).getTime() > Date.now() ? p.discount_expires_at : undefined,
+    isFlashSale: p.discount_expires_at && new Date(p.discount_expires_at).getTime() > Date.now() ? p.is_flash_sale : false,
+    image: getImageUrl(p.image),
+    gallery: Array.isArray(p.gallery) && p.gallery.length > 0 ? p.gallery.map(getImageUrl) : [getImageUrl(p.image)],
+    colors: Array.isArray(p.colors) ? p.colors : [],
+    sizes: Array.isArray(p.sizes) ? p.sizes : [],
+    details: p.details || [],
     story: p.story || p.description,
     limited: Boolean(p.limited),
-    stock: p.stock ?? 25,
-  })) : localProducts;
+  })) : [];
 
   const [activeCategory, setActiveCategory] = useState(categoryParam ? categoryParam.toUpperCase() : "ALL");
   const [gridCols, setGridCols] = useState<4 | 6>(4);
@@ -292,11 +313,11 @@ function ShopContent() {
                   </p>
                   <div className="flex items-center gap-2 pt-1 flex-wrap">
                     <span className="text-[13px] text-[#0A0A0A] font-[family-name:var(--font-body)] font-medium">
-                      Rp {(product.price * 15000).toLocaleString("id-ID")}
+                      Rp {(product.price < 1000 ? product.price * 1000 : product.price).toLocaleString("id-ID")}
                     </span>
                     {product.originalPrice && product.originalPrice > product.price && (
                       <span className="text-[11px] text-[#999999] line-through font-[family-name:var(--font-body)]">
-                        Rp {(product.originalPrice * 15000).toLocaleString("id-ID")}
+                        Rp {(product.originalPrice < 1000 ? product.originalPrice * 1000 : product.originalPrice).toLocaleString("id-ID")}
                       </span>
                     )}
                   </div>

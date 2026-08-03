@@ -7,6 +7,18 @@ import { useQuery } from "@tanstack/react-query";
 import { getHeroBanners, type HeroBanner } from "@/utils/api";
 import Container from "./Container";
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://brand.test";
+
+function getImageUrl(imagePath: string): string {
+  if (!imagePath) return "";
+  // Jika sudah full URL (http/https), langsung pakai
+  if (imagePath.startsWith("http")) return imagePath;
+  // Hanya path /storage/... (upload Laravel) yang di-prefix backend URL
+  if (imagePath.startsWith("/storage/")) return `${BACKEND_URL}${imagePath}`;
+  // Path lokal (/images/...) tetap apa adanya → di-serve dari Next.js public folder
+  return imagePath;
+}
+
 export default function Hero() {
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -15,11 +27,7 @@ export default function Hero() {
     queryFn: getHeroBanners,
   });
 
-  const activeBanners: HeroBanner[] = heroBanners.length > 0 ? heroBanners : [
-    { id: 1, image_path: "/images/hero/hero-1.png", sort_order: 1, is_active: true },
-    { id: 2, image_path: "/images/hero/hero-2.png", sort_order: 2, is_active: true },
-    { id: 3, image_path: "/images/hero/hero-3.png", sort_order: 3, is_active: true },
-  ];
+  const activeBanners: HeroBanner[] = heroBanners;
 
   const transition = useCallback(() => {
     if (activeBanners.length === 0) return;
@@ -32,7 +40,9 @@ export default function Hero() {
     return () => clearInterval(timer);
   }, [transition, activeBanners.length]);
 
-  const currentBanner = activeBanners[currentIndex % activeBanners.length];
+  const currentBanner = activeBanners.length > 0
+    ? activeBanners[currentIndex % activeBanners.length]
+    : null;
 
   return (
     <section className="relative h-screen w-full overflow-hidden bg-[#0A0A0A]">
@@ -51,7 +61,7 @@ export default function Hero() {
             className="absolute inset-0 z-[1]"
           >
             <Image
-              src={currentBanner.image_path}
+              src={getImageUrl(currentBanner.image_path)}
               alt="SECTOR MADNESS Campaign"
               fill
               className="object-cover"

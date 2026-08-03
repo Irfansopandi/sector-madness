@@ -67,6 +67,20 @@ class ProductController extends Controller
 
         $products = $query->get();
 
+        // Auto-cleanup expired discounts
+        foreach ($products as $product) {
+            if ($product->discount_expires_at && \Carbon\Carbon::parse($product->discount_expires_at)->isPast()) {
+                if ($product->original_price && $product->original_price > $product->price) {
+                    $product->price = $product->original_price;
+                }
+                $product->original_price = null;
+                $product->discount_percentage = null;
+                $product->discount_expires_at = null;
+                $product->is_flash_sale = false;
+                $product->save();
+            }
+        }
+
         return response()->json([
             'status' => true,
             'count'  => $products->count(),
@@ -87,6 +101,17 @@ class ProductController extends Controller
                 'status'  => false,
                 'message' => 'Product not found',
             ], 404);
+        }
+
+        if ($product->discount_expires_at && \Carbon\Carbon::parse($product->discount_expires_at)->isPast()) {
+            if ($product->original_price && $product->original_price > $product->price) {
+                $product->price = $product->original_price;
+            }
+            $product->original_price = null;
+            $product->discount_percentage = null;
+            $product->discount_expires_at = null;
+            $product->is_flash_sale = false;
+            $product->save();
         }
 
         // Ambil rekomendasi produk terkait
@@ -114,5 +139,197 @@ class ProductController extends Controller
         }
 
         return response()->json($product->variants);
+    }
+
+    /**
+     * Store new Product
+     * Endpoint: POST /api/admin/products
+     */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'price' => 'required|numeric|min:0',
+            'stock' => 'required|integer|min:0',
+        ]);
+
+        $data = $request->only([
+            'category_id',
+            'name',
+            'collection',
+            'collection_code',
+            'tagline',
+            'description',
+            'material',
+            'weight',
+            'price',
+            'original_price',
+            'discount_percentage',
+            'discount_expires_at',
+            'is_flash_sale',
+            'image',
+            'gallery',
+            'colors',
+            'sizes',
+            'details',
+            'size_guide',
+            'story',
+            'limited',
+            'stock',
+        ]);
+
+        if (isset($data['original_price']) && isset($data['price']) && $data['original_price'] !== null) {
+            $origPrice = (float) $data['original_price'];
+            $price = (float) $data['price'];
+            if ($origPrice > 0 && $origPrice < $price) {
+                $data['original_price'] = $price;
+                $data['price'] = max(0, $price - $origPrice);
+            }
+            if ($data['original_price'] > $data['price']) {
+                $data['discount_percentage'] = round((($data['original_price'] - $data['price']) / $data['original_price']) * 100);
+            }
+        }
+
+        $data['slug'] = \Illuminate\Support\Str::slug($request->name) . '-' . time();
+
+        $product = Product::create($data);
+
+        if ($request->has('variants') && is_array($request->variants)) {
+            $totalStock = 0;
+            foreach ($request->variants as $v) {
+                $stk = (int) ($v['stock'] ?? 0);
+                $totalStock += $stk;
+                $product->variants()->create([
+                    'color' => $v['color'] ?? 'Default',
+                    'size'  => $v['size'] ?? 'M',
+                    'stock' => $stk,
+                ]);
+            }
+            if ($totalStock > 0) {
+                $product->update(['stock' => $totalStock]);
+            }
+        }
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Product created successfully',
+            'data'    => $product->fresh()->load(['category', 'variants']),
+        ], 201);
+    }
+
+    /**
+     * Update Product
+     * Endpoint: PUT /api/admin/products/{id}
+     */
+    public function update(Request $request, $id)
+    {
+        $product = Product::find($id);
+
+        if (!$product) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Product not found',
+            ], 404);
+        }
+
+        $data = $request->only([
+            'category_id',
+            'name',
+            'collection',
+            'collection_code',
+            'tagline',
+            'description',
+            'material',
+            'weight',
+            'price',
+            'original_price',
+            'discount_percentage',
+            'discount_expires_at',
+            'is_flash_sale',
+            'image',
+            'gallery',
+            'colors',
+            'sizes',
+            'details',
+            'size_guide',
+            'story',
+            'limited',
+            'stock',
+        ]);
+
+        if ($request->filled('name') && $request->name !== $product->name) {
+            $data['slug'] = \Illuminate\Support\Str::slug($request->name) . '-' . time();
+        }
+
+        if ($request->filled('image')) {
+            $newImage = $request->image;
+            $currentGallery = $request->input('gallery', $product->gallery ?? []);
+            if (!is_array($currentGallery)) {
+                $currentGallery = [];
+            }
+            if (empty($currentGallery) || $currentGallery[0] !== $newImage) {
+                $data['gallery'] = array_merge([$newImage], array_values(array_filter($currentGallery, fn($g) => $g !== $newImage)));
+            }
+        }
+
+        if (isset($data['original_price']) && isset($data['price']) && $data['original_price'] !== null) {
+            $origPrice = (float) $data['original_price'];
+            $price = (float) $data['price'];
+            if ($origPrice > 0 && $origPrice < $price) {
+                $data['original_price'] = $price;
+                $data['price'] = max(0, $price - $origPrice);
+            }
+            if ($data['original_price'] > $data['price']) {
+                $data['discount_percentage'] = round((($data['original_price'] - $data['price']) / $data['original_price']) * 100);
+            }
+        }
+
+        $product->update(array_filter($data, fn($value) => $value !== null));
+
+        if ($request->has('variants') && is_array($request->variants)) {
+            $product->variants()->delete();
+            $totalStock = 0;
+            foreach ($request->variants as $v) {
+                $stk = (int) ($v['stock'] ?? 0);
+                $totalStock += $stk;
+                $product->variants()->create([
+                    'color' => $v['color'] ?? 'Default',
+                    'size'  => $v['size'] ?? 'M',
+                    'stock' => $stk,
+                ]);
+            }
+            if ($totalStock > 0) {
+                $product->update(['stock' => $totalStock]);
+            }
+        }
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Product updated successfully',
+            'data'    => $product->fresh()->load(['category', 'variants']),
+        ], 200);
+    }
+
+    /**
+     * Delete Product
+     * Endpoint: DELETE /api/admin/products/{id}
+     */
+    public function destroy($id)
+    {
+        $product = Product::find($id);
+
+        if (!$product) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Product not found',
+            ], 404);
+        }
+
+        $product->delete();
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Product deleted successfully',
+        ], 200);
     }
 }

@@ -203,9 +203,12 @@ function CheckoutContent() {
     queryFn: getCustomerProfile,
   });
 
+  const checkoutToken = typeof window !== "undefined" ? localStorage.getItem("sector_madness_token") : null;
+
   const { data: cartData, isLoading: isCartLoading } = useQuery({
-    queryKey: ["cart"],
+    queryKey: ["cart", checkoutToken ?? "guest"],
     queryFn: getCart,
+    enabled: !!checkoutToken,
   });
   const [customModalOpen, setCustomModalOpen] = useState(false);
   const [paymentTxData, setPaymentTxData] = useState<any>(null);

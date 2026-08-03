@@ -5,9 +5,10 @@ import { useEffect, useState } from "react";
 interface CountdownTimerProps {
   expiresAt: string;
   compact?: boolean;
+  onExpire?: () => void;
 }
 
-export default function CountdownTimer({ expiresAt, compact = false }: CountdownTimerProps) {
+export default function CountdownTimer({ expiresAt, compact = false, onExpire }: CountdownTimerProps) {
   const [timeLeft, setTimeLeft] = useState<{
     days: number;
     hours: number;
@@ -38,18 +39,23 @@ export default function CountdownTimer({ expiresAt, compact = false }: Countdown
       };
     };
 
-    setTimeLeft(calculateTimeLeft());
+    const initial = calculateTimeLeft();
+    setTimeLeft(initial);
+    if (initial.isExpired) {
+      onExpire?.();
+    }
 
     const timer = setInterval(() => {
       const remaining = calculateTimeLeft();
       setTimeLeft(remaining);
       if (remaining.isExpired) {
         clearInterval(timer);
+        onExpire?.();
       }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [expiresAt]);
+  }, [expiresAt, onExpire]);
 
   if (timeLeft.isExpired) return null;
 

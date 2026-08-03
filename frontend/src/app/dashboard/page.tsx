@@ -11,10 +11,12 @@ import {
   getOrderDetail,
   getShipmentTracking,
   cancelOrder,
+  isOrderActive,
   type CustomerProfile,
   type OrderListItem,
   type OrderDetailData,
   type TrackingData,
+  getImageUrl,
 } from "@/utils/api";
 
 function getDynamicGreeting(): string {
@@ -227,13 +229,7 @@ function DashboardOverviewContent() {
     getOrders()
       .then((data) => {
         if (!data) return;
-        const activeOnly = data.filter((item) => {
-          const st = (item.shipping_status || item.status || "").toUpperCase();
-          const ordSt = (item.status || "").toUpperCase();
-          const isCancelled = st === "CANCELLED" || st === "DIBATALKAN" || ordSt === "CANCELLED" || ordSt === "DIBATALKAN";
-          const isDelivered = st === "DELIVERED" || st === "COMPLETED" || st === "RECEIVED" || st === "SELESAI" || st === "DITERIMA" || st === "SHIPPED";
-          return !isCancelled && !isDelivered;
-        });
+        const activeOnly = data.filter(isOrderActive);
         setOrdersList(activeOnly);
         try {
           localStorage.setItem("sector_madness_active_orders", JSON.stringify(activeOnly));
@@ -333,13 +329,24 @@ function DashboardOverviewContent() {
   const hasReadyToShipOrder = ordersList.some((o) => {
     const ship = (o.shipping_status || "").toLowerCase();
     const stat = (o.status || "").toLowerCase();
-    return ship === "packed" || ship === "ready_to_ship" || ship === "ready to ship" || ship === "siap kirim" || stat === "packed" || stat === "ready_to_ship";
+    return (
+      ship === "packed" ||
+      ship === "ready_to_ship" ||
+      ship === "ready to ship" ||
+      ship === "siap kirim" ||
+      ship === "shipped" ||
+      ship === "in transit" ||
+      ship === "in_transit" ||
+      stat === "packed" ||
+      stat === "ready_to_ship" ||
+      stat === "shipped"
+    );
   });
 
   const hasDeliveredOrder = ordersList.some((o) => {
     const ship = (o.shipping_status || "").toLowerCase();
     const stat = (o.status || "").toLowerCase();
-    return ship === "delivered" || ship === "shipped" || ship === "completed" || ship === "received" || ship === "in transit" || stat === "completed" || stat === "delivered" || stat === "shipped";
+    return ship === "delivered" || stat === "delivered";
   });
 
   return (
@@ -486,10 +493,12 @@ function DashboardOverviewContent() {
                   const shipStatus = (order.shipping_status || order.status || "PROCESSING").toUpperCase();
                   const isCancelPending = shipStatus === "CANCEL PENDING" || shipStatus === "CANCELLATION PENDING" || (shipStatus === "PENDING" && isPaid);
                   const isCancelled = shipStatus === "CANCELLED" || shipStatus === "DIBATALKAN";
-                  const isDelivered = shipStatus === "DELIVERED" || shipStatus === "SHIPPED" || shipStatus === "COMPLETED" || shipStatus === "RECEIVED";
-                  const isReady = shipStatus === "PACKED" || shipStatus === "READY_TO_SHIP" || shipStatus === "READY TO SHIP" || shipStatus === "READY FOR DISPATCH" || shipStatus === "SIAP KIRIM";
+                  const isCompleted = shipStatus === "COMPLETED" || shipStatus === "RECEIVED" || shipStatus === "SELESAI" || shipStatus === "DITERIMA";
+                  const isDelivered = shipStatus === "DELIVERED";
+                  const isShipped = shipStatus === "SHIPPED" || shipStatus === "IN TRANSIT" || shipStatus === "IN_TRANSIT" || shipStatus === "PACKED" || shipStatus === "READY_TO_SHIP" || shipStatus === "READY TO SHIP" || shipStatus === "READY FOR DISPATCH" || shipStatus === "SIAP KIRIM";
+                  const isReady = isShipped;
                   const isInProcess = !isCancelPending && !isCancelled && (shipStatus === "ALLOCATED" || shipStatus === "PROCESSING" || shipStatus === "IN PROCESS");
-                  const displayStatus = isCancelPending ? "CANCEL PENDING" : isCancelled ? "CANCELLED" : isDelivered ? "DELIVERED" : isReady ? "READY TO SHIP" : isInProcess ? "IN PROCESS" : shipStatus;
+                  const displayStatus = isCancelPending ? "CANCEL PENDING" : isCancelled ? "CANCELLED" : isCompleted ? "COMPLETED" : isDelivered ? "DELIVERED" : isShipped ? "READY TO SHIP" : isInProcess ? "IN PROCESS" : shipStatus;
 
                   return (
                     <tr key={order.order_number} className="hover:bg-white/[0.02] transition-colors">
@@ -652,8 +661,9 @@ function DashboardOverviewContent() {
                       if (st === "CANCEL PENDING" || st === "CANCELLATION PENDING" || (st === "PENDING" && isPaid)) return <span className="text-red-400 font-bold">CANCEL PENDING</span>;
                       if (st === "CANCELLED" || st === "DIBATALKAN") return <span className="text-red-500 font-bold">CANCELLED</span>;
                       if (st === "ALLOCATED" || st === "PROCESSING" || st === "IN PROCESS") return "IN PROCESS";
-                      if (st === "PACKED" || st === "READY_TO_SHIP" || st === "READY TO SHIP" || st === "READY FOR DISPATCH" || st === "SIAP KIRIM") return "READY TO SHIP";
-                      if (st === "DELIVERED" || st === "SHIPPED" || st === "COMPLETED" || st === "IN TRANSIT") return "DELIVERED";
+                      if (st === "PACKED" || st === "READY_TO_SHIP" || st === "READY TO SHIP" || st === "READY FOR DISPATCH" || st === "SIAP KIRIM" || st === "SHIPPED" || st === "IN TRANSIT") return <span className="text-sky-400 font-bold">READY TO SHIP</span>;
+                      if (st === "DELIVERED") return <span className="text-emerald-400 font-bold">DELIVERED</span>;
+                      if (st === "COMPLETED" || st === "RECEIVED") return <span className="text-emerald-500 font-bold">COMPLETED</span>;
                       if (st === "PENDING" || st === "UNPAID") return "PENDING PAYMENT";
                       return st;
                     })()}
@@ -668,7 +678,7 @@ function DashboardOverviewContent() {
                       const isPaid = pay === "PAID" || pay === "SETTLED" || pay === "SUCCESS";
                       if (st === "CANCELLED" || st === "DIBATALKAN" || !isPaid || st === "PENDING" || st === "UNPAID" || st === "PENDING PAYMENT") return "-";
                       if (st === "CANCEL PENDING" || st === "CANCELLATION PENDING") return "ON HOLD";
-                      return selectedOrderDetail.courier_info?.courier_name || "J&T EXPRESS";
+                      return selectedOrderDetail.courier_info?.courier_name || (selectedOrderDetail as any).courier || "JNE EXPRESS";
                     })()}
                   </span>
                 </div>
@@ -680,7 +690,7 @@ function DashboardOverviewContent() {
                       const pay = (selectedOrderDetail.payment_info?.payment_status || (selectedOrderDetail as any).payment_status || "").toUpperCase();
                       const isPaid = pay === "PAID" || pay === "SETTLED" || pay === "SUCCESS";
                       if (!isPaid || st === "CANCEL PENDING" || st === "CANCELLATION PENDING" || st === "CANCELLED" || st === "DIBATALKAN" || st === "PENDING" || st === "UNPAID" || st === "PENDING PAYMENT") return "-";
-                      return selectedOrderDetail.courier_info?.tracking_number || "BITESHIP-JNT-1725126548";
+                      return selectedOrderDetail.courier_info?.tracking_number || (selectedOrderDetail as any).tracking_number || "PENDING ALLOCATION";
                     })()}
                   </span>
                 </div>
@@ -694,9 +704,9 @@ function DashboardOverviewContent() {
                 <div style={{ gap: "20px" }} className="flex flex-col">
                   {(selectedOrderDetail.products || (selectedOrderDetail as any).items || [])?.map((item: any, idx: number) => {
                     const prodName = item.product_name || item.name || "SECTOR 002 OVERSIZED TRENCH";
-                    const prodImg = item.product_image || (idx % 2 === 0 ? "/images/hero/hero-1.png" : "/images/campaign/campaign-1.png");
-                    const color = item.color || "Midnight Navy";
-                    const size = item.size || "S";
+                    const prodImg = getImageUrl(item.product_image) || (idx % 2 === 0 ? "/images/hero/hero-1.png" : "/images/campaign/campaign-1.png");
+                    const validColor = item.color && !["default","none","n/a","null",""].includes(item.color.trim().toLowerCase()) ? item.color : null;
+                    const validSize = item.size && !["default","none","n/a","null",""].includes(item.size.trim().toLowerCase()) ? item.size : null;
                     const qty = item.quantity || 1;
                     const price = (item.price || 0) * qty;
 
@@ -714,7 +724,7 @@ function DashboardOverviewContent() {
                             {prodName}
                           </h4>
                           <p style={{ marginBottom: "14px" }} className="text-xs font-mono text-[#8A8A8A] tracking-widest uppercase">
-                            {color} // {size} // QTY: {qty}
+                            {[validColor, validSize, `QTY: ${qty}`].filter(Boolean).join(" // ")}
                           </p>
                           <p className="text-base font-mono text-[#B6A47E] font-black">
                             Rp {price.toLocaleString("id-ID")}
@@ -746,11 +756,7 @@ function DashboardOverviewContent() {
                   const isInProcessOrPending =
                     !isCancelPending && !isCancelled && (st === "IN PROCESS" || st === "PROCESSING" || st === "ALLOCATED" ||
                     st === "PENDING" || st === "PENDING PAYMENT" || st === "UNPAID");
-                  const isReadyToShip =
-                    !isCancelPending && !isCancelled && (st === "READY TO SHIP" || st === "READY_TO_SHIP" || st === "PACKED" || st === "READY FOR DISPATCH" || st === "SIAP KIRIM");
-                  const isDelivered =
-                    !isCancelPending && !isCancelled && (st === "DELIVERED" || st === "COMPLETED" || st === "RECEIVED" || st === "SELESAI");
-                  const isShippedOrDelivered = !isInProcessOrPending && !isReadyToShip && !isCancelled && !isCancelPending;
+                  const isDeliveredOnly = !isCancelPending && !isCancelled && (st === "DELIVERED");
 
                   return (
                     <>
@@ -794,7 +800,7 @@ function DashboardOverviewContent() {
                         </div>
                       )}
 
-                      {isShippedOrDelivered && !isDelivered && !isCancelPending && !isCancelled && (
+                      {isDeliveredOnly && (
                         <button
                           onClick={() => handleConfirmReceived(selectedOrderDetail.order_number)}
                           style={{ padding: "20px 0" }}

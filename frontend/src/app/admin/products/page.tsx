@@ -1,0 +1,2183 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import AdminSidebar from "../components/AdminSidebar";
+import AdminHeader from "../components/AdminHeader";
+import {
+  getAdminProducts,
+  createAdminProduct,
+  updateAdminProduct,
+  deleteAdminProduct,
+  getCategories,
+  getCollections,
+  uploadAdminImage,
+  AdminProduct,
+} from "@/utils/api";
+import {
+  Package,
+  Plus,
+  X,
+  Pencil,
+  Trash2,
+  Upload,
+  Search,
+  Filter,
+  Images,
+  Palette,
+  Ruler,
+  AlertCircle,
+  Box,
+} from "lucide-react";
+import Swal from "sweetalert2";
+
+interface SizeGuideRow {
+  size: string;
+  chest: string;
+  waist: string;
+}
+
+const AVAILABLE_SIZES = ["S", "M", "L", "XL", "XXL", "ALL SIZE"];
+const AVAILABLE_COLORS = ["BLACK", "WHITE", "CHARCOAL", "SAND", "OLIVE", "NAVY", "BEIGE", "GREY"];
+
+export default function AdminProductsPage() {
+  const queryClient = useQueryClient();
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const savedTheme = localStorage.getItem("sector_madness_admin_theme");
+      if (savedTheme !== null) {
+        return savedTheme === "dark";
+      }
+    }
+    return true;
+  });
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("ALL");
+  const [rowLimit, setRowLimit] = useState<number>(10);
+  const [statusMessage, setStatusMessage] = useState("");
+
+  const [modalMode, setModalMode] = useState<"add" | "edit" | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<AdminProduct | null>(null);
+
+  const getLabelString = (val: any): string => {
+    if (val === null || val === undefined) return "";
+    if (typeof val === "string") return val;
+    if (typeof val === "object") {
+      return val.name || val.color || val.size || val.label || String(val);
+    }
+    return String(val);
+  };
+
+  // Form States
+  const [formName, setFormName] = useState("");
+  const [formCategoryId, setFormCategoryId] = useState<number | "">("");
+  const [formCollection, setFormCollection] = useState("");
+  const [formCollectionCode, setFormCollectionCode] = useState("");
+  const [isCustomCollection, setIsCustomCollection] = useState(false);
+  const [formPrice, setFormPrice] = useState<number | "">("");
+  const [formOriginalPrice, setFormOriginalPrice] = useState<number | "">("");
+  const [formDiscountExpiresAt, setFormDiscountExpiresAt] = useState("");
+  const [formIsFlashSale, setFormIsFlashSale] = useState(false);
+  const [formLimited, setFormLimited] = useState(false);
+  const [formStock, setFormStock] = useState<number | "">(10);
+  const [formMaterial, setFormMaterial] = useState("");
+  const [formWeight, setFormWeight] = useState("");
+  const [formDetails, setFormDetails] = useState("");
+  const [sizeGuideRows, setSizeGuideRows] = useState<SizeGuideRow[]>([
+    { size: "S", chest: "90 - 95", waist: "75 - 80" },
+    { size: "M", chest: "96 - 101", waist: "81 - 86" },
+    { size: "L", chest: "102 - 107", waist: "87 - 92" },
+    { size: "XL", chest: "108 - 113", waist: "93 - 98" },
+    { size: "XXL", chest: "114 - 119", waist: "99 - 104" },
+  ]);
+  const [formStory, setFormStory] = useState("");
+  const [formDescription, setFormDescription] = useState("");
+
+  // Single Cover Image
+  const [formImagePath, setFormImagePath] = useState("");
+  const [formImageFile, setFormImageFile] = useState<File | null>(null);
+  const [formImagePreview, setFormImagePreview] = useState("");
+
+  // Multiple Gallery Photos
+  const [galleryPaths, setGalleryPaths] = useState<string[]>([]);
+  const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
+  const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
+
+  // Sizes & Colors
+  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
+  const [customSizeInput, setCustomSizeInput] = useState("");
+
+  const [selectedColors, setSelectedColors] = useState<string[]>([]);
+  const [customColorInput, setCustomColorInput] = useState("");
+
+  interface VariantStockItem {
+    color: string;
+    size: string;
+    stock: number;
+  }
+  const [variantStocks, setVariantStocks] = useState<VariantStockItem[]>([]);
+
+  const colorsKey = selectedColors.map(getLabelString).join(",");
+  const sizesKey = selectedSizes.map(getLabelString).join(",");
+
+  useEffect(() => {
+    const colors = selectedColors.length > 0 ? selectedColors.map(getLabelString) : ["Default"];
+    const sizes = selectedSizes.length > 0 ? selectedSizes.map(getLabelString) : ["All Size"];
+    const totalCombos = colors.length * sizes.length;
+    const currentStock = typeof formStock === "number" && formStock > 0 ? formStock : 10;
+    const perComboStock = Math.max(1, Math.floor(currentStock / totalCombos));
+
+    setVariantStocks((prev) => {
+      const next: VariantStockItem[] = [];
+      colors.forEach((c) => {
+        sizes.forEach((s) => {
+          const existing = prev.find((item) => item.color === c && item.size === s);
+          next.push({
+            color: c,
+            size: s,
+            stock: existing ? existing.stock : perComboStock,
+          });
+        });
+      });
+      return next;
+    });
+  }, [colorsKey, sizesKey]);
+
+  const updateVariantStock = (color: string, size: string, stockVal: number) => {
+    setVariantStocks((prev) => {
+      const next = prev.map((item) => {
+        if (item.color === color && item.size === size) {
+          return { ...item, stock: Math.max(0, stockVal) };
+        }
+        return item;
+      });
+      const total = next.reduce((acc, curr) => acc + (Number(curr.stock) || 0), 0);
+      if (total > 0) setFormStock(total);
+      return next;
+    });
+  };
+
+  const [isUploading, setIsUploading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const handleThemeEvent = () => {
+      if (typeof window !== "undefined") {
+        const saved = localStorage.getItem("sector_madness_admin_theme");
+        setIsDarkMode(saved === null ? true : saved === "dark");
+      }
+    };
+    window.addEventListener("sector_theme_change", handleThemeEvent);
+    return () => window.removeEventListener("sector_theme_change", handleThemeEvent);
+  }, []);
+
+  const toggleTheme = () => {
+    const next = !isDarkMode;
+    setIsDarkMode(next);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("sector_madness_admin_theme", next ? "dark" : "light");
+      setTimeout(() => {
+        window.dispatchEvent(new Event("sector_theme_change"));
+      }, 0);
+    }
+  };
+
+  // Queries
+  const { data: products = [], isLoading: loadingProducts } = useQuery({
+    queryKey: ["admin-products"],
+    queryFn: getAdminProducts,
+    refetchInterval: 5000,
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ["categories"],
+    queryFn: getCategories,
+  });
+
+  const { data: collections = [] } = useQuery({
+    queryKey: ["collections"],
+    queryFn: getCollections,
+  });
+
+  // Mutations
+  const addProductMut = useMutation({
+    mutationFn: createAdminProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      showSuccessAlert("Produk berhasil ditambahkan!");
+      closeModal();
+    },
+    onError: (err: any) => {
+      showErrorAlert(err.response?.data?.message || "Gagal menambahkan produk.");
+    },
+  });
+
+  const updateProductMut = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<AdminProduct> }) =>
+      updateAdminProduct(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      showSuccessAlert("Produk berhasil diperbarui!");
+      closeModal();
+    },
+    onError: (err: any) => {
+      showErrorAlert(err.response?.data?.message || "Gagal memperbarui produk.");
+    },
+  });
+
+  const deleteProductMut = useMutation({
+    mutationFn: deleteAdminProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      showSuccessAlert("Produk berhasil dihapus!");
+    },
+    onError: (err: any) => {
+      showErrorAlert(err.response?.data?.message || "Gagal menghapus produk.");
+    },
+  });
+
+  const showSuccessAlert = (msg: string) => {
+    Swal.fire({
+      toast: true,
+      position: "top-end",
+      icon: "success",
+      title: msg,
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true,
+      background: isDarkMode ? "#18181C" : "#ffffff",
+      color: isDarkMode ? "#f5f5f5" : "#0a0a0a",
+      customClass: {
+        popup: isDarkMode
+          ? "border border-white/10 rounded-[12px] shadow-2xl"
+          : "border border-gray-200 rounded-[12px] shadow-2xl",
+      },
+    });
+  };
+
+  const showErrorAlert = (msg: string) => {
+    Swal.fire({
+      icon: "error",
+      title: "ERROR",
+      text: msg,
+      background: isDarkMode ? "#18181C" : "#ffffff",
+      color: isDarkMode ? "#f5f5f5" : "#0a0a0a",
+      confirmButtonColor: "#E53E3E",
+    });
+  };
+
+  const confirmDelete = (productName: string, onConfirm: () => void) => {
+    Swal.fire({
+      title: "HAPUS PRODUK?",
+      text: `Apakah Anda yakin ingin menghapus produk "${productName}"? Tindakan ini tidak dapat dibatalkan.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#E53E3E",
+      cancelButtonColor: isDarkMode ? "#27272a" : "#E5E7EB",
+      confirmButtonText: "YA, HAPUS",
+      cancelButtonText: "BATAL",
+      reverseButtons: true,
+      background: isDarkMode ? "#18181C" : "#ffffff",
+      color: isDarkMode ? "#f5f5f5" : "#0a0a0a",
+      customClass: {
+        popup: isDarkMode
+          ? "border border-white/10 rounded-[12px] shadow-2xl"
+          : "border border-gray-200 rounded-[12px] shadow-2xl",
+        confirmButton:
+          "px-5 py-2.5 rounded-lg font-bold text-xs tracking-widest uppercase cursor-pointer !text-white",
+        cancelButton: isDarkMode
+          ? "px-5 py-2.5 rounded-lg font-bold text-xs tracking-widest uppercase cursor-pointer !text-gray-200"
+          : "px-5 py-2.5 rounded-lg font-bold text-xs tracking-widest uppercase cursor-pointer !text-gray-900 border border-gray-300 shadow-xs",
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        onConfirm();
+      }
+    });
+  };
+
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      showErrorAlert("Ukuran file foto melebihi batas maksimal 5 MB.");
+      return;
+    }
+
+    setFormImageFile(file);
+    setErrors((prev) => ({ ...prev, image: "" }));
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        setFormImagePreview(event.target.result as string);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleMultipleGalleryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const validFiles: File[] = [];
+    const newPreviews: string[] = [];
+    let hasOverLimit = false;
+
+    files.forEach((file) => {
+      if (file.size <= 5 * 1024 * 1024) {
+        validFiles.push(file);
+        newPreviews.push(URL.createObjectURL(file));
+      } else {
+        hasOverLimit = true;
+      }
+    });
+
+    if (hasOverLimit) {
+      showErrorAlert("Beberapa file terlewati karena ukurannya melebihi batas 5 MB.");
+    }
+
+    setGalleryFiles((prev) => [...prev, ...validFiles]);
+    setGalleryPreviews((prev) => [...prev, ...newPreviews]);
+  };
+
+  const removeGalleryPhoto = (index: number) => {
+    if (index < galleryPaths.length) {
+      setGalleryPaths((prev) => prev.filter((_, i) => i !== index));
+    } else {
+      const localIndex = index - galleryPaths.length;
+      setGalleryFiles((prev) => prev.filter((_, i) => i !== localIndex));
+      setGalleryPreviews((prev) => prev.filter((_, i) => i !== index));
+    }
+  };
+
+
+
+  const formatSizeGuideText = (guide: any): string => {
+    if (!guide) return "";
+    if (typeof guide === "string") return guide;
+    if (Array.isArray(guide)) {
+      return guide
+        .map((item) => {
+          if (!item) return "";
+          if (typeof item === "string") return item;
+          if (typeof item === "object") {
+            const sz = item.size || item.name || "";
+            const chest = item.chest ? `Chest ${item.chest}` : "";
+            const waist = item.waist ? `Waist ${item.waist}` : "";
+            const length = item.length ? `Length ${item.length}` : "";
+            const parts = [chest, waist, length].filter(Boolean).join(", ");
+            return sz ? `${sz}: ${parts || JSON.stringify(item)}` : JSON.stringify(item);
+          }
+          return String(item);
+        })
+        .filter(Boolean)
+        .join("\n");
+    }
+    if (typeof guide === "object") {
+      return JSON.stringify(guide);
+    }
+    return String(guide);
+  };
+
+  const formatDetailsText = (details: any): string => {
+    if (!details) return "";
+    if (typeof details === "string") return details;
+    if (Array.isArray(details)) {
+      return details
+        .map((item) => {
+          if (!item) return "";
+          if (typeof item === "string") return item;
+          if (typeof item === "object") {
+            return item.text || item.title || item.detail || JSON.stringify(item);
+          }
+          return String(item);
+        })
+        .filter(Boolean)
+        .join("\n");
+    }
+    return String(details);
+  };
+
+  const parseSizeGuideRows = (guide: any): SizeGuideRow[] => {
+    const defaultGuide: SizeGuideRow[] = [
+      { size: "S", chest: "90 - 95", waist: "75 - 80" },
+      { size: "M", chest: "96 - 101", waist: "81 - 86" },
+      { size: "L", chest: "102 - 107", waist: "87 - 92" },
+      { size: "XL", chest: "108 - 113", waist: "93 - 98" },
+      { size: "XXL", chest: "114 - 119", waist: "99 - 104" },
+    ];
+    if (!guide) return defaultGuide;
+    if (Array.isArray(guide) && guide.length > 0) {
+      return guide.map((item) => {
+        if (typeof item === "object" && item !== null) {
+          return {
+            size: item.size || item.name || "S",
+            chest: item.chest || "",
+            waist: item.waist || item.length || "",
+          };
+        }
+        if (typeof item === "string") {
+          const parts = item.split(":");
+          const sz = parts[0]?.trim() || "S";
+          const rest = parts[1] || "";
+          const chestMatch = rest.match(/Chest\s*([^,]+)/i);
+          const waistMatch = rest.match(/(?:Waist|Length)\s*([^,]+)/i);
+          return {
+            size: sz,
+            chest: chestMatch ? chestMatch[1].trim() : rest.trim(),
+            waist: waistMatch ? waistMatch[1].trim() : "",
+          };
+        }
+        return { size: "S", chest: "", waist: "" };
+      });
+    }
+    return defaultGuide;
+  };
+
+  const updateSizeGuideRow = (index: number, field: keyof SizeGuideRow, value: string) => {
+    setSizeGuideRows((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], [field]: value };
+      return next;
+    });
+  };
+
+  const addSizeGuideRow = () => {
+    setSizeGuideRows((prev) => [...prev, { size: "BARU", chest: "", waist: "" }]);
+  };
+
+  const removeSizeGuideRow = (index: number) => {
+    setSizeGuideRows((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const toggleSize = (szVal: any) => {
+    const sz = getLabelString(szVal);
+    const curr = selectedSizes.map(getLabelString);
+    if (curr.includes(sz)) {
+      setSelectedSizes(curr.filter((s) => s !== sz));
+    } else {
+      setSelectedSizes([...curr, sz]);
+    }
+  };
+
+  const addCustomSize = () => {
+    const sz = customSizeInput.trim().toUpperCase();
+    const curr = selectedSizes.map(getLabelString);
+    if (sz && !curr.includes(sz)) {
+      setSelectedSizes([...curr, sz]);
+      setCustomSizeInput("");
+    }
+  };
+
+  const toggleColor = (clrVal: any) => {
+    const clr = getLabelString(clrVal);
+    const curr = selectedColors.map(getLabelString);
+    if (curr.includes(clr)) {
+      setSelectedColors(curr.filter((c) => c !== clr));
+    } else {
+      setSelectedColors([...curr, clr]);
+    }
+  };
+
+  const addCustomColor = () => {
+    const clr = customColorInput.trim().toUpperCase();
+    const curr = selectedColors.map(getLabelString);
+    if (clr && !curr.includes(clr)) {
+      setSelectedColors([...curr, clr]);
+      setCustomColorInput("");
+    }
+  };
+
+  const openAddModal = () => {
+    setErrors({});
+    setSelectedProduct(null);
+    setFormName("");
+    setFormCategoryId("");
+    setFormCollection("");
+    setFormCollectionCode("");
+    setIsCustomCollection(false);
+    setFormPrice("");
+    setFormOriginalPrice("");
+    setFormDiscountExpiresAt("");
+    setFormIsFlashSale(false);
+    setFormLimited(false);
+    setFormStock(10);
+    setFormMaterial("");
+    setFormWeight("");
+    setFormDetails("");
+    setSizeGuideRows([
+      { size: "S", chest: "90 - 95", waist: "75 - 80" },
+      { size: "M", chest: "96 - 101", waist: "81 - 86" },
+      { size: "L", chest: "102 - 107", waist: "87 - 92" },
+      { size: "XL", chest: "108 - 113", waist: "93 - 98" },
+      { size: "XXL", chest: "114 - 119", waist: "99 - 104" },
+    ]);
+    setFormStory("");
+    setFormDescription("");
+    setFormImagePath("");
+    setFormImageFile(null);
+    setFormImagePreview("");
+    setGalleryPaths([]);
+    setGalleryFiles([]);
+    setGalleryPreviews([]);
+    setSelectedSizes(["S", "M", "L", "XL"]);
+    setSelectedColors(["BLACK"]);
+    setModalMode("add");
+  };
+
+  const openEditModal = (product: AdminProduct) => {
+    setErrors({});
+    setSelectedProduct(product);
+    setFormName(product.name || "");
+    setFormCategoryId(product.category_id || product.category?.id || "");
+    const colName = product.collection || "";
+    setFormCollection(colName);
+    setFormCollectionCode(product.collection_code || colName);
+    const matchInDb = collections.some((c) => c.name === colName || c.code === colName);
+    setIsCustomCollection(Boolean(colName && !matchInDb));
+    // Normal Price before discount
+    const rawNormalPrice = product.original_price && product.original_price > product.price
+      ? product.original_price
+      : product.price;
+    const realNormalPrice = rawNormalPrice ? (rawNormalPrice < 1000 ? rawNormalPrice * 1000 : rawNormalPrice) : "";
+    
+    // Discount Amount
+    const rawDiscountAmt = product.original_price && product.original_price > product.price
+      ? product.original_price - product.price
+      : "";
+    const realDiscountAmt = rawDiscountAmt ? (rawDiscountAmt < 1000 ? rawDiscountAmt * 1000 : rawDiscountAmt) : "";
+
+    setFormPrice(realNormalPrice);
+    setFormOriginalPrice(realDiscountAmt);
+    setFormDiscountExpiresAt(product.discount_expires_at ? product.discount_expires_at.replace(" ", "T").slice(0, 16) : "");
+    setFormIsFlashSale(Boolean(product.is_flash_sale));
+    setFormLimited(Boolean(product.limited));
+    setFormStock(product.stock ?? 10);
+    setFormMaterial(product.material || "");
+    setFormWeight(product.weight || "");
+    setFormDetails(formatDetailsText(product.details));
+    setSizeGuideRows(parseSizeGuideRows(product.size_guide));
+    setFormStory(product.story || "");
+    setFormDescription(product.description || "");
+    setFormImagePath(product.image || "");
+    setFormImageFile(null);
+    setFormImagePreview(
+      product.image
+        ? product.image.startsWith("http")
+          ? product.image
+          : `http://brand.test${product.image}`
+        : ""
+    );
+
+    const existingGallery = Array.isArray(product.gallery) ? product.gallery : [];
+    setGalleryPaths(existingGallery);
+    setGalleryFiles([]);
+    setGalleryPreviews(
+      existingGallery.map((g) => (g.startsWith("http") ? g : `http://brand.test${g}`))
+    );
+
+    setSelectedSizes(Array.isArray(product.sizes) ? product.sizes.map(getLabelString) : []);
+    setSelectedColors(Array.isArray(product.colors) ? product.colors.map(getLabelString) : []);
+
+    if (Array.isArray(product.variants) && product.variants.length > 0) {
+      setVariantStocks(
+        product.variants.map((v: any) => ({
+          color: v.color || "Default",
+          size: v.size || "All Size",
+          stock: Number(v.stock) || 0,
+        }))
+      );
+    }
+
+    setModalMode("edit");
+  };
+
+  const closeModal = () => {
+    setErrors({});
+    setModalMode(null);
+    setSelectedProduct(null);
+    setFormImageFile(null);
+    setFormImagePreview("");
+    setGalleryFiles([]);
+    setGalleryPreviews([]);
+  };
+
+  const validateForm = () => {
+    const errs: Record<string, string> = {};
+    if (!formName.trim()) {
+      errs.name = "Nama produk wajib diisi.";
+    }
+    if (formPrice === "" || Number(formPrice) <= 0) {
+      errs.price = "Harga jual wajib diisi dan harus lebih besar dari 0.";
+    }
+    if (formStock === "" || Number(formStock) < 0) {
+      errs.stock = "Stok produk wajib diisi (minimal 0).";
+    }
+    if (modalMode === "add" && !formImageFile && !formImagePath) {
+      errs.image = "Foto sampul utama produk wajib diunggah.";
+    }
+
+    setErrors(errs);
+
+    // Auto-scroll to the first invalid input element inside the modal
+    const firstErrorKey = Object.keys(errs)[0];
+    if (firstErrorKey) {
+      setTimeout(() => {
+        const targetElement = document.getElementById(`field-${firstErrorKey}`);
+        if (targetElement) {
+          targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
+          const inputEl = targetElement.querySelector("input, select, textarea");
+          if (inputEl && "focus" in inputEl) {
+            (inputEl as HTMLElement).focus();
+          }
+        }
+      }, 50);
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    setIsUploading(true);
+    try {
+      let finalImagePath = formImagePath;
+
+      if (formImageFile) {
+        finalImagePath = await uploadAdminImage(formImageFile, "products");
+      }
+
+      const uploadedGalleryPaths: string[] = [...galleryPaths];
+      for (const file of galleryFiles) {
+        const path = await uploadAdminImage(file, "products");
+        uploadedGalleryPaths.push(path);
+      }
+
+      const payload: Partial<AdminProduct> = {
+        name: formName.trim(),
+        price: Number(formPrice),
+        original_price: formOriginalPrice ? Number(formOriginalPrice) : undefined,
+        discount_expires_at: formDiscountExpiresAt ? formDiscountExpiresAt : undefined,
+        is_flash_sale: formIsFlashSale,
+        limited: formLimited,
+        stock: Number(formStock),
+        category_id: formCategoryId !== "" ? Number(formCategoryId) : undefined,
+        collection: formCollection.trim() || undefined,
+        collection_code: formCollectionCode.trim() || formCollection.trim() || undefined,
+        material: formMaterial.trim() || undefined,
+        weight: formWeight.trim() || undefined,
+        details: formDetails.trim()
+          ? formDetails.split("\n").map((s) => s.trim()).filter(Boolean)
+          : undefined,
+        size_guide: sizeGuideRows
+          .filter((r) => r.size.trim())
+          .map((r) => ({
+            size: r.size.trim(),
+            chest: r.chest.trim(),
+            waist: r.waist.trim(),
+          })),
+        story: formStory.trim() || undefined,
+        description: formDescription.trim() || undefined,
+        image: finalImagePath,
+        gallery: uploadedGalleryPaths,
+        sizes: selectedSizes,
+        colors: selectedColors,
+        variants: variantStocks,
+      };
+
+      if (modalMode === "add") {
+        addProductMut.mutate(payload);
+      } else if (modalMode === "edit" && selectedProduct) {
+        updateProductMut.mutate({ id: Number(selectedProduct.id), data: payload });
+      }
+    } catch {
+      showErrorAlert("Gagal mengunggah foto produk.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const filteredProducts = products.filter((prod) => {
+    const q = searchQuery.toLowerCase().trim();
+    const matchesSearch =
+      !q ||
+      prod.name.toLowerCase().includes(q) ||
+      (prod.category?.name || "").toLowerCase().includes(q) ||
+      (prod.material || "").toLowerCase().includes(q);
+
+    const matchesCat =
+      categoryFilter === "ALL" ||
+      String(prod.category_id || prod.category?.id) === categoryFilter;
+
+    return matchesSearch && matchesCat;
+  });
+
+  const displayedProducts =
+    rowLimit === 0 ? filteredProducts : filteredProducts.slice(0, rowLimit);
+
+  const formatRupiah = (amount?: number) => {
+    if (amount === undefined || amount === null || isNaN(amount)) return "Rp 0";
+    const realAmount = amount < 1000 ? amount * 1000 : amount;
+    return `Rp ${realAmount.toLocaleString("id-ID")}`;
+  };
+
+  const getInputStyle = (hasError: boolean) => ({
+    width: "100%",
+    padding: "11px 14px",
+    fontSize: "12px",
+    fontWeight: 600,
+    borderRadius: "6px",
+    outline: "none",
+    backgroundColor: isDarkMode ? "#121214" : "#F9FAFB",
+    border: hasError
+      ? "1px solid #E53E3E"
+      : isDarkMode
+      ? "1px solid rgba(255, 255, 255, 0.12)"
+      : "1px solid #D1D5DB",
+    color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
+    transition: "border 0.2s",
+  });
+
+  const labelStyle = {
+    display: "block",
+    fontSize: "11px",
+    fontWeight: 700,
+    letterSpacing: "0.12em",
+    textTransform: "uppercase" as const,
+    marginBottom: "8px",
+    color: isDarkMode ? "#8A8A8A" : "#4B5563",
+  };
+
+  return (
+    <div
+      suppressHydrationWarning
+      className={`flex flex-col lg:flex-row min-h-screen transition-colors duration-200 font-[family-name:var(--font-body)] ${
+        isDarkMode ? "bg-[#121214] text-[#F5F5F5]" : "bg-[#F4F4F6] text-[#0A0A0A]"
+      }`}
+    >
+      <AdminSidebar activeTab="products" isDarkMode={isDarkMode} />
+
+      <div className="flex-1 flex flex-col min-w-0">
+        <AdminHeader
+          title="KELOLA PRODUK"
+          subtitle="Manajemen data katalog produk, galeri foto, ukuran, dan harga"
+          isDarkMode={isDarkMode}
+          onToggleTheme={toggleTheme}
+        />
+
+        <main
+          style={{
+            paddingTop: "48px",
+            paddingBottom: "96px",
+            paddingLeft: "48px",
+            paddingRight: "48px",
+            maxWidth: "1440px",
+            marginLeft: "auto",
+            marginRight: "auto",
+            width: "100%",
+          }}
+          className="flex-1 min-w-0"
+        >
+          {statusMessage && (
+            <div
+              className={`mb-6 p-4 border rounded-[6px] text-xs tracking-wider uppercase font-semibold flex items-center justify-between shadow-sm ${
+                isDarkMode
+                  ? "bg-[#18181C] border-[#B6A47E]/40 text-[#B6A47E]"
+                  : "bg-white border-[#B6A47E] text-[#0A0A0A]"
+              }`}
+            >
+              <span>{statusMessage}</span>
+              <button
+                onClick={() => setStatusMessage("")}
+                className="opacity-70 hover:opacity-100 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
+          {/* PAGE HEADER: TITLE COUNTER & ADD BUTTON */}
+          <div style={{ marginBottom: "32px" }} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <h2
+              style={{
+                fontSize: "11px",
+                letterSpacing: "0.22em",
+                fontWeight: 700,
+                fontFamily: "'Inter', -apple-system, sans-serif",
+              }}
+              className={`uppercase ${isDarkMode ? "text-[#8A8A8A]" : "text-[#4B5563]"}`}
+            >
+              {filteredProducts.length} PRODUK DITEMUKAN ({products.length} TOTAL)
+            </h2>
+            <button
+              onClick={openAddModal}
+              style={{ padding: "12px 28px" }}
+              className={`group rounded-[6px] text-xs font-bold tracking-widest uppercase transition-all duration-200 cursor-pointer flex items-center gap-2 shadow-sm ${
+                isDarkMode
+                  ? "bg-[#B6A47E] text-[#0A0A0A] hover:bg-[#a3926d]"
+                  : "bg-[#0A0A0A] text-white hover:bg-[#222222]"
+              }`}
+            >
+              <Plus className="w-4 h-4 transition-transform duration-300 group-hover:rotate-90" />
+              <span>TAMBAH PRODUK</span>
+            </button>
+          </div>
+
+          {/* TABLE CONTROL BAR: SEARCH, FILTER & ROW LIMIT */}
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "16px",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: "24px",
+              padding: "16px 20px",
+              borderRadius: "8px",
+              backgroundColor: isDarkMode ? "#18181C" : "#FFFFFF",
+              border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #E5E7EB",
+            }}
+          >
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "12px", flex: 1, minWidth: "280px" }}>
+              {/* Search Bar */}
+              <div style={{ position: "relative", flex: 1, minWidth: "220px" }}>
+                <Search
+                  style={{
+                    position: "absolute",
+                    left: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    width: "16px",
+                    height: "16px",
+                    color: isDarkMode ? "#8A8A8A" : "#9CA3AF",
+                  }}
+                />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Cari Produk / Kategori / Material..."
+                  style={{
+                    width: "100%",
+                    paddingLeft: "38px",
+                    paddingRight: "14px",
+                    paddingTop: "9px",
+                    paddingBottom: "9px",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    borderRadius: "6px",
+                    outline: "none",
+                    backgroundColor: isDarkMode ? "#121214" : "#F9FAFB",
+                    border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #D1D5DB",
+                    color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
+                  }}
+                />
+              </div>
+
+              {/* Category Filter Dropdown */}
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <Filter style={{ width: "14px", height: "14px", color: "#B6A47E" }} />
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  style={{
+                    padding: "9px 14px",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    borderRadius: "6px",
+                    outline: "none",
+                    textTransform: "uppercase",
+                    cursor: "pointer",
+                    backgroundColor: isDarkMode ? "#121214" : "#F9FAFB",
+                    border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #D1D5DB",
+                    color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
+                  }}
+                >
+                  <option value="ALL">SEMUA KATEGORI</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={String(cat.id)}>
+                      {cat.name.toUpperCase()}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Row Limit Select */}
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: isDarkMode ? "#8A8A8A" : "#6B7280" }}>
+                TAMPILKAN:
+              </span>
+              <select
+                value={rowLimit}
+                onChange={(e) => setRowLimit(Number(e.target.value))}
+                style={{
+                  padding: "9px 14px",
+                  fontSize: "12px",
+                  fontWeight: 700,
+                  borderRadius: "6px",
+                  outline: "none",
+                  cursor: "pointer",
+                  backgroundColor: isDarkMode ? "#121214" : "#F9FAFB",
+                  border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #D1D5DB",
+                  color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
+                }}
+              >
+                <option value={5}>5 BARIS</option>
+                <option value={10}>10 BARIS</option>
+                <option value={25}>25 BARIS</option>
+                <option value={50}>50 BARIS</option>
+                <option value={0}>SEMUA ({filteredProducts.length})</option>
+              </select>
+            </div>
+          </div>
+
+          {/* TABLE CONTAINER */}
+          <div
+            style={{
+              borderRadius: "8px",
+              overflow: "hidden",
+              border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #E5E7EB",
+              backgroundColor: isDarkMode ? "#18181C" : "#FFFFFF",
+            }}
+          >
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr
+                    style={{
+                      borderBottom: isDarkMode ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #E5E7EB",
+                      backgroundColor: isDarkMode ? "rgba(255, 255, 255, 0.02)" : "#F9FAFB",
+                    }}
+                  >
+                    <th style={{ padding: "16px 20px", fontSize: "11px", letterSpacing: "0.15em" }} className="font-mono font-bold uppercase text-[#8A8A8A]">
+                      FOTO
+                    </th>
+                    <th style={{ padding: "16px 20px", fontSize: "11px", letterSpacing: "0.15em" }} className="font-mono font-bold uppercase text-[#8A8A8A]">
+                      NAMA PRODUK
+                    </th>
+                    <th style={{ padding: "16px 20px", fontSize: "11px", letterSpacing: "0.15em" }} className="font-mono font-bold uppercase text-[#8A8A8A]">
+                      KATEGORI
+                    </th>
+                    <th style={{ padding: "16px 20px", fontSize: "11px", letterSpacing: "0.15em" }} className="font-mono font-bold uppercase text-[#8A8A8A]">
+                      HARGA
+                    </th>
+                    <th style={{ padding: "16px 20px", fontSize: "11px", letterSpacing: "0.15em" }} className="font-mono font-bold uppercase text-[#8A8A8A]">
+                      STOK
+                    </th>
+                    <th style={{ padding: "16px 20px", fontSize: "11px", letterSpacing: "0.15em" }} className="font-mono font-bold uppercase text-[#8A8A8A] text-right">
+                      AKSI
+                    </th>
+                  </tr>
+                </thead>
+                <tbody
+                  className={`divide-y text-xs ${
+                    isDarkMode ? "divide-white/5" : "divide-gray-100"
+                  }`}
+                >
+                  {loadingProducts ? (
+                    <tr>
+                      <td colSpan={6} style={{ padding: "48px" }} className="text-center text-gray-500 font-mono">
+                        Memuat data produk...
+                      </td>
+                    </tr>
+                  ) : displayedProducts.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} style={{ padding: "48px" }} className="text-center text-gray-500 font-mono">
+                        Tidak ada data produk yang ditemukan.
+                      </td>
+                    </tr>
+                  ) : (
+                    displayedProducts.map((prod) => {
+                      const imgUrl = prod.image
+                        ? prod.image.startsWith("http")
+                          ? prod.image
+                          : `http://brand.test${prod.image}`
+                        : "/images/placeholder.png";
+
+                      return (
+                        <tr
+                          key={prod.id}
+                          className={`transition-colors ${
+                            isDarkMode ? "hover:bg-white/[0.02]" : "hover:bg-gray-50/80"
+                          }`}
+                        >
+                          <td style={{ padding: "16px 20px" }}>
+                            <div
+                              style={{ width: "56px", height: "64px" }}
+                              className="rounded-md overflow-hidden bg-black/20 border border-white/10 relative shrink-0"
+                            >
+                              <img
+                                src={imgUrl}
+                                alt={prod.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          </td>
+                          <td style={{ padding: "16px 20px" }}>
+                            <div className="font-bold text-sm tracking-wide">{prod.name}</div>
+                            {prod.material && (
+                              <div
+                                style={{ marginTop: "3px", fontSize: "11px" }}
+                                className={`font-mono ${
+                                  isDarkMode ? "text-[#8A8A8A]" : "text-gray-500"
+                                }`}
+                              >
+                                {prod.material}
+                              </div>
+                            )}
+                          </td>
+                          <td style={{ padding: "16px 20px" }}>
+                            <div className="flex flex-col gap-1 items-start">
+                              <span
+                                style={{ padding: "4px 10px", borderRadius: "4px", fontSize: "11px" }}
+                                className={`font-mono font-bold tracking-wider uppercase border ${
+                                  isDarkMode
+                                    ? "bg-white/5 border-white/10 text-gray-300"
+                                    : "bg-gray-100 border-gray-200 text-gray-700"
+                                }`}
+                              >
+                                {prod.category?.name || "Uncategorized"}
+                              </span>
+                              {prod.collection && (
+                                <span style={{ fontSize: "10px" }} className="font-mono text-[#B6A47E] font-medium tracking-wider uppercase">
+                                  FOCUS: {prod.collection}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td style={{ padding: "16px 20px" }} className="font-mono font-bold">
+                            <div>{formatRupiah(prod.price)}</div>
+                            {prod.original_price && prod.original_price > prod.price && (
+                              <div style={{ fontSize: "10px", marginTop: "2px" }} className="text-red-500 line-through">
+                                {formatRupiah(prod.original_price)}
+                              </div>
+                            )}
+                          </td>
+                          <td style={{ padding: "16px 20px" }}>
+                            <span
+                              style={{ padding: "4px 12px", borderRadius: "9999px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.05em" }}
+                              className={`inline-flex items-center gap-1.5 uppercase font-mono border ${
+                                prod.stock > 0
+                                  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                                  : "bg-red-500/10 text-red-400 border-red-500/20"
+                              }`}
+                            >
+                              <span className={`w-1.5 h-1.5 rounded-full ${prod.stock > 0 ? "bg-emerald-400" : "bg-red-400"}`} />
+                              {prod.stock > 0 ? `${prod.stock} UNIT` : "STOK HABIS"}
+                            </span>
+                          </td>
+                          <td style={{ padding: "16px 20px" }} className="text-right">
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "8px" }}>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  updateProductMut.mutate({
+                                    id: Number(prod.id),
+                                    data: { limited: !prod.limited },
+                                  })
+                                }
+                                style={{ padding: "8px 12px", borderRadius: "6px" }}
+                                className={`text-xs font-bold tracking-wider uppercase transition-all duration-200 cursor-pointer flex items-center gap-1.5 border ${
+                                  prod.limited
+                                    ? "bg-[#B6A47E]/15 border-[#B6A47E] text-[#B6A47E] hover:bg-[#B6A47E] hover:text-black"
+                                    : "bg-white/5 border-white/10 text-gray-400 hover:text-gray-200 hover:border-gray-500"
+                                }`}
+                                title="Klik untuk ubah status Limited Release"
+                              >
+                                <span>{prod.limited ? "⭐ LIMITED" : "REGULAR"}</span>
+                              </button>
+
+                              <button
+                                onClick={() => openEditModal(prod)}
+                                style={{ padding: "8px 14px", borderRadius: "6px" }}
+                                className={`text-xs font-bold tracking-wider uppercase transition-all duration-200 cursor-pointer flex items-center gap-1.5 border ${
+                                  isDarkMode
+                                    ? "bg-white/5 border-white/10 text-white hover:border-[#B6A47E] hover:text-[#B6A47E]"
+                                    : "bg-gray-100 border-gray-200 text-gray-800 hover:border-[#B6A47E] hover:text-[#B6A47E]"
+                                }`}
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                                <span>EDIT</span>
+                              </button>
+                              <button
+                                onClick={() =>
+                                  confirmDelete(prod.name, () => deleteProductMut.mutate(prod.id))
+                                }
+                                style={{ padding: "8px 12px", borderRadius: "6px" }}
+                                className="text-xs font-bold tracking-wider uppercase transition-all duration-200 cursor-pointer flex items-center gap-1.5 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:border-red-500/40"
+                                title="Hapus Produk"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      {/* Add / Edit Product Modal */}
+      {modalMode && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "rgba(0, 0, 0, 0.85)",
+            backdropFilter: "blur(8px)",
+            padding: "24px",
+            overflowY: "auto",
+          }}
+        >
+          <div
+            style={{
+              width: "95%",
+              maxWidth: "960px",
+              padding: "40px",
+              borderRadius: "12px",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+              backgroundColor: isDarkMode ? "#18181C" : "#ffffff",
+              border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #D1D5DB",
+              color: isDarkMode ? "#ffffff" : "#0A0A0A",
+              margin: "auto",
+              maxHeight: "90vh",
+              overflowY: "auto",
+              display: "flex",
+              flexDirection: "column",
+              gap: "24px",
+            }}
+          >
+            {/* Modal Header */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                paddingBottom: "16px",
+                borderBottom: isDarkMode ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid #E5E7EB",
+              }}
+            >
+              <h3
+                style={{
+                  fontSize: "13px",
+                  fontWeight: 700,
+                  letterSpacing: "0.18em",
+                  textTransform: "uppercase",
+                  color: "#B6A47E",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                }}
+              >
+                <Package style={{ width: "18px", height: "18px" }} />
+                <span>{modalMode === "add" ? "ADD NEW PRODUCT" : "EDIT PRODUCT"}</span>
+              </h3>
+              <button
+                type="button"
+                onClick={closeModal}
+                style={{
+                  padding: "6px",
+                  borderRadius: "4px",
+                  border: "none",
+                  background: "transparent",
+                  color: isDarkMode ? "#8A8A8A" : "#6B7280",
+                  cursor: "pointer",
+                }}
+              >
+                <X style={{ width: "18px", height: "18px" }} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+              {/* Product Name (REQUIRED) */}
+              <div id="field-name">
+                <label style={labelStyle}>
+                  NAMA PRODUK <span style={{ color: "#E53E3E" }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Contoh: Heavyweight Oversized Tee"
+                  value={formName}
+                  onChange={(e) => {
+                    setFormName(e.target.value);
+                    if (e.target.value.trim()) {
+                      setErrors((prev) => ({ ...prev, name: "" }));
+                    }
+                  }}
+                  style={getInputStyle(!!errors.name)}
+                />
+                {errors.name && (
+                  <p style={{ fontSize: "11px", color: "#E53E3E", marginTop: "4px", display: "flex", alignItems: "center", gap: "4px" }}>
+                    <AlertCircle style={{ width: "13px", height: "13px" }} />
+                    <span>{errors.name}</span>
+                  </p>
+                )}
+              </div>
+
+              {/* Category (OPTIONAL), Collection (OPTIONAL), & Stock (REQUIRED) Row */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px" }}>
+                <div>
+                  <label style={labelStyle}>KATEGORI (OPSIONAL)</label>
+                  <select
+                    value={formCategoryId}
+                    onChange={(e) =>
+                      setFormCategoryId(e.target.value ? Number(e.target.value) : "")
+                    }
+                    style={{ ...getInputStyle(false), cursor: "pointer" }}
+                  >
+                    <option value="">Pilih Kategori...</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name.toUpperCase()}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label style={labelStyle}>FOCUS ON / KOLEKSI (OPSIONAL)</label>
+                  {!isCustomCollection ? (
+                    <select
+                      value={formCollection}
+                      onChange={(e) => {
+                        if (e.target.value === "__CUSTOM__") {
+                          setIsCustomCollection(true);
+                          setFormCollection("");
+                          setFormCollectionCode("");
+                        } else {
+                          const val = e.target.value;
+                          setFormCollection(val);
+                          const match = collections.find((c) => c.name === val || c.code === val);
+                          if (match) {
+                            setFormCollectionCode(match.code || match.name);
+                          } else {
+                            setFormCollectionCode(val);
+                          }
+                        }
+                      }}
+                      style={{ ...getInputStyle(false), cursor: "pointer" }}
+                    >
+                      <option value="">Pilih Koleksi / Focus On...</option>
+                      {collections.map((col) => (
+                        <option key={col.id} value={col.name}>
+                          {col.name.toUpperCase()} {col.code ? `(${col.code})` : ""}
+                        </option>
+                      ))}
+                      <option value="__CUSTOM__">+ Tulis Manual (Kustom)...</option>
+                    </select>
+                  ) : (
+                    <div style={{ display: "flex", gap: "6px" }}>
+                      <input
+                        type="text"
+                        placeholder="Contoh: SECTOR MADNESS"
+                        value={formCollection}
+                        onChange={(e) => {
+                          setFormCollection(e.target.value);
+                          setFormCollectionCode(e.target.value);
+                        }}
+                        style={{ ...getInputStyle(false), flex: 1 }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsCustomCollection(false);
+                          setFormCollection("");
+                          setFormCollectionCode("");
+                        }}
+                        style={{
+                          padding: "0 10px",
+                          fontSize: "10px",
+                          fontWeight: 700,
+                          background: isDarkMode ? "#27272A" : "#E5E7EB",
+                          color: isDarkMode ? "#FFF" : "#000",
+                          borderRadius: "6px",
+                          cursor: "pointer",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        Pilih List
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div id="field-stock">
+                  <label style={labelStyle}>
+                    STOK PRODUK <span style={{ color: "#E53E3E" }}>*</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="10"
+                    value={formStock}
+                    onChange={(e) => {
+                      setFormStock(e.target.value !== "" ? Number(e.target.value) : "");
+                      if (e.target.value !== "") {
+                        setErrors((prev) => ({ ...prev, stock: "" }));
+                      }
+                    }}
+                    style={getInputStyle(!!errors.stock)}
+                  />
+                  {errors.stock && (
+                    <p style={{ fontSize: "11px", color: "#E53E3E", marginTop: "4px", display: "flex", alignItems: "center", gap: "4px" }}>
+                      <AlertCircle style={{ width: "13px", height: "13px" }} />
+                      <span>{errors.stock}</span>
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Material & Weight Row */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                <div>
+                  <label style={labelStyle}>BAHAN / MATERIAL (OPSIONAL)</label>
+                  <textarea
+                    rows={2}
+                    placeholder={"Contoh:\n100% Heavyweight Cotton 24s\nPre-shrunk combed cotton jersey"}
+                    value={formMaterial}
+                    onChange={(e) => setFormMaterial(e.target.value)}
+                    style={{ ...getInputStyle(false), resize: "vertical" }}
+                  />
+                </div>
+
+                <div>
+                  <label style={labelStyle}>BOBOT / WEIGHT (OPSIONAL)</label>
+                  <input
+                    type="text"
+                    placeholder="Contoh: 480 GSM"
+                    value={formWeight}
+                    onChange={(e) => setFormWeight(e.target.value)}
+                    style={getInputStyle(false)}
+                  />
+                </div>
+              </div>
+
+              {/* Price & Discount Row */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                <div id="field-price">
+                  <label style={labelStyle}>
+                    HARGA NORMAL / ASLI (RP) <span style={{ color: "#E53E3E" }}>*</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="misal: 2000000"
+                    value={formPrice}
+                    onChange={(e) => {
+                      setFormPrice(e.target.value ? Number(e.target.value) : "");
+                      if (e.target.value && Number(e.target.value) > 0) {
+                        setErrors((prev) => ({ ...prev, price: "" }));
+                      }
+                    }}
+                    style={getInputStyle(!!errors.price)}
+                  />
+                  {errors.price && (
+                    <p style={{ fontSize: "11px", color: "#E53E3E", marginTop: "4px", display: "flex", alignItems: "center", gap: "4px" }}>
+                      <AlertCircle style={{ width: "13px", height: "13px" }} />
+                      <span>{errors.price}</span>
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label style={labelStyle}>NOMINAL DISKON (RP) (OPSIONAL)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="misal: 50000"
+                    value={formOriginalPrice}
+                    onChange={(e) =>
+                      setFormOriginalPrice(e.target.value ? Number(e.target.value) : "")
+                    }
+                    style={getInputStyle(false)}
+                  />
+                  <p style={{ fontSize: "10px", color: isDarkMode ? "#8A8A8A" : "#6B7280", marginTop: "4px", fontFamily: "monospace" }}>
+                    * Masukkan nominal potongan diskon (misal: 50000). Jika tidak ada diskon, kosongkan.
+                  </p>
+                </div>
+              </div>
+
+              {/* Live Price Calculation Preview */}
+              {formPrice !== "" && Number(formPrice) > 0 && (() => {
+                const norm = Number(formPrice) || 0;
+                const disc = Number(formOriginalPrice) || 0;
+                let finalSelling = norm;
+                let slashed = 0;
+                let pct = 0;
+
+                if (disc > 0) {
+                  if (disc < norm) {
+                    finalSelling = norm - disc;
+                    slashed = norm;
+                    pct = Math.round((disc / norm) * 100);
+                  } else {
+                    finalSelling = norm;
+                    slashed = disc;
+                    pct = Math.round(((disc - norm) / disc) * 100);
+                  }
+                }
+
+                return (
+                  <div
+                    style={{
+                      padding: "10px 14px",
+                      borderRadius: "6px",
+                      backgroundColor: isDarkMode ? "#121214" : "#F3F4F6",
+                      border: isDarkMode ? "1px solid rgba(182, 164, 126, 0.3)" : "1px solid #D1D5DB",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      fontSize: "11px",
+                      fontWeight: 600,
+                    }}
+                  >
+                    <span style={{ color: "#B6A47E", fontWeight: 700 }}>ESTIMASI HASIL HARGA:</span>
+                    <div>
+                      {slashed > 0 ? (
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <span style={{ textDecoration: "line-through", color: "#888888" }}>
+                            Rp {slashed.toLocaleString("id-ID")}
+                          </span>
+                          <span style={{ backgroundColor: "#FF3B30", color: "#FFFFFF", fontSize: "9px", fontWeight: 800, padding: "2px 6px", borderRadius: "3px" }}>
+                            -{pct}% OFF
+                          </span>
+                          <span style={{ color: "#00E676", fontSize: "13px", fontWeight: 800 }}>
+                            Rp {finalSelling.toLocaleString("id-ID")}
+                          </span>
+                        </div>
+                      ) : (
+                        <span style={{ color: "#00E676", fontSize: "13px", fontWeight: 800 }}>
+                          Rp {finalSelling.toLocaleString("id-ID")}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Discount Expiration Date, Flash Sale, & Limited Release */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px" }}>
+                <div>
+                  <label style={labelStyle}>BATAS WAKTU DISKON (OPSIONAL)</label>
+                  <input
+                    type="datetime-local"
+                    value={formDiscountExpiresAt}
+                    onChange={(e) => setFormDiscountExpiresAt(e.target.value)}
+                    style={{ ...getInputStyle(false), colorScheme: isDarkMode ? "dark" : "light" }}
+                  />
+                  <p style={{ fontSize: "10px", color: isDarkMode ? "#8A8A8A" : "#6B7280", marginTop: "4px", fontFamily: "monospace" }}>
+                    * Tanggal & jam berakhirnya promo diskon.
+                  </p>
+                </div>
+
+                <div>
+                  <label style={labelStyle}>FLASH SALE STATUS (OPSIONAL)</label>
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      padding: "10px 14px",
+                      borderRadius: "6px",
+                      backgroundColor: isDarkMode ? "#121214" : "#F3F4F6",
+                      border: formIsFlashSale
+                        ? "1px solid #FF3B30"
+                        : isDarkMode
+                        ? "1px solid rgba(255, 255, 255, 0.12)"
+                        : "1px solid #D1D5DB",
+                      cursor: "pointer",
+                      marginTop: "2px",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formIsFlashSale}
+                      onChange={(e) => setFormIsFlashSale(e.target.checked)}
+                      style={{ width: "16px", height: "16px", accentColor: "#FF3B30", cursor: "pointer" }}
+                    />
+                    <span style={{ fontSize: "12px", fontWeight: 700, color: formIsFlashSale ? "#FF3B30" : isDarkMode ? "#CCC" : "#333" }}>
+                      {formIsFlashSale ? "🔥 FLASH SALE ACTIVE" : "FLASH SALE NON-AKTIF"}
+                    </span>
+                  </label>
+                </div>
+
+                <div>
+                  <label style={labelStyle}>LIMITED RELEASE STATUS (OPSIONAL)</label>
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      padding: "10px 14px",
+                      borderRadius: "6px",
+                      backgroundColor: isDarkMode ? "#121214" : "#F3F4F6",
+                      border: formLimited
+                        ? "1px solid #B6A47E"
+                        : isDarkMode
+                        ? "1px solid rgba(255, 255, 255, 0.12)"
+                        : "1px solid #D1D5DB",
+                      cursor: "pointer",
+                      marginTop: "2px",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formLimited}
+                      onChange={(e) => setFormLimited(e.target.checked)}
+                      style={{ width: "16px", height: "16px", accentColor: "#B6A47E", cursor: "pointer" }}
+                    />
+                    <span style={{ fontSize: "12px", fontWeight: 700, color: formLimited ? "#B6A47E" : isDarkMode ? "#CCC" : "#333" }}>
+                      {formLimited ? "⭐ LIMITED RELEASE" : "STANDARD RELEASE"}
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Sizes (Ukuran) Management (OPTIONAL) */}
+              <div>
+                <label style={{ ...labelStyle, display: "flex", alignItems: "center", gap: "6px" }}>
+                  <Ruler style={{ width: "14px", height: "14px", color: "#B6A47E" }} />
+                  <span>KELOLA UKURAN / SIZES (OPSIONAL)</span>
+                </label>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "8px" }}>
+                  {AVAILABLE_SIZES.map((sz) => {
+                    const isSel = selectedSizes.map(getLabelString).includes(sz);
+                    return (
+                      <button
+                        type="button"
+                        key={sz}
+                        onClick={() => toggleSize(sz)}
+                        style={{
+                          padding: "6px 12px",
+                          fontSize: "11px",
+                          fontWeight: 700,
+                          borderRadius: "4px",
+                          cursor: "pointer",
+                          transition: "all 0.2s",
+                          backgroundColor: isSel ? "#B6A47E" : isDarkMode ? "#121214" : "#F3F4F6",
+                          border: isSel ? "1px solid #B6A47E" : isDarkMode ? "1px solid rgba(255,255,255,0.12)" : "1px solid #D1D5DB",
+                          color: isSel ? "#0A0A0A" : isDarkMode ? "#8A8A8A" : "#4B5563",
+                        }}
+                      >
+                        {sz}
+                      </button>
+                    );
+                  })}
+                  {/* Custom Added Sizes */}
+                  {selectedSizes
+                    .map(getLabelString)
+                    .filter((sz) => sz && !AVAILABLE_SIZES.includes(sz))
+                    .map((sz, idx) => (
+                      <div
+                        key={`custom-sz-${sz}-${idx}`}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          padding: "6px 10px",
+                          fontSize: "11px",
+                          fontWeight: 700,
+                          borderRadius: "4px",
+                          backgroundColor: "#B6A47E",
+                          color: "#0A0A0A",
+                          border: "1px solid #B6A47E",
+                        }}
+                      >
+                        <span>{sz}</span>
+                        <button
+                          type="button"
+                          onClick={() => toggleSize(sz)}
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            cursor: "pointer",
+                            padding: 0,
+                            display: "flex",
+                            alignItems: "center",
+                            color: "#0A0A0A",
+                          }}
+                          title="Hapus ukuran custom"
+                        >
+                          <X style={{ width: "12px", height: "12px" }} />
+                        </button>
+                      </div>
+                    ))}
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <input
+                    type="text"
+                    placeholder="Ukuran Custom (misal: 32, 34)..."
+                    value={customSizeInput}
+                    onChange={(e) => setCustomSizeInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addCustomSize();
+                      }
+                    }}
+                    style={{ ...getInputStyle(false), flex: 1, padding: "8px 12px" }}
+                  />
+                  <button
+                    type="button"
+                    onClick={addCustomSize}
+                    style={{
+                      padding: "8px 16px",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      letterSpacing: "0.08em",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                      backgroundColor: "rgba(182, 164, 126, 0.15)",
+                      color: "#B6A47E",
+                      border: "1px solid rgba(182, 164, 126, 0.3)",
+                    }}
+                  >
+                    TAMBAH
+                  </button>
+                </div>
+              </div>
+
+              {/* Colors (Warna) Management (OPTIONAL) */}
+              <div>
+                <label style={{ ...labelStyle, display: "flex", alignItems: "center", gap: "6px" }}>
+                  <Palette style={{ width: "14px", height: "14px", color: "#B6A47E" }} />
+                  <span>KELOLA WARNA / COLORS (OPSIONAL)</span>
+                </label>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "8px" }}>
+                  {AVAILABLE_COLORS.map((clr) => {
+                    const isSel = selectedColors.map(getLabelString).includes(clr);
+                    return (
+                      <button
+                        type="button"
+                        key={clr}
+                        onClick={() => toggleColor(clr)}
+                        style={{
+                          padding: "6px 12px",
+                          fontSize: "11px",
+                          fontWeight: 700,
+                          borderRadius: "4px",
+                          cursor: "pointer",
+                          transition: "all 0.2s",
+                          backgroundColor: isSel ? "#B6A47E" : isDarkMode ? "#121214" : "#F3F4F6",
+                          border: isSel ? "1px solid #B6A47E" : isDarkMode ? "1px solid rgba(255,255,255,0.12)" : "1px solid #D1D5DB",
+                          color: isSel ? "#0A0A0A" : isDarkMode ? "#8A8A8A" : "#4B5563",
+                        }}
+                      >
+                        {clr}
+                      </button>
+                    );
+                  })}
+                  {/* Custom Added Colors */}
+                  {selectedColors
+                    .map(getLabelString)
+                    .filter((clr) => clr && !AVAILABLE_COLORS.includes(clr))
+                    .map((clr, idx) => (
+                      <div
+                        key={`custom-clr-${clr}-${idx}`}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          padding: "6px 10px",
+                          fontSize: "11px",
+                          fontWeight: 700,
+                          borderRadius: "4px",
+                          backgroundColor: "#B6A47E",
+                          color: "#0A0A0A",
+                          border: "1px solid #B6A47E",
+                        }}
+                      >
+                        <span>{clr}</span>
+                        <button
+                          type="button"
+                          onClick={() => toggleColor(clr)}
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            cursor: "pointer",
+                            padding: 0,
+                            display: "flex",
+                            alignItems: "center",
+                            color: "#0A0A0A",
+                          }}
+                          title="Hapus warna custom"
+                        >
+                          <X style={{ width: "12px", height: "12px" }} />
+                        </button>
+                      </div>
+                    ))}
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <input
+                    type="text"
+                    placeholder="Warna Custom (misal: WASHED BLUE)..."
+                    value={customColorInput}
+                    onChange={(e) => setCustomColorInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addCustomColor();
+                      }
+                    }}
+                    style={{ ...getInputStyle(false), flex: 1, padding: "8px 12px" }}
+                  />
+                  <button
+                    type="button"
+                    onClick={addCustomColor}
+                    style={{
+                      padding: "8px 16px",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      letterSpacing: "0.08em",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                      backgroundColor: "rgba(182, 164, 126, 0.15)",
+                      color: "#B6A47E",
+                      border: "1px solid rgba(182, 164, 126, 0.3)",
+                    }}
+                  >
+                    TAMBAH
+                  </button>
+                </div>
+              </div>
+
+              {/* Variant Stock Breakdown Matrix */}
+              {(selectedSizes.length > 0 || selectedColors.length > 0) && variantStocks.length > 0 && (
+                <div
+                  style={{
+                    padding: "16px",
+                    borderRadius: "8px",
+                    backgroundColor: isDarkMode ? "#141416" : "#F9FAFB",
+                    border: isDarkMode ? "1px solid rgba(182, 164, 126, 0.25)" : "1px solid #E5E7EB",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+                    <label style={{ ...labelStyle, marginBottom: 0, display: "flex", alignItems: "center", gap: "6px" }}>
+                      <Box style={{ width: "14px", height: "14px", color: "#B6A47E" }} />
+                      <span>RINCIAN STOK PER VARIAN (WARNA & UKURAN)</span>
+                    </label>
+                    <span style={{ fontSize: "11px", fontWeight: 700, color: "#B6A47E", fontFamily: "monospace" }}>
+                      TOTAL: {variantStocks.reduce((sum, item) => sum + (Number(item.stock) || 0), 0)} UNITS
+                    </span>
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px" }}>
+                    {variantStocks.map((vItem, idx) => (
+                      <div
+                        key={`var-${vItem.color}-${vItem.size}-${idx}`}
+                        style={{
+                          padding: "10px 12px",
+                          borderRadius: "6px",
+                          backgroundColor: isDarkMode ? "#0A0A0A" : "#FFFFFF",
+                          border: isDarkMode ? "1px solid rgba(255,255,255,0.08)" : "1px solid #D1D5DB",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "6px",
+                        }}
+                      >
+                        <span style={{ fontSize: "10px", fontWeight: 800, color: "#B6A47E", letterSpacing: "0.08em" }}>
+                          {vItem.color !== "Default" ? vItem.color : ""} {vItem.color !== "Default" && vItem.size !== "All Size" ? "•" : ""} {vItem.size !== "All Size" ? vItem.size : (vItem.color === "Default" ? "ALL VARIANTS" : "")}
+                        </span>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="0"
+                            value={vItem.stock === 0 ? "" : vItem.stock}
+                            onChange={(e) => {
+                              const val = e.target.value === "" ? 0 : parseInt(e.target.value, 10);
+                              updateVariantStock(vItem.color, vItem.size, isNaN(val) ? 0 : val);
+                            }}
+                            style={{
+                              ...getInputStyle(false),
+                              padding: "6px 8px",
+                              fontSize: "12px",
+                              fontWeight: 700,
+                              textAlign: "center",
+                            }}
+                          />
+                          <span style={{ fontSize: "10px", color: isDarkMode ? "#8A8A8A" : "#6B7280", fontWeight: 600 }}>
+                            Units
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <p style={{ fontSize: "10px", color: isDarkMode ? "#8A8A8A" : "#6B7280", marginTop: "10px", fontFamily: "monospace" }}>
+                    * Mengisi stok per varian di atas akan otomatis memperbarui total Stok Produk.
+                  </p>
+                </div>
+              )}
+
+              {/* Primary Cover Image (REQUIRED) */}
+              <div id="field-image">
+                <label style={labelStyle}>
+                  FOTO SAMPUL UTAMA <span style={{ color: "#E53E3E" }}>*</span>
+                </label>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  {formImagePreview && (
+                    <div style={{ width: "64px", height: "72px", borderRadius: "6px", overflow: "hidden", border: isDarkMode ? "1px solid rgba(255,255,255,0.15)" : "1px solid #D1D5DB", flexShrink: 0 }}>
+                      <img
+                        src={formImagePreview}
+                        alt="Preview Utama"
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                    </div>
+                  )}
+                  <label
+                    style={{
+                      flex: 1,
+                      padding: "14px 16px",
+                      borderRadius: "6px",
+                      border: errors.image
+                        ? "1px dashed #E53E3E"
+                        : isDarkMode
+                        ? "1px dashed rgba(255, 255, 255, 0.2)"
+                        : "1px dashed #9CA3AF",
+                      backgroundColor: isDarkMode ? "#121214" : "#F9FAFB",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Upload style={{ width: "16px", height: "16px", color: "#B6A47E" }} />
+                    <span style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: isDarkMode ? "#D1D5DB" : "#374151" }}>
+                      {formImageFile ? formImageFile.name : "PILIH FOTO UTAMA"}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageFileChange}
+                      style={{ display: "none" }}
+                    />
+                  </label>
+                </div>
+                <p style={{ fontSize: "10px", color: isDarkMode ? "#8A8A8A" : "#6B7280", marginTop: "4px", fontFamily: "monospace" }}>
+                  * Maksimal ukuran file: 5 MB per foto. Format: JPG, PNG, WEBP.
+                </p>
+                {errors.image && (
+                  <p style={{ fontSize: "11px", color: "#E53E3E", marginTop: "4px", display: "flex", alignItems: "center", gap: "4px" }}>
+                    <AlertCircle style={{ width: "13px", height: "13px" }} />
+                    <span>{errors.image}</span>
+                  </p>
+                )}
+              </div>
+
+              {/* Multiple Gallery Photos (OPTIONAL) */}
+              <div>
+                <label style={{ ...labelStyle, display: "flex", alignItems: "center", gap: "6px" }}>
+                  <Images style={{ width: "14px", height: "14px", color: "#B6A47E" }} />
+                  <span>GALERI FOTO PRODUK (OPSIONAL)</span>
+                </label>
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    padding: "14px 16px",
+                    borderRadius: "6px",
+                    border: isDarkMode ? "1px dashed rgba(255, 255, 255, 0.2)" : "1px dashed #9CA3AF",
+                    backgroundColor: isDarkMode ? "#121214" : "#F9FAFB",
+                    cursor: "pointer",
+                    marginBottom: "4px",
+                  }}
+                >
+                  <Plus style={{ width: "16px", height: "16px", color: "#B6A47E" }} />
+                  <span style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: isDarkMode ? "#D1D5DB" : "#374151" }}>
+                    TAMBAH BANYAK FOTO GALERI
+                  </span>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleMultipleGalleryChange}
+                    style={{ display: "none" }}
+                  />
+                </label>
+                <p style={{ fontSize: "10px", color: isDarkMode ? "#8A8A8A" : "#6B7280", marginBottom: "12px", fontFamily: "monospace" }}>
+                  * Maksimal ukuran file: 5 MB per foto. Format: JPG, PNG, WEBP.
+                </p>
+
+                {galleryPreviews.length > 0 && (
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "10px" }}>
+                    {galleryPreviews.map((src, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          position: "relative",
+                          width: "100%",
+                          height: "72px",
+                          borderRadius: "6px",
+                          overflow: "hidden",
+                          border: isDarkMode ? "1px solid rgba(255,255,255,0.15)" : "1px solid #D1D5DB",
+                          backgroundColor: "#000000",
+                        }}
+                      >
+                        <img
+                          src={src}
+                          alt={`Galeri ${idx + 1}`}
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeGalleryPhoto(idx)}
+                          style={{
+                            position: "absolute",
+                            top: "4px",
+                            right: "4px",
+                            width: "20px",
+                            height: "20px",
+                            borderRadius: "9999px",
+                            backgroundColor: "#E53E3E",
+                            color: "#FFFFFF",
+                            border: "none",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            cursor: "pointer",
+                          }}
+                          title="Hapus foto"
+                        >
+                          <X style={{ width: "12px", height: "12px" }} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+
+
+              {/* Details & Specifications */}
+              <div>
+                <label style={labelStyle}>DETAILS & SPECIFICATIONS (OPSIONAL)</label>
+                <textarea
+                  rows={3}
+                  placeholder={"Tulis 1 poin per baris, contoh:\nHeavyweight 480 GSM organic combed cotton jersey\nOversized drop-shoulder structural silhouette\nDouble-layered hood with hidden internal reinforced drawstring"}
+                  value={formDetails}
+                  onChange={(e) => setFormDetails(e.target.value)}
+                  style={{ ...getInputStyle(false), resize: "vertical" }}
+                />
+                <p style={{ fontSize: "10px", color: isDarkMode ? "#8A8A8A" : "#6B7280", marginTop: "4px", fontFamily: "monospace" }}>
+                  * Tulis per baris (1 baris = 1 poin spesifikasi pada halaman detail produk).
+                </p>
+              </div>
+
+
+              {/* Size Guide Table */}
+              <div>
+                <label style={{ ...labelStyle, display: "flex", alignItems: "center", gap: "6px" }}>
+                  <Ruler style={{ width: "14px", height: "14px", color: "#B6A47E" }} />
+                  <span>PANDUAN UKURAN / SIZE GUIDE (TABEL EDITABLE)</span>
+                </label>
+                <div
+                  style={{
+                    borderRadius: "8px",
+                    overflow: "hidden",
+                    border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #D1D5DB",
+                    backgroundColor: isDarkMode ? "#121214" : "#F9FAFB",
+                  }}
+                >
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr
+                        style={{
+                          borderBottom: isDarkMode ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid #E5E7EB",
+                          backgroundColor: isDarkMode ? "rgba(255, 255, 255, 0.03)" : "#F3F4F6",
+                        }}
+                      >
+                        <th style={{ padding: "10px 14px", fontSize: "11px", letterSpacing: "0.1em", width: "120px" }} className="font-mono font-bold uppercase text-[#B6A47E]">
+                          UKURAN (SIZE)
+                        </th>
+                        <th style={{ padding: "10px 14px", fontSize: "11px", letterSpacing: "0.1em" }} className="font-mono font-bold uppercase text-[#B6A47E]">
+                          CHEST (DADA)
+                        </th>
+                        <th style={{ padding: "10px 14px", fontSize: "11px", letterSpacing: "0.1em" }} className="font-mono font-bold uppercase text-[#B6A47E]">
+                          WAIST / LENGTH (PINGGANG/PANJANG)
+                        </th>
+                        <th style={{ padding: "10px 14px", fontSize: "11px", letterSpacing: "0.1em", width: "60px" }} className="font-mono font-bold uppercase text-[#B6A47E] text-right">
+                          AKSI
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className={`divide-y ${isDarkMode ? "divide-white/10" : "divide-gray-200"}`}>
+                      {sizeGuideRows.map((row, idx) => (
+                        <tr key={idx}>
+                          <td style={{ padding: "8px 12px" }}>
+                            <input
+                              type="text"
+                              value={row.size}
+                              onChange={(e) => updateSizeGuideRow(idx, "size", e.target.value)}
+                              style={{
+                                ...getInputStyle(false),
+                                padding: "6px 10px",
+                                fontWeight: 700,
+                                textAlign: "center",
+                                textTransform: "uppercase",
+                              }}
+                            />
+                          </td>
+                          <td style={{ padding: "8px 12px" }}>
+                            <input
+                              type="text"
+                              placeholder="misal: 90 - 95"
+                              value={row.chest}
+                              onChange={(e) => updateSizeGuideRow(idx, "chest", e.target.value)}
+                              style={{ ...getInputStyle(false), padding: "6px 10px" }}
+                            />
+                          </td>
+                          <td style={{ padding: "8px 12px" }}>
+                            <input
+                              type="text"
+                              placeholder="misal: 75 - 80"
+                              value={row.waist}
+                              onChange={(e) => updateSizeGuideRow(idx, "waist", e.target.value)}
+                              style={{ ...getInputStyle(false), padding: "6px 10px" }}
+                            />
+                          </td>
+                          <td style={{ padding: "8px 12px" }} className="text-right">
+                            <button
+                              type="button"
+                              onClick={() => removeSizeGuideRow(idx)}
+                              style={{
+                                padding: "6px 10px",
+                                borderRadius: "4px",
+                                border: "none",
+                                backgroundColor: "rgba(229, 62, 62, 0.15)",
+                                color: "#E53E3E",
+                                cursor: "pointer",
+                              }}
+                              title="Hapus Baris Ukuran"
+                            >
+                              <X style={{ width: "14px", height: "14px" }} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div style={{ padding: "10px 14px", borderTop: isDarkMode ? "1px solid rgba(255,255,255,0.1)" : "1px solid #E5E7EB" }}>
+                    <button
+                      type="button"
+                      onClick={addSizeGuideRow}
+                      style={{
+                        padding: "6px 14px",
+                        fontSize: "11px",
+                        fontWeight: 700,
+                        letterSpacing: "0.08em",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        backgroundColor: "rgba(182, 164, 126, 0.15)",
+                        color: "#B6A47E",
+                        border: "1px solid rgba(182, 164, 126, 0.3)",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <Plus style={{ width: "14px", height: "14px" }} />
+                      <span>TAMBAH BARIS UKURAN</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Product Story */}
+              <div>
+                <label style={labelStyle}>CERITA PRODUK / BRAND STORY (OPSIONAL)</label>
+                <textarea
+                  rows={2}
+                  placeholder="Kisah atau konsep di balik pembuatan produk ini..."
+                  value={formStory}
+                  onChange={(e) => setFormStory(e.target.value)}
+                  style={{ ...getInputStyle(false), resize: "vertical" }}
+                />
+              </div>
+
+              {/* Description (OPTIONAL) */}
+              <div>
+                <label style={labelStyle}>DESKRIPSI UMUM PRODUK (OPSIONAL)</label>
+                <textarea
+                  rows={2}
+                  placeholder="Deskripsi singkat produk..."
+                  value={formDescription}
+                  onChange={(e) => setFormDescription(e.target.value)}
+                  style={{ ...getInputStyle(false), resize: "vertical" }}
+                />
+              </div>
+
+              {/* Submit Buttons */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: "12px",
+                  paddingTop: "20px",
+                  borderTop: isDarkMode ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid #E5E7EB",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  style={{
+                    padding: "10px 20px",
+                    borderRadius: "6px",
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    cursor: "pointer",
+                    border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #D1D5DB",
+                    backgroundColor: "transparent",
+                    color: isDarkMode ? "#D1D5DB" : "#374151",
+                  }}
+                >
+                  BATAL
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUploading}
+                  style={{
+                    padding: "10px 24px",
+                    borderRadius: "6px",
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    cursor: "pointer",
+                    border: "none",
+                    backgroundColor: isDarkMode ? "#B6A47E" : "#0A0A0A",
+                    color: isDarkMode ? "#0A0A0A" : "#FFFFFF",
+                  }}
+                >
+                  {isUploading ? "MENYIMPAN..." : "SIMPAN PRODUK"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -3,45 +3,16 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { getJournals, JournalArticle } from "@/utils/api";
+import { getJournals } from "@/utils/api";
 import AnimatedSection from "./AnimatedSection";
 
-const fallbackArticles = [
-  {
-    slug: "origin-sector-001",
-    title: "The Origin of Sector 001",
-    category: "Collection Stories",
-    issue: "VOL. 01",
-    summary: "A closer look at the inspiration behind our first collection and the ideas that shaped every silhouette.",
-    image: "/images/campaign/campaign-1.png",
-  },
-  {
-    slug: "designed-beyond-trends",
-    title: "Designed Beyond Trends",
-    category: "Brand Philosophy",
-    issue: "VOL. 02",
-    summary: "Why timeless design creates stronger identity than seasonal fashion.",
-    image: "/images/story/brand-story.png",
-  },
-  {
-    slug: "inside-the-fabric",
-    title: "Inside the Fabric",
-    category: "Materials & Craftsmanship",
-    issue: "VOL. 03",
-    summary: "Exploring heavyweight cotton, garment construction, and the importance of premium materials.",
-    image: "/images/hero/hero-1.png",
-  },
-];
-
 export default function JournalSection() {
-  const { data: apiJournals } = useQuery({
+  const { data: apiJournals = [] } = useQuery({
     queryKey: ["journals"],
     queryFn: () => getJournals(),
   });
 
-  const displayArticles = (apiJournals && apiJournals.length > 0)
-    ? apiJournals.slice(0, 3)
-    : fallbackArticles;
+  const displayArticles = apiJournals.slice(0, 3);
 
   return (
     <section id="journal" className="relative w-full bg-[#0A0A0A] text-[#F5F5F5] pt-24 md:pt-36 pb-24 md:pb-32">

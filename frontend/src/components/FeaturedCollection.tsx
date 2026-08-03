@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getProducts } from "@/utils/api";
+import { getProducts, getImageUrl } from "@/utils/api";
 import { products as localProducts } from "@/data/products";
 import ProductCard from "./ProductCard";
 
@@ -24,14 +24,14 @@ export default function FeaturedCollection() {
     description: p.description || "",
     material: p.material || "Technical Blend",
     weight: p.weight || "450 GSM",
-    price: typeof p.price === 'number' ? (p.price > 1000 ? p.price / 15000 : p.price) : 285,
-    originalPrice: p.original_price ? (p.original_price > 1000 ? p.original_price / 15000 : p.original_price) : undefined,
+    price: typeof p.price === 'number' ? (p.price < 1000 ? p.price * 1000 : p.price) : 285000,
+    originalPrice: p.original_price ? (p.original_price < 1000 ? p.original_price * 1000 : p.original_price) : undefined,
     discountPercentage: p.discount_percentage,
     discountExpiresAt: p.discount_expires_at,
     isFlashSale: p.is_flash_sale,
-    image: p.image || "/images/products/product-1.png",
+    image: getImageUrl(p.image),
     limited: Boolean(p.limited),
-  })) : localProducts;
+  })) : [];
 
   const featuredProducts = productsList.slice(0, 10);
 

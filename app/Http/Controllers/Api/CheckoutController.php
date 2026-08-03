@@ -156,7 +156,9 @@ class CheckoutController extends Controller
         if ($cart) {
             $items = $cart->items()->with('product')->get();
             foreach ($items as $item) {
-                $subtotal += ($item->price * 15000 * $item->quantity);
+                $rawPrice = (float)($item->product ? $item->product->price : $item->price);
+                $priceIdr = $rawPrice < 1000 ? $rawPrice * 1000 : $rawPrice;
+                $subtotal += ($priceIdr * $item->quantity);
             }
         }
 
@@ -220,7 +222,8 @@ class CheckoutController extends Controller
 
         foreach ($cartItems as $item) {
             $product = $item->product;
-            $priceIdr = (float)($item->price * 15000);
+            $rawPrice = (float)($product ? $product->price : $item->price);
+            $priceIdr = $rawPrice < 1000 ? $rawPrice * 1000 : $rawPrice;
             $itemTotal = $priceIdr * $item->quantity;
             $subtotal += $itemTotal;
 
@@ -262,11 +265,9 @@ class CheckoutController extends Controller
             }
         }
 
-        // Kalkulasi pajak 11% dari subtotal dikurangi diskon
-        $taxableAmount = max(0, $subtotal - $discount);
-        $tax = round($taxableAmount * 0.11);
-        
-        $grandTotal = max(0, $subtotal - $discount + $shippingPrice + $tax);
+        // Harga sudah termasuk PPN (Tax Included)
+        $tax = 0;
+        $grandTotal = max(0, $subtotal - $discount + $shippingPrice);
 
         return response()->json([
             'status' => true,
@@ -274,7 +275,6 @@ class CheckoutController extends Controller
                 'subtotal'       => (float)$subtotal,
                 'shipping'       => (float)$shippingPrice,
                 'discount'       => (float)$discount,
-                'tax'            => (float)$tax,
                 'grand_total'    => (float)$grandTotal,
                 'items_count'    => $cartItems->sum('quantity'),
                 'items'          => $formattedItems,
@@ -393,8 +393,9 @@ class CheckoutController extends Controller
                 ], 422);
             }
 
-            // Gunakan harga terbaru di DB
-            $latestPriceIdr = (int)($product->price * 15000);
+            // Gunakan harga terbaru di DB (normalisasi IDR)
+            $rawPrice = (float)$product->price;
+            $latestPriceIdr = (int)($rawPrice < 1000 ? $rawPrice * 1000 : $rawPrice);
             $itemSubtotal = $latestPriceIdr * $item->quantity;
             $subtotal += $itemSubtotal;
 
@@ -448,18 +449,8 @@ class CheckoutController extends Controller
             ];
         }
 
-        $taxableAmount = max(0, $subtotal - $discount);
-        $tax = (int)round($taxableAmount * 0.11);
-        if ($tax > 0) {
-            $itemDetailsForMidtrans[] = [
-                'id'       => 'TAX-PPN11',
-                'price'    => $tax,
-                'quantity' => 1,
-                'name'     => 'Indonesian VAT (11%)',
-            ];
-        }
-
-        $grandTotal = max(0, $subtotal - $discount + $shippingCost + $tax);
+        $tax = 0;
+        $grandTotal = max(0, $subtotal - $discount + $shippingCost);
 
         // Transaksi DB Atomik: Buat pesanan & kurangi stok produk
         $order = DB::transaction(function () use ($user, $cart, $dbOrderItems, $shippingAddressData, $request, $grandTotal, $shippingCost, $discount, $tax, $subtotal, $voucherCode) {
@@ -474,7 +465,6 @@ class CheckoutController extends Controller
                     'subtotal'        => $subtotal,
                     'shipping_cost'   => $shippingCost,
                     'discount_amount' => $discount,
-                    'tax_amount'      => $tax,
                     'voucher_code'    => $voucherCode,
                     'courier_code'    => $request->courier_code,
                     'courier_name'    => $request->courier_name,
