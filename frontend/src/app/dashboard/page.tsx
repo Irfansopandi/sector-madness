@@ -162,9 +162,28 @@ function DashboardOverviewContent() {
 
   const executeCancellation = async () => {
     if (!selectedOrderDetail) return;
+
+    const cancelPayload = {
+      reason: cancelReason,
+      bank_name: bankName,
+      account_number: accountNumber,
+      account_name: accountName,
+      account_holder: accountName,
+      notes: cancelNotes,
+      cancellation_reason: cancelNotes ? `${cancelReason} - ${cancelNotes}` : cancelReason,
+    };
+
+    if (typeof window !== "undefined" && selectedOrderDetail.order_number) {
+      try {
+        localStorage.setItem(`sector_cancel_${selectedOrderDetail.order_number}`, JSON.stringify(cancelPayload));
+      } catch (e) {
+        console.error("Failed to save cancellation to localStorage:", e);
+      }
+    }
+
     try {
       if (selectedOrderDetail.order_number) {
-        await cancelOrder(selectedOrderDetail.order_number);
+        await cancelOrder(selectedOrderDetail.order_number, cancelPayload);
       }
     } catch (err) {
       console.error("Failed to submit cancellation to database:", err);
@@ -175,17 +194,38 @@ function DashboardOverviewContent() {
     const newStatus = isPaid ? "CANCEL PENDING" : "CANCELLED";
 
     if (selectedOrderDetail.order_number) {
-      setSelectedOrderDetail({ ...selectedOrderDetail, shipping_status: newStatus });
+      setSelectedOrderDetail({
+        ...selectedOrderDetail,
+        shipping_status: newStatus,
+        cancellation_request: cancelPayload,
+        cancel_data: cancelPayload,
+        bank_name: bankName,
+        account_number: accountNumber,
+        account_name: accountName,
+        cancel_reason: cancelReason,
+        cancellation_reason: cancelNotes ? `${cancelReason} - ${cancelNotes}` : cancelReason,
+      });
     }
-    
-    if (newStatus === "CANCELLED") {
-      setOrdersList((prev) => prev.filter((ord) => ord.order_number !== selectedOrderDetail.order_number));
-    } else {
-      setOrdersList((prev) =>
-        prev.map((ord) => (ord.order_number === selectedOrderDetail.order_number ? { ...ord, shipping_status: newStatus, status: newStatus } : ord))
-      );
-    }
-    
+
+    setOrdersList((prev) =>
+      prev.map((ord) =>
+        ord.order_number === selectedOrderDetail.order_number
+          ? {
+              ...ord,
+              shipping_status: newStatus,
+              status: newStatus,
+              cancellation_request: cancelPayload,
+              cancel_data: cancelPayload,
+              bank_name: bankName,
+              account_number: accountNumber,
+              account_name: accountName,
+              cancel_reason: cancelReason,
+              cancellation_reason: cancelNotes ? `${cancelReason} - ${cancelNotes}` : cancelReason,
+            }
+          : ord
+      )
+    );
+
     setShowConfirmCancel(false);
     setCancelModalOpen(false);
     setCancelSuccessModalOpen(true);
@@ -251,32 +291,33 @@ function DashboardOverviewContent() {
     } catch {
       const fallbackItem = ordersList.find((o) => o.order_number === orderNumber);
       if (fallbackItem) {
+        const itemAddr = (fallbackItem as any).shipping_address || (fallbackItem as any).address || {};
         setSelectedOrderDetail({
           order_number: orderNumber,
           order_date: fallbackItem.order_date || "-",
           customer_info: {
-            name: userName || "Customer",
-            email: userEmail || "-",
-            phone: "-",
+            name: itemAddr.receiver_name || (fallbackItem as any).customer_name || userName || "Customer",
+            email: (fallbackItem as any).email || userEmail || "-",
+            phone: itemAddr.phone_number || (fallbackItem as any).phone || "-",
           },
           courier_info: {
-            courier_code: "-",
-            courier_name: fallbackItem.shipping_status ? `Status: ${fallbackItem.shipping_status}` : "Standard Shipping",
+            courier_code: (fallbackItem as any).courier || "-",
+            courier_name: (fallbackItem as any).courier_name || (fallbackItem.shipping_status ? `Status: ${fallbackItem.shipping_status}` : "Standard Shipping"),
             service_code: "-",
             service_name: "-",
             estimated_delivery: "-",
             tracking_number: fallbackItem.tracking_number || undefined,
           },
           shipping_address: {
-            receiver_name: userName || "Customer",
-            phone_number: "-",
-            street_address: "Address recorded in invoice",
-            city: "-",
-            province: "-",
-            postal_code: "-",
-            label: "Main",
+            receiver_name: itemAddr.receiver_name || (fallbackItem as any).receiver_name || userName || "Customer",
+            phone_number: itemAddr.phone_number || (fallbackItem as any).phone_number || "-",
+            street_address: itemAddr.street_address || (fallbackItem as any).street_address || (fallbackItem as any).address || "Address recorded in invoice",
+            city: itemAddr.city || (fallbackItem as any).city || "-",
+            province: itemAddr.province || (fallbackItem as any).province || "-",
+            postal_code: itemAddr.postal_code || itemAddr.postcode || itemAddr.zip_code || (fallbackItem as any).postal_code || (fallbackItem as any).postcode || (fallbackItem as any).zip_code || "-",
+            label: itemAddr.label || "Main Address",
           },
-          products: (fallbackItem as any).items || (fallbackItem as any).products || [],
+          products: (fallbackItem as any).items || (fallbackItem as any).products || (fallbackItem as any).order_items || [],
           summary: {
             subtotal: fallbackItem.total || 0,
             shipping: 0,
@@ -741,7 +782,14 @@ function DashboardOverviewContent() {
                 <div style={{ paddingTop: "28px", gap: "12px" }} className="flex flex-col border-t border-white/[0.1] font-mono text-xs text-left">
                   <span className="text-xs text-[#8A8A8A] uppercase tracking-[0.2em] block font-bold">SHIPPING ADDRESS</span>
                   <p className="text-[#F5F5F5] text-sm font-bold tracking-wide">{selectedOrderDetail.shipping_address.receiver_name} ({selectedOrderDetail.shipping_address.phone_number})</p>
-                  <p className="text-[#8A8A8A] leading-relaxed text-xs">{selectedOrderDetail.shipping_address.street_address}, {selectedOrderDetail.shipping_address.city}, {selectedOrderDetail.shipping_address.province} {selectedOrderDetail.shipping_address.postal_code}</p>
+                  <p className="text-[#8A8A8A] leading-relaxed text-xs">
+                    {[
+                      selectedOrderDetail.shipping_address.street_address,
+                      selectedOrderDetail.shipping_address.city,
+                      selectedOrderDetail.shipping_address.province,
+                      selectedOrderDetail.shipping_address.postal_code || (selectedOrderDetail.shipping_address as any)?.postcode || (selectedOrderDetail.shipping_address as any)?.zip_code || (selectedOrderDetail.shipping_address as any)?.postalCode
+                    ].filter(Boolean).join(", ")}
+                  </p>
                 </div>
               )}
 

@@ -20,6 +20,75 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getProductBySlug, checkWishlistStatus, addToWishlist, removeFromWishlist, addToCart, getImageUrl } from "@/utils/api";
 import { useEffect } from "react";
 
+const getColorHex = (colorInput: any): string => {
+  if (!colorInput) return "#0A0A0A";
+
+  if (typeof colorInput === "object" && colorInput !== null) {
+    if (colorInput.hex && typeof colorInput.hex === "string" && colorInput.hex.trim()) {
+      return colorInput.hex.trim();
+    }
+    colorInput = colorInput.name || colorInput.color || String(colorInput);
+  }
+
+  const str = String(colorInput).trim();
+  if (str.startsWith("#") || str.startsWith("rgb") || str.startsWith("hsl")) {
+    return str;
+  }
+
+  const nameUpper = str.toUpperCase();
+
+  const COLOR_MAP: Record<string, string> = {
+    WHITE: "#FFFFFF",
+    "OFF WHITE": "#F8F8F0",
+    IVORY: "#FFFFF0",
+    SNOW: "#FAFAFA",
+    CREAM: "#FFFDD0",
+    BLACK: "#0A0A0A",
+    "STEALTH BLACK": "#0A0A0A",
+    "JET BLACK": "#050505",
+    CHARCOAL: "#333333",
+    "WASHED GREY": "#4D5157",
+    "WASHED GRAY": "#4D5157",
+    "WASHED BLUE": "#4B6B94",
+    GREY: "#808080",
+    GRAY: "#808080",
+    "LIGHT GREY": "#D3D3D3",
+    "DARK GREY": "#555555",
+    SAND: "#D4C5A9",
+    BEIGE: "#F5F5DC",
+    KHAKI: "#C3B091",
+    OLIVE: "#3B4236",
+    "MILITARY GREEN": "#3B4236",
+    GREEN: "#2E7D32",
+    "FOREST GREEN": "#228B22",
+    NAVY: "#1B263B",
+    "NAVY BLUE": "#1B263B",
+    BLUE: "#1E88E5",
+    "LIGHT BLUE": "#ADD8E6",
+    RED: "#E53935",
+    MAROON: "#800000",
+    BURGUNDY: "#800020",
+    BROWN: "#795548",
+    CHOCOLATE: "#7B3F00",
+    YELLOW: "#FBC02D",
+    ORANGE: "#FB8C00",
+    PURPLE: "#8E24AA",
+    PINK: "#EC407A",
+  };
+
+  if (COLOR_MAP[nameUpper]) {
+    return COLOR_MAP[nameUpper];
+  }
+
+  for (const [key, hex] of Object.entries(COLOR_MAP)) {
+    if (nameUpper.includes(key) || key.includes(nameUpper)) {
+      return hex;
+    }
+  }
+
+  return nameUpper.toLowerCase();
+};
+
 export default function ProductPage({
   params,
 }: {
@@ -37,9 +106,9 @@ export default function ProductPage({
     return (
       <main className="min-h-screen bg-[#0A0A0A] text-[#F5F5F5] flex flex-col justify-between">
         <Navbar mode="dark" />
-        <div className="flex-1 flex flex-col items-center justify-center py-32">
-          <div className="w-10 h-10 border-2 border-[#B6A47E] border-t-transparent rounded-full animate-spin mb-6" />
-          <p className="text-xs font-mono tracking-[0.3em] text-[#8A8A8A] uppercase animate-pulse">
+        <div className="flex-1 flex flex-col items-center justify-center py-32 gap-6">
+          <div className="w-10 h-10 border-2 border-[#B6A47E] border-t-transparent rounded-full animate-spin" />
+          <p className="text-xs font-mono tracking-[0.3em] text-[#8A8A8A] uppercase animate-pulse mt-2">
             LOADING PRODUCT DETAILS...
           </p>
         </div>
@@ -523,10 +592,19 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
                   <div className="flex items-center gap-4 border-b border-[#222222]" style={{ paddingBottom: "20px" }}>
                     {product.colors.map((colorItem: any) => {
                       const colorName = typeof colorItem === "string" ? colorItem : colorItem.name || String(colorItem);
-                      const hexVal = typeof colorItem === "object" && colorItem && colorItem.hex ? colorItem.hex : "#0A0A0A";
+                      const hexVal = getColorHex(colorItem);
+                      const isWhiteOrLight =
+                        hexVal.toUpperCase() === "#FFFFFF" ||
+                        hexVal.toUpperCase() === "#FAFAFA" ||
+                        hexVal.toUpperCase() === "#FFFFF0" ||
+                        hexVal.toUpperCase() === "#F8F8F0" ||
+                        hexVal.toUpperCase() === "#FFFDD0" ||
+                        hexVal.toUpperCase() === "#F5F5DC";
+
                       return (
                         <button
                           key={colorName}
+                          type="button"
                           onClick={() => {
                             setSelectedColor(colorName);
                             // If selected size is out of stock for this new color, reset size
@@ -537,12 +615,12 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
                           title={colorName}
                           className={`w-10 h-10 border cursor-pointer transition-all duration-300 flex items-center justify-center ${
                             selectedColor === colorName
-                              ? "border-[#F5F5F5] p-[3px] scale-105"
-                              : "border-[#222222] hover:border-[#8A8A8A]"
+                              ? "border-[#B6A47E] p-[3px] scale-105 shadow-md"
+                              : "border-[#333333] hover:border-[#8A8A8A]"
                           }`}
                         >
                           <span
-                            className="w-full h-full"
+                            className={`w-full h-full block ${isWhiteOrLight ? "border border-gray-400" : ""}`}
                             style={{ backgroundColor: hexVal }}
                           />
                         </button>

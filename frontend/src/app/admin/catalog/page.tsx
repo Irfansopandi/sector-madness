@@ -11,7 +11,7 @@ import {
   getSortOptions, createSortOption, updateSortOption, deleteSortOption, SortOptionItem,
   getJournals, createJournal, updateJournal, deleteJournal, JournalArticle,
 } from "@/utils/api";
-import { SlidersHorizontal, Plus, X, Pencil, Trash2, Upload, Search } from "lucide-react";
+import { SlidersHorizontal, Plus, X, Pencil, Trash2, Upload, Search, Loader2 } from "lucide-react";
 import Swal from "sweetalert2";
 
 export default function AdminCatalogPage() {
@@ -262,6 +262,16 @@ export default function AdminCatalogPage() {
       showStatus("Journal article deleted successfully!");
     },
   });
+
+  const isSubmitting =
+    addCategoryMut.isPending ||
+    updateCategoryMut.isPending ||
+    addCollectionMut.isPending ||
+    updateCollectionMut.isPending ||
+    addSortMut.isPending ||
+    updateSortMut.isPending ||
+    addJournalMut.isPending ||
+    updateJournalMut.isPending;
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -1430,6 +1440,7 @@ export default function AdminCatalogPage() {
                 </button>
                 <button
                   type="submit"
+                  disabled={isSubmitting}
                   style={{
                     padding: "10px 28px",
                     borderRadius: "6px",
@@ -1437,14 +1448,23 @@ export default function AdminCatalogPage() {
                     fontWeight: 700,
                     letterSpacing: "0.12em",
                     textTransform: "uppercase",
-                    cursor: "pointer",
+                    cursor: isSubmitting ? "not-allowed" : "pointer",
                     backgroundColor: "#B6A47E",
                     border: "none",
                     color: "#0A0A0A",
                     boxShadow: "0 2px 4px rgba(0,0,0,0.15)",
+                    opacity: isSubmitting ? 0.75 : 1,
                   }}
+                  className="flex items-center gap-2 transition-all"
                 >
-                  SAVE CHANGES
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-black" />
+                      <span>SAVING...</span>
+                    </>
+                  ) : (
+                    <span>SAVE CHANGES</span>
+                  )}
                 </button>
               </div>
             </form>

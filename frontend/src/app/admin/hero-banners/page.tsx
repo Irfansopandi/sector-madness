@@ -12,7 +12,7 @@ import {
   uploadAdminImage,
   AdminHeroBanner,
 } from "@/utils/api";
-import { Image as ImageIcon, Plus, X, Pencil, Trash2, Upload, Search, Filter } from "lucide-react";
+import { Image as ImageIcon, Plus, X, Pencil, Trash2, Upload, Search, Filter, Loader2 } from "lucide-react";
 import Swal from "sweetalert2";
 
 export default function AdminHeroBannersPage() {
@@ -892,10 +892,18 @@ export default function AdminHeroBannersPage() {
                     border: "none",
                     color: "#0A0A0A",
                     boxShadow: "0 2px 4px rgba(0,0,0,0.15)",
-                    opacity: isUploading || addBannerMut.isPending || updateBannerMut.isPending ? 0.5 : 1,
+                    opacity: isUploading || addBannerMut.isPending || updateBannerMut.isPending ? 0.75 : 1,
                   }}
+                  className="flex items-center gap-2 transition-all"
                 >
-                  {isUploading ? "UPLOADING..." : addBannerMut.isPending || updateBannerMut.isPending ? "SAVING..." : "SAVE BANNER"}
+                  {isUploading || addBannerMut.isPending || updateBannerMut.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-black" />
+                      <span>{isUploading ? "UPLOADING..." : "SAVING..."}</span>
+                    </>
+                  ) : (
+                    <span>SAVE BANNER</span>
+                  )}
                 </button>
               </div>
             </form>

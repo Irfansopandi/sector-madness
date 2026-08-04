@@ -16,10 +16,49 @@ function ShopContent() {
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get("category");
 
-  const { data: apiProducts } = useQuery({
+  const { data: apiProducts, isLoading: loadingProducts } = useQuery({
     queryKey: ["products"],
     queryFn: getProducts,
   });
+
+  const { data: apiCategories } = useQuery({
+    queryKey: ["categories"],
+    queryFn: getCategories,
+  });
+
+  const { data: apiSortOptions } = useQuery({
+    queryKey: ["sortOptions"],
+    queryFn: getSortOptions,
+  });
+
+  const [activeCategory, setActiveCategory] = useState(categoryParam ? categoryParam.toUpperCase() : "ALL");
+  const [gridCols, setGridCols] = useState<4 | 6>(4);
+  const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState("SELECTED");
+
+  // Sync URL query param with state
+  useEffect(() => {
+    if (categoryParam) {
+      setActiveCategory(categoryParam.toUpperCase());
+    } else {
+      setActiveCategory("ALL");
+    }
+  }, [categoryParam]);
+
+  if (loadingProducts) {
+    return (
+      <main className="min-h-screen bg-[#0A0A0A] text-[#F5F5F5] flex flex-col justify-between">
+        <Navbar mode="dark" />
+        <div className="flex-1 flex flex-col items-center justify-center py-32 gap-6">
+          <div className="w-10 h-10 border-2 border-[#B6A47E] border-t-transparent rounded-full animate-spin" />
+          <p className="text-xs font-mono tracking-[0.3em] text-[#8A8A8A] uppercase animate-pulse mt-2">
+            LOADING CATALOG PRODUCTS...
+          </p>
+        </div>
+        <Footer />
+      </main>
+    );
+  }
 
   const productsList = apiProducts && apiProducts.length > 0 ? apiProducts.map(p => ({
     id: String(p.id).padStart(3, '0'),
@@ -66,30 +105,6 @@ function ShopContent() {
     story: p.story || p.description,
     limited: Boolean(p.limited),
   })) : [];
-
-  const [activeCategory, setActiveCategory] = useState(categoryParam ? categoryParam.toUpperCase() : "ALL");
-  const [gridCols, setGridCols] = useState<4 | 6>(4);
-  const [showFilters, setShowFilters] = useState(false);
-  const [sortBy, setSortBy] = useState("SELECTED");
-
-  // Sync URL query param with state
-  useEffect(() => {
-    if (categoryParam) {
-      setActiveCategory(categoryParam.toUpperCase());
-    } else {
-      setActiveCategory("ALL");
-    }
-  }, [categoryParam]);
-
-  const { data: apiCategories } = useQuery({
-    queryKey: ["categories"],
-    queryFn: getCategories,
-  });
-
-  const { data: apiSortOptions } = useQuery({
-    queryKey: ["sortOptions"],
-    queryFn: getSortOptions,
-  });
 
   const dynamicCategories = (apiCategories && apiCategories.length > 0)
     ? ["ALL", ...apiCategories.map(c => c.name.toUpperCase())]
@@ -459,7 +474,20 @@ function ShopContent() {
 
 export default function ShopPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#FFFFFF]" />}>
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-[#0A0A0A] text-[#F5F5F5] flex flex-col justify-between">
+          <Navbar mode="dark" />
+          <div className="flex-1 flex flex-col items-center justify-center py-32 gap-6">
+            <div className="w-10 h-10 border-2 border-[#B6A47E] border-t-transparent rounded-full animate-spin" />
+            <p className="text-xs font-mono tracking-[0.3em] text-[#8A8A8A] uppercase animate-pulse mt-2">
+              LOADING CATALOG PRODUCTS...
+            </p>
+          </div>
+          <Footer />
+        </main>
+      }
+    >
       <ShopContent />
     </Suspense>
   );

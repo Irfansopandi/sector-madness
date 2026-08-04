@@ -158,7 +158,13 @@ function CheckoutSuccessContent() {
               <span className="text-[#888888] uppercase block mb-1.5 font-bold tracking-wider">LOGISTICS DESTINATION</span>
               <strong className="text-white block uppercase font-bold">{order.shipping_address?.receiver_name}</strong>
               <span className="text-[#CCCCCC] block pt-0.5 leading-relaxed">{order.shipping_address?.street_address}</span>
-              <span className="text-[#888888] block text-[11px] pt-0.5">{order.shipping_address?.city}, {order.shipping_address?.postal_code}</span>
+              <span className="text-[#888888] block text-[11px] pt-0.5">
+                {[
+                  order.shipping_address?.city,
+                  order.shipping_address?.province,
+                  order.shipping_address?.postal_code || (order.shipping_address as any)?.postcode || (order.shipping_address as any)?.zip_code || (order.shipping_address as any)?.postalCode
+                ].filter(Boolean).join(", ")}
+              </span>
             </div>
 
             {/* 3. COURIER PROTOCOL */}

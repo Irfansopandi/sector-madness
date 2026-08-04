@@ -211,7 +211,13 @@ export default function OrderDetailPage() {
                 </span>
                 <p><strong className="text-[#888888]">RECEIVER ({order.shipping_address.label || "RUMAH"}):</strong> <span className="text-white font-bold block pt-0.5">{order.shipping_address.receiver_name}</span></p>
                 <p className="text-[#CCCCCC] leading-relaxed pt-1">{order.shipping_address.street_address}</p>
-                <p className="text-[#888888]">{order.shipping_address.city}, {order.shipping_address.province} — {order.shipping_address.postal_code}</p>
+                <p className="text-[#888888]">
+                  {[
+                    order.shipping_address.city,
+                    order.shipping_address.province,
+                    order.shipping_address.postal_code || (order.shipping_address as any)?.postcode || (order.shipping_address as any)?.zip_code || (order.shipping_address as any)?.postalCode
+                  ].filter(Boolean).join(", ")}
+                </p>
               </div>
 
               <div className="p-6 bg-[#0E0E0E] border border-[#222222] space-y-3">

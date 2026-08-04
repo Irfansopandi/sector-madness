@@ -10,7 +10,7 @@ const api = axios.create({
     "Content-Type": "application/json",
     Accept: "application/json",
   },
-  timeout: 15000,
+  timeout: 30000,
 });
 
 // Request interceptor to attach Sanctum Token — ONLY from sector_madness_token
@@ -260,6 +260,33 @@ export interface OrderDetailData {
   };
   shipping_status: string;
   status?: string;
+  cancel_reason?: string;
+  cancellation_reason?: string;
+  cancel_note?: string;
+  bank_name?: string;
+  account_number?: string;
+  account_name?: string;
+  refund_bank?: string;
+  refund_account?: string;
+  refund_name?: string;
+  no_rekening?: string;
+  nama_rekening?: string;
+  cancellation_request?: {
+    bank_name?: string;
+    account_number?: string;
+    account_name?: string;
+    account_holder?: string;
+    reason?: string;
+    notes?: string;
+  };
+  cancel_data?: {
+    bank_name?: string;
+    account_number?: string;
+    account_name?: string;
+    account_holder?: string;
+    reason?: string;
+    notes?: string;
+  };
   timeline: OrderTimeline[];
   created_at?: string;
   payment_status?: string;
@@ -552,8 +579,8 @@ export const getOrderDetail = async (orderNumber: string): Promise<OrderDetailDa
   return res.data.data;
 };
 
-export const cancelOrder = async (orderNumber: string): Promise<any> => {
-  const res = await api.post(`/orders/${orderNumber}/cancel`);
+export const cancelOrder = async (orderNumber: string, payload?: any): Promise<any> => {
+  const res = await api.post(`/orders/${orderNumber}/cancel`, payload);
   return res.data;
 };
 
@@ -947,6 +974,33 @@ export interface AdminOrder {
   shipping_status: string;
   courier?: string;
   tracking_number?: string;
+  cancel_reason?: string;
+  cancellation_reason?: string;
+  cancel_note?: string;
+  bank_name?: string;
+  account_number?: string;
+  account_name?: string;
+  refund_bank?: string;
+  refund_account?: string;
+  refund_name?: string;
+  no_rekening?: string;
+  nama_rekening?: string;
+  cancellation_request?: {
+    bank_name?: string;
+    account_number?: string;
+    account_name?: string;
+    account_holder?: string;
+    reason?: string;
+    notes?: string;
+  };
+  cancel_data?: {
+    bank_name?: string;
+    account_number?: string;
+    account_name?: string;
+    account_holder?: string;
+    reason?: string;
+    notes?: string;
+  };
   created_at: string;
   items_count?: number;
 }

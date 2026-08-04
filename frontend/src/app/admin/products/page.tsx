@@ -12,6 +12,8 @@ import {
   getCategories,
   getCollections,
   uploadAdminImage,
+  getImageUrl,
+  getAdminOrders,
   AdminProduct,
 } from "@/utils/api";
 import {
@@ -28,6 +30,9 @@ import {
   Ruler,
   AlertCircle,
   Box,
+  TrendingUp,
+  ShoppingBag,
+  Loader2,
 } from "lucide-react";
 import Swal from "sweetalert2";
 
@@ -56,6 +61,10 @@ export default function AdminProductsPage() {
   const [categoryFilter, setCategoryFilter] = useState("ALL");
   const [rowLimit, setRowLimit] = useState<number>(10);
   const [statusMessage, setStatusMessage] = useState("");
+
+  const [activeTab, setActiveTab] = useState<"CATALOG" | "TOP_SOLD">("CATALOG");
+  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
+  const tabRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
 
   const [modalMode, setModalMode] = useState<"add" | "edit" | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<AdminProduct | null>(null);
@@ -187,8 +196,106 @@ export default function AdminProductsPage() {
   const { data: products = [], isLoading: loadingProducts } = useQuery({
     queryKey: ["admin-products"],
     queryFn: getAdminProducts,
-    refetchInterval: 5000,
+    refetchInterval: 15000,
+    retry: false,
   });
+
+  const { data: orders = [] } = useQuery({
+    queryKey: ["admin-orders"],
+    queryFn: getAdminOrders,
+    refetchInterval: 15000,
+    retry: false,
+  });
+
+  // Aggregate top best-selling products from all non-cancelled orders
+  const topProducts = (() => {
+    const map = new Map<string, { name: string; image: string; qty: number; revenue: number; unitPrice: number }>();
+    orders
+      .filter((ord) => {
+        const st = (ord.shipping_status || "").toUpperCase();
+        return st !== "CANCELLED" && st !== "CANCELED" && st !== "DIBATALKAN";
+      })
+      .forEach((ord) => {
+        const items: any[] = (ord as any).items || (ord as any).products || [];
+        items.forEach((item: any) => {
+          const rawName: string = item.product_name || item.name || "Unknown Product";
+          const qty: number = Number(item.quantity) || 1;
+
+          // Match with official catalog products first by ID or Name
+          let matchedProd: any = null;
+          if (products.length > 0) {
+            matchedProd = products.find((p: any) => {
+              const pId = String(p.id || "");
+              const iId = String(item.product_id || item.id || "");
+              if (iId && pId === iId) return true;
+
+              const pName = (p.name || p.title || "").toLowerCase().trim();
+              const iName = rawName.toLowerCase().trim();
+              return pName === iName || pName.includes(iName) || iName.includes(pName);
+            });
+          }
+
+          const displayName = matchedProd?.name || rawName;
+
+          // Image: Always prioritize live catalog image
+          let image: string = "";
+          if (matchedProd && (matchedProd.image || matchedProd.photo)) {
+            image = matchedProd.image || matchedProd.photo;
+          } else {
+            image = item.product_image || item.image || item.photo || "";
+          }
+
+          // Price: Always prioritize live catalog price
+          let unitPrice = 0;
+          if (matchedProd && matchedProd.price) {
+            const rawP = Number(matchedProd.price) || 0;
+            unitPrice = rawP < 1000 ? rawP * 1000 : rawP;
+          } else {
+            const rawP = Number(item.price || item.unit_price) || 0;
+            const normalizedP = rawP < 1000 ? rawP * 1000 : rawP;
+            unitPrice = normalizedP > 1000000 && qty > 1 ? Math.round(normalizedP / qty) : normalizedP;
+          }
+
+          const existing = map.get(displayName);
+          if (existing) {
+            existing.qty += qty;
+            existing.revenue += unitPrice * qty;
+            if (image && (!existing.image || (matchedProd && matchedProd.image))) {
+              existing.image = image;
+            }
+          } else {
+            map.set(displayName, { name: displayName, image, qty, revenue: unitPrice * qty, unitPrice });
+          }
+        });
+      });
+    return Array.from(map.values())
+      .sort((a, b) => b.revenue - a.revenue || b.qty - a.qty)
+      .map((p, i) => ({ ...p, rank: i + 1 }));
+  })();
+
+  const filteredTopProducts = topProducts.filter((prod) => {
+    const q = searchQuery.toLowerCase().trim();
+    return !q || prod.name.toLowerCase().includes(q);
+  });
+
+  const displayedTopProducts =
+    rowLimit === 0 ? filteredTopProducts : filteredTopProducts.slice(0, rowLimit);
+
+  useEffect(() => {
+    const updateIndicator = () => {
+      const activeEl = tabRefs.current[activeTab];
+      if (activeEl) {
+        setIndicatorStyle({
+          left: activeEl.offsetLeft,
+          width: activeEl.offsetWidth,
+        });
+      }
+    };
+
+    updateIndicator();
+    window.addEventListener("resize", updateIndicator);
+    return () => window.removeEventListener("resize", updateIndicator);
+  }, [activeTab, products.length, topProducts.length]);
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
@@ -211,6 +318,9 @@ export default function AdminProductsPage() {
     onError: (err: any) => {
       showErrorAlert(err.response?.data?.message || "Gagal menambahkan produk.");
     },
+    onSettled: () => {
+      setIsUploading(false);
+    },
   });
 
   const updateProductMut = useMutation({
@@ -224,7 +334,12 @@ export default function AdminProductsPage() {
     onError: (err: any) => {
       showErrorAlert(err.response?.data?.message || "Gagal memperbarui produk.");
     },
+    onSettled: () => {
+      setIsUploading(false);
+    },
   });
+
+  const isSubmitting = isUploading || addProductMut.isPending || updateProductMut.isPending;
 
   const deleteProductMut = useMutation({
     mutationFn: deleteAdminProduct,
@@ -801,330 +916,599 @@ export default function AdminProductsPage() {
             </div>
           )}
 
-          {/* PAGE HEADER: TITLE COUNTER & ADD BUTTON */}
-          <div style={{ marginBottom: "32px" }} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <h2
-              style={{
-                fontSize: "11px",
-                letterSpacing: "0.22em",
-                fontWeight: 700,
-                fontFamily: "'Inter', -apple-system, sans-serif",
-              }}
-              className={`uppercase ${isDarkMode ? "text-[#8A8A8A]" : "text-[#4B5563]"}`}
-            >
-              {filteredProducts.length} PRODUK DITEMUKAN ({products.length} TOTAL)
-            </h2>
-            <button
-              onClick={openAddModal}
-              style={{ padding: "12px 28px" }}
-              className={`group rounded-[6px] text-xs font-bold tracking-widest uppercase transition-all duration-200 cursor-pointer flex items-center gap-2 shadow-sm ${
-                isDarkMode
-                  ? "bg-[#B6A47E] text-[#0A0A0A] hover:bg-[#a3926d]"
-                  : "bg-[#0A0A0A] text-white hover:bg-[#222222]"
-              }`}
-            >
-              <Plus className="w-4 h-4 transition-transform duration-300 group-hover:rotate-90" />
-              <span>TAMBAH PRODUK</span>
-            </button>
-          </div>
-
-          {/* TABLE CONTROL BAR: SEARCH, FILTER & ROW LIMIT */}
+          {/* Smooth Sliding Button Pill Navigation Tabs (Matching Admin Orders Page) */}
           <div
             style={{
+              position: "relative",
               display: "flex",
               flexWrap: "wrap",
-              gap: "16px",
               alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: "24px",
-              padding: "16px 20px",
-              borderRadius: "8px",
-              backgroundColor: isDarkMode ? "#18181C" : "#FFFFFF",
-              border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #E5E7EB",
+              gap: "8px",
+              padding: "6px",
+              borderRadius: "10px",
+              backgroundColor: isDarkMode ? "#18181C" : "#E5E7EB",
+              border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #D1D5DB",
+              marginBottom: "28px",
+              width: "fit-content",
             }}
           >
-            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "12px", flex: 1, minWidth: "280px" }}>
-              {/* Search Bar */}
-              <div style={{ position: "relative", flex: 1, minWidth: "220px" }}>
-                <Search
-                  style={{
-                    position: "absolute",
-                    left: "12px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    width: "16px",
-                    height: "16px",
-                    color: isDarkMode ? "#8A8A8A" : "#9CA3AF",
-                  }}
-                />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Cari Produk / Kategori / Material..."
-                  style={{
-                    width: "100%",
-                    paddingLeft: "38px",
-                    paddingRight: "14px",
-                    paddingTop: "9px",
-                    paddingBottom: "9px",
-                    fontSize: "12px",
-                    fontWeight: 600,
-                    borderRadius: "6px",
-                    outline: "none",
-                    backgroundColor: isDarkMode ? "#121214" : "#F9FAFB",
-                    border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #D1D5DB",
-                    color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
-                  }}
-                />
-              </div>
-
-              {/* Category Filter Dropdown */}
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <Filter style={{ width: "14px", height: "14px", color: "#B6A47E" }} />
-                <select
-                  value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
-                  style={{
-                    padding: "9px 14px",
-                    fontSize: "12px",
-                    fontWeight: 700,
-                    borderRadius: "6px",
-                    outline: "none",
-                    textTransform: "uppercase",
-                    cursor: "pointer",
-                    backgroundColor: isDarkMode ? "#121214" : "#F9FAFB",
-                    border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #D1D5DB",
-                    color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
-                  }}
-                >
-                  <option value="ALL">SEMUA KATEGORI</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={String(cat.id)}>
-                      {cat.name.toUpperCase()}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Row Limit Select */}
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <span style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: isDarkMode ? "#8A8A8A" : "#6B7280" }}>
-                TAMPILKAN:
-              </span>
-              <select
-                value={rowLimit}
-                onChange={(e) => setRowLimit(Number(e.target.value))}
+            {/* Sliding Active Pill Indicator */}
+            {indicatorStyle.width > 0 && (
+              <div
                 style={{
-                  padding: "9px 14px",
-                  fontSize: "12px",
-                  fontWeight: 700,
-                  borderRadius: "6px",
-                  outline: "none",
-                  cursor: "pointer",
-                  backgroundColor: isDarkMode ? "#121214" : "#F9FAFB",
-                  border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #D1D5DB",
-                  color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
+                  position: "absolute",
+                  top: "6px",
+                  bottom: "6px",
+                  left: `${indicatorStyle.left}px`,
+                  width: `${indicatorStyle.width}px`,
+                  borderRadius: "7px",
+                  backgroundColor: isDarkMode ? "#121214" : "#FFFFFF",
+                  border: "1.5px solid #B6A47E",
+                  boxShadow: isDarkMode
+                    ? "0 4px 14px rgba(0,0,0,0.6)"
+                    : "0 2px 8px rgba(0,0,0,0.1)",
+                  transition: "left 0.35s cubic-bezier(0.16, 1, 0.3, 1), width 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
+                  pointerEvents: "none",
+                  zIndex: 1,
                 }}
-              >
-                <option value={5}>5 BARIS</option>
-                <option value={10}>10 BARIS</option>
-                <option value={25}>25 BARIS</option>
-                <option value={50}>50 BARIS</option>
-                <option value={0}>SEMUA ({filteredProducts.length})</option>
-              </select>
-            </div>
-          </div>
+              />
+            )}
 
-          {/* TABLE CONTAINER */}
-          <div
-            style={{
-              borderRadius: "8px",
-              overflow: "hidden",
-              border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #E5E7EB",
-              backgroundColor: isDarkMode ? "#18181C" : "#FFFFFF",
-            }}
-          >
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr
-                    style={{
-                      borderBottom: isDarkMode ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #E5E7EB",
-                      backgroundColor: isDarkMode ? "rgba(255, 255, 255, 0.02)" : "#F9FAFB",
-                    }}
-                  >
-                    <th style={{ padding: "16px 20px", fontSize: "11px", letterSpacing: "0.15em" }} className="font-mono font-bold uppercase text-[#8A8A8A]">
-                      FOTO
-                    </th>
-                    <th style={{ padding: "16px 20px", fontSize: "11px", letterSpacing: "0.15em" }} className="font-mono font-bold uppercase text-[#8A8A8A]">
-                      NAMA PRODUK
-                    </th>
-                    <th style={{ padding: "16px 20px", fontSize: "11px", letterSpacing: "0.15em" }} className="font-mono font-bold uppercase text-[#8A8A8A]">
-                      KATEGORI
-                    </th>
-                    <th style={{ padding: "16px 20px", fontSize: "11px", letterSpacing: "0.15em" }} className="font-mono font-bold uppercase text-[#8A8A8A]">
-                      HARGA
-                    </th>
-                    <th style={{ padding: "16px 20px", fontSize: "11px", letterSpacing: "0.15em" }} className="font-mono font-bold uppercase text-[#8A8A8A]">
-                      STOK
-                    </th>
-                    <th style={{ padding: "16px 20px", fontSize: "11px", letterSpacing: "0.15em" }} className="font-mono font-bold uppercase text-[#8A8A8A] text-right">
-                      AKSI
-                    </th>
-                  </tr>
-                </thead>
-                <tbody
-                  className={`divide-y text-xs ${
-                    isDarkMode ? "divide-white/5" : "divide-gray-100"
+            {[
+              { id: "CATALOG", label: "SEMUA PRODUK", count: products.length, icon: Package },
+              { id: "TOP_SOLD", label: "PRODUK TERJUAL", count: topProducts.length, icon: TrendingUp },
+            ].map((tab) => {
+              const IconComponent = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  ref={(el) => { tabRefs.current[tab.id] = el; }}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id as any)}
+                  style={{
+                    position: "relative",
+                    zIndex: 2,
+                    padding: "8px 18px",
+                    borderRadius: "7px",
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    letterSpacing: "0.08em",
+                    fontFamily: "'Inter', -apple-system, sans-serif",
+                  }}
+                  className={`flex items-center gap-2 uppercase transition-colors duration-200 cursor-pointer ${
+                    isActive
+                      ? isDarkMode ? "text-[#F5F5F5]" : "text-[#0A0A0A]"
+                      : isDarkMode ? "text-[#8A8A8A] hover:text-[#CCCCCC]" : "text-[#6B7280] hover:text-[#111827]"
                   }`}
                 >
-                  {loadingProducts ? (
-                    <tr>
-                      <td colSpan={6} style={{ padding: "48px" }} className="text-center text-gray-500 font-mono">
-                        Memuat data produk...
-                      </td>
-                    </tr>
-                  ) : displayedProducts.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} style={{ padding: "48px" }} className="text-center text-gray-500 font-mono">
-                        Tidak ada data produk yang ditemukan.
-                      </td>
-                    </tr>
-                  ) : (
-                    displayedProducts.map((prod) => {
-                      const imgUrl = prod.image
-                        ? prod.image.startsWith("http")
-                          ? prod.image
-                          : `http://brand.test${prod.image}`
-                        : "/images/placeholder.png";
+                  <IconComponent className={`w-3.5 h-3.5 ${isActive ? "text-[#B6A47E]" : "opacity-60"}`} />
+                  <span>{tab.label}</span>
+                  <span
+                    style={{ padding: "2px 7px", borderRadius: "12px", fontSize: "10px" }}
+                    className={`font-mono font-extrabold ${
+                      isActive
+                        ? "bg-[#B6A47E] text-black"
+                        : isDarkMode ? "bg-white/10 text-[#8A8A8A]" : "bg-gray-200 text-gray-700"
+                    }`}
+                  >
+                    {tab.count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
 
-                      return (
-                        <tr
-                          key={prod.id}
-                          className={`transition-colors ${
-                            isDarkMode ? "hover:bg-white/[0.02]" : "hover:bg-gray-50/80"
+          {activeTab === "CATALOG" && (
+            <>
+              {/* PAGE HEADER: TITLE COUNTER & ADD BUTTON */}
+              <div style={{ marginBottom: "32px" }} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <h2
+                  style={{
+                    fontSize: "11px",
+                    letterSpacing: "0.22em",
+                    fontWeight: 700,
+                    fontFamily: "'Inter', -apple-system, sans-serif",
+                  }}
+                  className={`uppercase ${isDarkMode ? "text-[#8A8A8A]" : "text-[#4B5563]"}`}
+                >
+                  {filteredProducts.length} PRODUK DITEMUKAN ({products.length} TOTAL)
+                </h2>
+                <button
+                  onClick={openAddModal}
+                  style={{ padding: "12px 28px" }}
+                  className={`group rounded-[6px] text-xs font-bold tracking-widest uppercase transition-all duration-200 cursor-pointer flex items-center gap-2 shadow-sm ${
+                    isDarkMode
+                      ? "bg-[#B6A47E] text-[#0A0A0A] hover:bg-[#a3926d]"
+                      : "bg-[#0A0A0A] text-white hover:bg-[#222222]"
+                  }`}
+                >
+                  <Plus className="w-4 h-4 transition-transform duration-300 group-hover:rotate-90" />
+                  <span>TAMBAH PRODUK</span>
+                </button>
+              </div>
+
+              {/* TABLE CONTROL BAR: SEARCH, FILTER & ROW LIMIT */}
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "16px",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "16px 20px",
+                  borderRadius: "6px",
+                  marginBottom: "24px",
+                }}
+                className={`border shadow-sm ${
+                  isDarkMode
+                    ? "bg-[#18181C] border-white/10"
+                    : "bg-white border-[#D1D5DB]"
+                }`}
+              >
+                <div className="flex flex-wrap items-center gap-3 flex-1 min-w-[280px]">
+                  <div className="relative flex-1 min-w-[200px]">
+                    <Search
+                      className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 ${
+                        isDarkMode ? "text-[#8A8A8A]" : "text-gray-400"
+                      }`}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Cari Produk / Kategori / Material..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      style={{
+                        paddingLeft: "40px",
+                        paddingRight: "14px",
+                        paddingTop: "10px",
+                        paddingBottom: "10px",
+                      }}
+                      className={`w-full text-xs font-medium rounded-[4px] border outline-none transition-colors ${
+                        isDarkMode
+                          ? "bg-[#121214] border-white/10 text-white focus:border-[#B6A47E]"
+                          : "bg-gray-50 border-gray-300 text-gray-900 focus:border-[#B6A47E]"
+                      }`}
+                    />
+                    {searchQuery && (
+                      <button
+                        onClick={() => setSearchQuery("")}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Filter className={`w-3.5 h-3.5 ${isDarkMode ? "text-[#8A8A8A]" : "text-gray-400"}`} />
+                    <select
+                      value={categoryFilter}
+                      onChange={(e) => setCategoryFilter(e.target.value)}
+                      style={{ padding: "10px 14px" }}
+                      className={`text-xs font-bold tracking-wider uppercase rounded-[4px] border outline-none cursor-pointer transition-colors ${
+                        isDarkMode
+                          ? "bg-[#121214] border-white/10 text-white focus:border-[#B6A47E]"
+                          : "bg-gray-50 border-gray-300 text-gray-900 focus:border-[#B6A47E]"
+                      }`}
+                    >
+                      <option value="ALL">SEMUA KATEGORI</option>
+                      {categories.map((cat: any) => (
+                        <option key={cat.id} value={String(cat.id)}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span className={`text-[11px] font-bold tracking-wider uppercase ${isDarkMode ? "text-[#8A8A8A]" : "text-gray-500"}`}>
+                    TAMPILKAN:
+                  </span>
+                  <select
+                    value={rowLimit}
+                    onChange={(e) => setRowLimit(Number(e.target.value))}
+                    style={{ padding: "10px 14px" }}
+                    className={`text-xs font-bold tracking-wider uppercase rounded-[4px] border outline-none cursor-pointer transition-colors ${
+                      isDarkMode
+                        ? "bg-[#121214] border-white/10 text-white focus:border-[#B6A47E]"
+                        : "bg-gray-50 border-gray-300 text-gray-900 focus:border-[#B6A47E]"
+                    }`}
+                  >
+                    <option value={10}>10 BARIS</option>
+                    <option value={20}>20 BARIS</option>
+                    <option value={50}>50 BARIS</option>
+                    <option value={0}>SEMUA BARIS</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* PRODUCTS DATA TABLE */}
+              <div
+                className={`border rounded-[6px] overflow-x-auto shadow-sm transition-colors ${
+                  isDarkMode
+                    ? "bg-[#18181C] border-white/10"
+                    : "bg-white border-[#D1D5DB]"
+                }`}
+              >
+                <table className="w-full text-left text-xs uppercase tracking-wider">
+                  <thead
+                    className={`border-b ${
+                      isDarkMode
+                        ? "bg-[#1E1E22] border-white/10 text-[#8A8A8A]"
+                        : "bg-[#F9FAFB] border-[#E5E7EB] text-[#4B5563]"
+                    }`}
+                  >
+                    <tr>
+                      <th style={{ padding: "18px 20px" }} className="font-bold whitespace-nowrap">FOTO</th>
+                      <th style={{ padding: "18px 20px" }} className="font-bold whitespace-nowrap">NAMA PRODUK</th>
+                      <th style={{ padding: "18px 20px" }} className="font-bold whitespace-nowrap">KATEGORI</th>
+                      <th style={{ padding: "18px 20px" }} className="font-bold whitespace-nowrap">HARGA</th>
+                      <th style={{ padding: "18px 20px" }} className="font-bold whitespace-nowrap">STOK</th>
+                      <th style={{ padding: "18px 20px" }} className="font-bold text-right whitespace-nowrap">AKSI</th>
+                    </tr>
+                  </thead>
+                  <tbody
+                    className={`divide-y ${
+                      isDarkMode ? "divide-white/[0.05]" : "divide-[#E5E7EB]"
+                    }`}
+                  >
+                    {displayedProducts.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={6}
+                          style={{ padding: "48px 24px" }}
+                          className={`text-center ${
+                            isDarkMode ? "text-[#777777]" : "text-[#6B7280]"
                           }`}
                         >
-                          <td style={{ padding: "16px 20px" }}>
-                            <div
-                              style={{ width: "56px", height: "64px" }}
-                              className="rounded-md overflow-hidden bg-black/20 border border-white/10 relative shrink-0"
-                            >
+                          Tidak ada produk ditemukan sesuai kriteria pencarian.
+                        </td>
+                      </tr>
+                    ) : (
+                      displayedProducts.map((prod) => {
+                        const imgUrl = prod.image
+                          ? prod.image.startsWith("http")
+                            ? prod.image
+                            : `http://brand.test${prod.image}`
+                          : "/images/placeholder.png";
+
+                        return (
+                          <tr
+                            key={prod.id}
+                            className={`transition-colors ${
+                              isDarkMode ? "hover:bg-white/[0.02]" : "hover:bg-gray-50/80"
+                            }`}
+                          >
+                            <td style={{ padding: "16px 20px" }}>
+                              <div
+                                style={{ width: "56px", height: "64px" }}
+                                className="rounded-md overflow-hidden bg-black/20 border border-white/10 relative shrink-0"
+                              >
+                                <img
+                                  src={imgUrl}
+                                  alt={prod.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            </td>
+                            <td style={{ padding: "16px 20px" }}>
+                              <div className="font-bold text-sm tracking-wide">{prod.name}</div>
+                              {prod.material && (
+                                <div
+                                  style={{ marginTop: "3px", fontSize: "11px" }}
+                                  className={`font-mono ${
+                                    isDarkMode ? "text-[#8A8A8A]" : "text-gray-500"
+                                  }`}
+                                >
+                                  {prod.material}
+                                </div>
+                              )}
+                            </td>
+                            <td style={{ padding: "16px 20px" }}>
+                              <div className="flex flex-col gap-1 items-start">
+                                <span
+                                  style={{ padding: "4px 10px", borderRadius: "4px", fontSize: "11px" }}
+                                  className={`font-mono font-bold tracking-wider uppercase border ${
+                                    isDarkMode
+                                      ? "bg-white/5 border-white/10 text-gray-300"
+                                      : "bg-gray-100 border-gray-200 text-gray-700"
+                                  }`}
+                                >
+                                  {prod.category?.name || "Uncategorized"}
+                                </span>
+                                {prod.collection && (
+                                  <span style={{ fontSize: "10px" }} className="font-mono text-[#B6A47E] font-medium tracking-wider uppercase">
+                                    FOCUS: {prod.collection}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td style={{ padding: "16px 20px" }} className="font-mono font-bold">
+                              <div>{formatRupiah(prod.price)}</div>
+                              {prod.original_price && prod.original_price > prod.price && (
+                                <div style={{ fontSize: "10px", marginTop: "2px" }} className="text-red-500 line-through">
+                                  {formatRupiah(prod.original_price)}
+                                </div>
+                              )}
+                            </td>
+                            <td style={{ padding: "16px 20px" }}>
+                              <span
+                                style={{ padding: "4px 12px", borderRadius: "9999px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.05em" }}
+                                className={`inline-flex items-center gap-1.5 uppercase font-mono border ${
+                                  prod.stock > 0
+                                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                                    : "bg-red-500/10 text-red-400 border-red-500/20"
+                                }`}
+                              >
+                                <span className={`w-1.5 h-1.5 rounded-full ${prod.stock > 0 ? "bg-emerald-400" : "bg-red-400"}`} />
+                                {prod.stock > 0 ? `${prod.stock} UNIT` : "STOK HABIS"}
+                              </span>
+                            </td>
+                            <td style={{ padding: "16px 20px" }} className="text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    updateProductMut.mutate({
+                                      id: Number(prod.id),
+                                      data: { limited: !prod.limited },
+                                    })
+                                  }
+                                  style={{ padding: "8px 12px", borderRadius: "6px" }}
+                                  className={`text-xs font-bold tracking-wider uppercase transition-all duration-200 cursor-pointer flex items-center gap-1 border ${
+                                    prod.limited
+                                      ? "bg-[#B6A47E]/15 border-[#B6A47E] text-[#B6A47E] hover:bg-[#B6A47E] hover:text-black"
+                                      : "bg-white/5 border-white/10 text-gray-400 hover:text-gray-200 hover:border-gray-500"
+                                  }`}
+                                  title="Klik untuk ubah status Limited Release"
+                                >
+                                  <span>{prod.limited ? "⭐ LIMITED" : "REGULAR"}</span>
+                                </button>
+
+                                <button
+                                  onClick={() => openEditModal(prod)}
+                                  style={{ padding: "8px 14px", borderRadius: "6px" }}
+                                  className={`text-xs font-bold tracking-wider uppercase transition-all duration-200 cursor-pointer flex items-center gap-1.5 border ${
+                                    isDarkMode
+                                      ? "bg-white/5 border-white/10 text-white hover:border-[#B6A47E] hover:text-[#B6A47E]"
+                                      : "bg-gray-100 border-gray-200 text-gray-800 hover:border-[#B6A47E] hover:text-[#B6A47E]"
+                                  }`}
+                                >
+                                  <Pencil className="w-3.5 h-3.5" />
+                                  <span>EDIT</span>
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    confirmDelete(prod.name, () => deleteProductMut.mutate(prod.id))
+                                  }
+                                  style={{ padding: "8px 12px", borderRadius: "6px" }}
+                                  className="text-xs font-bold tracking-wider uppercase transition-all duration-200 cursor-pointer flex items-center gap-1.5 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:border-red-500/40"
+                                  title="Hapus Produk"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+
+          {activeTab === "TOP_SOLD" && (
+            <>
+              <div style={{ marginBottom: "32px" }} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4" style={{ color: "#B6A47E" }} />
+                  <h2
+                    style={{
+                      fontSize: "11px",
+                      letterSpacing: "0.22em",
+                      fontWeight: 700,
+                      fontFamily: "'Inter', -apple-system, sans-serif",
+                    }}
+                    className={`uppercase ${isDarkMode ? "text-[#8A8A8A]" : "text-[#4B5563]"}`}
+                  >
+                    {filteredTopProducts.length} PRODUK TERJUAL DITEMUKAN ({topProducts.length} TOTAL)
+                  </h2>
+                </div>
+                <span
+                  style={{ fontSize: "10px", fontFamily: "'Inter', -apple-system, sans-serif" }}
+                  className={`font-medium tracking-wider uppercase ${isDarkMode ? "text-[#666666]" : "text-[#9CA3AF]"}`}
+                >
+                  BERDASARKAN TOTAL PENGHASILAN & QTY TERJUAL
+                </span>
+              </div>
+
+              {/* CONTROL BAR: SEARCH & ROW LIMIT */}
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "16px",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "16px 20px",
+                  borderRadius: "6px",
+                  marginBottom: "24px",
+                }}
+                className={`border shadow-sm ${
+                  isDarkMode
+                    ? "bg-[#18181C] border-white/10"
+                    : "bg-white border-[#D1D5DB]"
+                }`}
+              >
+                <div className="relative flex-1 min-w-[240px]">
+                  <Search
+                    className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 ${
+                      isDarkMode ? "text-[#8A8A8A]" : "text-gray-400"
+                    }`}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Cari Produk Terjual..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    style={{
+                      paddingLeft: "40px",
+                      paddingRight: "14px",
+                      paddingTop: "10px",
+                      paddingBottom: "10px",
+                    }}
+                    className={`w-full text-xs font-medium rounded-[4px] border outline-none transition-colors ${
+                      isDarkMode
+                        ? "bg-[#121214] border-white/10 text-white focus:border-[#B6A47E]"
+                        : "bg-gray-50 border-gray-300 text-gray-900 focus:border-[#B6A47E]"
+                    }`}
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span className={`text-[11px] font-bold tracking-wider uppercase ${isDarkMode ? "text-[#8A8A8A]" : "text-gray-500"}`}>
+                    TAMPILKAN:
+                  </span>
+                  <select
+                    value={rowLimit}
+                    onChange={(e) => setRowLimit(Number(e.target.value))}
+                    style={{ padding: "10px 14px" }}
+                    className={`text-xs font-bold tracking-wider uppercase rounded-[4px] border outline-none cursor-pointer transition-colors ${
+                      isDarkMode
+                        ? "bg-[#121214] border-white/10 text-white focus:border-[#B6A47E]"
+                        : "bg-gray-50 border-gray-300 text-gray-900 focus:border-[#B6A47E]"
+                    }`}
+                  >
+                    <option value={10}>10 BARIS</option>
+                    <option value={20}>20 BARIS</option>
+                    <option value={50}>50 BARIS</option>
+                    <option value={0}>SEMUA BARIS</option>
+                  </select>
+                </div>
+              </div>
+
+              <div
+                className={`border rounded-[6px] overflow-hidden shadow-sm ${
+                  isDarkMode ? "bg-[#18181C] border-white/10" : "bg-white border-[#D1D5DB]"
+                }`}
+              >
+                {displayedTopProducts.length === 0 ? (
+                  <div
+                    style={{ padding: "64px 24px" }}
+                    className={`text-center text-xs ${isDarkMode ? "text-[#777777]" : "text-[#6B7280]"}`}
+                  >
+                    Tidak ada produk terjual ditemukan sesuai pencarian.
+                  </div>
+                ) : (
+                  <div className={`divide-y ${isDarkMode ? "divide-white/[0.05]" : "divide-[#E5E7EB]"}`}>
+                    {displayedTopProducts.map((prod) => {
+                      const prodImg = prod.image ? getImageUrl(prod.image) : null;
+                      return (
+                        <div
+                          key={prod.name}
+                          style={{ padding: "20px 28px" }}
+                          className={`flex items-center gap-5 transition-colors ${
+                            isDarkMode ? "hover:bg-white/[0.02]" : "hover:bg-[#F9FAFB]"
+                          }`}
+                        >
+                          {/* Rank badge */}
+                          <span
+                            style={{ width: "36px", height: "36px", borderRadius: "8px", flexShrink: 0 }}
+                            className={`inline-flex items-center justify-center font-black text-xs font-mono ${
+                              prod.rank === 1
+                                ? "bg-amber-500/20 text-amber-400 border border-amber-500/40"
+                                : prod.rank === 2
+                                ? "bg-slate-500/15 text-slate-400 border border-slate-500/30"
+                                : prod.rank === 3
+                                ? "bg-orange-900/20 text-orange-400 border border-orange-500/30"
+                                : isDarkMode
+                                ? "bg-white/5 text-[#8A8A8A] border border-white/10"
+                                : "bg-gray-100 text-gray-500 border border-gray-200"
+                            }`}
+                          >
+                            {prod.rank}
+                          </span>
+
+                          {/* Product Image Thumbnail */}
+                          <div
+                            style={{ width: "52px", height: "52px", borderRadius: "8px", flexShrink: 0 }}
+                            className={`overflow-hidden border relative flex items-center justify-center ${
+                              isDarkMode ? "bg-white/5 border-white/10" : "bg-gray-100 border-gray-200"
+                            }`}
+                          >
+                            {prodImg ? (
                               <img
-                                src={imgUrl}
+                                src={prodImg}
                                 alt={prod.name}
                                 className="w-full h-full object-cover"
                               />
-                            </div>
-                          </td>
-                          <td style={{ padding: "16px 20px" }}>
-                            <div className="font-bold text-sm tracking-wide">{prod.name}</div>
-                            {prod.material && (
-                              <div
-                                style={{ marginTop: "3px", fontSize: "11px" }}
-                                className={`font-mono ${
-                                  isDarkMode ? "text-[#8A8A8A]" : "text-gray-500"
-                                }`}
-                              >
-                                {prod.material}
-                              </div>
+                            ) : (
+                              <ShoppingBag className={`w-5 h-5 ${isDarkMode ? "text-[#8A8A8A]" : "text-gray-400"}`} />
                             )}
-                          </td>
-                          <td style={{ padding: "16px 20px" }}>
-                            <div className="flex flex-col gap-1 items-start">
-                              <span
-                                style={{ padding: "4px 10px", borderRadius: "4px", fontSize: "11px" }}
-                                className={`font-mono font-bold tracking-wider uppercase border ${
-                                  isDarkMode
-                                    ? "bg-white/5 border-white/10 text-gray-300"
-                                    : "bg-gray-100 border-gray-200 text-gray-700"
-                                }`}
-                              >
-                                {prod.category?.name || "Uncategorized"}
-                              </span>
-                              {prod.collection && (
-                                <span style={{ fontSize: "10px" }} className="font-mono text-[#B6A47E] font-medium tracking-wider uppercase">
-                                  FOCUS: {prod.collection}
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td style={{ padding: "16px 20px" }} className="font-mono font-bold">
-                            <div>{formatRupiah(prod.price)}</div>
-                            {prod.original_price && prod.original_price > prod.price && (
-                              <div style={{ fontSize: "10px", marginTop: "2px" }} className="text-red-500 line-through">
-                                {formatRupiah(prod.original_price)}
-                              </div>
-                            )}
-                          </td>
-                          <td style={{ padding: "16px 20px" }}>
+                          </div>
+
+                          {/* Product Name + Unit Price & Total Revenue */}
+                          <div className="flex-1 min-w-0 flex flex-col gap-1.5">
                             <span
-                              style={{ padding: "4px 12px", borderRadius: "9999px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.05em" }}
-                              className={`inline-flex items-center gap-1.5 uppercase font-mono border ${
-                                prod.stock > 0
-                                  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                                  : "bg-red-500/10 text-red-400 border-red-500/20"
+                              className={`font-bold text-xs uppercase tracking-wide truncate ${
+                                isDarkMode ? "text-[#F5F5F5]" : "text-[#111827]"
                               }`}
                             >
-                              <span className={`w-1.5 h-1.5 rounded-full ${prod.stock > 0 ? "bg-emerald-400" : "bg-red-400"}`} />
-                              {prod.stock > 0 ? `${prod.stock} UNIT` : "STOK HABIS"}
+                              {prod.name}
                             </span>
-                          </td>
-                          <td style={{ padding: "16px 20px" }} className="text-right">
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "8px" }}>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  updateProductMut.mutate({
-                                    id: Number(prod.id),
-                                    data: { limited: !prod.limited },
-                                  })
-                                }
-                                style={{ padding: "8px 12px", borderRadius: "6px" }}
-                                className={`text-xs font-bold tracking-wider uppercase transition-all duration-200 cursor-pointer flex items-center gap-1.5 border ${
-                                  prod.limited
-                                    ? "bg-[#B6A47E]/15 border-[#B6A47E] text-[#B6A47E] hover:bg-[#B6A47E] hover:text-black"
-                                    : "bg-white/5 border-white/10 text-gray-400 hover:text-gray-200 hover:border-gray-500"
-                                }`}
-                                title="Klik untuk ubah status Limited Release"
-                              >
-                                <span>{prod.limited ? "⭐ LIMITED" : "REGULAR"}</span>
-                              </button>
-
-                              <button
-                                onClick={() => openEditModal(prod)}
-                                style={{ padding: "8px 14px", borderRadius: "6px" }}
-                                className={`text-xs font-bold tracking-wider uppercase transition-all duration-200 cursor-pointer flex items-center gap-1.5 border ${
-                                  isDarkMode
-                                    ? "bg-white/5 border-white/10 text-white hover:border-[#B6A47E] hover:text-[#B6A47E]"
-                                    : "bg-gray-100 border-gray-200 text-gray-800 hover:border-[#B6A47E] hover:text-[#B6A47E]"
+                            <div className="flex items-center gap-2 text-[11px] font-mono">
+                              <span
+                                className={`font-semibold ${
+                                  prod.rank === 1
+                                    ? "text-[#B6A47E]"
+                                    : isDarkMode
+                                    ? "text-[#CCCCCC]"
+                                    : "text-[#374151]"
                                 }`}
                               >
-                                <Pencil className="w-3.5 h-3.5" />
-                                <span>EDIT</span>
-                              </button>
-                              <button
-                                onClick={() =>
-                                  confirmDelete(prod.name, () => deleteProductMut.mutate(prod.id))
-                                }
-                                style={{ padding: "8px 12px", borderRadius: "6px" }}
-                                className="text-xs font-bold tracking-wider uppercase transition-all duration-200 cursor-pointer flex items-center gap-1.5 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:border-red-500/40"
-                                title="Hapus Produk"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
+                                Rp {prod.unitPrice.toLocaleString("id-ID")}
+                                <span className="text-[10px] opacity-60 font-normal"> / pcs</span>
+                              </span>
+                              <span className="text-gray-500 font-sans opacity-50">•</span>
+                              <span className={`text-[10px] ${isDarkMode ? "text-[#777777]" : "text-[#6B7280]"}`}>
+                                Total: Rp {prod.revenue.toLocaleString("id-ID")}
+                              </span>
                             </div>
-                          </td>
-                        </tr>
+                          </div>
+
+                          {/* Qty pill */}
+                          <span
+                            style={{ padding: "8px 20px", borderRadius: "8px", flexShrink: 0 }}
+                            className={`font-black font-mono text-sm ${
+                              prod.rank === 1
+                                ? "bg-amber-500/15 text-amber-400 border border-amber-500/30"
+                                : isDarkMode
+                                ? "bg-white/5 text-[#F5F5F5] border border-white/10"
+                                : "bg-gray-100 text-[#111827] border border-gray-200"
+                            }`}
+                          >
+                            {prod.qty} <span className="font-normal opacity-60 text-[10px]">pcs</span>
+                          </span>
+                        </div>
                       );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                    })}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </main>
       </div>
 
@@ -2157,7 +2541,7 @@ export default function AdminProductsPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={isUploading}
+                  disabled={isSubmitting}
                   style={{
                     padding: "10px 24px",
                     borderRadius: "6px",
@@ -2165,13 +2549,22 @@ export default function AdminProductsPage() {
                     fontWeight: 700,
                     letterSpacing: "0.1em",
                     textTransform: "uppercase",
-                    cursor: "pointer",
+                    cursor: isSubmitting ? "not-allowed" : "pointer",
                     border: "none",
                     backgroundColor: isDarkMode ? "#B6A47E" : "#0A0A0A",
                     color: isDarkMode ? "#0A0A0A" : "#FFFFFF",
+                    opacity: isSubmitting ? 0.75 : 1,
                   }}
+                  className="flex items-center gap-2 transition-all"
                 >
-                  {isUploading ? "MENYIMPAN..." : "SIMPAN PRODUK"}
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>{modalMode === "edit" ? "MENYIMPAN..." : "MENAMBAH..."}</span>
+                    </>
+                  ) : (
+                    <span>{modalMode === "edit" ? "SIMPAN PERUBAHAN" : "SIMPAN PRODUK"}</span>
+                  )}
                 </button>
               </div>
             </form>
