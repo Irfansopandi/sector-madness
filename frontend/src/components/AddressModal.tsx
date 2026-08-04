@@ -41,6 +41,24 @@ export default function AddressModal({ isOpen, onClose, onSuccess, editingAddres
     is_default: editingAddress?.is_default ?? (defaultValues?.is_default || false),
   });
 
+  useEffect(() => {
+    if (isOpen) {
+      setAddressForm({
+        label: editingAddress?.label || "",
+        receiver_name: editingAddress?.receiver_name || defaultValues?.receiver_name || "",
+        phone_number: editingAddress?.phone_number || defaultValues?.phone_number || "",
+        province: editingAddress?.province || "",
+        city: editingAddress?.city || "",
+        district: editingAddress?.district || "",
+        postal_code: editingAddress?.postal_code || "",
+        street_address: editingAddress?.street_address || "",
+        is_default: editingAddress?.is_default ?? (defaultValues?.is_default || false),
+      });
+      setFormErrors({});
+      setLocationError(null);
+    }
+  }, [isOpen, editingAddress, defaultValues?.receiver_name, defaultValues?.phone_number, defaultValues?.is_default]);
+
   const handleUseCurrentLocation = () => {
     setLocationError(null);
     if (!navigator.geolocation) {

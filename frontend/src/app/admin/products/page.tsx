@@ -47,15 +47,14 @@ const AVAILABLE_COLORS = ["BLACK", "WHITE", "CHARCOAL", "SAND", "OLIVE", "NAVY",
 
 export default function AdminProductsPage() {
   const queryClient = useQueryClient();
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      const savedTheme = localStorage.getItem("sector_madness_admin_theme");
-      if (savedTheme !== null) {
-        return savedTheme === "dark";
-      }
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("sector_madness_admin_theme");
+    if (savedTheme !== null) {
+      setIsDarkMode(savedTheme === "dark");
     }
-    return true;
-  });
+  }, []);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("ALL");
@@ -1126,11 +1125,11 @@ export default function AdminProductsPage() {
 
               {/* PRODUCTS DATA TABLE */}
               <div
-                className={`border rounded-[6px] overflow-x-auto shadow-sm transition-colors ${
+                className={`border rounded-[6px] overflow-x-auto shadow-sm transition-colors [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-transparent ${
                   isDarkMode
-                    ? "bg-[#18181C] border-white/10"
-                    : "bg-white border-[#D1D5DB]"
-                }`}
+                    ? "bg-[#18181C] border-white/10 [&::-webkit-scrollbar-thumb]:bg-white/20 hover:[&::-webkit-scrollbar-thumb]:bg-white/35"
+                    : "bg-white border-[#D1D5DB] [&::-webkit-scrollbar-thumb]:bg-black/20 hover:[&::-webkit-scrollbar-thumb]:bg-black/35"
+                } [&::-webkit-scrollbar-thumb]:rounded-full`}
               >
                 <table className="w-full text-left text-xs uppercase tracking-wider">
                   <thead

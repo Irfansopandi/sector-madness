@@ -15,25 +15,20 @@ export default function AdminSidebar({ activeTab, isDarkMode }: AdminSidebarProp
   const pathname = usePathname();
   const router = useRouter();
   const [isOpenMobile, setIsOpenMobile] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      const savedCollapsed = localStorage.getItem("sector_madness_sidebar_collapsed");
-      if (savedCollapsed !== null) {
-        return savedCollapsed === "true";
-      }
-    }
-    return false;
-  });
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [hoveredTooltip, setHoveredTooltip] = useState<{ label: string; top: number } | null>(null);
-  const [internalDarkMode, setInternalDarkMode] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("sector_madness_admin_theme");
-      if (saved !== null) {
-        return saved === "dark";
-      }
+  const [internalDarkMode, setInternalDarkMode] = useState<boolean>(true);
+
+  useEffect(() => {
+    const savedCollapsed = localStorage.getItem("sector_madness_sidebar_collapsed");
+    if (savedCollapsed !== null) {
+      setIsCollapsed(savedCollapsed === "true");
     }
-    return true;
-  });
+    const saved = localStorage.getItem("sector_madness_admin_theme");
+    if (saved !== null) {
+      setInternalDarkMode(saved === "dark");
+    }
+  }, []);
   const [adminUser, setAdminUser] = useState({
     name: "Admin SectorMadness",
     role: "Administrator",
@@ -147,7 +142,7 @@ export default function AdminSidebar({ activeTab, isDarkMode }: AdminSidebarProp
 
   const navGroups = [
     {
-      category: "DASHBOARD",
+      category: "OVERVIEW",
       items: [
         {
           id: "dashboard",
@@ -164,7 +159,7 @@ export default function AdminSidebar({ activeTab, isDarkMode }: AdminSidebarProp
       ],
     },
     {
-      category: "PESANAN",  
+      category: "MANAGEMENT",  
       items: [
         {
           id: "orders",
@@ -179,11 +174,6 @@ export default function AdminSidebar({ activeTab, isDarkMode }: AdminSidebarProp
             </svg>
           ),
         },
-      ],
-    },
-    {
-      category: "KATALOG & KONTEN",
-      items: [
         {
           id: "products",
           label: "Produk",
@@ -196,6 +186,11 @@ export default function AdminSidebar({ activeTab, isDarkMode }: AdminSidebarProp
             </svg>
           ),
         },
+      ],
+    },
+    {
+      category: "KATALOG & KONTEN",
+      items: [
         {
           id: "catalog",
           label: "Daftar Katalog",

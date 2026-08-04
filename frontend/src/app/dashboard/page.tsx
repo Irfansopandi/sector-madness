@@ -11,6 +11,7 @@ import {
   getOrderDetail,
   getShipmentTracking,
   cancelOrder,
+  confirmOrderReceived,
   isOrderActive,
   type CustomerProfile,
   type OrderListItem,
@@ -18,6 +19,7 @@ import {
   type TrackingData,
   getImageUrl,
 } from "@/utils/api";
+import { useToast } from "@/components/Toast";
 
 function getDynamicGreeting(): string {
   const hours = new Date().getHours();
@@ -86,6 +88,9 @@ function DashboardOverviewContent() {
 
   const [ordersList, setOrdersList] = useState<OrderListItem[]>([]);
   const [selectedOrderDetail, setSelectedOrderDetail] = useState<OrderDetailData | null>(null);
+  const [isConfirmingReceived, setIsConfirmingReceived] = useState(false);
+  const [showConfirmReceivedModal, setShowConfirmReceivedModal] = useState(false);
+  const { showToast } = useToast();
 
   const searchParams = useSearchParams();
   const paramOrderNo = searchParams ? (searchParams.get("order") || searchParams.get("order_number")) : null;
@@ -122,13 +127,32 @@ function DashboardOverviewContent() {
     }
   };
 
-  const handleConfirmReceived = (orderNumber: string) => {
-    if (selectedOrderDetail && selectedOrderDetail.order_number === orderNumber) {
-      setSelectedOrderDetail({ ...selectedOrderDetail, shipping_status: "DELIVERED" });
+  const handleConfirmReceived = async (orderNumber: string) => {
+    try {
+      setIsConfirmingReceived(true);
+      await confirmOrderReceived(orderNumber);
+      showToast("Thank you! Your order has been confirmed as received and moved to Order History.", "success", "ORDER COMPLETED");
+      setSelectedOrderDetail(null);
+      setOrdersList((prev) => prev.filter((ord) => ord.order_number !== orderNumber));
+      try {
+        const cached = localStorage.getItem("sector_madness_active_orders");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          const filtered = parsed.filter((item: any) => item.order_number !== orderNumber);
+          localStorage.setItem("sector_madness_active_orders", JSON.stringify(filtered));
+        }
+      } catch {}
+      getOrders().then((data) => {
+        if (data) {
+          const activeOnly = data.filter(isOrderActive);
+          setOrdersList(activeOnly);
+        }
+      }).catch(() => {});
+    } catch (err: any) {
+      showToast(err.response?.data?.message || "Failed to confirm order receipt.", "error", "ERROR");
+    } finally {
+      setIsConfirmingReceived(false);
     }
-    setOrdersList((prev) =>
-      prev.map((ord) => (ord.order_number === orderNumber ? { ...ord, shipping_status: "DELIVERED", status: "DELIVERED" } : ord))
-    );
   };
 
   const handleCancelOrder = (orderNumber: string) => {
@@ -312,6 +336,7 @@ function DashboardOverviewContent() {
             receiver_name: itemAddr.receiver_name || (fallbackItem as any).receiver_name || userName || "Customer",
             phone_number: itemAddr.phone_number || (fallbackItem as any).phone_number || "-",
             street_address: itemAddr.street_address || (fallbackItem as any).street_address || (fallbackItem as any).address || "Address recorded in invoice",
+            district: itemAddr.district || (fallbackItem as any).district || "",
             city: itemAddr.city || (fallbackItem as any).city || "-",
             province: itemAddr.province || (fallbackItem as any).province || "-",
             postal_code: itemAddr.postal_code || itemAddr.postcode || itemAddr.zip_code || (fallbackItem as any).postal_code || (fallbackItem as any).postcode || (fallbackItem as any).zip_code || "-",
@@ -782,9 +807,10 @@ function DashboardOverviewContent() {
                 <div style={{ paddingTop: "28px", gap: "12px" }} className="flex flex-col border-t border-white/[0.1] font-mono text-xs text-left">
                   <span className="text-xs text-[#8A8A8A] uppercase tracking-[0.2em] block font-bold">SHIPPING ADDRESS</span>
                   <p className="text-[#F5F5F5] text-sm font-bold tracking-wide">{selectedOrderDetail.shipping_address.receiver_name} ({selectedOrderDetail.shipping_address.phone_number})</p>
-                  <p className="text-[#8A8A8A] leading-relaxed text-xs">
+                  <p className="text-[#CCCCCC] leading-relaxed text-xs">{selectedOrderDetail.shipping_address.street_address}</p>
+                  <p className="text-[#8A8A8A] text-xs pt-0.5">
                     {[
-                      selectedOrderDetail.shipping_address.street_address,
+                      selectedOrderDetail.shipping_address.district,
                       selectedOrderDetail.shipping_address.city,
                       selectedOrderDetail.shipping_address.province,
                       selectedOrderDetail.shipping_address.postal_code || (selectedOrderDetail.shipping_address as any)?.postcode || (selectedOrderDetail.shipping_address as any)?.zip_code || (selectedOrderDetail.shipping_address as any)?.postalCode
@@ -804,7 +830,7 @@ function DashboardOverviewContent() {
                   const isInProcessOrPending =
                     !isCancelPending && !isCancelled && (st === "IN PROCESS" || st === "PROCESSING" || st === "ALLOCATED" ||
                     st === "PENDING" || st === "PENDING PAYMENT" || st === "UNPAID");
-                  const isDeliveredOnly = !isCancelPending && !isCancelled && (st === "DELIVERED");
+                  const isDeliveredOnly = !isCancelPending && !isCancelled && (st === "DELIVERED" || st === "DELIVERY" || st === "DELIVERING");
 
                   return (
                     <>
@@ -850,11 +876,12 @@ function DashboardOverviewContent() {
 
                       {isDeliveredOnly && (
                         <button
-                          onClick={() => handleConfirmReceived(selectedOrderDetail.order_number)}
+                          onClick={() => setShowConfirmReceivedModal(true)}
+                          disabled={isConfirmingReceived}
                           style={{ padding: "20px 0" }}
-                          className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-[#0A0A0A] font-mono text-xs uppercase font-extrabold tracking-[0.25em] transition-all duration-300 cursor-pointer shadow-xl rounded-sm block text-center"
+                          className="flex-1 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-[#0A0A0A] font-mono text-xs uppercase font-extrabold tracking-[0.25em] transition-all duration-300 cursor-pointer shadow-xl rounded-sm block text-center"
                         >
-                          ✓ CONFIRM RECEIVED
+                          {isConfirmingReceived ? "CONFIRMING..." : "✓ CONFIRM RECEIVED"}
                         </button>
                       )}
                     </>
@@ -1198,6 +1225,63 @@ function DashboardOverviewContent() {
               >
                 GOT IT & CLOSE
               </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── MODAL 7: CONFIRM ORDER RECEIVED POPUP MODAL ── */}
+      <AnimatePresence>
+        {showConfirmReceivedModal && selectedOrderDetail && (
+          <div className="fixed inset-0 z-[165] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, translateY: 10 }}
+              animate={{ opacity: 1, scale: 1, translateY: 0 }}
+              exit={{ opacity: 0, scale: 0.9, translateY: 10 }}
+              style={{ padding: "40px 36px" }}
+              className="bg-[#141414] border border-white/[0.12] text-[#F5F5F5] w-full max-w-[460px] flex flex-col items-center text-center shadow-2xl rounded-sm font-sans relative"
+            >
+              <div style={{ marginBottom: "24px" }} className="w-14 h-14 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shadow-inner">
+                <svg className="w-7 h-7 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                </svg>
+              </div>
+
+              <span className="text-[10px] font-mono tracking-[0.3em] uppercase text-[#B6A47E] font-semibold block mb-2">
+                ORDER DELIVERY CONFIRMATION
+              </span>
+
+              <h3 style={{ marginBottom: "14px" }} className="text-lg font-bold uppercase tracking-[0.12em] text-[#F5F5F5] font-serif">
+                HAVE YOU RECEIVED THIS ORDER?
+              </h3>
+
+              <p style={{ marginBottom: "28px" }} className="text-xs sm:text-sm text-[#A0A0A0] font-sans font-normal leading-[1.8] px-2">
+                Please confirm that your package has arrived safely. This action will mark order <span className="text-white font-mono font-bold">#{selectedOrderDetail.order_number}</span> as <span className="text-emerald-400 font-semibold">COMPLETED</span> and move it to Order History.
+              </p>
+
+              <div className="flex items-center gap-3 w-full">
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmReceivedModal(false)}
+                  disabled={isConfirmingReceived}
+                  style={{ padding: "14px 0" }}
+                  className="flex-1 border border-white/20 hover:border-white/50 text-[#A0A0A0] hover:text-white font-mono text-xs uppercase font-bold tracking-[0.15em] rounded-sm transition-all cursor-pointer"
+                >
+                  NOT YET
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowConfirmReceivedModal(false);
+                    handleConfirmReceived(selectedOrderDetail.order_number);
+                  }}
+                  disabled={isConfirmingReceived}
+                  style={{ padding: "14px 0" }}
+                  className="flex-1 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-[#0A0A0A] font-mono text-xs uppercase font-bold tracking-[0.15em] rounded-sm transition-all shadow-lg cursor-pointer flex items-center justify-center gap-2"
+                >
+                  {isConfirmingReceived ? "CONFIRMING..." : "YES, RECEIVED"}
+                </button>
+              </div>
             </motion.div>
           </div>
         )}

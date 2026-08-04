@@ -362,7 +362,7 @@ export default function ShippingPage() {
             </motion.div>
           </div>
 
-          {/* Right Image */}
+          {/* Right Image */} 
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}

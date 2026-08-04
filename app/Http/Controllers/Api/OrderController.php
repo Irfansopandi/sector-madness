@@ -40,6 +40,23 @@ class OrderController extends Controller
                 'data' => [],
             ], 200);
         }
+        // Auto-complete delivered orders older than 5 days
+        Order::where('user_id', $user->id)
+            ->where('updated_at', '<=', now()->subDays(5))
+            ->where(function ($q) {
+                $q->whereIn('status', ['delivered', 'delivering', 'shipped'])
+                  ->orWhereHas('shipment', function ($sq) {
+                      $sq->whereIn('status', ['delivered', 'delivering', 'shipped']);
+                  });
+            })
+            ->get()
+            ->each(function ($ord) {
+                $ord->update(['status' => 'completed']);
+                if ($ord->shipment) {
+                    $ord->shipment->update(['status' => 'completed']);
+                }
+            });
+
         $orders = Order::with(['items', 'payment', 'shipment'])
             ->where('user_id', $user->id)
             ->orderBy('created_at', 'desc')
@@ -95,6 +112,17 @@ class OrderController extends Controller
             ], 404);
         }
 
+        // Auto-complete if order in delivery status and older than 5 days
+        $isDeliveredStatus = in_array(strtolower($order->status), ['delivered', 'delivering', 'shipped']) ||
+            ($order->shipment && in_array(strtolower($order->shipment->status), ['delivered', 'delivering', 'shipped']));
+        if ($isDeliveredStatus && $order->updated_at <= now()->subDays(5)) {
+            $order->update(['status' => 'completed']);
+            if ($order->shipment) {
+                $order->shipment->update(['status' => 'completed']);
+            }
+            $order->refresh();
+        }
+
         $addr = $order->shipping_address ?? [];
         $ship = $order->shipment;
         $pay  = $order->payment;
@@ -139,20 +167,29 @@ class OrderController extends Controller
             ]
         ];
 
+        $customerUser = $order->user;
+        $customerName = $customerUser ? $customerUser->name : ($order->shipping_name ?: ($addr['receiver_name'] ?? 'Customer'));
+        $customerEmail = $customerUser ? $customerUser->email : ($order->shipping_email ?: 'guest@sectormadness.com');
+        $customerPhone = $customerUser ? ($customerUser->phone ?: ($addr['phone_number'] ?? '')) : ($addr['phone_number'] ?? '');
+
+        $shippingReceiver = $addr['receiver_name'] ?? ($customerUser ? $customerUser->name : 'Recipient');
+        $shippingPhone = $addr['phone_number'] ?? ($customerUser ? $customerUser->phone : '');
+
         return response()->json([
             'status' => true,
             'data'   => [
                 'order_number'      => $order->order_number,
                 'order_date'        => \Carbon\Carbon::parse($order->created_at)->format('d F Y, H:i') . ' WIB',
                 'customer_info'     => [
-                    'name'  => $addr['receiver_name'] ?? ($user ? $user->name : ($order->user ? $order->user->name : 'Customer')),
-                    'email' => $user ? $user->email : ($order->user ? $order->user->email : ''),
-                    'phone' => $addr['phone_number'] ?? ($user ? $user->phone : ($order->user ? $order->user->phone : '')),
+                    'name'  => $customerName,
+                    'email' => $customerEmail,
+                    'phone' => $customerPhone,
                 ],
                 'shipping_address'  => [
-                    'receiver_name'  => $addr['receiver_name'] ?? ($order->user ? $order->user->name : 'Recipient'),
-                    'phone_number'   => $addr['phone_number'] ?? ($order->user ? $order->user->phone : ''),
+                    'receiver_name'  => $shippingReceiver,
+                    'phone_number'   => $shippingPhone,
                     'street_address' => $addr['street_address'] ?? ($addr['street'] ?? ''),
+                    'district'       => $addr['district'] ?? ($addr['district_name'] ?? ''),
                     'city'           => $addr['city'] ?? '',
                     'province'       => $addr['province'] ?? '',
                     'postal_code'    => $addr['postal_code'] ?? '',
@@ -262,12 +299,20 @@ class OrderController extends Controller
             $rawShipStatus = $order->shipment ? strtoupper($order->shipment->status) : strtoupper($order->status);
             $shipStatus = in_array($rawShipStatus, ['ALLOCATED', 'IN PROCESS', 'PENDING', 'ORDERED', '']) ? 'IN PROCESSING' : $rawShipStatus;
 
+            $addr = $order->shipping_address ?? [];
+            $customerUser = $order->user;
+            $customerName = $customerUser ? $customerUser->name : ($order->shipping_name ?: ($addr['receiver_name'] ?? 'Guest Customer'));
+            $customerEmail = $customerUser ? $customerUser->email : ($order->shipping_email ?: 'guest@sectormadness.com');
+            $customerPhone = $customerUser ? ($customerUser->phone ?: ($addr['phone_number'] ?? '')) : ($addr['phone_number'] ?? '');
+
             return [
                 'id'              => $order->id,
                 'order_number'    => $order->order_number,
                 'user_id'         => $order->user_id,
-                'customer_name'   => $order->user ? $order->user->name : ($order->shipping_name ?: 'Guest Customer'),
-                'customer_email'  => $order->user ? $order->user->email : ($order->shipping_email ?: 'guest@sectormadness.com'),
+                'customer_name'   => $customerName,
+                'customer_email'  => $customerEmail,
+                'customer_phone'  => $customerPhone,
+                'shipping_address'=> $addr,
                 'total'           => $grandTotal,
                 'payment_status'  => $order->payment ? strtoupper($order->payment->payment_status) : strtoupper($order->status),
                 'shipping_status' => $shipStatus,

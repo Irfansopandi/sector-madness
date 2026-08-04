@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Plus, MapPin, Edit3, Trash2, CheckCircle2 } from "lucide-react";
 import {
   getShippingAddresses,
+  getCustomerProfile,
   updateShippingAddress,
   deleteShippingAddress,
   type ShippingAddress,
@@ -15,10 +16,28 @@ export default function AddressBookPage() {
   const [addressesList, setAddressesList] = useState<ShippingAddress[]>([]);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState<ShippingAddress | null>(null);
+  const [userProfile, setUserProfile] = useState<{ name?: string; phone?: string } | null>(null);
   
   // Delete modal state
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("sector_madness_user");
+      if (stored) {
+        setUserProfile(JSON.parse(stored));
+      }
+    } catch {}
+
+    getCustomerProfile()
+      .then((data) => {
+        if (data) {
+          setUserProfile({ name: data.name, phone: data.phone });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     try {
@@ -334,7 +353,11 @@ export default function AddressBookPage() {
         isOpen={isAddressModalOpen}
         onClose={() => setIsAddressModalOpen(false)}
         editingAddress={editingAddress}
-        defaultValues={{ is_default: addressesList.length === 0 }}
+        defaultValues={{
+          receiver_name: userProfile?.name || "",
+          phone_number: userProfile?.phone || "",
+          is_default: addressesList.length === 0,
+        }}
         onSuccess={async () => {
           setIsAddressModalOpen(false);
           const updatedList = await getShippingAddresses().catch(() => []);

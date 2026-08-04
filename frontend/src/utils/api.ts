@@ -231,6 +231,7 @@ export interface OrderDetailData {
     receiver_name: string;
     phone_number: string;
     street_address: string;
+    district?: string;
     city: string;
     province: string;
     postal_code: string;
@@ -547,6 +548,7 @@ export const createPaymentTransaction = async (payload: {
   receiver_name?: string;
   phone_number?: string;
   street_address?: string;
+  district?: string;
   province?: string;
   city?: string;
   postal_code?: string;
@@ -608,11 +610,15 @@ export function isOrderActive(item: { shipping_status?: string; status?: string;
     ordSt === "RECEIVED";
 
   let isDeliveredAutoFinished = false;
-  if (st === "DELIVERED" || ordSt === "DELIVERED") {
+  if (
+    st === "DELIVERED" || ordSt === "DELIVERED" ||
+    st === "DELIVERY" || ordSt === "DELIVERY" ||
+    st === "DELIVERING" || ordSt === "DELIVERING"
+  ) {
     const timeRef = (item as any).updated_at || item.created_at || "";
     if (timeRef) {
       const updateTime = new Date(timeRef).getTime();
-      if (!isNaN(updateTime) && Date.now() - updateTime > 24 * 60 * 60 * 1000) {
+      if (!isNaN(updateTime) && Date.now() - updateTime > 5 * 24 * 60 * 60 * 1000) {
         isDeliveredAutoFinished = true;
       }
     }
@@ -640,11 +646,15 @@ export function isOrderFinished(item: { shipping_status?: string; status?: strin
     ordSt === "RECEIVED";
 
   let isDeliveredAutoFinished = false;
-  if (st === "DELIVERED" || ordSt === "DELIVERED") {
+  if (
+    st === "DELIVERED" || ordSt === "DELIVERED" ||
+    st === "DELIVERY" || ordSt === "DELIVERY" ||
+    st === "DELIVERING" || ordSt === "DELIVERING"
+  ) {
     const timeRef = (item as any).updated_at || item.created_at || "";
     if (timeRef) {
       const updateTime = new Date(timeRef).getTime();
-      if (!isNaN(updateTime) && Date.now() - updateTime > 24 * 60 * 60 * 1000) {
+      if (!isNaN(updateTime) && Date.now() - updateTime > 5 * 24 * 60 * 60 * 1000) {
         isDeliveredAutoFinished = true;
       }
     }
@@ -969,7 +979,10 @@ export interface AdminOrder {
   user_id?: number;
   customer_name?: string;
   customer_email?: string;
+  customer_phone?: string;
+  shipping_address?: any;
   total: number;
+  status?: string;
   payment_status: string;
   shipping_status: string;
   courier?: string;
@@ -1002,6 +1015,8 @@ export interface AdminOrder {
     notes?: string;
   };
   created_at: string;
+  updated_at?: string;
+  order_date?: string;
   items_count?: number;
 }
 

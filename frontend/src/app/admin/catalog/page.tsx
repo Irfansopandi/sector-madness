@@ -681,7 +681,13 @@ export default function AdminCatalogPage() {
                   : "bg-white border-[#D1D5DB]"
               }`}
             >
-              <div className="overflow-x-auto">
+              <div
+                className={`overflow-x-auto [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-transparent ${
+                  isDarkMode
+                    ? "[&::-webkit-scrollbar-thumb]:bg-white/20 hover:[&::-webkit-scrollbar-thumb]:bg-white/35"
+                    : "[&::-webkit-scrollbar-thumb]:bg-black/20 hover:[&::-webkit-scrollbar-thumb]:bg-black/35"
+                } [&::-webkit-scrollbar-thumb]:rounded-full`}
+              >
                 <table className="w-full text-left text-xs uppercase tracking-wider">
                   <thead
                     className={`border-b ${

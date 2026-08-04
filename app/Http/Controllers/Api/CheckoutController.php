@@ -304,6 +304,7 @@ class CheckoutController extends Controller
             'receiver_name'      => 'nullable|string',
             'phone_number'       => 'nullable|string',
             'street_address'     => 'nullable|string',
+            'district'           => 'nullable|string',
             'province'           => 'nullable|string',
             'city'               => 'nullable|string',
             'postal_code'        => 'nullable|string',
@@ -325,21 +326,25 @@ class CheckoutController extends Controller
             ], 422);
         }
 
-        // 3. Validasi Address
+        // 3. Validasi Address & Security Ownership Check
         $shippingAddressData = null;
         if ($request->address_id) {
             $addr = ShippingAddress::find($request->address_id);
             if (!$addr) {
                 return response()->json(['status' => false, 'message' => 'Selected shipping address not found.'], 422);
             }
+            if ($addr->user_id && $user && $addr->user_id != $user->id) {
+                return response()->json(['status' => false, 'message' => 'Unauthorized address access. Selected address does not belong to you.'], 403);
+            }
             $shippingAddressData = [
-                'receiver_name' => $addr->receiver_name,
-                'phone_number'  => $addr->phone_number,
-                'street_address'=> $addr->street_address,
-                'city'          => $addr->city,
-                'province'      => $addr->province,
-                'postal_code'   => $addr->postal_code,
-                'label'         => $addr->label,
+                'receiver_name' => $request->receiver_name ?: $addr->receiver_name,
+                'phone_number'  => $request->phone_number ?: $addr->phone_number,
+                'street_address'=> $request->street_address ?: $addr->street_address,
+                'district'      => $request->district ?: ($addr->district ?? ''),
+                'city'          => $request->city ?: $addr->city,
+                'province'      => $request->province ?: $addr->province,
+                'postal_code'   => $request->postal_code ?: $addr->postal_code,
+                'label'         => $addr->label ?? 'Main Address',
             ];
         } else {
             if (!$request->street_address || !$request->receiver_name) {
@@ -349,6 +354,7 @@ class CheckoutController extends Controller
                 'receiver_name' => $request->receiver_name,
                 'phone_number'  => $request->phone_number ?? $user->phone,
                 'street_address'=> $request->street_address,
+                'district'      => $request->district ?? '',
                 'city'          => $request->city ?? 'Jakarta',
                 'province'      => $request->province ?? 'DKI Jakarta',
                 'postal_code'   => $request->postal_code ?? '12110',

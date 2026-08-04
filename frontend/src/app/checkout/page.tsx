@@ -189,6 +189,12 @@ function CheckoutContent() {
   const queryClient = useQueryClient();
   const { showToast, success, error } = useToast();
 
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const { data: existingOrder, isLoading: isExistingOrderLoading } = useQuery({
     queryKey: ["order-detail", orderNumberParam],
     queryFn: () => getOrderDetail(orderNumberParam),
@@ -255,13 +261,10 @@ function CheckoutContent() {
               setFullName(parsed.name);
             } else if (parsed.firstName || parsed.lastName) {
               setFullName([parsed.firstName, parsed.lastName].filter(Boolean).join(" "));
-            } else if (parsed.email) {
-              const userEmail: string = parsed.email;
-              const handle = userEmail.split("@")[0] || "";
-              const clean = handle.replace(/[^a-zA-Z]/g, " ").trim();
-              setFullName(clean ? clean.split(/\s+/).map((p: string) => p.charAt(0).toUpperCase() + p.slice(1)).join(" ") : "Member");
             }
-            if (parsed.phone) setPhone(parsed.phone);
+            if (parsed.phone !== undefined && parsed.phone !== null) {
+              setPhone(parsed.phone);
+            }
           }
         }
       } catch {
@@ -271,7 +274,11 @@ function CheckoutContent() {
 
     if (customer) {
       if (customer.email) setEmail(customer.email);
-      if (customer.phone) setPhone(customer.phone);
+      if (customer.phone !== undefined && customer.phone !== null) {
+        setPhone(customer.phone);
+      } else {
+        setPhone("");
+      }
       if (customer.name) setFullName(customer.name);
     }
   }, [customer]);
@@ -286,6 +293,7 @@ function CheckoutContent() {
       }
       if (existingOrder.shipping_address) {
         setAddress(existingOrder.shipping_address.street_address || "");
+        setAddressLine2(existingOrder.shipping_address.district || "");
         setCity(existingOrder.shipping_address.city || "");
         setStateProvince(existingOrder.shipping_address.province || "");
         setPostalCode(existingOrder.shipping_address.postal_code || "");
@@ -309,13 +317,14 @@ function CheckoutContent() {
   }, [existingOrder]);
 
   const applySavedAddress = (addr: ShippingAddress) => {
-    setFullName(addr.receiver_name);
-    setPhone(addr.phone_number);
-    setAddress(addr.street_address);
-    setAddressLine2(addr.district);
-    setCity(addr.city);
-    setStateProvince(addr.province);
-    setPostalCode(addr.postal_code);
+    setSelectedAddressId(addr.id);
+    setFullName(addr.receiver_name || customer?.name || "");
+    setPhone(addr.phone_number || (customer?.phone ?? ""));
+    setAddress(addr.street_address || "");
+    setAddressLine2(addr.district || "");
+    setCity(addr.city || "");
+    setStateProvince(addr.province || "");
+    setPostalCode(addr.postal_code || "");
     if (addr.area_id) setSelectedAreaId(addr.area_id);
     showToast(`Loaded address: ${addr.label}`, "success", "ADDRESS BOOK");
   };
@@ -324,7 +333,7 @@ function CheckoutContent() {
   const handleToggleSavedAddress = (checked: boolean) => {
     setUseSavedAddress(checked);
     if (checked && customer) {
-      if (customer.phone) setPhone(customer.phone);
+      if (customer.phone !== undefined && customer.phone !== null) setPhone(customer.phone);
       if (customer.email) setEmail(customer.email);
     }
   };
@@ -554,7 +563,7 @@ function CheckoutContent() {
   const [appliedPromo, setAppliedPromo] = useState<{ code: string; label: string; amount: number } | null>(null);
 
   const displayItems = existingOrder?.products || (existingOrder as any)?.items || cartData?.items;
-  const isItemsLoading = isCartLoading || isExistingOrderLoading;
+  const isItemsLoading = !isMounted || isCartLoading || isExistingOrderLoading;
   const subtotal = existingOrder?.summary?.subtotal || (existingOrder as any)?.total || cartData?.subtotal || 0;
   const shippingCost = existingOrder?.summary?.shipping !== undefined ? existingOrder.summary.shipping : (selectedRate?.shipping_price || 0);
 
@@ -650,9 +659,11 @@ function CheckoutContent() {
     try {
       const fullNameCombined = fullName.trim() || (customer?.name || "Customer");
       const res = await createPaymentTransaction({
+        address_id: selectedAddressId || undefined,
         receiver_name: fullNameCombined,
         phone_number: phone,
         street_address: address,
+        district: addressLine2,
         province: stateProvince,
         city: city,
         postal_code: postalCode,

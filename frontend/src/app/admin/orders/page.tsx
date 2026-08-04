@@ -17,21 +17,17 @@ import { PackageCheck, ArrowRight, X, Search, Filter, Eye, Truck, Printer, Clock
 import Swal from "sweetalert2";
 
 export default function AdminOrdersPage() {
+  const queryClient = useQueryClient();
   const [isMounted, setIsMounted] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
+
   useEffect(() => {
     setIsMounted(true);
-  }, []);
-
-  const queryClient = useQueryClient();
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      const savedTheme = localStorage.getItem("sector_madness_admin_theme");
-      if (savedTheme !== null) {
-        return savedTheme === "dark";
-      }
+    const savedTheme = localStorage.getItem("sector_madness_admin_theme");
+    if (savedTheme !== null) {
+      setIsDarkMode(savedTheme === "dark");
     }
-    return true;
-  });
+  }, []);
 
   const [selectedOrder, setSelectedOrder] = useState<AdminOrder | null>(null);
   const [selectedOrderDetail, setSelectedOrderDetail] = useState<OrderDetailData | null>(null);
@@ -60,6 +56,7 @@ export default function AdminOrdersPage() {
             receiver_name: itemAddr.receiver_name || fallbackOrd.customer_name || "Customer",
             phone_number: itemAddr.phone_number || "-",
             street_address: itemAddr.street_address || itemAddr.address || "Alamat Pengiriman Registered",
+            district: itemAddr.district || "",
             city: itemAddr.city || "-",
             province: itemAddr.province || "-",
             postal_code: itemAddr.postal_code || itemAddr.postcode || itemAddr.zip_code || "-",
@@ -87,12 +84,13 @@ export default function AdminOrdersPage() {
           customer_info: {
             name: fallbackOrd.customer_name || itemAddr.receiver_name || "Customer",
             email: fallbackOrd.customer_email || "-",
-            phone: itemAddr.phone_number || "-",
+            phone: fallbackOrd.customer_phone || itemAddr.phone_number || "-",
           },
           shipping_address: {
             receiver_name: itemAddr.receiver_name || fallbackOrd.customer_name || "Customer",
-            phone_number: itemAddr.phone_number || "-",
+            phone_number: itemAddr.phone_number || fallbackOrd.customer_phone || "-",
             street_address: itemAddr.street_address || itemAddr.address || "Address recorded in invoice",
+            district: itemAddr.district || "",
             city: itemAddr.city || "-",
             province: itemAddr.province || "-",
             postal_code: itemAddr.postal_code || itemAddr.postcode || itemAddr.zip_code || "-",
@@ -236,35 +234,62 @@ export default function AdminOrdersPage() {
     });
   };
 
-  // Compute counts for tab badges
-  const countAll = orders.length;
-  const countProcessing = orders.filter((o) => {
-    const st = (o.shipping_status || "IN PROCESSING").toUpperCase();
-    return (
-      st === "ALLOCATED" ||
-      st === "IN PROCESS" ||
-      st === "PENDING" ||
-      st === "PROCESSING" ||
-      st === "IN PROCESSING" ||
-      st === "SHIPPED" ||
-      st === "IN TRANSIT"
-    );
-  }).length;
-  const countCompleted = orders.filter((o) => {
-    const st = (o.shipping_status || "").toUpperCase();
-    return st === "DELIVERED" || st === "COMPLETED" || st === "SELESAI";
-  }).length;
-  const countCancelled = orders.filter((o) => {
-    const st = (o.shipping_status || "").toUpperCase();
+  // Helper functions for admin order status categorization
+  const checkIsOrderCancelled = (o: any) => {
+    const st = (o.shipping_status || o.status || "").toUpperCase();
+    const ordSt = (o.status || "").toUpperCase();
     return (
       st === "CANCELLED" ||
       st === "DIBATALKAN" ||
       st === "CANCELED" ||
       st === "CANCEL PENDING" ||
       st === "CANCEL_PENDING" ||
-      st === "CANCEL_REQUESTED"
+      st === "CANCEL_REQUESTED" ||
+      ordSt === "CANCELLED" ||
+      ordSt === "DIBATALKAN" ||
+      ordSt === "CANCELED" ||
+      ordSt === "CANCEL PENDING"
     );
-  }).length;
+  };
+
+  const checkIsOrderFinished = (o: any) => {
+    if (checkIsOrderCancelled(o)) return false;
+    const st = (o.shipping_status || o.status || "").toUpperCase();
+    const ordSt = (o.status || "").toUpperCase();
+
+    const isExplicitlyCompleted =
+      st === "COMPLETED" ||
+      st === "RECEIVED" ||
+      st === "SELESAI" ||
+      ordSt === "COMPLETED" ||
+      ordSt === "RECEIVED" ||
+      ordSt === "SELESAI";
+
+    if (isExplicitlyCompleted) return true;
+
+    let isDeliveredAutoFinished = false;
+    if (
+      st === "DELIVERED" || ordSt === "DELIVERED" ||
+      st === "DELIVERY" || ordSt === "DELIVERY" ||
+      st === "DELIVERING" || ordSt === "DELIVERING"
+    ) {
+      const timeRef = o.updated_at || o.created_at || o.order_date || "";
+      if (timeRef) {
+        const updateTime = new Date(timeRef).getTime();
+        if (!isNaN(updateTime) && Date.now() - updateTime > 5 * 24 * 60 * 60 * 1000) {
+          isDeliveredAutoFinished = true;
+        }
+      }
+    }
+
+    return isDeliveredAutoFinished;
+  };
+
+  // Compute counts for tab badges
+  const countAll = orders.length;
+  const countCancelled = orders.filter(checkIsOrderCancelled).length;
+  const countCompleted = orders.filter((o) => !checkIsOrderCancelled(o) && checkIsOrderFinished(o)).length;
+  const countProcessing = orders.filter((o) => !checkIsOrderCancelled(o) && !checkIsOrderFinished(o)).length;
 
   useEffect(() => {
     const updateIndicator = () => {
@@ -294,26 +319,23 @@ export default function AdminOrdersPage() {
       (ord.cancel_reason || "").toLowerCase().includes(q) ||
       (ord.cancellation_reason || "").toLowerCase().includes(q);
 
+    const isCancelled = checkIsOrderCancelled(ord);
+    const isFinished = checkIsOrderFinished(ord);
+
+    let matchesTab = true;
+    if (activeTab === "PROCESSING") {
+      matchesTab = !isCancelled && !isFinished;
+    } else if (activeTab === "DELIVERED") {
+      matchesTab = !isCancelled && isFinished;
+    } else if (activeTab === "CANCELLED") {
+      matchesTab = isCancelled;
+    }
+
     const rawSt = (ord.shipping_status || "IN PROCESSING").toUpperCase();
     const mappedStatus =
       rawSt === "ALLOCATED" || rawSt === "IN PROCESS" || rawSt === "PENDING" || rawSt === "PROCESSING"
         ? "IN PROCESSING"
         : rawSt;
-
-    let matchesTab = true;
-    if (activeTab === "PROCESSING") {
-      matchesTab = mappedStatus === "IN PROCESSING" || mappedStatus === "SHIPPED" || mappedStatus === "IN TRANSIT";
-    } else if (activeTab === "DELIVERED") {
-      matchesTab = mappedStatus === "DELIVERED" || mappedStatus === "COMPLETED" || mappedStatus === "SELESAI";
-    } else if (activeTab === "CANCELLED") {
-      matchesTab =
-        mappedStatus === "CANCELLED" ||
-        mappedStatus === "DIBATALKAN" ||
-        mappedStatus === "CANCELED" ||
-        mappedStatus === "CANCEL PENDING" ||
-        mappedStatus === "CANCEL_PENDING" ||
-        mappedStatus === "CANCEL_REQUESTED";
-    }
 
     const matchesStatus =
       statusFilter === "ALL" ||
@@ -608,7 +630,13 @@ export default function AdminOrdersPage() {
                 : "bg-white border-[#D1D5DB]"
             }`}
           >
-            <div className="overflow-x-auto">
+            <div
+              className={`overflow-x-auto [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-transparent ${
+                isDarkMode
+                  ? "[&::-webkit-scrollbar-thumb]:bg-white/20 hover:[&::-webkit-scrollbar-thumb]:bg-white/35"
+                  : "[&::-webkit-scrollbar-thumb]:bg-black/20 hover:[&::-webkit-scrollbar-thumb]:bg-black/35"
+              } [&::-webkit-scrollbar-thumb]:rounded-full`}
+            >
               <table className="w-full text-left text-xs uppercase tracking-wider">
                 <thead
                   className={`border-b ${
@@ -618,13 +646,13 @@ export default function AdminOrdersPage() {
                   }`}
                 >
                   <tr>
-                    <th style={{ padding: "18px 24px" }} className="font-bold">ORDER NO</th>
-                    <th style={{ padding: "18px 24px" }} className="font-bold">DATE</th>
-                    <th style={{ padding: "18px 24px" }} className="font-bold">CUSTOMER</th>
-                    <th style={{ padding: "18px 24px" }} className="font-bold">TOTAL</th>
-                    <th style={{ padding: "18px 24px" }} className="font-bold">PAYMENT</th>
-                    <th style={{ padding: "18px 24px" }} className="font-bold">SHIPPING STATUS</th>
-                    <th style={{ padding: "18px 24px" }} className="font-bold text-right">ACTION</th>
+                    <th style={{ padding: "14px 16px" }} className="font-bold">ORDER NO</th>
+                    <th style={{ padding: "14px 16px" }} className="font-bold">DATE</th>
+                    <th style={{ padding: "14px 16px" }} className="font-bold">CUSTOMER</th>
+                    <th style={{ padding: "14px 16px" }} className="font-bold">TOTAL</th>
+                    <th style={{ padding: "14px 16px" }} className="font-bold">PAYMENT</th>
+                    <th style={{ padding: "14px 16px" }} className="font-bold">SHIPPING STATUS</th>
+                    <th style={{ padding: "14px 16px" }} className="font-bold text-right">ACTION</th>
                   </tr>
                 </thead>
                 <tbody
@@ -665,7 +693,7 @@ export default function AdminOrdersPage() {
                         }`}
                       >
                         <td
-                          style={{ padding: "20px 24px" }}
+                          style={{ padding: "14px 16px" }}
                           className={`font-mono font-bold whitespace-nowrap ${
                             isDarkMode ? "text-[#F5F5F5]" : "text-[#111827]"
                           }`}
@@ -673,7 +701,7 @@ export default function AdminOrdersPage() {
                           {ord.order_number}
                         </td>
                         <td
-                          style={{ padding: "20px 24px" }}
+                          style={{ padding: "14px 16px" }}
                           className={`font-mono whitespace-nowrap ${
                             isDarkMode ? "text-[#8A8A8A]" : "text-[#6B7280]"
                           }`}
@@ -681,7 +709,7 @@ export default function AdminOrdersPage() {
                           {ord.created_at ? new Date(ord.created_at).toLocaleDateString("id-ID") : "TODAY"}
                         </td>
                         <td
-                          style={{ padding: "20px 24px" }}
+                          style={{ padding: "14px 16px" }}
                           className={`font-semibold whitespace-nowrap ${
                             isDarkMode ? "text-[#CCCCCC]" : "text-[#374151]"
                           }`}
@@ -689,17 +717,17 @@ export default function AdminOrdersPage() {
                           {ord.customer_name || "Archive Member"}
                         </td>
                         <td
-                          style={{ padding: "20px 24px" }}
+                          style={{ padding: "14px 16px" }}
                           className={`font-mono font-bold whitespace-nowrap ${
                             isDarkMode ? "text-[#F5F5F5]" : "text-[#111827]"
                           }`}
                         >
                           Rp {(ord.total || 0).toLocaleString("id-ID")}
                         </td>
-                        <td style={{ padding: "20px 24px" }} className="font-bold text-emerald-500 whitespace-nowrap">
+                        <td style={{ padding: "14px 16px" }} className="font-bold text-emerald-500 whitespace-nowrap">
                           {ord.payment_status || "PAID"}
                         </td>
-                        <td style={{ padding: "20px 24px" }} className="whitespace-nowrap">
+                        <td style={{ padding: "14px 16px" }} className="whitespace-nowrap">
                           {(() => {
                             const rawSt = (ord.shipping_status || "IN PROCESSING").toUpperCase();
                             const statusLabel =
@@ -747,17 +775,17 @@ export default function AdminOrdersPage() {
                             );
                           })()}
                         </td>
-                        <td style={{ padding: "20px 24px" }} className="text-right whitespace-nowrap">
+                        <td style={{ padding: "14px 16px" }} className="text-right whitespace-nowrap">
                           {(() => {
-                            const ordStatus = (ord.shipping_status || "").toUpperCase();
-                            const isCancelledRow = ordStatus === "CANCELLED" || ordStatus === "CANCELED" || ordStatus === "DIBATALKAN";
+                            const isCancelledRow = checkIsOrderCancelled(ord);
+                            const isCompletedRow = checkIsOrderFinished(ord);
                             return (
-                              <div className="flex items-center justify-end gap-2">
+                              <div className="flex items-center justify-end gap-1.5">
                                 <button
                                   type="button"
                                   onClick={() => handleOpenDetailModal(ord.order_number, ord)}
                                   title="View Order Details"
-                                  style={{ padding: "8px 12px", borderRadius: "6px" }}
+                                  style={{ padding: "7px 10px", borderRadius: "6px" }}
                                   className={`text-xs font-bold tracking-wider uppercase transition-all duration-200 cursor-pointer flex items-center justify-center border ${
                                     isDarkMode
                                       ? "bg-white/5 border-white/10 text-[#B6A47E] hover:border-[#B6A47E] hover:text-white"
@@ -766,12 +794,12 @@ export default function AdminOrdersPage() {
                                 >
                                   <Eye className="w-3.5 h-3.5" />
                                 </button>
-                                {!isCancelledRow && (
+                                {!isCancelledRow && !isCompletedRow && (
                                   <button
                                     type="button"
                                     onClick={() => openUpdateModal(ord)}
                                     title="Update Shipment & Resi"
-                                    style={{ padding: "8px 12px", borderRadius: "6px" }}
+                                    style={{ padding: "7px 10px", borderRadius: "6px" }}
                                     className={`text-xs font-bold tracking-wider uppercase transition-all duration-200 cursor-pointer flex items-center justify-center border ${
                                       isDarkMode
                                         ? "bg-white/5 border-white/10 text-white hover:border-[#B6A47E] hover:text-[#B6A47E]"
@@ -781,12 +809,12 @@ export default function AdminOrdersPage() {
                                     <Truck className="w-3.5 h-3.5" />
                                   </button>
                                 )}
-                                {!isCancelledRow && (
+                                {!isCancelledRow && !isCompletedRow && (
                                   <button
                                     type="button"
                                     onClick={() => handlePrintLabel(ord.order_number, ord)}
                                     title="Print Shipping Label (Resi Thermal)"
-                                    style={{ padding: "8px 12px", borderRadius: "6px" }}
+                                    style={{ padding: "7px 10px", borderRadius: "6px" }}
                                     className={`text-xs font-bold tracking-wider uppercase transition-all duration-200 cursor-pointer flex items-center justify-center border ${
                                       isDarkMode
                                         ? "bg-white/5 border-white/10 text-emerald-400 hover:border-emerald-400 hover:text-white"
@@ -1080,16 +1108,14 @@ export default function AdminOrdersPage() {
               </p>
             </div>
 
-            {/* 4-Columns Overview Bar */}
+            {/* 4-Columns Overview Bar (or 3-Columns for Completed Order where Resi is hidden) */}
             {(() => {
-              const isCancelledDetail =
-                (selectedOrderDetail.shipping_status || "").toUpperCase() === "CANCELLED" ||
-                (selectedOrderDetail.shipping_status || "").toUpperCase() === "CANCELED" ||
-                (selectedOrderDetail.shipping_status || "").toUpperCase() === "DIBATALKAN";
+              const isCancelledDetail = checkIsOrderCancelled(selectedOrderDetail);
+              const isCompletedDetail = checkIsOrderFinished(selectedOrderDetail);
               return (
             <div
               style={{ padding: "24px 32px" }}
-              className="grid grid-cols-2 sm:grid-cols-4 gap-6 bg-[#0A0A0A] border border-white/[0.08] text-xs text-left rounded-sm"
+              className={`grid ${isCompletedDetail ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-2 sm:grid-cols-4"} gap-6 bg-[#0A0A0A] border border-white/[0.08] text-xs text-left rounded-sm`}
             >
               <div className="space-y-1.5 text-left">
                 <span className="text-[10px] text-[#8A8A8A] uppercase tracking-wider block font-bold">PAYMENT METHOD</span>
@@ -1109,12 +1135,14 @@ export default function AdminOrdersPage() {
                   {isCancelledDetail ? "-" : (selectedOrderDetail.courier_info?.courier_name || (selectedOrderDetail as any).courier || "JNE EXPRESS")}
                 </span>
               </div>
-              <div className="space-y-1.5 text-left">
-                <span className="text-[10px] text-[#8A8A8A] uppercase tracking-wider block font-bold">RESI TRACKING</span>
-                <span className="text-[#B6A47E] font-extrabold text-sm uppercase block truncate">
-                  {isCancelledDetail ? "-" : (selectedOrderDetail.courier_info?.tracking_number || (selectedOrderDetail as any).tracking_number || "PENDING ALLOCATION")}
-                </span>
-              </div>
+              {!isCompletedDetail && (
+                <div className="space-y-1.5 text-left">
+                  <span className="text-[10px] text-[#8A8A8A] uppercase tracking-wider block font-bold">RESI TRACKING</span>
+                  <span className="text-[#B6A47E] font-extrabold text-sm uppercase block truncate">
+                    {isCancelledDetail ? "-" : (selectedOrderDetail.courier_info?.tracking_number || (selectedOrderDetail as any).tracking_number || "PENDING ALLOCATION")}
+                  </span>
+                </div>
+              )}
             </div>
               );
             })()}
@@ -1432,9 +1460,10 @@ export default function AdminOrdersPage() {
                 <p className="text-[#F5F5F5] text-sm font-bold tracking-wide">
                   {selectedOrderDetail.shipping_address?.receiver_name} ({selectedOrderDetail.shipping_address?.phone_number})
                 </p>
-                <p className="text-[#8A8A8A] leading-relaxed text-xs">
+                <p className="text-[#CCCCCC] leading-relaxed text-xs">{selectedOrderDetail.shipping_address?.street_address}</p>
+                <p className="text-[#8A8A8A] text-xs pt-0.5">
                   {[
-                    selectedOrderDetail.shipping_address?.street_address,
+                    selectedOrderDetail.shipping_address?.district,
                     selectedOrderDetail.shipping_address?.city,
                     selectedOrderDetail.shipping_address?.province,
                     selectedOrderDetail.shipping_address?.postal_code || (selectedOrderDetail.shipping_address as any)?.postcode || (selectedOrderDetail.shipping_address as any)?.zip_code || (selectedOrderDetail.shipping_address as any)?.postalCode
@@ -1496,10 +1525,8 @@ export default function AdminOrdersPage() {
               const subtotalVal = selectedOrderDetail.summary?.subtotal || subtotalCalc;
               const shippingVal = selectedOrderDetail.summary?.shipping ?? (grandTotalVal - subtotalVal > 0 ? grandTotalVal - subtotalVal : 0);
               const discountVal = selectedOrderDetail.summary?.discount || 0;
-              const isCancelledDetail =
-                (selectedOrderDetail.shipping_status || "").toUpperCase() === "CANCELLED" ||
-                (selectedOrderDetail.shipping_status || "").toUpperCase() === "CANCELED" ||
-                (selectedOrderDetail.shipping_status || "").toUpperCase() === "DIBATALKAN";
+              const isCancelledDetail = checkIsOrderCancelled(selectedOrderDetail);
+              const isCompletedDetail = checkIsOrderFinished(selectedOrderDetail);
 
               return (
                 <div style={{ paddingTop: "24px" }} className="border-t border-white/[0.1] flex flex-col gap-4 font-mono text-xs">
@@ -1527,7 +1554,7 @@ export default function AdminOrdersPage() {
                   </div>
 
                   <div className="flex justify-end items-center gap-3 pt-2">
-                    {!isCancelledDetail && (
+                    {!isCancelledDetail && !isCompletedDetail && (
                       <button
                         type="button"
                         onClick={() => {
@@ -1823,8 +1850,11 @@ export default function AdminOrdersPage() {
                         Telp: {printOrder.shipping_address?.phone_number || printOrder.customer_info?.phone || "-"}
                       </p>
                       <p style={{ fontSize: "10px", lineHeight: "1.5", fontWeight: "bold", color: "#000000", margin: 0, paddingTop: "2px" }}>
+                        {printOrder.shipping_address?.street_address}
+                      </p>
+                      <p style={{ fontSize: "10px", lineHeight: "1.5", color: "#4B5563", margin: 0, paddingTop: "1px" }}>
                         {[
-                          printOrder.shipping_address?.street_address,
+                          printOrder.shipping_address?.district,
                           printOrder.shipping_address?.city,
                           printOrder.shipping_address?.province,
                           printOrder.shipping_address?.postal_code || (printOrder.shipping_address as any)?.postcode || (printOrder.shipping_address as any)?.zip_code || (printOrder.shipping_address as any)?.postalCode

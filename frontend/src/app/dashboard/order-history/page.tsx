@@ -50,6 +50,7 @@ export default function OrderHistoryPage() {
             receiver_name: itemAddr.receiver_name || (fallbackItem as any).receiver_name || "Customer",
             phone_number: itemAddr.phone_number || (fallbackItem as any).phone_number || "-",
             street_address: itemAddr.street_address || (fallbackItem as any).street_address || (fallbackItem as any).address || "Address recorded in invoice",
+            district: itemAddr.district || (fallbackItem as any).district || "",
             city: itemAddr.city || (fallbackItem as any).city || "-",
             province: itemAddr.province || (fallbackItem as any).province || "-",
             postal_code: itemAddr.postal_code || itemAddr.postcode || itemAddr.zip_code || (fallbackItem as any).postal_code || (fallbackItem as any).postcode || (fallbackItem as any).zip_code || "-",
@@ -315,9 +316,10 @@ export default function OrderHistoryPage() {
                 <div style={{ paddingTop: "28px", gap: "12px" }} className="flex flex-col border-t border-white/[0.1] font-mono text-xs text-left">
                   <span className="text-xs text-[#8A8A8A] uppercase tracking-[0.2em] block font-bold">SHIPPING ADDRESS</span>
                   <p className="text-[#F5F5F5] text-sm font-bold tracking-wide">{selectedOrderDetail.shipping_address.receiver_name} ({selectedOrderDetail.shipping_address.phone_number})</p>
-                  <p className="text-[#8A8A8A] leading-relaxed text-xs">
+                  <p className="text-[#CCCCCC] leading-relaxed text-xs">{selectedOrderDetail.shipping_address.street_address}</p>
+                  <p className="text-[#8A8A8A] text-xs pt-0.5">
                     {[
-                      selectedOrderDetail.shipping_address.street_address,
+                      selectedOrderDetail.shipping_address.district,
                       selectedOrderDetail.shipping_address.city,
                       selectedOrderDetail.shipping_address.province,
                       selectedOrderDetail.shipping_address.postal_code || (selectedOrderDetail.shipping_address as any)?.postcode || (selectedOrderDetail.shipping_address as any)?.zip_code || (selectedOrderDetail.shipping_address as any)?.postalCode

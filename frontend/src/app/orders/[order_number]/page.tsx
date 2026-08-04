@@ -6,7 +6,7 @@ import Link from "next/link";
 import Script from "next/script";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CustomPaymentModal from "@/components/CustomPaymentModal";
@@ -58,17 +58,18 @@ export default function OrderDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["order-detail", orderNumber] });
       queryClient.invalidateQueries({ queryKey: ["orders"] });
-      success("Terima kasih! Pesanan Anda telah dikonfirmasi diterima dan dipindahkan ke Riwayat Pesanan.", "PESANAN DITERIMA");
+      success("Thank you! Your order has been confirmed as received and moved to Order History.", "ORDER COMPLETED");
       setTimeout(() => {
         window.location.href = "/dashboard/order-history";
       }, 1500);
     },
     onError: (err: any) => {
-      error(err.response?.data?.message || "Gagal mengonfirmasi penerimaan pesanan.");
+      error(err.response?.data?.message || "Failed to confirm order receipt.");
     },
   });
 
   const [customModalOpen, setCustomModalOpen] = useState(false);
+  const [showConfirmReceivedModal, setShowConfirmReceivedModal] = useState(false);
 
   const handleResumePayment = () => {
     setCustomModalOpen(true);
@@ -177,18 +178,16 @@ export default function OrderDetailPage() {
                 )}
 
                 {((order.shipping_status || order.status || "").toUpperCase() === "SHIPPED" ||
-                  (order.shipping_status || order.status || "").toUpperCase() === "DELIVERED") && (
+                  (order.shipping_status || order.status || "").toUpperCase() === "DELIVERED" ||
+                  (order.shipping_status || order.status || "").toUpperCase() === "DELIVERY" ||
+                  (order.shipping_status || order.status || "").toUpperCase() === "DELIVERING") && (
                   <button
                     type="button"
-                    onClick={() => {
-                      if (confirm("Apakah Anda telah menerima produk pesanan ini dengan baik?")) {
-                        confirmReceivedMutation.mutate();
-                      }
-                    }}
+                    onClick={() => setShowConfirmReceivedModal(true)}
                     disabled={confirmReceivedMutation.isPending}
-                    className="px-8 py-3.5 bg-[#00E676] hover:bg-[#00C853] text-[#0A0A0A] font-mono text-xs font-black uppercase tracking-[0.2em] transition-all cursor-pointer shadow-lg"
+                    className="px-8 py-3.5 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-[#0A0A0A] font-mono text-xs font-black uppercase tracking-[0.2em] transition-all cursor-pointer shadow-lg"
                   >
-                    {confirmReceivedMutation.isPending ? "MEMPROSES..." : "✓ TERIMA PESANAN"}
+                    {confirmReceivedMutation.isPending ? "CONFIRMING..." : "✓ CONFIRM RECEIVED"}
                   </button>
                 )}
               </div>
@@ -213,6 +212,7 @@ export default function OrderDetailPage() {
                 <p className="text-[#CCCCCC] leading-relaxed pt-1">{order.shipping_address.street_address}</p>
                 <p className="text-[#888888]">
                   {[
+                    order.shipping_address.district,
                     order.shipping_address.city,
                     order.shipping_address.province,
                     order.shipping_address.postal_code || (order.shipping_address as any)?.postcode || (order.shipping_address as any)?.zip_code || (order.shipping_address as any)?.postalCode
@@ -347,6 +347,63 @@ export default function OrderDetailPage() {
           vaNumber={order.payment_info?.snap_token}
         />
       )}
+
+      {/* ── CONFIRM ORDER RECEIVED POPUP MODAL ── */}
+      <AnimatePresence>
+        {showConfirmReceivedModal && order && (
+          <div className="fixed inset-0 z-[165] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, translateY: 10 }}
+              animate={{ opacity: 1, scale: 1, translateY: 0 }}
+              exit={{ opacity: 0, scale: 0.9, translateY: 10 }}
+              style={{ padding: "40px 36px" }}
+              className="bg-[#141414] border border-white/[0.12] text-[#F5F5F5] w-full max-w-[460px] flex flex-col items-center text-center shadow-2xl rounded-sm font-sans relative"
+            >
+              <div style={{ marginBottom: "24px" }} className="w-14 h-14 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shadow-inner">
+                <svg className="w-7 h-7 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                </svg>
+              </div>
+
+              <span className="text-[10px] font-mono tracking-[0.3em] uppercase text-[#B6A47E] font-semibold block mb-2">
+                ORDER DELIVERY CONFIRMATION
+              </span>
+
+              <h3 style={{ marginBottom: "14px" }} className="text-lg font-bold uppercase tracking-[0.12em] text-[#F5F5F5] font-serif">
+                HAVE YOU RECEIVED THIS ORDER?
+              </h3>
+
+              <p style={{ marginBottom: "28px" }} className="text-xs sm:text-sm text-[#A0A0A0] font-sans font-normal leading-[1.8] px-2">
+                Please confirm that your package has arrived safely. This action will mark order <span className="text-white font-mono font-bold">#{order.order_number}</span> as <span className="text-emerald-400 font-semibold">COMPLETED</span> and move it to Order History.
+              </p>
+
+              <div className="flex items-center gap-3 w-full">
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmReceivedModal(false)}
+                  disabled={confirmReceivedMutation.isPending}
+                  style={{ padding: "14px 0" }}
+                  className="flex-1 border border-white/20 hover:border-white/50 text-[#A0A0A0] hover:text-white font-mono text-xs uppercase font-bold tracking-[0.15em] rounded-sm transition-all cursor-pointer"
+                >
+                  NOT YET
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowConfirmReceivedModal(false);
+                    confirmReceivedMutation.mutate();
+                  }}
+                  disabled={confirmReceivedMutation.isPending}
+                  style={{ padding: "14px 0" }}
+                  className="flex-1 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-[#0A0A0A] font-mono text-xs uppercase font-bold tracking-[0.15em] rounded-sm transition-all shadow-lg cursor-pointer flex items-center justify-center gap-2"
+                >
+                  {confirmReceivedMutation.isPending ? "CONFIRMING..." : "YES, RECEIVED"}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <Footer />
     </main>

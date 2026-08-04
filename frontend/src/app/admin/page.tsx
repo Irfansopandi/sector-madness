@@ -38,19 +38,15 @@ import {
 
 export default function AdminDashboardPage() {
   const [isMounted, setIsMounted] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
+
   useEffect(() => {
     setIsMounted(true);
-  }, []);
-
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      const savedTheme = localStorage.getItem("sector_madness_admin_theme");
-      if (savedTheme !== null) {
-        return savedTheme === "dark";
-      }
+    const savedTheme = localStorage.getItem("sector_madness_admin_theme");
+    if (savedTheme !== null) {
+      setIsDarkMode(savedTheme === "dark");
     }
-    return true;
-  });
+  }, []);
   const [greeting, setGreeting] = useState("GOOD DAY,");
   const [adminName, setAdminName] = useState("Admin SectorMadness");
   const [adminEmail, setAdminEmail] = useState("admin@sectormadness.com");
@@ -72,12 +68,13 @@ export default function AdminDashboardPage() {
           customer_info: {
             name: fallbackOrd.customer_name || itemAddr.receiver_name || "Customer",
             email: fallbackOrd.customer_email || "-",
-            phone: itemAddr.phone_number || "-",
+            phone: fallbackOrd.customer_phone || itemAddr.phone_number || "-",
           },
           shipping_address: {
             receiver_name: itemAddr.receiver_name || fallbackOrd.customer_name || "Customer",
-            phone_number: itemAddr.phone_number || "-",
+            phone_number: itemAddr.phone_number || fallbackOrd.customer_phone || "-",
             street_address: itemAddr.street_address || itemAddr.address || "Alamat Pengiriman Registered",
+            district: itemAddr.district || "",
             city: itemAddr.city || "-",
             province: itemAddr.province || "-",
             postal_code: itemAddr.postal_code || itemAddr.postcode || itemAddr.zip_code || "-",
@@ -105,12 +102,13 @@ export default function AdminDashboardPage() {
           customer_info: {
             name: fallbackOrd.customer_name || itemAddr.receiver_name || "Customer",
             email: fallbackOrd.customer_email || "-",
-            phone: itemAddr.phone_number || "-",
+            phone: fallbackOrd.customer_phone || itemAddr.phone_number || "-",
           },
           shipping_address: {
             receiver_name: itemAddr.receiver_name || fallbackOrd.customer_name || "Customer",
-            phone_number: itemAddr.phone_number || "-",
+            phone_number: itemAddr.phone_number || fallbackOrd.customer_phone || "-",
             street_address: itemAddr.street_address || itemAddr.address || "Address recorded in invoice",
+            district: itemAddr.district || "",
             city: itemAddr.city || "-",
             province: itemAddr.province || "-",
             postal_code: itemAddr.postal_code || itemAddr.postcode || itemAddr.zip_code || "-",
@@ -147,6 +145,10 @@ export default function AdminDashboardPage() {
             payment_status: fallbackOrd.payment_status || "PAID",
           },
           shipping_status: fallbackOrd.shipping_status || "PROCESSING",
+          cancel_reason: fallbackOrd.cancellation_request?.reason || fallbackOrd.cancel_data?.reason || fallbackOrd.cancel_reason || fallbackOrd.cancellation_reason || fallbackOrd.cancel_note || fallbackOrd.reason || undefined,
+          bank_name: fallbackOrd.cancellation_request?.bank_name || fallbackOrd.cancel_data?.bank_name || fallbackOrd.bank_name || fallbackOrd.refund_bank || fallbackOrd.bank || undefined,
+          account_number: fallbackOrd.cancellation_request?.account_number || fallbackOrd.cancel_data?.account_number || fallbackOrd.account_number || fallbackOrd.refund_account || fallbackOrd.no_rekening || undefined,
+          account_name: fallbackOrd.cancellation_request?.account_name || fallbackOrd.cancellation_request?.account_holder || fallbackOrd.cancel_data?.account_name || fallbackOrd.account_name || fallbackOrd.refund_name || fallbackOrd.nama_rekening || undefined,
           timeline: [],
         });
       }
@@ -284,8 +286,23 @@ export default function AdminDashboardPage() {
 
   const recentOrders = orders
     .filter((ord) => {
-      const st = (ord.shipping_status || "").toUpperCase();
-      return st !== "CANCELLED" && st !== "CANCELED" && st !== "DIBATALKAN";
+      const st = (ord.shipping_status || ord.status || "").toUpperCase();
+      const ordSt = (ord.status || "").toUpperCase();
+      const isCancelled = st === "CANCELLED" || st === "CANCELED" || st === "DIBATALKAN" || ordSt === "CANCELLED" || ordSt === "DIBATALKAN";
+      const isCompleted = st === "COMPLETED" || st === "SELESAI" || st === "RECEIVED" || ordSt === "COMPLETED" || ordSt === "SELESAI" || ordSt === "RECEIVED";
+      
+      let isDeliveredAutoFinished = false;
+      if (st === "DELIVERED" || ordSt === "DELIVERED" || st === "DELIVERY" || ordSt === "DELIVERY" || st === "DELIVERING" || ordSt === "DELIVERING") {
+        const timeRef = ord.updated_at || ord.created_at || ord.order_date || "";
+        if (timeRef) {
+          const updateTime = new Date(timeRef).getTime();
+          if (!isNaN(updateTime) && Date.now() - updateTime > 5 * 24 * 60 * 60 * 1000) {
+            isDeliveredAutoFinished = true;
+          }
+        }
+      }
+
+      return !isCancelled && !isCompleted && !isDeliveredAutoFinished;
     })
     .slice(0, 6);
 
@@ -875,9 +892,11 @@ export default function AdminDashboardPage() {
             </div>
 
             <div
-              className={`border rounded-[6px] overflow-x-auto shadow-sm transition-colors ${
-                isDarkMode ? "bg-[#18181C] border-white/10" : "bg-white border-[#D1D5DB]"
-              }`}
+              className={`border rounded-[6px] overflow-x-auto shadow-sm transition-colors [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-transparent ${
+                isDarkMode
+                  ? "bg-[#18181C] border-white/10 [&::-webkit-scrollbar-thumb]:bg-white/20 hover:[&::-webkit-scrollbar-thumb]:bg-white/35"
+                  : "bg-white border-[#D1D5DB] [&::-webkit-scrollbar-thumb]:bg-black/20 hover:[&::-webkit-scrollbar-thumb]:bg-black/35"
+              } [&::-webkit-scrollbar-thumb]:rounded-full`}
             >
               <table className="w-full text-left text-xs uppercase tracking-wider">
                 <thead
@@ -1062,36 +1081,51 @@ export default function AdminDashboardPage() {
               </p>
             </div>
 
-            {/* 4-Columns Overview Bar */}
-            <div
-              style={{ padding: "24px 32px" }}
-              className="grid grid-cols-2 sm:grid-cols-4 gap-6 bg-[#0A0A0A] border border-white/[0.08] text-xs text-left rounded-sm"
-            >
-              <div className="space-y-1.5 text-left">
-                <span className="text-[10px] text-[#8A8A8A] uppercase tracking-wider block font-bold">PAYMENT METHOD</span>
-                <span className="text-[#F5F5F5] font-extrabold text-sm uppercase block">
-                  {selectedOrderDetail.payment_info?.method || (selectedOrderDetail as any).payment_method || "ONLINE PAYMENT"}
-                </span>
-              </div>
-              <div className="space-y-1.5 text-left">
-                <span className="text-[10px] text-[#8A8A8A] uppercase tracking-wider block font-bold">PAYMENT STATUS</span>
-                <span className="text-emerald-400 font-extrabold text-sm uppercase block">
-                  ✓ {(selectedOrderDetail.payment_info?.payment_status || (selectedOrderDetail as any).payment_status || "PAID").toUpperCase()}
-                </span>
-              </div>
-              <div className="space-y-1.5 text-left">
-                <span className="text-[10px] text-[#8A8A8A] uppercase tracking-wider block font-bold">COURIER</span>
-                <span className="text-[#F5F5F5] font-extrabold text-sm uppercase block">
-                  {selectedOrderDetail.courier_info?.courier_name || (selectedOrderDetail as any).courier || "JNE EXPRESS"}
-                </span>
-              </div>
-              <div className="space-y-1.5 text-left">
-                <span className="text-[10px] text-[#8A8A8A] uppercase tracking-wider block font-bold">RESI TRACKING</span>
-                <span className="text-[#B6A47E] font-extrabold text-sm uppercase block truncate">
-                  {selectedOrderDetail.courier_info?.tracking_number || (selectedOrderDetail as any).tracking_number || "PENDING ALLOCATION"}
-                </span>
-              </div>
-            </div>
+            {/* 4-Columns Overview Bar (or 3-Columns for Completed Order where Resi is hidden) */}
+            {(() => {
+              const st = (selectedOrderDetail.shipping_status || (selectedOrderDetail as any).status || "").toUpperCase();
+              const ordSt = ((selectedOrderDetail as any).status || "").toUpperCase();
+              const isCompletedDetail =
+                st === "COMPLETED" || st === "SELESAI" || st === "RECEIVED" ||
+                ordSt === "COMPLETED" || ordSt === "SELESAI" || ordSt === "RECEIVED";
+              const isCancelledDetail =
+                st === "CANCELLED" || st === "CANCELED" || st === "DIBATALKAN" ||
+                ordSt === "CANCELLED" || ordSt === "DIBATALKAN";
+
+              return (
+                <div
+                  style={{ padding: "24px 32px" }}
+                  className={`grid ${isCompletedDetail ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-2 sm:grid-cols-4"} gap-6 bg-[#0A0A0A] border border-white/[0.08] text-xs text-left rounded-sm`}
+                >
+                  <div className="space-y-1.5 text-left">
+                    <span className="text-[10px] text-[#8A8A8A] uppercase tracking-wider block font-bold">PAYMENT METHOD</span>
+                    <span className="text-[#F5F5F5] font-extrabold text-sm uppercase block">
+                      {selectedOrderDetail.payment_info?.method || (selectedOrderDetail as any).payment_method || "ONLINE PAYMENT"}
+                    </span>
+                  </div>
+                  <div className="space-y-1.5 text-left">
+                    <span className="text-[10px] text-[#8A8A8A] uppercase tracking-wider block font-bold">PAYMENT STATUS</span>
+                    <span className="text-emerald-400 font-extrabold text-sm uppercase block">
+                      ✓ {(selectedOrderDetail.payment_info?.payment_status || (selectedOrderDetail as any).payment_status || "PAID").toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="space-y-1.5 text-left">
+                    <span className="text-[10px] text-[#8A8A8A] uppercase tracking-wider block font-bold">COURIER</span>
+                    <span className="text-[#F5F5F5] font-extrabold text-sm uppercase block">
+                      {selectedOrderDetail.courier_info?.courier_name || (selectedOrderDetail as any).courier || "JNE EXPRESS"}
+                    </span>
+                  </div>
+                  {!isCompletedDetail && (
+                    <div className="space-y-1.5 text-left">
+                      <span className="text-[10px] text-[#8A8A8A] uppercase tracking-wider block font-bold">RESI TRACKING</span>
+                      <span className="text-[#B6A47E] font-extrabold text-sm uppercase block truncate">
+                        {selectedOrderDetail.courier_info?.tracking_number || (selectedOrderDetail as any).tracking_number || "PENDING ALLOCATION"}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Customer Info & Shipping Address Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
@@ -1115,9 +1149,10 @@ export default function AdminDashboardPage() {
                 <p className="text-[#F5F5F5] text-sm font-bold tracking-wide">
                   {selectedOrderDetail.shipping_address?.receiver_name} ({selectedOrderDetail.shipping_address?.phone_number})
                 </p>
-                <p className="text-[#8A8A8A] leading-relaxed text-xs">
+                <p className="text-[#CCCCCC] leading-relaxed text-xs">{selectedOrderDetail.shipping_address?.street_address}</p>
+                <p className="text-[#8A8A8A] text-xs pt-0.5">
                   {[
-                    selectedOrderDetail.shipping_address?.street_address,
+                    selectedOrderDetail.shipping_address?.district,
                     selectedOrderDetail.shipping_address?.city,
                     selectedOrderDetail.shipping_address?.province,
                     selectedOrderDetail.shipping_address?.postal_code || (selectedOrderDetail.shipping_address as any)?.postcode || (selectedOrderDetail.shipping_address as any)?.zip_code || (selectedOrderDetail.shipping_address as any)?.postalCode
@@ -1179,6 +1214,14 @@ export default function AdminDashboardPage() {
               const subtotalVal = selectedOrderDetail.summary?.subtotal || subtotalCalc;
               const shippingVal = selectedOrderDetail.summary?.shipping ?? (grandTotalVal - subtotalVal > 0 ? grandTotalVal - subtotalVal : 0);
               const discountVal = selectedOrderDetail.summary?.discount || 0;
+              const st = (selectedOrderDetail.shipping_status || (selectedOrderDetail as any).status || "").toUpperCase();
+              const ordSt = ((selectedOrderDetail as any).status || "").toUpperCase();
+              const isCompletedDetail =
+                st === "COMPLETED" || st === "SELESAI" || st === "RECEIVED" ||
+                ordSt === "COMPLETED" || ordSt === "SELESAI" || ordSt === "RECEIVED";
+              const isCancelledDetail =
+                st === "CANCELLED" || st === "CANCELED" || st === "DIBATALKAN" ||
+                ordSt === "CANCELLED" || ordSt === "DIBATALKAN";
 
               return (
                 <div style={{ paddingTop: "24px" }} className="border-t border-white/[0.1] flex flex-col gap-4 font-mono text-xs">
@@ -1206,17 +1249,19 @@ export default function AdminDashboardPage() {
                   </div>
 
                   <div className="flex justify-end items-center gap-3 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPrintOrder(selectedOrderDetail);
-                      }}
-                      style={{ padding: "14px 28px" }}
-                      className="bg-white/10 hover:bg-white text-white hover:text-black font-mono text-xs uppercase font-extrabold tracking-[0.2em] transition-all duration-300 cursor-pointer rounded-sm flex items-center gap-2 border border-white/20"
-                    >
-                      <Printer className="w-4 h-4" />
-                      <span>CETAK LABEL RESI</span>
-                    </button>
+                    {!isCancelledDetail && !isCompletedDetail && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPrintOrder(selectedOrderDetail);
+                        }}
+                        style={{ padding: "14px 28px" }}
+                        className="bg-white/10 hover:bg-white text-white hover:text-black font-mono text-xs uppercase font-extrabold tracking-[0.2em] transition-all duration-300 cursor-pointer rounded-sm flex items-center gap-2 border border-white/20"
+                      >
+                        <Printer className="w-4 h-4" />
+                        <span>CETAK LABEL RESI</span>
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => setSelectedOrderDetail(null)}
@@ -1500,8 +1545,11 @@ export default function AdminDashboardPage() {
                         Telp: {printOrder.shipping_address?.phone_number || printOrder.customer_info?.phone || "-"}
                       </p>
                       <p style={{ fontSize: "10px", lineHeight: "1.5", fontWeight: "bold", color: "#000000", margin: 0, paddingTop: "2px" }}>
+                        {printOrder.shipping_address?.street_address}
+                      </p>
+                      <p style={{ fontSize: "10px", lineHeight: "1.5", color: "#4B5563", margin: 0, paddingTop: "1px" }}>
                         {[
-                          printOrder.shipping_address?.street_address,
+                          printOrder.shipping_address?.district,
                           printOrder.shipping_address?.city,
                           printOrder.shipping_address?.province,
                           printOrder.shipping_address?.postal_code || (printOrder.shipping_address as any)?.postcode || (printOrder.shipping_address as any)?.zip_code || (printOrder.shipping_address as any)?.postalCode
