@@ -32,6 +32,12 @@ export default function AdminCatalogPage() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [rowLimit, setRowLimit] = useState<number>(10);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+
+  // Reset page when tab, search query, or row limit changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, searchQuery, rowLimit]);
 
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>, setImageState: (val: string) => void) => {
     const file = e.target.files?.[0];
@@ -178,7 +184,17 @@ export default function AdminCatalogPage() {
     mutationFn: deleteCategory,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
-      showStatus("Category deleted successfully!");
+      showStatus("Kategori berhasil dihapus!");
+    },
+    onError: (err: any) => {
+      Swal.fire({
+        icon: "error",
+        title: "GAGAL MENGHAPUS",
+        text: err.response?.data?.message || "Gagal menghapus kategori.",
+        background: isDarkMode ? "#18181C" : "#ffffff",
+        color: isDarkMode ? "#f5f5f5" : "#0a0a0a",
+        confirmButtonColor: "#B6A47E",
+      });
     },
   });
 
@@ -396,25 +412,41 @@ export default function AdminCatalogPage() {
     const q = searchQuery.toLowerCase().trim();
     return !q || cat.name.toLowerCase().includes(q) || (cat.slug || "").toLowerCase().includes(q) || (cat.description || "").toLowerCase().includes(q);
   });
-  const displayedCats = rowLimit === 0 ? filteredCats : filteredCats.slice(0, rowLimit);
 
   const filteredCols = collections.filter((col) => {
     const q = searchQuery.toLowerCase().trim();
     return !q || col.name.toLowerCase().includes(q) || (col.code || "").toLowerCase().includes(q) || (col.description || "").toLowerCase().includes(q);
   });
-  const displayedCols = rowLimit === 0 ? filteredCols : filteredCols.slice(0, rowLimit);
 
   const filteredSorts = sortOptions.filter((s) => {
     const q = searchQuery.toLowerCase().trim();
     return !q || s.name.toLowerCase().includes(q) || (s.code || "").toLowerCase().includes(q);
   });
-  const displayedSorts = rowLimit === 0 ? filteredSorts : filteredSorts.slice(0, rowLimit);
 
   const filteredCatJournals = journals.filter((j) => {
     const q = searchQuery.toLowerCase().trim();
     return !q || j.title.toLowerCase().includes(q) || (j.category || "").toLowerCase().includes(q) || (j.summary || "").toLowerCase().includes(q);
   });
-  const displayedCatJournals = rowLimit === 0 ? filteredCatJournals : filteredCatJournals.slice(0, rowLimit);
+
+  const getActiveTabFilteredData = () => {
+    if (activeTab === "categories") return filteredCats;
+    if (activeTab === "collections") return filteredCols;
+    if (activeTab === "sort") return filteredSorts;
+    return filteredCatJournals;
+  };
+
+  const currentTabItems = getActiveTabFilteredData();
+  const currentTotal = currentTabItems.length;
+  const pageSize = rowLimit > 0 ? rowLimit : currentTotal;
+  const totalPages = pageSize > 0 ? Math.max(1, Math.ceil(currentTotal / pageSize)) : 1;
+  const validPage = Math.min(currentPage, totalPages);
+  const startIndex = (validPage - 1) * pageSize;
+  const endIndex = rowLimit > 0 ? Math.min(startIndex + pageSize, currentTotal) : currentTotal;
+
+  const displayedCats = activeTab === "categories" ? filteredCats.slice(startIndex, endIndex) : [];
+  const displayedCols = activeTab === "collections" ? filteredCols.slice(startIndex, endIndex) : [];
+  const displayedSorts = activeTab === "sort" ? filteredSorts.slice(startIndex, endIndex) : [];
+  const displayedCatJournals = activeTab === "journals" ? filteredCatJournals.slice(startIndex, endIndex) : [];
 
   useEffect(() => {
     const updateIndicator = () => {
@@ -443,8 +475,8 @@ export default function AdminCatalogPage() {
 
       <div className="flex-1 flex flex-col min-w-0">
         <AdminHeader
-          title="CATALOG MANAGEMENT"
-          subtitle="Organize product categories, collections, sort parameters, and publication journals"
+          title="MANAJEMEN KATALOG"
+          subtitle="Kelola kategori produk, koleksi focus on, opsi pengurutan, dan artikel jurnal"
           isDarkMode={isDarkMode}
           onToggleTheme={toggleTheme}
         />
@@ -517,10 +549,10 @@ export default function AdminCatalogPage() {
             )}
 
             {[
-              { id: "categories", label: `CATEGORIES (${categories.length})` },
-              { id: "collections", label: `FOCUS ON COLLECTIONS (${collections.length})` },
-              { id: "sort", label: `SORT BY OPTIONS (${sortOptions.length})` },
-              { id: "journals", label: `JOURNAL ARTICLES (${journals.length})` },
+              { id: "categories", label: `KATEGORI (${categories.length})` },
+              { id: "collections", label: `KOLEKSI FOCUS ON (${collections.length})` },
+              { id: "sort", label: `OPSI URUTAN (${sortOptions.length})` },
+              { id: "journals", label: `ARTIKEL JURNAL (${journals.length})` },
             ].map((tab) => {
               const isActive = activeTab === tab.id;
               return (
@@ -575,10 +607,10 @@ export default function AdminCatalogPage() {
               }}
               className={`uppercase font-bold ${isDarkMode ? "text-[#8A8A8A]" : "text-[#4B5563]"}`}
             >
-              {activeTab === "categories" && "Manage product categories visible in Shop filters & Navbar menu."}
-              {activeTab === "collections" && "Manage Focus On collections featured in Navbar dropdown."}
-              {activeTab === "sort" && "Manage Sort By filter options in the Shop page drawer."}
-              {activeTab === "journals" && "Manage publication articles, stories, and editorial posts."}
+              {activeTab === "categories" && "Kelola kategori produk yang tampil di filter Toko & menu Navigasi."}
+              {activeTab === "collections" && "Kelola koleksi unggulan Focus On yang tampil di menu dropdown Navigasi."}
+              {activeTab === "sort" && "Kelola opsi urutan produk pada filter halaman Toko."}
+              {activeTab === "journals" && "Kelola artikel publikasi, cerita brand, dan jurnal editorial."}
             </p>
             <button
               onClick={openAddModal}
@@ -590,7 +622,17 @@ export default function AdminCatalogPage() {
               }`}
             >
               <Plus className="w-4 h-4 stroke-[2.5] shrink-0 transition-transform duration-300 group-hover:rotate-90" />
-              <span>ADD NEW {activeTab.toUpperCase().slice(0, -1)}</span>
+              <span>
+                TAMBAH{" "}
+                {activeTab === "categories"
+                  ? "KATEGORI"
+                  : activeTab === "collections"
+                  ? "KOLEKSI"
+                  : activeTab === "sort"
+                  ? "OPSI URUTAN"
+                  : "JURNAL"}{" "}
+                BARU
+              </span>
             </button>
           </div>
 
@@ -697,7 +739,7 @@ export default function AdminCatalogPage() {
                     }`}
                   >
                     <tr>
-                      <th style={{ padding: "18px 24px" }} className="font-bold">ID</th>
+                      <th style={{ padding: "18px 24px" }} className="font-bold">NO.</th>
                       <th style={{ padding: "18px 24px" }} className="font-bold">CATEGORY NAME</th>
                       <th style={{ padding: "18px 24px" }} className="font-bold">SLUG</th>
                       <th style={{ padding: "18px 24px" }} className="font-bold">DESCRIPTION</th>
@@ -714,9 +756,9 @@ export default function AdminCatalogPage() {
                         <td colSpan={5} style={{ padding: "48px 24px" }} className={`text-center ${isDarkMode ? "text-[#777777]" : "text-[#6B7280]"}`}>Tidak ada kategori yang sesuai dengan pencarian.</td>
                       </tr>
                     ) : (
-                      displayedCats.map((cat: CategoryItem) => (
+                      displayedCats.map((cat: CategoryItem, idx: number) => (
                         <tr key={cat.id} className={`transition-colors ${isDarkMode ? "hover:bg-white/[0.02]" : "hover:bg-[#F9FAFB]"}`}>
-                          <td style={{ padding: "20px 24px" }} className="font-mono font-bold">{cat.id}</td>
+                          <td style={{ padding: "20px 24px" }} className={`font-mono font-bold ${isDarkMode ? "text-[#8A8A8A]" : "text-gray-500"}`}>{startIndex + idx + 1}</td>
                           <td style={{ padding: "20px 24px" }} className={`font-bold ${isDarkMode ? "text-[#F5F5F5]" : "text-[#111827]"}`}>{cat.name}</td>
                           <td style={{ padding: "20px 24px" }} className={`font-mono ${isDarkMode ? "text-[#8A8A8A]" : "text-[#6B7280]"}`}>{cat.slug}</td>
                           <td style={{ padding: "20px 24px" }} className={`max-w-xs truncate ${isDarkMode ? "text-[#8A8A8A]" : "text-[#6B7280]"}`}>{cat.description || "—"}</td>
@@ -778,7 +820,7 @@ export default function AdminCatalogPage() {
                     }`}
                   >
                     <tr>
-                      <th style={{ padding: "18px 24px" }} className="font-bold">ID</th>
+                      <th style={{ padding: "18px 24px" }} className="font-bold">NO.</th>
                       <th style={{ padding: "18px 24px" }} className="font-bold">COLLECTION NAME</th>
                       <th style={{ padding: "18px 24px" }} className="font-bold">CODE / TAG</th>
                       <th style={{ padding: "18px 24px" }} className="font-bold">SLUG</th>
@@ -795,9 +837,9 @@ export default function AdminCatalogPage() {
                         <td colSpan={5} style={{ padding: "48px 24px" }} className={`text-center ${isDarkMode ? "text-[#777777]" : "text-[#6B7280]"}`}>Tidak ada koleksi yang sesuai dengan pencarian.</td>
                       </tr>
                     ) : (
-                      displayedCols.map((col: CollectionItem) => (
+                      displayedCols.map((col: CollectionItem, idx: number) => (
                         <tr key={col.id} className={`transition-colors ${isDarkMode ? "hover:bg-white/[0.02]" : "hover:bg-[#F9FAFB]"}`}>
-                          <td style={{ padding: "20px 24px" }} className="font-mono font-bold">{col.id}</td>
+                          <td style={{ padding: "20px 24px" }} className={`font-mono font-bold ${isDarkMode ? "text-[#8A8A8A]" : "text-gray-500"}`}>{startIndex + idx + 1}</td>
                           <td style={{ padding: "20px 24px" }} className={`font-bold ${isDarkMode ? "text-[#F5F5F5]" : "text-[#111827]"}`}>{col.name}</td>
                           <td style={{ padding: "20px 24px" }} className={`font-mono ${isDarkMode ? "text-[#8A8A8A]" : "text-[#6B7280]"}`}>{col.code || col.name}</td>
                           <td style={{ padding: "20px 24px" }} className={`font-mono ${isDarkMode ? "text-[#8A8A8A]" : "text-[#6B7280]"}`}>{col.slug}</td>
@@ -859,6 +901,7 @@ export default function AdminCatalogPage() {
                     }`}
                   >
                     <tr>
+                      <th style={{ padding: "18px 24px" }} className="font-bold">NO.</th>
                       <th style={{ padding: "18px 24px" }} className="font-bold">SORT ORDER</th>
                       <th style={{ padding: "18px 24px" }} className="font-bold">OPTION NAME</th>
                       <th style={{ padding: "18px 24px" }} className="font-bold">SORT CODE</th>
@@ -868,15 +911,16 @@ export default function AdminCatalogPage() {
                   <tbody className={`divide-y ${isDarkMode ? "divide-white/[0.05]" : "divide-[#E5E7EB]"}`}>
                     {loadingSorts ? (
                       <tr>
-                        <td colSpan={4} style={{ padding: "48px 24px" }} className={`text-center ${isDarkMode ? "text-[#777777]" : "text-[#6B7280]"}`}>Loading sort options...</td>
+                        <td colSpan={5} style={{ padding: "48px 24px" }} className={`text-center ${isDarkMode ? "text-[#777777]" : "text-[#6B7280]"}`}>Loading sort options...</td>
                       </tr>
                     ) : displayedSorts.length === 0 ? (
                       <tr>
-                        <td colSpan={4} style={{ padding: "48px 24px" }} className={`text-center ${isDarkMode ? "text-[#777777]" : "text-[#6B7280]"}`}>Tidak ada opsi sort yang sesuai dengan pencarian.</td>
+                        <td colSpan={5} style={{ padding: "48px 24px" }} className={`text-center ${isDarkMode ? "text-[#777777]" : "text-[#6B7280]"}`}>Tidak ada opsi sort yang sesuai dengan pencarian.</td>
                       </tr>
                     ) : (
-                      displayedSorts.map((sort: SortOptionItem) => (
+                      displayedSorts.map((sort: SortOptionItem, idx: number) => (
                         <tr key={sort.id} className={`transition-colors ${isDarkMode ? "hover:bg-white/[0.02]" : "hover:bg-[#F9FAFB]"}`}>
+                          <td style={{ padding: "20px 24px" }} className={`font-mono font-bold ${isDarkMode ? "text-[#8A8A8A]" : "text-gray-500"}`}>{startIndex + idx + 1}</td>
                           <td style={{ padding: "20px 24px" }} className="font-mono font-bold">{sort.sort_order ?? 0}</td>
                           <td style={{ padding: "20px 24px" }} className={`font-bold ${isDarkMode ? "text-[#F5F5F5]" : "text-[#111827]"}`}>{sort.name}</td>
                           <td style={{ padding: "20px 24px" }} className={`font-mono ${isDarkMode ? "text-[#8A8A8A]" : "text-[#6B7280]"}`}>{sort.code}</td>
@@ -938,7 +982,7 @@ export default function AdminCatalogPage() {
                     }`}
                   >
                     <tr>
-                      <th style={{ padding: "18px 24px" }} className="font-bold">ID</th>
+                      <th style={{ padding: "18px 24px" }} className="font-bold">NO.</th>
                       <th style={{ padding: "18px 24px" }} className="font-bold">TITLE</th>
                       <th style={{ padding: "18px 24px" }} className="font-bold">CATEGORY</th>
                       <th style={{ padding: "18px 24px" }} className="font-bold">ISSUE</th>
@@ -956,9 +1000,9 @@ export default function AdminCatalogPage() {
                         <td colSpan={6} style={{ padding: "48px 24px" }} className={`text-center ${isDarkMode ? "text-[#777777]" : "text-[#6B7280]"}`}>Tidak ada artikel jurnal yang sesuai dengan pencarian.</td>
                       </tr>
                     ) : (
-                      displayedCatJournals.map((art: JournalArticle) => (
+                      displayedCatJournals.map((art: JournalArticle, idx: number) => (
                         <tr key={art.id} className={`transition-colors ${isDarkMode ? "hover:bg-white/[0.02]" : "hover:bg-[#F9FAFB]"}`}>
-                          <td style={{ padding: "20px 24px" }} className="font-mono font-bold">{art.id}</td>
+                          <td style={{ padding: "20px 24px" }} className={`font-mono font-bold ${isDarkMode ? "text-[#8A8A8A]" : "text-gray-500"}`}>{startIndex + idx + 1}</td>
                           <td style={{ padding: "20px 24px" }} className={`font-bold ${isDarkMode ? "text-[#F5F5F5]" : "text-[#111827]"}`}>{art.title}</td>
                           <td style={{ padding: "20px 24px" }} className="font-semibold text-[#B6A47E]">{art.category}</td>
                           <td style={{ padding: "20px 24px" }} className={`font-mono ${isDarkMode ? "text-[#8A8A8A]" : "text-[#6B7280]"}`}>{art.issue || "—"}</td>
@@ -998,6 +1042,82 @@ export default function AdminCatalogPage() {
                     )}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {/* PAGINATION FOOTER CONTROL BAR */}
+          {rowLimit > 0 && currentTotal > rowLimit && (
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "16px",
+                marginTop: "24px",
+                padding: "16px 20px",
+                borderRadius: "8px",
+                backgroundColor: isDarkMode ? "#18181C" : "#FFFFFF",
+                border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #E5E7EB",
+              }}
+            >
+              <span className={`text-xs font-bold font-mono ${isDarkMode ? "text-[#8A8A8A]" : "text-gray-600"}`}>
+                Menampilkan <span className="text-[#B6A47E] font-extrabold">{currentTotal > 0 ? startIndex + 1 : 0}</span> –{" "}
+                <span className="text-[#B6A47E] font-extrabold">{endIndex}</span> dari{" "}
+                <span className="text-[#B6A47E] font-extrabold">{currentTotal}</span> data (Halaman {validPage} dari {totalPages})
+              </span>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={validPage <= 1}
+                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                  style={{ padding: "8px 16px" }}
+                  className={`rounded-[5px] text-[11px] font-bold uppercase tracking-wider transition-all border ${
+                    validPage <= 1
+                      ? "opacity-40 cursor-not-allowed border-transparent text-gray-500"
+                      : isDarkMode
+                      ? "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-[#B6A47E] cursor-pointer"
+                      : "bg-gray-100 border-gray-200 text-gray-800 hover:bg-gray-200 cursor-pointer"
+                  }`}
+                >
+                  Sebelumnya
+                </button>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pg) => (
+                  <button
+                    key={pg}
+                    type="button"
+                    onClick={() => setCurrentPage(pg)}
+                    style={{ width: "32px", height: "32px" }}
+                    className={`rounded-[5px] text-[11px] font-bold font-mono transition-all border cursor-pointer flex items-center justify-center ${
+                      pg === validPage
+                        ? "bg-[#B6A47E] border-[#B6A47E] text-black font-extrabold"
+                        : isDarkMode
+                        ? "bg-white/5 border-white/10 text-white hover:bg-white/10"
+                        : "bg-gray-100 border-gray-200 text-gray-800 hover:bg-gray-200"
+                    }`}
+                  >
+                    {pg}
+                  </button>
+                ))}
+
+                <button
+                  type="button"
+                  disabled={validPage >= totalPages}
+                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                  style={{ padding: "8px 16px" }}
+                  className={`rounded-[5px] text-[11px] font-bold uppercase tracking-wider transition-all border ${
+                    validPage >= totalPages
+                      ? "opacity-40 cursor-not-allowed border-transparent text-gray-500"
+                      : isDarkMode
+                      ? "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-[#B6A47E] cursor-pointer"
+                      : "bg-gray-100 border-gray-200 text-gray-800 hover:bg-gray-200 cursor-pointer"
+                  }`}
+                >
+                  Selanjutnya
+                </button>
               </div>
             </div>
           )}

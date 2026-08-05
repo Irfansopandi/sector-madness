@@ -108,6 +108,13 @@ class CategoryController extends Controller
             ], 404);
         }
 
+        if ($category->products()->count() > 0) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Kategori "' . $category->name . '" tidak dapat dihapus karena masih digunakan oleh produk.',
+            ], 422);
+        }
+
         $category->delete();
 
         return response()->json([

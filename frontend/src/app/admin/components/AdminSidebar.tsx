@@ -15,9 +15,21 @@ export default function AdminSidebar({ activeTab, isDarkMode }: AdminSidebarProp
   const pathname = usePathname();
   const router = useRouter();
   const [isOpenMobile, setIsOpenMobile] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("sector_madness_sidebar_collapsed");
+      return saved === "true";
+    }
+    return false;
+  });
   const [hoveredTooltip, setHoveredTooltip] = useState<{ label: string; top: number } | null>(null);
-  const [internalDarkMode, setInternalDarkMode] = useState<boolean>(true);
+  const [internalDarkMode, setInternalDarkMode] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("sector_madness_admin_theme");
+      return saved === null ? true : saved === "dark";
+    }
+    return true;
+  });
 
   useEffect(() => {
     const savedCollapsed = localStorage.getItem("sector_madness_sidebar_collapsed");
@@ -162,8 +174,20 @@ export default function AdminSidebar({ activeTab, isDarkMode }: AdminSidebarProp
       category: "MANAGEMENT",  
       items: [
         {
+          id: "products",
+          label: "Products",
+          href: "/admin/products",
+          icon: (
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+              <path d="m3.3 7 8.7 5 8.7-5" />
+              <path d="M12 22V12" />
+            </svg>
+          ),
+        },
+        {
           id: "orders",
-          label: "Order",
+          label: "Orders",
           href: "/admin/orders",
           icon: (
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -175,14 +199,27 @@ export default function AdminSidebar({ activeTab, isDarkMode }: AdminSidebarProp
           ),
         },
         {
-          id: "products",
-          label: "Produk",
-          href: "/admin/products",
+          id: "customers",
+          label: "Customers",
+          href: "/admin/customers",
           icon: (
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
-              <path d="m3.3 7 8.7 5 8.7-5" />
-              <path d="M12 22V12" />
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+          ),
+        },
+        {
+          id: "vouchers",
+          label: "Kode Voucher",
+          href: "/admin/vouchers",
+          icon: (
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2Z" />
+              <path d="M9 12h.01" />
+              <path d="M15 12h.01" />
             </svg>
           ),
         },

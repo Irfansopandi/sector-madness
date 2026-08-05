@@ -173,7 +173,9 @@ export default function AddressModal({ isOpen, onClose, onSuccess, editingAddres
         item.district.toLowerCase().includes(q) ||
         item.city.toLowerCase().includes(q) ||
         item.province.toLowerCase().includes(q) ||
-        item.postal_code.includes(q)
+        item.postal_code.includes(q) ||
+        (item.subdistrict && item.subdistrict.toLowerCase().includes(q)) ||
+        (item.keywords && item.keywords.some((k) => k.toLowerCase().includes(q)))
     );
     const apiMatches = (areaResults || []).map((a: any) => {
       const dist = a.administrative_division_level_3_name || a.name || "District";
@@ -494,7 +496,7 @@ export default function AddressModal({ isOpen, onClose, onSuccess, editingAddres
                           >
                             <div className="flex items-center justify-between">
                               <span className="text-[#FFFFFF] group-hover:text-white font-extrabold text-sm uppercase tracking-wide transition-colors">
-                                {loc.district}
+                                {loc.district} {loc.subdistrict ? <span className="text-[#B6A47E] font-normal text-xs normal-case ml-1">(Desa: {loc.subdistrict})</span> : ""}
                               </span>
                               <span className="bg-[#1C1C1C] text-[#DDDDDD] border border-[#3A3A3A] px-2.5 py-1 text-xs font-bold tracking-widest ml-3 shrink-0 whitespace-nowrap">
                                 POS: {loc.postal_code}

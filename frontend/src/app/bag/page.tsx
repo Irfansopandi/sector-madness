@@ -20,7 +20,7 @@ export default function ShoppingBagPage() {
 
   const { data: realProducts = [] } = useQuery({
     queryKey: ["products"],
-    queryFn: getProducts,
+    queryFn: () => getProducts(),
   });
 
   const currentToken = typeof window !== "undefined" ? localStorage.getItem("sector_madness_token") : null;

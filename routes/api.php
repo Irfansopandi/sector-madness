@@ -21,6 +21,8 @@ use App\Http\Controllers\Api\CollectionController;
 use App\Http\Controllers\Api\HeroBannerController;
 use App\Http\Controllers\Api\JournalController;
 use App\Http\Controllers\Api\UploadController;
+use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\VoucherController;
 
 /*
 |--------------------------------------------------------------------------
@@ -163,6 +165,22 @@ Route::post('/orders/{order_number}/confirm-received', [OrderController::class, 
 // Admin Order & Shipment Tracking Control API
 Route::get('/admin/orders', [OrderController::class, 'adminOrders']);
 Route::put('/admin/orders/{order_number}/shipment', [OrderController::class, 'adminUpdateShipment']);
+
+// Admin Customer Management API
+Route::get('/admin/customers', [CustomerController::class, 'adminIndex']);
+Route::post('/admin/customers', [CustomerController::class, 'adminStore']);
+Route::get('/admin/customers/{id}', [CustomerController::class, 'adminShow']);
+Route::put('/admin/customers/{id}', [CustomerController::class, 'adminUpdate']);
+Route::put('/admin/customers/{id}/status', [CustomerController::class, 'adminToggleStatus']);
+Route::delete('/admin/customers/{id}', [CustomerController::class, 'adminDestroy']);
+
+// Admin Voucher Management API
+Route::get('/admin/vouchers', [VoucherController::class, 'adminIndex']);
+Route::post('/admin/vouchers', [VoucherController::class, 'adminStore']);
+Route::get('/admin/vouchers/{id}', [VoucherController::class, 'adminShow']);
+Route::put('/admin/vouchers/{id}', [VoucherController::class, 'adminUpdate']);
+Route::put('/admin/vouchers/{id}/status', [VoucherController::class, 'adminToggleStatus']);
+Route::delete('/admin/vouchers/{id}', [VoucherController::class, 'adminDestroy']);
 
 /*
 |--------------------------------------------------------------------------

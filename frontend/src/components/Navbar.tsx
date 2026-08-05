@@ -287,7 +287,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
           isLightMode || isShopHovered
             ? "bg-[#FFFFFF] text-[#0A0A0A] border-[#E5E5E5]"
             : scrolled
-            ? "bg-[#0A0A0A]/95 backdrop-blur-sm border-[#222222]/50 text-[#F5F5F5]"
+            ? "bg-[#0A0A0A]/80 backdrop-blur-md border-[#222222]/40 text-[#F5F5F5]"
             : "bg-transparent text-[#F5F5F5] border-transparent"
         }`}
       >

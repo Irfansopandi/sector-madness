@@ -27,27 +27,34 @@ class ProductController extends Controller
             });
         }
 
-        // Filter berdasarkan kategori atau tag
+        // Filter berdasarkan kategori dari Single Source of Truth database categories
         if ($request->filled('category')) {
-            $cat = strtoupper($request->category);
-            if (!in_array($cat, ['ALL', 'ALL PRODUCTS', 'SHOP'])) {
-                if ($cat === 'NEW ARRIVALS') {
+            $catParam = trim($request->category);
+            $catUpper = strtoupper($catParam);
+
+            if (!in_array($catUpper, ['ALL', 'ALL PRODUCTS', 'SHOP'])) {
+                if ($catUpper === 'NEW ARRIVALS') {
                     $query->where('collection_code', 'SECTOR 002')->orWhere('id', '>=', 5);
-                } elseif ($cat === 'OUTERWEAR' || $cat === 'JACKETS') {
-                    $query->where(function ($q) {
-                        $q->where('name', 'like', '%bomber%')
-                          ->orWhere('name', 'like', '%trench%')
-                          ->orWhere('name', 'like', '%anorak%')
-                          ->orWhere('name', 'like', '%vest%')
-                          ->orWhere('name', 'like', '%jacket%')
-                          ->orWhere('name', 'like', '%coat%');
-                    });
-                } elseif ($cat === 'T-SHIRT' || $cat === 'T-SHIRTS') {
-                    $query->where('name', 'like', '%tee%')->orWhere('name', 'like', '%shirt%');
-                } elseif ($cat === 'BOTTOMS' || $cat === 'CARGO' || $cat === 'TROUSERS') {
-                    $query->where('name', 'like', '%cargo%')->orWhere('name', 'like', '%trousers%')->orWhere('name', 'like', '%pants%');
                 } else {
-                    $query->where('name', 'like', "%{$cat}%")->orWhere('collection', 'like', "%{$cat}%");
+                    // Cari kategori di database berdasarkan ID, slug, atau nama
+                    $categoryModel = null;
+                    if (is_numeric($catParam)) {
+                        $categoryModel = \App\Models\Category::find($catParam);
+                    }
+                    if (!$categoryModel) {
+                        $catSlug = \Illuminate\Support\Str::slug($catParam);
+                        $categoryModel = \App\Models\Category::where('slug', $catSlug)
+                            ->orWhere('name', $catUpper)
+                            ->orWhereRaw('LOWER(name) = ?', [strtolower($catParam)])
+                            ->first();
+                    }
+
+                    if ($categoryModel) {
+                        $query->where('category_id', $categoryModel->id);
+                    } else {
+                        // Jika kategori tidak terdaftar di database, return 0 hasil dengan aman
+                        $query->whereRaw('1 = 0');
+                    }
                 }
             }
         }

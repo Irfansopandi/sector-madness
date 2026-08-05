@@ -92,17 +92,25 @@ export default function Hero() {
             </span>
           </motion.div>
 
-          {/* Brand Name */}
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
-            className="font-[family-name:var(--font-display)] text-[clamp(2.5rem,8vw,7rem)] tracking-[-0.02em] text-[#F5F5F5] font-normal leading-[0.95] mb-10 md:mb-12"
-          >
-            SECTOR
-            <br />
-            MADNESS
-          </motion.h1>
+          {/* Brand Name - Vertical Gap Collapse Entrance */}
+          <h1 className="font-[family-name:var(--font-display)] text-[clamp(2.5rem,8vw,7rem)] tracking-[-0.02em] text-[#F5F5F5] font-normal leading-[0.95] mb-10 md:mb-12 flex flex-col items-center text-center">
+            <motion.span
+              initial={{ opacity: 0, y: -45 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+              className="block"
+            >
+              SECTOR
+            </motion.span>
+            <motion.span
+              initial={{ opacity: 0, y: 45 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+              className="block"
+            >
+              MADNESS
+            </motion.span>
+          </h1>
 
           {/* Tagline */}
           <motion.p

@@ -1,246 +1,198 @@
-export const INDONESIA_LOCATION_DIRECTORY = [
+export interface LocationDirectoryItem {
+  district: string;
+  city: string;
+  province: string;
+  postal_code: string;
+  area_id: string;
+  subdistrict?: string;
+  keywords?: string[];
+}
+
+export const INDONESIA_LOCATION_DIRECTORY: LocationDirectoryItem[] = [
+  // KABUPATEN KARAWANG
+  { district: "Tempuran", city: "Karawang", province: "Jawa Barat", postal_code: "41385", area_id: "IDNPJ_TEMP", subdistrict: "Sumberjaya", keywords: ["sumberjaya", "sumber jaya", "tempuran"] },
+  { district: "Rengasdengklok", city: "Karawang", province: "Jawa Barat", postal_code: "41352", area_id: "IDNPJ_RENG", keywords: ["rengasdengklok", "dengklok"] },
+  { district: "Klari", city: "Karawang", province: "Jawa Barat", postal_code: "41371", area_id: "IDNPJ_KLARI", subdistrict: "Kosambi", keywords: ["klari", "kosambi"] },
+  { district: "Telukjambe Timur", city: "Karawang", province: "Jawa Barat", postal_code: "41361", area_id: "IDNPJ_TELUK", subdistrict: "Wadas", keywords: ["wadas", "galuh mas", "telukjambe timur"] },
+  { district: "Telukjambe Barat", city: "Karawang", province: "Jawa Barat", postal_code: "41361", area_id: "IDNPJ_TELUK2", keywords: ["telukjambe barat", "badami"] },
+  { district: "Cikampek", city: "Karawang", province: "Jawa Barat", postal_code: "41373", area_id: "IDNPJ_CKM", keywords: ["cikampek", "dawuan"] },
+  { district: "Kotabaru", city: "Karawang", province: "Jawa Barat", postal_code: "41374", area_id: "IDNPJ_KOTAB", subdistrict: "Sarimulya", keywords: ["kotabaru", "sarimulya"] },
+  { district: "Jatisari", city: "Karawang", province: "Jawa Barat", postal_code: "41374", area_id: "IDNPJ_KOTAB2", subdistrict: "Balonggandu", keywords: ["jatisari", "balonggandu"] },
+  { district: "Cilamaya Wetan", city: "Karawang", province: "Jawa Barat", postal_code: "41384", area_id: "IDNPJ_CILAM", keywords: ["cilamaya wetan", "cilamaya"] },
+  { district: "Cilamaya Kulon", city: "Karawang", province: "Jawa Barat", postal_code: "41384", area_id: "IDNPJ_CILAM2", keywords: ["cilamaya kulon", "pasirjaya"] },
+  { district: "Karawang Barat", city: "Karawang", province: "Jawa Barat", postal_code: "41311", area_id: "IDNPJ_KRWB", subdistrict: "Tanjungpura", keywords: ["karawang barat", "tanjungpura"] },
+  { district: "Karawang Timur", city: "Karawang", province: "Jawa Barat", postal_code: "41314", area_id: "IDNPJ_KRWT", subdistrict: "Kondangjaya", keywords: ["karawang timur", "kondangjaya"] },
+  { district: "Cibuaya", city: "Karawang", province: "Jawa Barat", postal_code: "41354", area_id: "IDNPJ_CIBU", keywords: ["cibuaya"] },
+  { district: "Batujaya", city: "Karawang", province: "Jawa Barat", postal_code: "41354", area_id: "IDNPJ_BATU", subdistrict: "Segaran", keywords: ["batujaya", "segaran"] },
+
   // JAKARTA SELATAN (12xxx)
-  { district: "Kebayoran Baru", city: "Jakarta Selatan", province: "DKI Jakarta", postal_code: "12110", area_id: "IDNPJ001" },
-  { district: "Senopati (Kebayoran Baru)", city: "Jakarta Selatan", province: "DKI Jakarta", postal_code: "12110", area_id: "IDNPJ001" },
-  { district: "Gandaria Utara", city: "Jakarta Selatan", province: "DKI Jakarta", postal_code: "12140", area_id: "IDNPJ001" },
-  { district: "Cipete Selatan", city: "Jakarta Selatan", province: "DKI Jakarta", postal_code: "12410", area_id: "IDNPJ001" },
-  { district: "Melawai", city: "Jakarta Selatan", province: "DKI Jakarta", postal_code: "12160", area_id: "IDNPJ001" },
-  { district: "Kebayoran Lama", city: "Jakarta Selatan", province: "DKI Jakarta", postal_code: "12240", area_id: "IDNPJ002" },
-  { district: "Pondok Indah", city: "Jakarta Selatan", province: "DKI Jakarta", postal_code: "12310", area_id: "IDNPJ002" },
-  { district: "Cilandak Barat", city: "Jakarta Selatan", province: "DKI Jakarta", postal_code: "12430", area_id: "IDNPJ002" },
-  { district: "Lebak Bulus", city: "Jakarta Selatan", province: "DKI Jakarta", postal_code: "12440", area_id: "IDNPJ002" },
-  { district: "Fatmawati", city: "Jakarta Selatan", province: "DKI Jakarta", postal_code: "12430", area_id: "IDNPJ002" },
-  { district: "Pasar Minggu", city: "Jakarta Selatan", province: "DKI Jakarta", postal_code: "12520", area_id: "IDNPJ002" },
-  { district: "Ragunan", city: "Jakarta Selatan", province: "DKI Jakarta", postal_code: "12550", area_id: "IDNPJ002" },
-  { district: "Pejaten Barat", city: "Jakarta Selatan", province: "DKI Jakarta", postal_code: "12510", area_id: "IDNPJ002" },
-  { district: "Mampang Prapatan", city: "Jakarta Selatan", province: "DKI Jakarta", postal_code: "12710", area_id: "IDNPJ002" },
-  { district: "Kemang (Bangka)", city: "Jakarta Selatan", province: "DKI Jakarta", postal_code: "12730", area_id: "IDNPJ002" },
-  { district: "Pancoran", city: "Jakarta Selatan", province: "DKI Jakarta", postal_code: "12780", area_id: "IDNPJ002" },
-  { district: "Tebet Barat", city: "Jakarta Selatan", province: "DKI Jakarta", postal_code: "12810", area_id: "IDNPJ002" },
-  { district: "Menteng Dalam", city: "Jakarta Selatan", province: "DKI Jakarta", postal_code: "12870", area_id: "IDNPJ002" },
-  { district: "Setiabudi (Mega Kuningan)", city: "Jakarta Selatan", province: "DKI Jakarta", postal_code: "12910", area_id: "IDNPJ002" },
-  { district: "Karet Kuningan", city: "Jakarta Selatan", province: "DKI Jakarta", postal_code: "12940", area_id: "IDNPJ002" },
+  { district: "Kebayoran Baru", city: "Jakarta Selatan", province: "DKI Jakarta", postal_code: "12110", area_id: "IDNPJ001", subdistrict: "Senopati", keywords: ["senopati", "kebayoran baru", "gandaria utara", "melawai"] },
+  { district: "Cilandak", city: "Jakarta Selatan", province: "DKI Jakarta", postal_code: "12430", area_id: "IDNPJ002", subdistrict: "Cilandak Barat", keywords: ["cilandak barat", "fatmawati", "lebak bulus", "cilandak"] },
+  { district: "Kebayoran Lama", city: "Jakarta Selatan", province: "DKI Jakarta", postal_code: "12240", area_id: "IDNPJ002", subdistrict: "Pondok Indah", keywords: ["pondok indah", "kebayoran lama", "cipulir"] },
+  { district: "Pasar Minggu", city: "Jakarta Selatan", province: "DKI Jakarta", postal_code: "12520", area_id: "IDNPJ002", subdistrict: "Ragunan", keywords: ["ragunan", "pejaten", "pasar minggu"] },
+  { district: "Mampang Prapatan", city: "Jakarta Selatan", province: "DKI Jakarta", postal_code: "12710", area_id: "IDNPJ002", subdistrict: "Kemang / Bangka", keywords: ["kemang", "bangka", "mampang", "mampang prapatan"] },
+  { district: "Pancoran", city: "Jakarta Selatan", province: "DKI Jakarta", postal_code: "12780", area_id: "IDNPJ002", keywords: ["pancoran", "kalibata"] },
+  { district: "Tebet", city: "Jakarta Selatan", province: "DKI Jakarta", postal_code: "12810", area_id: "IDNPJ002", subdistrict: "Tebet Barat", keywords: ["tebet", "tebet barat", "menteng dalam"] },
+  { district: "Setiabudi", city: "Jakarta Selatan", province: "DKI Jakarta", postal_code: "12910", area_id: "IDNPJ002", subdistrict: "Mega Kuningan", keywords: ["setiabudi", "mega kuningan", "karet kuningan", "kuningan"] },
 
   // JAKARTA PUSAT (10xxx)
-  { district: "Menteng", city: "Jakarta Pusat", province: "DKI Jakarta", postal_code: "10310", area_id: "IDNPJ004" },
-  { district: "Cikini", city: "Jakarta Pusat", province: "DKI Jakarta", postal_code: "10330", area_id: "IDNPJ004" },
-  { district: "Gondangdia (Sudirman)", city: "Jakarta Pusat", province: "DKI Jakarta", postal_code: "10350", area_id: "IDNPJ004" },
-  { district: "Tanah Abang (Senayan)", city: "Jakarta Pusat", province: "DKI Jakarta", postal_code: "10250", area_id: "IDNPJ005" },
-  { district: "Gelora (Bung Karno)", city: "Jakarta Pusat", province: "DKI Jakarta", postal_code: "10270", area_id: "IDNPJ005" },
-  { district: "Bendungan Hilir (Benhil)", city: "Jakarta Pusat", province: "DKI Jakarta", postal_code: "10210", area_id: "IDNPJ005" },
-  { district: "Senen (Kramat Raya)", city: "Jakarta Pusat", province: "DKI Jakarta", postal_code: "10410", area_id: "IDNPJ003" },
-  { district: "Kemayoran", city: "Jakarta Pusat", province: "DKI Jakarta", postal_code: "10610", area_id: "IDNPJ003" },
-  { district: "Cempaka Putih", city: "Jakarta Pusat", province: "DKI Jakarta", postal_code: "10510", area_id: "IDNPJ003" },
-  { district: "Johar Baru", city: "Jakarta Pusat", province: "DKI Jakarta", postal_code: "10560", area_id: "IDNPJ003" },
-  { district: "Gambir (Monas)", city: "Jakarta Pusat", province: "DKI Jakarta", postal_code: "10110", area_id: "IDNPJ003" },
-  { district: "Petojo Selatan", city: "Jakarta Pusat", province: "DKI Jakarta", postal_code: "10160", area_id: "IDNPJ003" },
-  { district: "Sawah Besar", city: "Jakarta Pusat", province: "DKI Jakarta", postal_code: "10710", area_id: "IDNPJ003" },
-  { district: "Mangga Dua Selatan", city: "Jakarta Pusat", province: "DKI Jakarta", postal_code: "10730", area_id: "IDNPJ003" },
+  { district: "Menteng", city: "Jakarta Pusat", province: "DKI Jakarta", postal_code: "10310", area_id: "IDNPJ004", subdistrict: "Cikini / Gondangdia", keywords: ["menteng", "cikini", "gondangdia", "sudirman"] },
+  { district: "Tanah Abang", city: "Jakarta Pusat", province: "DKI Jakarta", postal_code: "10250", area_id: "IDNPJ005", subdistrict: "Senayan / Gelora", keywords: ["tanah abang", "senayan", "gelora", "bung karno", "benhil", "bendungan hilir"] },
+  { district: "Senen", city: "Jakarta Pusat", province: "DKI Jakarta", postal_code: "10410", area_id: "IDNPJ003", subdistrict: "Kramat", keywords: ["senen", "kramat raya", "kramat"] },
+  { district: "Kemayoran", city: "Jakarta Pusat", province: "DKI Jakarta", postal_code: "10610", area_id: "IDNPJ003", keywords: ["kemayoran", "serdang"] },
+  { district: "Cempaka Putih", city: "Jakarta Pusat", province: "DKI Jakarta", postal_code: "10510", area_id: "IDNPJ003", keywords: ["cempaka putih"] },
+  { district: "Johar Baru", city: "Jakarta Pusat", province: "DKI Jakarta", postal_code: "10560", area_id: "IDNPJ003", keywords: ["johar baru"] },
+  { district: "Gambir", city: "Jakarta Pusat", province: "DKI Jakarta", postal_code: "10110", area_id: "IDNPJ003", subdistrict: "Monas / Petojo", keywords: ["gambir", "monas", "petojo"] },
+  { district: "Sawah Besar", city: "Jakarta Pusat", province: "DKI Jakarta", postal_code: "10710", area_id: "IDNPJ003", subdistrict: "Mangga Dua", keywords: ["sawah besar", "mangga dua"] },
 
   // JAKARTA BARAT (11xxx)
-  { district: "Kembangan (Puri Indah)", city: "Jakarta Barat", province: "DKI Jakarta", postal_code: "11610", area_id: "IDNPJ010" },
-  { district: "Meruya Utara", city: "Jakarta Barat", province: "DKI Jakarta", postal_code: "11620", area_id: "IDNPJ010" },
-  { district: "Joglo", city: "Jakarta Barat", province: "DKI Jakarta", postal_code: "11640", area_id: "IDNPJ010" },
-  { district: "Kebon Jeruk", city: "Jakarta Barat", province: "DKI Jakarta", postal_code: "11530", area_id: "IDNPJ010" },
-  { district: "Kedoya Selatan", city: "Jakarta Barat", province: "DKI Jakarta", postal_code: "11520", area_id: "IDNPJ010" },
-  { district: "Duri Kepa", city: "Jakarta Barat", province: "DKI Jakarta", postal_code: "11510", area_id: "IDNPJ010" },
-  { district: "Grogol Petamburan", city: "Jakarta Barat", province: "DKI Jakarta", postal_code: "11450", area_id: "IDNPJ011" },
-  { district: "Tanjung Duren (Central Park / CP)", city: "Jakarta Barat", province: "DKI Jakarta", postal_code: "11470", area_id: "IDNPJ011" },
-  { district: "Tomang", city: "Jakarta Barat", province: "DKI Jakarta", postal_code: "11440", area_id: "IDNPJ011" },
-  { district: "Palmerah", city: "Jakarta Barat", province: "DKI Jakarta", postal_code: "11480", area_id: "IDNPJ011" },
-  { district: "Slipi", city: "Jakarta Barat", province: "DKI Jakarta", postal_code: "11410", area_id: "IDNPJ011" },
-  { district: "Kemanggisan", city: "Jakarta Barat", province: "DKI Jakarta", postal_code: "11480", area_id: "IDNPJ011" },
-  { district: "Tamansari (Kota Tua)", city: "Jakarta Barat", province: "DKI Jakarta", postal_code: "11110", area_id: "IDNPJ011" },
-  { district: "Glodok", city: "Jakarta Barat", province: "DKI Jakarta", postal_code: "11120", area_id: "IDNPJ011" },
-  { district: "Tambora", city: "Jakarta Barat", province: "DKI Jakarta", postal_code: "11210", area_id: "IDNPJ011" },
-  { district: "Cengkareng", city: "Jakarta Barat", province: "DKI Jakarta", postal_code: "11730", area_id: "IDNPJ011" },
-  { district: "Kalideres", city: "Jakarta Barat", province: "DKI Jakarta", postal_code: "11840", area_id: "IDNPJ011" },
+  { district: "Kembangan", city: "Jakarta Barat", province: "DKI Jakarta", postal_code: "11610", area_id: "IDNPJ010", subdistrict: "Puri Indah", keywords: ["kembangan", "puri indah", "meruya", "joglo"] },
+  { district: "Kebon Jeruk", city: "Jakarta Barat", province: "DKI Jakarta", postal_code: "11530", area_id: "IDNPJ010", subdistrict: "Kedoya", keywords: ["kebon jeruk", "kedoya", "duri kepa"] },
+  { district: "Grogol Petamburan", city: "Jakarta Barat", province: "DKI Jakarta", postal_code: "11450", area_id: "IDNPJ011", subdistrict: "Tanjung Duren", keywords: ["grogol", "grogol petamburan", "tanjung duren", "central park", "tomang"] },
+  { district: "Palmerah", city: "Jakarta Barat", province: "DKI Jakarta", postal_code: "11480", area_id: "IDNPJ011", subdistrict: "Slipi / Kemanggisan", keywords: ["palmerah", "slipi", "kemanggisan"] },
+  { district: "Tamansari", city: "Jakarta Barat", province: "DKI Jakarta", postal_code: "11110", area_id: "IDNPJ011", subdistrict: "Kota Tua / Glodok", keywords: ["tamansari", "kota tua", "glodok"] },
+  { district: "Tambora", city: "Jakarta Barat", province: "DKI Jakarta", postal_code: "11210", area_id: "IDNPJ011", keywords: ["tambora"] },
+  { district: "Cengkareng", city: "Jakarta Barat", province: "DKI Jakarta", postal_code: "11730", area_id: "IDNPJ011", keywords: ["cengkareng"] },
+  { district: "Kalideres", city: "Jakarta Barat", province: "DKI Jakarta", postal_code: "11840", area_id: "IDNPJ011", keywords: ["kalideres"] },
 
   // JAKARTA UTARA (14xxx)
-  { district: "Kelapa Gading (Boulevard)", city: "Jakarta Utara", province: "DKI Jakarta", postal_code: "14240", area_id: "IDNPJ006" },
-  { district: "Pegangsaan Dua", city: "Jakarta Utara", province: "DKI Jakarta", postal_code: "14250", area_id: "IDNPJ006" },
-  { district: "Penjaringan", city: "Jakarta Utara", province: "DKI Jakarta", postal_code: "14440", area_id: "IDNPJ007" },
-  { district: "Pantai Indah Kapuk (PIK 1 & 2)", city: "Jakarta Utara", province: "DKI Jakarta", postal_code: "14460", area_id: "IDNPJ007" },
-  { district: "Pluit (Baywalk)", city: "Jakarta Utara", province: "DKI Jakarta", postal_code: "14450", area_id: "IDNPJ007" },
-  { district: "Muara Karang", city: "Jakarta Utara", province: "DKI Jakarta", postal_code: "14450", area_id: "IDNPJ007" },
-  { district: "Pademangan", city: "Jakarta Utara", province: "DKI Jakarta", postal_code: "14420", area_id: "IDNPJ007" },
-  { district: "Ancol", city: "Jakarta Utara", province: "DKI Jakarta", postal_code: "14430", area_id: "IDNPJ007" },
-  { district: "Tanjung Priok", city: "Jakarta Utara", province: "DKI Jakarta", postal_code: "14310", area_id: "IDNPJ007" },
-  { district: "Sunter Agung", city: "Jakarta Utara", province: "DKI Jakarta", postal_code: "14350", area_id: "IDNPJ007" },
-  { district: "Sunter Jaya", city: "Jakarta Utara", province: "DKI Jakarta", postal_code: "14360", area_id: "IDNPJ007" },
-  { district: "Koja", city: "Jakarta Utara", province: "DKI Jakarta", postal_code: "14210", area_id: "IDNPJ007" },
-  { district: "Cilincing", city: "Jakarta Utara", province: "DKI Jakarta", postal_code: "14120", area_id: "IDNPJ007" },
+  { district: "Kelapa Gading", city: "Jakarta Utara", province: "DKI Jakarta", postal_code: "14240", area_id: "IDNPJ006", subdistrict: "Boulevard", keywords: ["kelapa gading", "pegangsaan dua", "boulevard"] },
+  { district: "Penjaringan", city: "Jakarta Utara", province: "DKI Jakarta", postal_code: "14440", area_id: "IDNPJ007", subdistrict: "PIK / Pluit", keywords: ["penjaringan", "pik", "pantai indah kapuk", "pluit", "baywalk", "muara karang"] },
+  { district: "Pademangan", city: "Jakarta Utara", province: "DKI Jakarta", postal_code: "14420", area_id: "IDNPJ007", subdistrict: "Ancol", keywords: ["pademangan", "ancol"] },
+  { district: "Tanjung Priok", city: "Jakarta Utara", province: "DKI Jakarta", postal_code: "14310", area_id: "IDNPJ007", subdistrict: "Sunter", keywords: ["tanjung priok", "sunter", "sunter agung", "sunter jaya"] },
+  { district: "Koja", city: "Jakarta Utara", province: "DKI Jakarta", postal_code: "14210", area_id: "IDNPJ007", keywords: ["koja"] },
+  { district: "Cilincing", city: "Jakarta Utara", province: "DKI Jakarta", postal_code: "14120", area_id: "IDNPJ007", keywords: ["cilincing"] },
 
   // JAKARTA TIMUR (13xxx)
-  { district: "Cakung (Pulogebang)", city: "Jakarta Timur", province: "DKI Jakarta", postal_code: "13910", area_id: "IDNPJ008" },
-  { district: "Jatinegara (Bidara Cina)", city: "Jakarta Timur", province: "DKI Jakarta", postal_code: "13310", area_id: "IDNPJ009" },
-  { district: "Cipinang", city: "Jakarta Timur", province: "DKI Jakarta", postal_code: "13410", area_id: "IDNPJ009" },
-  { district: "Matraman", city: "Jakarta Timur", province: "DKI Jakarta", postal_code: "13140", area_id: "IDNPJ009" },
-  { district: "Pulogadung", city: "Jakarta Timur", province: "DKI Jakarta", postal_code: "13210", area_id: "IDNPJ009" },
-  { district: "Rawamangun", city: "Jakarta Timur", province: "DKI Jakarta", postal_code: "13220", area_id: "IDNPJ009" },
-  { district: "Duren Sawit", city: "Jakarta Timur", province: "DKI Jakarta", postal_code: "13440", area_id: "IDNPJ009" },
-  { district: "Pondok Bambu", city: "Jakarta Timur", province: "DKI Jakarta", postal_code: "13430", area_id: "IDNPJ009" },
-  { district: "Klender", city: "Jakarta Timur", province: "DKI Jakarta", postal_code: "13470", area_id: "IDNPJ009" },
-  { district: "Kramat Jati", city: "Jakarta Timur", province: "DKI Jakarta", postal_code: "13510", area_id: "IDNPJ009" },
-  { district: "Cawang", city: "Jakarta Timur", province: "DKI Jakarta", postal_code: "13630", area_id: "IDNPJ009" },
-  { district: "Makasar (Halim PK)", city: "Jakarta Timur", province: "DKI Jakarta", postal_code: "13570", area_id: "IDNPJ009" },
-  { district: "Pasar Rebo", city: "Jakarta Timur", province: "DKI Jakarta", postal_code: "13760", area_id: "IDNPJ009" },
-  { district: "Ciracas (Kampung Rambutan)", city: "Jakarta Timur", province: "DKI Jakarta", postal_code: "13740", area_id: "IDNPJ009" },
-  { district: "Cibubur", city: "Jakarta Timur", province: "DKI Jakarta", postal_code: "13720", area_id: "IDNPJ009" },
-  { district: "Cipayung", city: "Jakarta Timur", province: "DKI Jakarta", postal_code: "13840", area_id: "IDNPJ009" },
+  { district: "Cakung", city: "Jakarta Timur", province: "DKI Jakarta", postal_code: "13910", area_id: "IDNPJ008", subdistrict: "Pulogebang", keywords: ["cakung", "pulogebang"] },
+  { district: "Jatinegara", city: "Jakarta Timur", province: "DKI Jakarta", postal_code: "13310", area_id: "IDNPJ009", subdistrict: "Bidara Cina / Cipinang", keywords: ["jatinegara", "bidara cina", "cipinang"] },
+  { district: "Matraman", city: "Jakarta Timur", province: "DKI Jakarta", postal_code: "13140", area_id: "IDNPJ009", keywords: ["matraman"] },
+  { district: "Pulogadung", city: "Jakarta Timur", province: "DKI Jakarta", postal_code: "13210", area_id: "IDNPJ009", subdistrict: "Rawamangun", keywords: ["pulogadung", "rawamangun"] },
+  { district: "Duren Sawit", city: "Jakarta Timur", province: "DKI Jakarta", postal_code: "13440", area_id: "IDNPJ009", subdistrict: "Pondok Bambu / Klender", keywords: ["duren sawit", "pondok bambu", "klender"] },
+  { district: "Kramat Jati", city: "Jakarta Timur", province: "DKI Jakarta", postal_code: "13510", area_id: "IDNPJ009", subdistrict: "Cawang", keywords: ["kramat jati", "cawang"] },
+  { district: "Makasar", city: "Jakarta Timur", province: "DKI Jakarta", postal_code: "13570", area_id: "IDNPJ009", subdistrict: "Halim Perdanakusuma", keywords: ["makasar", "halim", "halim pk"] },
+  { district: "Pasar Rebo", city: "Jakarta Timur", province: "DKI Jakarta", postal_code: "13760", area_id: "IDNPJ009", keywords: ["pasar rebo"] },
+  { district: "Ciracas", city: "Jakarta Timur", province: "DKI Jakarta", postal_code: "13740", area_id: "IDNPJ009", subdistrict: "Cibubur", keywords: ["ciracas", "kampung rambutan", "cibubur"] },
+  { district: "Cipayung", city: "Jakarta Timur", province: "DKI Jakarta", postal_code: "13840", area_id: "IDNPJ009", keywords: ["cipayung"] },
 
   // TANGERANG & TANGERANG SELATAN (15xxx)
-  { district: "Serpong (BSD City)", city: "Tangerang Selatan", province: "Banten", postal_code: "15310", area_id: "IDNPT001" },
-  { district: "Serpong Utara (Alam Sutera)", city: "Tangerang Selatan", province: "Banten", postal_code: "15326", area_id: "IDNPT001" },
-  { district: "Pondok Aren (Bintaro Jaya)", city: "Tangerang Selatan", province: "Banten", postal_code: "15220", area_id: "IDNPT002" },
-  { district: "Ciputat", city: "Tangerang Selatan", province: "Banten", postal_code: "15411", area_id: "IDNPT002" },
-  { district: "Ciputat Timur (Cirendeu / Pisangan)", city: "Tangerang Selatan", province: "Banten", postal_code: "15419", area_id: "IDNPT002" },
-  { district: "Pamulang", city: "Tangerang Selatan", province: "Banten", postal_code: "15417", area_id: "IDNPT002" },
-  { district: "Setu (Babakan)", city: "Tangerang Selatan", province: "Banten", postal_code: "15314", area_id: "IDNPT002" },
-  { district: "Karawaci (Lippo Village)", city: "Tangerang", province: "Banten", postal_code: "15115", area_id: "IDNPT003" },
-  { district: "Kelapa Dua (Gading Serpong)", city: "Tangerang", province: "Banten", postal_code: "15810", area_id: "IDNPT003" },
-  { district: "Ciledug", city: "Tangerang", province: "Banten", postal_code: "15151", area_id: "IDNPT003" },
-  { district: "Cipondoh", city: "Tangerang", province: "Banten", postal_code: "15148", area_id: "IDNPT003" },
-  { district: "Cikupa", city: "Tangerang", province: "Banten", postal_code: "15710", area_id: "IDNPT003" },
-  { district: "Balaraja", city: "Tangerang", province: "Banten", postal_code: "15610", area_id: "IDNPT003" },
-  { district: "Benda (Bandara Soekarno-Hatta)", city: "Tangerang", province: "Banten", postal_code: "15126", area_id: "IDNPT003" },
+  { district: "Serpong", city: "Tangerang Selatan", province: "Banten", postal_code: "15310", area_id: "IDNPT001", subdistrict: "BSD City", keywords: ["serpong", "bsd", "bsd city"] },
+  { district: "Serpong Utara", city: "Tangerang Selatan", province: "Banten", postal_code: "15326", area_id: "IDNPT001", subdistrict: "Alam Sutera", keywords: ["serpong utara", "alam sutera"] },
+  { district: "Pondok Aren", city: "Tangerang Selatan", province: "Banten", postal_code: "15220", area_id: "IDNPT002", subdistrict: "Bintaro Jaya", keywords: ["pondok aren", "bintaro", "bintaro jaya"] },
+  { district: "Ciputat", city: "Tangerang Selatan", province: "Banten", postal_code: "15411", area_id: "IDNPT002", keywords: ["ciputat"] },
+  { district: "Ciputat Timur", city: "Tangerang Selatan", province: "Banten", postal_code: "15419", area_id: "IDNPT002", subdistrict: "Cirendeu / Pisangan", keywords: ["ciputat timur", "cirendeu", "pisangan"] },
+  { district: "Pamulang", city: "Tangerang Selatan", province: "Banten", postal_code: "15417", area_id: "IDNPT002", keywords: ["pamulang"] },
+  { district: "Setu", city: "Tangerang Selatan", province: "Banten", postal_code: "15314", area_id: "IDNPT002", subdistrict: "Babakan", keywords: ["setu", "babakan"] },
+  { district: "Karawaci", city: "Tangerang", province: "Banten", postal_code: "15115", area_id: "IDNPT003", subdistrict: "Lippo Village", keywords: ["karawaci", "lippo village"] },
+  { district: "Kelapa Dua", city: "Tangerang", province: "Banten", postal_code: "15810", area_id: "IDNPT003", subdistrict: "Gading Serpong", keywords: ["kelapa dua", "gading serpong"] },
+  { district: "Ciledug", city: "Tangerang", province: "Banten", postal_code: "15151", area_id: "IDNPT003", keywords: ["ciledug"] },
+  { district: "Cipondoh", city: "Tangerang", province: "Banten", postal_code: "15148", area_id: "IDNPT003", keywords: ["cipondoh"] },
+  { district: "Cikupa", city: "Tangerang", province: "Banten", postal_code: "15710", area_id: "IDNPT003", keywords: ["cikupa"] },
+  { district: "Balaraja", city: "Tangerang", province: "Banten", postal_code: "15610", area_id: "IDNPT003", keywords: ["balaraja"] },
+  { district: "Benda", city: "Tangerang", province: "Banten", postal_code: "15126", area_id: "IDNPT003", subdistrict: "Bandara Soekarno-Hatta", keywords: ["benda", "bandara", "soekarno-hatta"] },
 
   // DEPOK & BOGOR (16xxx)
-  { district: "Beji (Margonda Raya)", city: "Depok", province: "Jawa Barat", postal_code: "16421", area_id: "IDNPB006" },
-  { district: "Pancoran Mas", city: "Depok", province: "Jawa Barat", postal_code: "16431", area_id: "IDNPB007" },
-  { district: "Sukmajaya", city: "Depok", province: "Jawa Barat", postal_code: "16411", area_id: "IDNPB007" },
-  { district: "Cimanggis (Kelapa Dua)", city: "Depok", province: "Jawa Barat", postal_code: "16451", area_id: "IDNPB007" },
-  { district: "Tapos", city: "Depok", province: "Jawa Barat", postal_code: "16454", area_id: "IDNPB007" },
-  { district: "Sawangan", city: "Depok", province: "Jawa Barat", postal_code: "16511", area_id: "IDNPB007" },
-  { district: "Cinere", city: "Depok", province: "Jawa Barat", postal_code: "16514", area_id: "IDNPB007" },
-  { district: "Limo", city: "Depok", province: "Jawa Barat", postal_code: "16515", area_id: "IDNPB007" },
-  { district: "Bogor Tengah (Pajajaran / Botani)", city: "Bogor", province: "Jawa Barat", postal_code: "16121", area_id: "IDNPB004" },
-  { district: "Bogor Utara (Bantarjati)", city: "Bogor", province: "Jawa Barat", postal_code: "16151", area_id: "IDNPB005" },
-  { district: "Bogor Selatan (Tajur / Ciawi)", city: "Bogor", province: "Jawa Barat", postal_code: "16131", area_id: "IDNPB005" },
-  { district: "Bogor Barat (Yasmin / Bubulak)", city: "Bogor", province: "Jawa Barat", postal_code: "16111", area_id: "IDNPB005" },
-  { district: "Sentul City (Babakan Madang)", city: "Kab. Bogor", province: "Jawa Barat", postal_code: "16810", area_id: "IDNPB005" },
-  { district: "Cibinong", city: "Kab. Bogor", province: "Jawa Barat", postal_code: "16911", area_id: "IDNPB005" },
-  { district: "Cisarua (Puncak / Megamendung)", city: "Kab. Bogor", province: "Jawa Barat", postal_code: "16750", area_id: "IDNPB005" },
+  { district: "Beji", city: "Depok", province: "Jawa Barat", postal_code: "16421", area_id: "IDNPB006", subdistrict: "Margonda", keywords: ["beji", "margonda", "margonda raya"] },
+  { district: "Pancoran Mas", city: "Depok", province: "Jawa Barat", postal_code: "16431", area_id: "IDNPB007", keywords: ["pancoran mas"] },
+  { district: "Sukmajaya", city: "Depok", province: "Jawa Barat", postal_code: "16411", area_id: "IDNPB007", keywords: ["sukmajaya"] },
+  { district: "Cimanggis", city: "Depok", province: "Jawa Barat", postal_code: "16451", area_id: "IDNPB007", subdistrict: "Kelapa Dua Depok", keywords: ["cimanggis", "kelapa dua depok"] },
+  { district: "Tapos", city: "Depok", province: "Jawa Barat", postal_code: "16454", area_id: "IDNPB007", keywords: ["tapos"] },
+  { district: "Sawangan", city: "Depok", province: "Jawa Barat", postal_code: "16511", area_id: "IDNPB007", keywords: ["sawangan"] },
+  { district: "Cinere", city: "Depok", province: "Jawa Barat", postal_code: "16514", area_id: "IDNPB007", keywords: ["cinere"] },
+  { district: "Limo", city: "Depok", province: "Jawa Barat", postal_code: "16515", area_id: "IDNPB007", keywords: ["limo"] },
+  { district: "Bogor Tengah", city: "Bogor", province: "Jawa Barat", postal_code: "16121", area_id: "IDNPB004", subdistrict: "Pajajaran / Botani", keywords: ["bogor tengah", "pajajaran", "botani"] },
+  { district: "Bogor Utara", city: "Bogor", province: "Jawa Barat", postal_code: "16151", area_id: "IDNPB005", subdistrict: "Bantarjati", keywords: ["bogor utara", "bantarjati"] },
+  { district: "Bogor Selatan", city: "Bogor", province: "Jawa Barat", postal_code: "16131", area_id: "IDNPB005", subdistrict: "Tajur / Ciawi", keywords: ["bogor selatan", "tajur", "ciawi"] },
+  { district: "Bogor Barat", city: "Bogor", province: "Jawa Barat", postal_code: "16111", area_id: "IDNPB005", subdistrict: "Yasmin / Bubulak", keywords: ["bogor barat", "yasmin", "bubulak"] },
+  { district: "Babakan Madang", city: "Kab. Bogor", province: "Jawa Barat", postal_code: "16810", area_id: "IDNPB005", subdistrict: "Sentul City", keywords: ["babakan madang", "sentul", "sentul city"] },
+  { district: "Cibinong", city: "Kab. Bogor", province: "Jawa Barat", postal_code: "16911", area_id: "IDNPB005", keywords: ["cibinong"] },
+  { district: "Cisarua", city: "Kab. Bogor", province: "Jawa Barat", postal_code: "16750", area_id: "IDNPB005", subdistrict: "Puncak / Megamendung", keywords: ["cisarua", "puncak", "megamendung"] },
 
   // BEKASI & CIKARANG (17xxx)
-  { district: "Bekasi Barat (Summarecon)", city: "Bekasi", province: "Jawa Barat", postal_code: "17131", area_id: "IDNPB008" },
-  { district: "Bekasi Selatan (Grand Galaxy)", city: "Bekasi", province: "Jawa Barat", postal_code: "17141", area_id: "IDNPB008" },
-  { district: "Pekayon Jaya", city: "Bekasi", province: "Jawa Barat", postal_code: "17148", area_id: "IDNPB008" },
-  { district: "Bekasi Timur", city: "Bekasi", province: "Jawa Barat", postal_code: "17111", area_id: "IDNPB008" },
-  { district: "Bekasi Utara", city: "Bekasi", province: "Jawa Barat", postal_code: "17121", area_id: "IDNPB008" },
-  { district: "Jatiasih", city: "Bekasi", province: "Jawa Barat", postal_code: "17421", area_id: "IDNPB009" },
-  { district: "Pondok Gede", city: "Bekasi", province: "Jawa Barat", postal_code: "17411", area_id: "IDNPB009" },
-  { district: "Jatisampurna (CitraGrand)", city: "Bekasi", province: "Jawa Barat", postal_code: "17433", area_id: "IDNPB009" },
-  { district: "Cikarang Selatan (Lippo Cikarang)", city: "Kab. Bekasi", province: "Jawa Barat", postal_code: "17550", area_id: "IDNPB009" },
-  { district: "Cikarang Pusat (Kota Deltamas)", city: "Kab. Bekasi", province: "Jawa Barat", postal_code: "17530", area_id: "IDNPB009" },
+  { district: "Bekasi Barat", city: "Bekasi", province: "Jawa Barat", postal_code: "17131", area_id: "IDNPB008", subdistrict: "Summarecon Bekasi", keywords: ["bekasi barat", "summarecon", "summarecon bekasi"] },
+  { district: "Bekasi Selatan", city: "Bekasi", province: "Jawa Barat", postal_code: "17141", area_id: "IDNPB008", subdistrict: "Grand Galaxy", keywords: ["bekasi selatan", "grand galaxy", "pekayon"] },
+  { district: "Bekasi Timur", city: "Bekasi", province: "Jawa Barat", postal_code: "17111", area_id: "IDNPB008", keywords: ["bekasi timur"] },
+  { district: "Bekasi Utara", city: "Bekasi", province: "Jawa Barat", postal_code: "17121", area_id: "IDNPB008", keywords: ["bekasi utara"] },
+  { district: "Jatiasih", city: "Bekasi", province: "Jawa Barat", postal_code: "17421", area_id: "IDNPB009", keywords: ["jatiasih"] },
+  { district: "Pondok Gede", city: "Bekasi", province: "Jawa Barat", postal_code: "17411", area_id: "IDNPB009", keywords: ["pondok gede"] },
+  { district: "Jatisampurna", city: "Bekasi", province: "Jawa Barat", postal_code: "17433", area_id: "IDNPB009", subdistrict: "CitraGrand", keywords: ["jatisampurna", "citragrand"] },
+  { district: "Cikarang Selatan", city: "Kab. Bekasi", province: "Jawa Barat", postal_code: "17550", area_id: "IDNPB009", subdistrict: "Lippo Cikarang", keywords: ["cikarang selatan", "lippo cikarang"] },
+  { district: "Cikarang Pusat", city: "Kab. Bekasi", province: "Jawa Barat", postal_code: "17530", area_id: "IDNPB009", subdistrict: "Kota Deltamas", keywords: ["cikarang pusat", "deltamas", "kota deltamas"] },
+  { district: "Cibarusah", city: "Kab. Bekasi", province: "Jawa Barat", postal_code: "17340", area_id: "IDNPJ_CBRS", keywords: ["cibarusah", "serang baru"] },
 
   // BANDUNG & SEKITARNYA (40xxx)
-  { district: "Coblong (Dago / Cihampelas)", city: "Bandung", province: "Jawa Barat", postal_code: "40132", area_id: "IDNPB001" },
-  { district: "Sumur Bandung (Braga / Merdeka)", city: "Bandung", province: "Jawa Barat", postal_code: "40111", area_id: "IDNPB002" },
-  { district: "Cicendo (Pasirkaliki / Stasiun)", city: "Bandung", province: "Jawa Barat", postal_code: "40171", area_id: "IDNPB003" },
-  { district: "Bandung Wetan (Riau / Gedung Sate)", city: "Bandung", province: "Jawa Barat", postal_code: "40115", area_id: "IDNPB003" },
-  { district: "Lengkong (Buah Batu / Burangrang)", city: "Bandung", province: "Jawa Barat", postal_code: "40264", area_id: "IDNPB003" },
-  { district: "Batununggal (Turangga)", city: "Bandung", province: "Jawa Barat", postal_code: "40273", area_id: "IDNPB003" },
-  { district: "Sukajadi (Pasteur / Paris Van Java)", city: "Bandung", province: "Jawa Barat", postal_code: "40161", area_id: "IDNPB003" },
-  { district: "Sukasari (Setiabudi / Gegerkalong)", city: "Bandung", province: "Jawa Barat", postal_code: "40151", area_id: "IDNPB003" },
-  { district: "Cidadap (Ciumbuleuit)", city: "Bandung", province: "Jawa Barat", postal_code: "40142", area_id: "IDNPB003" },
-  { district: "Arcamanik", city: "Bandung", province: "Jawa Barat", postal_code: "40293", area_id: "IDNPB003" },
-  { district: "Antapani", city: "Bandung", province: "Jawa Barat", postal_code: "40291", area_id: "IDNPB003" },
-  { district: "Cileunyi", city: "Kab. Bandung", province: "Jawa Barat", postal_code: "40622", area_id: "IDNPB003" },
-  { district: "Bojongsoang (Telkom University)", city: "Kab. Bandung", province: "Jawa Barat", postal_code: "40288", area_id: "IDNPB003" },
-  { district: "Cimahi Selatan / Tengah", city: "Cimahi", province: "Jawa Barat", postal_code: "40533", area_id: "IDNPB003" },
-  { district: "Lembang", city: "Kab. Bandung Barat", province: "Jawa Barat", postal_code: "40391", area_id: "IDNPB003" },
+  { district: "Coblong", city: "Bandung", province: "Jawa Barat", postal_code: "40132", area_id: "IDNPB001", subdistrict: "Dago / Cihampelas", keywords: ["coblong", "dago", "cihampelas"] },
+  { district: "Sumur Bandung", city: "Bandung", province: "Jawa Barat", postal_code: "40111", area_id: "IDNPB002", subdistrict: "Braga", keywords: ["sumur bandung", "braga", "merdeka"] },
+  { district: "Cicendo", city: "Bandung", province: "Jawa Barat", postal_code: "40171", area_id: "IDNPB003", subdistrict: "Pasirkaliki", keywords: ["cicendo", "pasirkaliki"] },
+  { district: "Bandung Wetan", city: "Bandung", province: "Jawa Barat", postal_code: "40115", area_id: "IDNPB003", subdistrict: "Riau / Gedung Sate", keywords: ["bandung wetan", "riau", "gedung sate"] },
+  { district: "Lengkong", city: "Bandung", province: "Jawa Barat", postal_code: "40264", area_id: "IDNPB003", subdistrict: "Buah Batu", keywords: ["lengkong", "buah batu", "burangrang"] },
+  { district: "Batununggal", city: "Bandung", province: "Jawa Barat", postal_code: "40273", area_id: "IDNPB003", subdistrict: "Turangga", keywords: ["batununggal", "turangga"] },
+  { district: "Sukajadi", city: "Bandung", province: "Jawa Barat", postal_code: "40161", area_id: "IDNPB003", subdistrict: "Pasteur / PVJ", keywords: ["sukajadi", "pasteur", "pvj", "paris van java"] },
+  { district: "Sukasari", city: "Bandung", province: "Jawa Barat", postal_code: "40151", area_id: "IDNPB003", subdistrict: "Setiabudi", keywords: ["sukasari", "setiabudi", "gegerkalong"] },
+  { district: "Cidadap", city: "Bandung", province: "Jawa Barat", postal_code: "40142", area_id: "IDNPB003", subdistrict: "Ciumbuleuit", keywords: ["cidadap", "ciumbuleuit"] },
+  { district: "Arcamanik", city: "Bandung", province: "Jawa Barat", postal_code: "40293", area_id: "IDNPB003", keywords: ["arcamanik"] },
+  { district: "Antapani", city: "Bandung", province: "Jawa Barat", postal_code: "40291", area_id: "IDNPB003", keywords: ["antapani"] },
+  { district: "Cileunyi", city: "Kab. Bandung", province: "Jawa Barat", postal_code: "40622", area_id: "IDNPB003", keywords: ["cileunyi"] },
+  { district: "Bojongsoang", city: "Kab. Bandung", province: "Jawa Barat", postal_code: "40288", area_id: "IDNPB003", subdistrict: "Telkom University", keywords: ["bojongsoang", "telkom university"] },
+  { district: "Cimahi Selatan", city: "Cimahi", province: "Jawa Barat", postal_code: "40533", area_id: "IDNPB003", keywords: ["cimahi selatan", "cimahi"] },
+  { district: "Lembang", city: "Kab. Bandung Barat", province: "Jawa Barat", postal_code: "40391", area_id: "IDNPB003", keywords: ["lembang"] },
 
   // JAWA TENGAH & JOGJA (50xxx - 55xxx)
-  { district: "Galur", city: "Kulon Progo", province: "DI Yogyakarta", postal_code: "55662", area_id: "IDNPY002" },
-  { district: "Aluh-Aluh", city: "Banjar", province: "Kalimantan Selatan", postal_code: "70652", area_id: "IDNPS008" },
-  { district: "Semarang Tengah (Simpang Lima)", city: "Semarang", province: "Jawa Tengah", postal_code: "50131", area_id: "IDNPM001" },
-  { district: "Gajahmungkur (Candi Agung)", city: "Semarang", province: "Jawa Tengah", postal_code: "50231", area_id: "IDNPM002" },
-  { district: "Tembalang (Undip)", city: "Semarang", province: "Jawa Tengah", postal_code: "50275", area_id: "IDNPM002" },
-  { district: "Banyumanik", city: "Semarang", province: "Jawa Tengah", postal_code: "50263", area_id: "IDNPM002" },
-  { district: "Pedurungan", city: "Semarang", province: "Jawa Tengah", postal_code: "50192", area_id: "IDNPM002" },
-  { district: "Banjarsari", city: "Surakarta (Solo)", province: "Jawa Tengah", postal_code: "57131", area_id: "IDNPM002" },
-  { district: "Laweyan (Manahan / Solo Baru)", city: "Surakarta (Solo)", province: "Jawa Tengah", postal_code: "57141", area_id: "IDNPM002" },
-  { district: "Kudu", city: "Kudus", province: "Jawa Tengah", postal_code: "59311", area_id: "IDNPM002" },
-  { district: "Pekalongan Barat / Timur", city: "Pekalongan", province: "Jawa Tengah", postal_code: "51111", area_id: "IDNPM002" },
-  { district: "Magelang Utara / Selatan", city: "Magelang", province: "Jawa Tengah", postal_code: "56111", area_id: "IDNPM002" },
-  { district: "Gondokusuman (Malioboro / Tugu)", city: "Yogyakarta", province: "DI Yogyakarta", postal_code: "55221", area_id: "IDNPY001" },
-  { district: "Depok (Gejayan / Seturan / UGM)", city: "Sleman", province: "DI Yogyakarta", postal_code: "55281", area_id: "IDNPY002" },
-  { district: "Mlati (Jombor / Sinduadi)", city: "Sleman", province: "DI Yogyakarta", postal_code: "55285", area_id: "IDNPY002" },
-  { district: "Kasihan (Tamantirto)", city: "Bantul", province: "DI Yogyakarta", postal_code: "55183", area_id: "IDNPY002" },
-  { district: "Sewon (Bangunharjo)", city: "Bantul", province: "DI Yogyakarta", postal_code: "55188", area_id: "IDNPY002" },
-  { district: "Umbulharjo", city: "Yogyakarta", province: "DI Yogyakarta", postal_code: "55161", area_id: "IDNPY001" },
-  { district: "Kraton / Mantrijeron", city: "Yogyakarta", province: "DI Yogyakarta", postal_code: "55131", area_id: "IDNPY001" },
+  { district: "Galur", city: "Kulon Progo", province: "D.I. Yogyakarta", postal_code: "55662", area_id: "IDNPY002", keywords: ["galur"] },
+  { district: "Aluh-Aluh", city: "Banjar", province: "Kalimantan Selatan", postal_code: "70652", area_id: "IDNPS008", keywords: ["aluh-aluh"] },
+  { district: "Semarang Tengah", city: "Semarang", province: "Jawa Tengah", postal_code: "50131", area_id: "IDNPM001", subdistrict: "Simpang Lima", keywords: ["semarang tengah", "simpang lima"] },
+  { district: "Gajahmungkur", city: "Semarang", province: "Jawa Tengah", postal_code: "50231", area_id: "IDNPM002", subdistrict: "Candi", keywords: ["gajahmungkur", "candi"] },
+  { district: "Tembalang", city: "Semarang", province: "Jawa Tengah", postal_code: "50275", area_id: "IDNPM002", subdistrict: "Undip", keywords: ["tembalang", "undip"] },
+  { district: "Banyumanik", city: "Semarang", province: "Jawa Tengah", postal_code: "50263", area_id: "IDNPM002", keywords: ["banyumanik"] },
+  { district: "Pedurungan", city: "Semarang", province: "Jawa Tengah", postal_code: "50192", area_id: "IDNPM002", keywords: ["pedurungan"] },
+  { district: "Banjarsari", city: "Surakarta (Solo)", province: "Jawa Tengah", postal_code: "57131", area_id: "IDNPM002", keywords: ["banjarsari", "solo"] },
+  { district: "Laweyan", city: "Surakarta (Solo)", province: "Jawa Tengah", postal_code: "57141", area_id: "IDNPM002", subdistrict: "Manahan / Solo Baru", keywords: ["laweyan", "manahan", "solo baru"] },
+  { district: "Kudus Kota", city: "Kudus", province: "Jawa Tengah", postal_code: "59311", area_id: "IDNPM002", keywords: ["kudus"] },
+  { district: "Pekalongan Barat", city: "Pekalongan", province: "Jawa Tengah", postal_code: "51111", area_id: "IDNPM002", keywords: ["pekalongan barat"] },
+  { district: "Magelang Selatan", city: "Magelang", province: "Jawa Tengah", postal_code: "56111", area_id: "IDNPM002", keywords: ["magelang selatan"] },
+  { district: "Gondokusuman", city: "Yogyakarta", province: "D.I. Yogyakarta", postal_code: "55221", area_id: "IDNPY001", subdistrict: "Malioboro / Tugu", keywords: ["gondokusuman", "malioboro", "tugu"] },
+  { district: "Depok", city: "Sleman", province: "D.I. Yogyakarta", postal_code: "55281", area_id: "IDNPY002", subdistrict: "Gejayan / Seturan / UGM", keywords: ["depok sleman", "gejayan", "seturan", "ugm"] },
+  { district: "Mlati", city: "Sleman", province: "D.I. Yogyakarta", postal_code: "55285", area_id: "IDNPY002", subdistrict: "Jombor", keywords: ["mlati", "jombor", "sinduadi"] },
+  { district: "Kasihan", city: "Bantul", province: "D.I. Yogyakarta", postal_code: "55183", area_id: "IDNPY002", subdistrict: "Tamantirto", keywords: ["kasihan", "tamantirto"] },
+  { district: "Sewon", city: "Bantul", province: "D.I. Yogyakarta", postal_code: "55188", area_id: "IDNPY002", subdistrict: "Bangunharjo", keywords: ["sewon", "bangunharjo"] },
+  { district: "Umbulharjo", city: "Yogyakarta", province: "D.I. Yogyakarta", postal_code: "55161", area_id: "IDNPY001", keywords: ["umbulharjo"] },
 
   // JAWA TIMUR (60xxx - 65xxx)
-  { district: "Tegalsari (Basuki Rahmat / Tunjungan)", city: "Surabaya", province: "Jawa Timur", postal_code: "60261", area_id: "IDNPS001" },
-  { district: "Gubeng (Dharmawangsa / Gubeng Kertajaya)", city: "Surabaya", province: "Jawa Timur", postal_code: "60281", area_id: "IDNPS002" },
-  { district: "Sukolilo (Klampis / ITS / Manyar)", city: "Surabaya", province: "Jawa Timur", postal_code: "60111", area_id: "IDNPS003" },
-  { district: "Wonokromo (Darmo / Diponegoro)", city: "Surabaya", province: "Jawa Timur", postal_code: "60241", area_id: "IDNPS003" },
-  { district: "Mulyorejo (Pakuwon City / Galaxy)", city: "Surabaya", province: "Jawa Timur", postal_code: "60115", area_id: "IDNPS003" },
-  { district: "Dukuh Pakis (Graha Famili / Mayjono)", city: "Surabaya", province: "Jawa Timur", postal_code: "60225", area_id: "IDNPS003" },
-  { district: "Sambikerep (Citraland / G-Walk)", city: "Surabaya", province: "Jawa Timur", postal_code: "60217", area_id: "IDNPS003" },
-  { district: "Rungkut (Brebek)", city: "Surabaya", province: "Jawa Timur", postal_code: "60293", area_id: "IDNPS003" },
-  { district: "Klojen (Ijen Raya / Alun-Alun)", city: "Malang", province: "Jawa Timur", postal_code: "65111", area_id: "IDNPS004" },
-  { district: "Lowokwaru (Soekarno Hatta / Suhat)", city: "Malang", province: "Jawa Timur", postal_code: "65141", area_id: "IDNPS005" },
-  { district: "Blimbing", city: "Malang", province: "Jawa Timur", postal_code: "65125", area_id: "IDNPS005" },
-  { district: "Batu (Panglima Sudirman)", city: "Batu", province: "Jawa Timur", postal_code: "65311", area_id: "IDNPS005" },
-  { district: "Sidoarjo Kota", city: "Sidoarjo", province: "Jawa Timur", postal_code: "61212", area_id: "IDNPS003" },
-  { district: "Waru / Juanda", city: "Sidoarjo", province: "Jawa Timur", postal_code: "61256", area_id: "IDNPS003" },
-  { district: "Kebomas / Manyar", city: "Gresik", province: "Jawa Timur", postal_code: "61121", area_id: "IDNPS003" },
+  { district: "Tegalsari", city: "Surabaya", province: "Jawa Timur", postal_code: "60261", area_id: "IDNPS001", subdistrict: "Basuki Rahmat / Tunjungan", keywords: ["tegalsari", "tunjungan"] },
+  { district: "Gubeng", city: "Surabaya", province: "Jawa Timur", postal_code: "60281", area_id: "IDNPS002", subdistrict: "Kertajaya", keywords: ["gubeng", "kertajaya"] },
+  { district: "Sukolilo", city: "Surabaya", province: "Jawa Timur", postal_code: "60111", area_id: "IDNPS003", subdistrict: "ITS / Klampis", keywords: ["sukolilo", "its", "klampis"] },
+  { district: "Wonokromo", city: "Surabaya", province: "Jawa Timur", postal_code: "60241", area_id: "IDNPS003", subdistrict: "Darmo", keywords: ["wonokromo", "darmo"] },
+  { district: "Mulyorejo", city: "Surabaya", province: "Jawa Timur", postal_code: "60115", area_id: "IDNPS003", subdistrict: "Pakuwon City", keywords: ["mulyorejo", "pakuwon city"] },
+  { district: "Dukuh Pakis", city: "Surabaya", province: "Jawa Timur", postal_code: "60225", area_id: "IDNPS003", subdistrict: "Graha Famili", keywords: ["dukuh pakis", "graha famili"] },
+  { district: "Sambikerep", city: "Surabaya", province: "Jawa Timur", postal_code: "60217", area_id: "IDNPS003", subdistrict: "Citraland", keywords: ["sambikerep", "citraland"] },
+  { district: "Rungkut", city: "Surabaya", province: "Jawa Timur", postal_code: "60293", area_id: "IDNPS003", subdistrict: "Brebek", keywords: ["rungkut", "brebek"] },
+  { district: "Klojen", city: "Malang", province: "Jawa Timur", postal_code: "65111", area_id: "IDNPS004", subdistrict: "Ijen Raya", keywords: ["klojen", "ijen"] },
+  { district: "Lowokwaru", city: "Malang", province: "Jawa Timur", postal_code: "65141", area_id: "IDNPS005", subdistrict: "Suhat / Soekarno Hatta", keywords: ["lowokwaru", "suhat", "soekarno hatta"] },
+  { district: "Blimbing", city: "Malang", province: "Jawa Timur", postal_code: "65125", area_id: "IDNPS005", keywords: ["blimbing"] },
+  { district: "Batu", city: "Batu", province: "Jawa Timur", postal_code: "65311", area_id: "IDNPS005", keywords: ["batu"] },
+  { district: "Sidoarjo", city: "Sidoarjo", province: "Jawa Timur", postal_code: "61212", area_id: "IDNPS003", keywords: ["sidoarjo"] },
+  { district: "Waru", city: "Sidoarjo", province: "Jawa Timur", postal_code: "61256", area_id: "IDNPS003", subdistrict: "Juanda", keywords: ["waru", "juanda"] },
+  { district: "Kebomas", city: "Gresik", province: "Jawa Timur", postal_code: "61121", area_id: "IDNPS003", keywords: ["kebomas", "gresik"] },
 
-  // BALI, SUMATERA, KALIMANTAN, SULAWESI
-  { district: "Kuta (Sunset Road / Seminyak)", city: "Badung", province: "Bali", postal_code: "80361", area_id: "IDNPL001" },
-  { district: "Kuta Utara (Canggu / Kerobokan)", city: "Badung", province: "Bali", postal_code: "80361", area_id: "IDNPL001" },
-  { district: "Kuta Selatan (Jimbaran / Nusa Dua / Uluwatu)", city: "Badung", province: "Bali", postal_code: "80361", area_id: "IDNPL001" },
-  { district: "Denpasar Selatan (Sanur / Sesetan)", city: "Denpasar", province: "Bali", postal_code: "80221", area_id: "IDNPL002" },
-  { district: "Denpasar Barat (Teuku Umar / Renon)", city: "Denpasar", province: "Bali", postal_code: "80231", area_id: "IDNPL002" },
-  { district: "Ubud (Pengosekan / Sayan / Campuhan)", city: "Gianyar", province: "Bali", postal_code: "80571", area_id: "IDNPL003" },
-  { district: "Medan Barat (Kesawan / Balaikota)", city: "Medan", province: "Sumatera Utara", postal_code: "20111", area_id: "IDNPD001" },
-  { district: "Medan Polonia (Mongonsidi)", city: "Medan", province: "Sumatera Utara", postal_code: "20152", area_id: "IDNPD002" },
-  { district: "Medan Sunggal / Setia Budi", city: "Medan", province: "Sumatera Utara", postal_code: "20122", area_id: "IDNPD002" },
-  { district: "Medan Petisah", city: "Medan", province: "Sumatera Utara", postal_code: "20114", area_id: "IDNPD002" },
-  { district: "Medan Baru (Gajah Mada)", city: "Medan", province: "Sumatera Utara", postal_code: "20151", area_id: "IDNPD002" },
-  { district: "Ilir Timur I (Sudirman / Palembang)", city: "Palembang", province: "Sumatera Selatan", postal_code: "30111", area_id: "IDNPP001" },
-  { district: "Ilir Barat I (Demangsari)", city: "Palembang", province: "Sumatera Selatan", postal_code: "30137", area_id: "IDNPP001" },
-  { district: "Sukajadi", city: "Pekanbaru", province: "Riau", postal_code: "28121", area_id: "IDNPP002" },
-  { district: "Marpoyan Damai", city: "Pekanbaru", province: "Riau", postal_code: "28125", area_id: "IDNPP002" },
-  { district: "Lubuk Baja (Nagoya / Batam Center)", city: "Batam", province: "Kepulauan Riau", postal_code: "29444", area_id: "IDNPP003" },
-  { district: "Batam Kota (Pelita)", city: "Batam", province: "Kepulauan Riau", postal_code: "29432", area_id: "IDNPP003" },
-  { district: "Ujung Pandang (Losari / Somba Opu)", city: "Makassar", province: "Sulawesi Selatan", postal_code: "90111", area_id: "IDNPK001" },
-  { district: "Panakukkang (Boulevard)", city: "Makassar", province: "Sulawesi Selatan", postal_code: "90231", area_id: "IDNPK002" },
-  { district: "Tamalanrea (Unhas / BTP)", city: "Makassar", province: "Sulawesi Selatan", postal_code: "90245", area_id: "IDNPK002" },
-  { district: "Rappocini", city: "Makassar", province: "Sulawesi Selatan", postal_code: "90222", area_id: "IDNPK002" },
-  { district: "Samarinda Kota / Ulu", city: "Samarinda", province: "Kalimantan Timur", postal_code: "75111", area_id: "IDNPS006" },
-  { district: "Balikpapan Kota / Selatan", city: "Balikpapan", province: "Kalimantan Timur", postal_code: "76111", area_id: "IDNPS007" },
-  { district: "Banjarmasin Tengah / Utara", city: "Banjarmasin", province: "Kalimantan Selatan", postal_code: "70111", area_id: "IDNPS008" },
-  { district: "Wenang (Megamas / Boulevard)", city: "Manado", province: "Sulawesi Utara", postal_code: "95111", area_id: "IDNPS009" },
-  
-  // JAWA BARAT - KABUPATEN KARAWANG DISTRICTS (EXHAUSTIVE KECAMATAN REPOSITORY)
-  { district: "Tempuran / Sumberjaya", city: "Karawang", province: "Jawa Barat", postal_code: "41385", area_id: "IDNPJ_TEMP" },
-  { district: "Rengasdengklok", city: "Karawang", province: "Jawa Barat", postal_code: "41352", area_id: "IDNPJ_RENG" },
-  { district: "Klari", city: "Karawang", province: "Jawa Barat", postal_code: "41371", area_id: "IDNPJ_KLARI" },
-  { district: "Telukjambe Timur / Wadas", city: "Karawang", province: "Jawa Barat", postal_code: "41361", area_id: "IDNPJ_TELUK" },
-  { district: "Telukjambe Barat", city: "Karawang", province: "Jawa Barat", postal_code: "41361", area_id: "IDNPJ_TELUK2" },
-  { district: "Cikampek", city: "Karawang", province: "Jawa Barat", postal_code: "41373", area_id: "IDNPJ_CKM" },
-  { district: "Kotabaru / Jatisari", city: "Karawang", province: "Jawa Barat", postal_code: "41374", area_id: "IDNPJ_KOTAB" },
-  { district: "Cilamaya Wetan / Kulon", city: "Karawang", province: "Jawa Barat", postal_code: "41384", area_id: "IDNPJ_CILAM" },
-  { district: "Karawang Barat", city: "Karawang", province: "Jawa Barat", postal_code: "41311", area_id: "IDNPJ_KRWB" },
-  { district: "Karawang Timur", city: "Karawang", province: "Jawa Barat", postal_code: "41314", area_id: "IDNPJ_KRWT" },
-  { district: "Cibuaya / Batujaya", city: "Karawang", province: "Jawa Barat", postal_code: "41354", area_id: "IDNPJ_CIBU" },
-  
-  // JAWA BARAT - BEKASI & BOGOR DISTRICTS
-  { district: "Cibarusah / Serang Baru", city: "Bekasi", province: "Jawa Barat", postal_code: "17340", area_id: "IDNPJ_CBRS" },
-  { district: "Cikarang Pusat (Deltamas)", city: "Bekasi", province: "Jawa Barat", postal_code: "17530", area_id: "IDNPJ_CKRP" },
-  { district: "Cikarang Selatan (Lippo)", city: "Bekasi", province: "Jawa Barat", postal_code: "17550", area_id: "IDNPJ_CKRS" },
-  { district: "Cibinong / Sentul City", city: "Bogor", province: "Jawa Barat", postal_code: "16914", area_id: "IDNPJ_CBNG" }
+  // BALI & OTHER PROVINCES
+  { district: "Kuta", city: "Badung", province: "Bali", postal_code: "80361", area_id: "IDNPL001", subdistrict: "Seminyak / Sunset Road", keywords: ["kuta", "seminyak"] },
+  { district: "Kuta Utara", city: "Badung", province: "Bali", postal_code: "80361", area_id: "IDNPL001", subdistrict: "Canggu / Kerobokan", keywords: ["kuta utara", "canggu", "kerobokan"] },
+  { district: "Kuta Selatan", city: "Badung", province: "Bali", postal_code: "80361", area_id: "IDNPL001", subdistrict: "Jimbaran / Nusa Dua", keywords: ["kuta selatan", "jimbaran", "nusa dua", "uluwatu"] },
+  { district: "Denpasar Selatan", city: "Denpasar", province: "Bali", postal_code: "80221", area_id: "IDNPL002", subdistrict: "Sanur", keywords: ["denpasar selatan", "sanur"] },
+  { district: "Denpasar Barat", city: "Denpasar", province: "Bali", postal_code: "80231", area_id: "IDNPL002", subdistrict: "Teuku Umar", keywords: ["denpasar barat", "teuku umar"] },
+  { district: "Ubud", city: "Gianyar", province: "Bali", postal_code: "80571", area_id: "IDNPL003", keywords: ["ubud"] },
+  { district: "Medan Barat", city: "Medan", province: "Sumatera Utara", postal_code: "20111", area_id: "IDNPD001", keywords: ["medan barat", "kesawan"] },
+  { district: "Medan Polonia", city: "Medan", province: "Sumatera Utara", postal_code: "20152", area_id: "IDNPD002", keywords: ["medan polonia"] },
+  { district: "Ilir Timur I", city: "Palembang", province: "Sumatera Selatan", postal_code: "30111", area_id: "IDNPP001", keywords: ["ilir timur i", "palembang"] },
+  { district: "Batam Kota", city: "Batam", province: "Kepulauan Riau", postal_code: "29432", area_id: "IDNPP003", keywords: ["batam kota"] },
+  { district: "Ujung Pandang", city: "Makassar", province: "Sulawesi Selatan", postal_code: "90111", area_id: "IDNPK001", subdistrict: "Losari", keywords: ["ujung pandang", "losari"] },
+  { district: "Panakukkang", city: "Makassar", province: "Sulawesi Selatan", postal_code: "90231", area_id: "IDNPK002", keywords: ["panakukkang"] },
+  { district: "Samarinda Kota", city: "Samarinda", province: "Kalimantan Timur", postal_code: "75111", area_id: "IDNPS006", keywords: ["samarinda"] },
+  { district: "Balikpapan Kota", city: "Balikpapan", province: "Kalimantan Timur", postal_code: "76111", area_id: "IDNPS007", keywords: ["balikpapan"] },
+  { district: "Banjarmasin Tengah", city: "Banjarmasin", province: "Kalimantan Selatan", postal_code: "70111", area_id: "IDNPS008", keywords: ["banjarmasin"] },
+  { district: "Wenang", city: "Manado", province: "Sulawesi Utara", postal_code: "95111", area_id: "IDNPS009", keywords: ["wenang", "manado"] },
 ];
 
-/**
- * MASTER INDONESIAN REGIONAL POSTAL CODE ENGINE
- * Reliably derives authentic regional postal code for ANY city, district, or province across Indonesia,
- * prioritizing exact Kecamatan (district) codes over generic city center defaults!
- */
 export const normalizeLocationText = (text: string) => {
   if (!text) return "";
   return text
@@ -251,12 +203,10 @@ export const normalizeLocationText = (text: string) => {
 };
 
 export function getRealtimePostalCode(district: string = "", city: string = "", province: string = "", rawZip?: any): string {
-  // 1. If explicit valid zip provided by API, TRUST IT FULLY.
   if (rawZip && String(rawZip).trim().length === 5 && !isNaN(Number(rawZip))) {
     return String(rawZip).trim();
   }
 
-  // Postal code cannot be guessed if district or city is empty
   if (!district.trim() || !city.trim()) {
     return "";
   }
@@ -265,12 +215,10 @@ export function getRealtimePostalCode(district: string = "", city: string = "", 
   const normCity = normalizeLocationText(city);
   const normProv = normalizeLocationText(province);
 
-  // 2. Exact matching against internal verified directory (DISTRICT PRIORITY FIRST!)
   const exactDist = INDONESIA_LOCATION_DIRECTORY.find((item) => {
     const iProv = normalizeLocationText(item.province);
     const iCity = normalizeLocationText(item.city);
     
-    // Some entries have 'Kab. Bandung' while city might be 'Bandung'
     const cleanICity = iCity.replace(/^kab\. /g, "").replace(/^kota /g, "");
     const cleanNormCity = normCity.replace(/^kab\. /g, "").replace(/^kota /g, "");
 
@@ -279,10 +227,13 @@ export function getRealtimePostalCode(district: string = "", city: string = "", 
     
     if (!provMatch || !cityMatch) return false;
 
-    const aliases = item.district.split("/").map(s => normalizeLocationText(s));
+    const aliases = [
+      item.district,
+      ...(item.subdistrict ? [item.subdistrict] : []),
+      ...(item.keywords || []),
+    ].map(s => normalizeLocationText(s));
     
     return aliases.some(alias => {
-      // Precise word matching
       return alias === normDistrict || (alias.length >= 3 && (alias.includes(normDistrict) || normDistrict.includes(alias)));
     });
   });
@@ -294,29 +245,25 @@ export function getRealtimePostalCode(district: string = "", city: string = "", 
   return "";
 }
 
-/**
- * MASTER INDONESIAN PROVINCE AUTO-RESOLVER
- * Instantly synchronizes Province field whenever user types district or city name.
- */
 export function getRealtimeProvince(district: string = "", city: string = "", province: string = ""): string {
-  if (province && province !== "Indonesia") return province; // TRUST EXPLICIT PROVINCE
+  if (province && province !== "Indonesia") return province;
 
   const combined = `${district} ${city}`.toLowerCase().trim();
   if (!combined) return "Indonesia";
 
-  // 1. Check internal directory first
   const exactLocal = INDONESIA_LOCATION_DIRECTORY.find((item) => {
     const d = item.district.toLowerCase().split(" ")[0];
     const c = item.city.toLowerCase().replace("kota ", "").replace("kab. ", "").split(" ")[0];
-    return (d && d.length >= 3 && combined.includes(d)) || (c && c.length >= 3 && combined.includes(c));
+    const sub = item.subdistrict ? item.subdistrict.toLowerCase().split(" ")[0] : "";
+    const kwMatch = item.keywords ? item.keywords.some(k => combined.includes(k.toLowerCase())) : false;
+    return (d && d.length >= 3 && combined.includes(d)) || (c && c.length >= 3 && combined.includes(c)) || (sub && sub.length >= 3 && combined.includes(sub)) || kwMatch;
   });
   if (exactLocal && exactLocal.province) {
     return exactLocal.province;
   }
 
-  // 2. Comprehensive Province keyword synchronization
   if (
-    combined.includes("karawang") || combined.includes("tempuran") || combined.includes("rengasdengklok") || combined.includes("klari") || combined.includes("telukjambe") || combined.includes("cikampek") || combined.includes("cilamaya") ||
+    combined.includes("karawang") || combined.includes("tempuran") || combined.includes("sumberjaya") || combined.includes("sumber jaya") || combined.includes("rengasdengklok") || combined.includes("klari") || combined.includes("telukjambe") || combined.includes("cikampek") || combined.includes("cilamaya") ||
     combined.includes("bekasi") || combined.includes("cikarang") || combined.includes("cibaru") || combined.includes("tambun") || combined.includes("cibitung") ||
     combined.includes("bogor") || combined.includes("cibinong") || combined.includes("sentul") || combined.includes("ciawi") || combined.includes("puncak") || combined.includes("dramaga") ||
     combined.includes("depok") || combined.includes("margonda") || combined.includes("cinere") || combined.includes("sawangan") || combined.includes("cimanggis") ||
@@ -345,7 +292,7 @@ export function getRealtimeProvince(district: string = "", city: string = "", pr
 
   if (
     combined.includes("yogyakarta") || combined.includes("jogja") || combined.includes("sleman") || combined.includes("bantul") || combined.includes("gunungkidul") || combined.includes("kulon progo") ||
-    combined.includes("galur") || combined.includes("gejayan") || combined.includes("kasihan") || combined.includes("malioboro") || combined.includes("depok") || combined.includes("diy") || combined.includes("d.i. yogyakarta")
+    combined.includes("galur") || combined.includes("gejayan") || combined.includes("kasihan") || combined.includes("malioboro") || combined.includes("diy") || combined.includes("d.i. yogyakarta")
   ) {
     return "D.I. Yogyakarta";
   }
@@ -380,7 +327,7 @@ export function getRealtimeProvince(district: string = "", city: string = "", pr
     return "Bali";
   }
 
-  if (combined.includes("banjarmasin") || combined.includes("banjar ") || combined.includes("banjar,") || combined.includes("aluh-aluh") || combined.includes("banjarbaru") || combined.includes("martapura") || combined.includes("tanah bumbu") || combined.includes("kotabaru") || combined.includes("tapin") || combined.includes("kalsel")) {
+  if (combined.includes("banjarmasin") || combined.includes("banjar") || combined.includes("aluh-aluh") || combined.includes("banjarbaru") || combined.includes("martapura") || combined.includes("tanah bumbu") || combined.includes("kotabaru") || combined.includes("tapin") || combined.includes("kalsel")) {
     return "Kalimantan Selatan";
   }
   if (combined.includes("samarinda") || combined.includes("balikpapan") || combined.includes("bontang") || combined.includes("kutai") || combined.includes("tenggarong") || combined.includes("ikn") || combined.includes("kaltim")) {
@@ -416,4 +363,3 @@ export function getRealtimeProvince(district: string = "", city: string = "", pr
 
   return province || "Indonesia";
 }
-

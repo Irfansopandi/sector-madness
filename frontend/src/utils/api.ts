@@ -415,9 +415,10 @@ export const checkWishlistStatus = async (productId: number, size?: string, colo
 };
 
 // Catalog API
-export const getProducts = async (): Promise<any[]> => {
+export const getProducts = async (params?: { category?: string; search?: string; sort_by?: string } | any): Promise<any[]> => {
   try {
-    const res = await api.get("/products");
+    const queryParams = (params && typeof params === "object" && !("queryKey" in params)) ? params : undefined;
+    const res = await api.get("/products", { params: queryParams });
     return res.data.data || [];
   } catch {
     return [];
@@ -1178,6 +1179,107 @@ export const updateAdminProduct = async (id: number, data: Partial<AdminProduct>
 
 export const deleteAdminProduct = async (id: number) => {
   const res = await api.delete(`/admin/products/${id}`);
+  return res.data;
+};
+
+export interface AdminCustomer {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string;
+  birth_date?: string;
+  is_active: boolean;
+  last_login_at?: string;
+  created_at: string;
+  updated_at?: string;
+  orders_count?: number;
+  shipping_addresses?: ShippingAddress[];
+  shipping_address?: ShippingAddress | null;
+}
+
+export const getAdminCustomers = async (params?: { search?: string; status?: string }): Promise<AdminCustomer[]> => {
+  try {
+    const res = await api.get("/admin/customers", { params });
+    if (res.data?.data && Array.isArray(res.data.data)) {
+      return res.data.data;
+    }
+    if (Array.isArray(res.data)) {
+      return res.data;
+    }
+  } catch (error) {
+    console.error("Failed to fetch admin customers:", error);
+  }
+  return [];
+};
+
+export const createAdminCustomer = async (data: Partial<AdminCustomer> & { password?: string }) => {
+  const res = await api.post("/admin/customers", data);
+  return res.data;
+};
+
+export const updateAdminCustomer = async (id: number, data: Partial<AdminCustomer> & { password?: string }) => {
+  const res = await api.put(`/admin/customers/${id}`, data);
+  return res.data;
+};
+
+export const toggleAdminCustomerStatus = async (id: number, is_active?: boolean) => {
+  const res = await api.put(`/admin/customers/${id}/status`, { is_active });
+  return res.data;
+};
+
+export const deleteAdminCustomer = async (id: number) => {
+  const res = await api.delete(`/admin/customers/${id}`);
+  return res.data;
+};
+
+/* ====================================================
+   ADMIN VOUCHER MANAGEMENT API
+==================================================== */
+export interface AdminVoucher {
+  id: number;
+  code: string;
+  name: string;
+  discount_type: "fixed" | "percentage";
+  discount_value: number;
+  minimum_purchase: number;
+  is_active: boolean;
+  expires_at?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export const getAdminVouchers = async (params?: { search?: string; status?: string }): Promise<AdminVoucher[]> => {
+  try {
+    const res = await api.get("/admin/vouchers", { params });
+    if (res.data?.data && Array.isArray(res.data.data)) {
+      return res.data.data;
+    }
+    if (Array.isArray(res.data)) {
+      return res.data;
+    }
+  } catch (error) {
+    console.error("Failed to fetch admin vouchers:", error);
+  }
+  return [];
+};
+
+export const createAdminVoucher = async (data: Partial<AdminVoucher>) => {
+  const res = await api.post("/admin/vouchers", data);
+  return res.data;
+};
+
+export const updateAdminVoucher = async (id: number, data: Partial<AdminVoucher>) => {
+  const res = await api.put(`/admin/vouchers/${id}`, data);
+  return res.data;
+};
+
+export const toggleAdminVoucherStatus = async (id: number, is_active?: boolean) => {
+  const res = await api.put(`/admin/vouchers/${id}/status`, { is_active });
+  return res.data;
+};
+
+export const deleteAdminVoucher = async (id: number) => {
+  const res = await api.delete(`/admin/vouchers/${id}`);
   return res.data;
 };
 

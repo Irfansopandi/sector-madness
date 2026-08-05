@@ -47,21 +47,26 @@ const AVAILABLE_COLORS = ["BLACK", "WHITE", "CHARCOAL", "SAND", "OLIVE", "NAVY",
 
 export default function AdminProductsPage() {
   const queryClient = useQueryClient();
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
-
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("sector_madness_admin_theme");
-    if (savedTheme !== null) {
-      setIsDarkMode(savedTheme === "dark");
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const savedTheme = localStorage.getItem("sector_madness_admin_theme");
+      return savedTheme === null ? true : savedTheme === "dark";
     }
-  }, []);
+    return true;
+  });
 
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("ALL");
   const [rowLimit, setRowLimit] = useState<number>(10);
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const [statusMessage, setStatusMessage] = useState("");
 
   const [activeTab, setActiveTab] = useState<"CATALOG" | "TOP_SOLD">("CATALOG");
+
+  // Reset page when filters or row limit change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, categoryFilter, rowLimit, activeTab]);
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
   const tabRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
 
@@ -831,8 +836,14 @@ export default function AdminProductsPage() {
     return matchesSearch && matchesCat;
   });
 
-  const displayedProducts =
-    rowLimit === 0 ? filteredProducts : filteredProducts.slice(0, rowLimit);
+  const currentTotal = filteredProducts.length;
+  const pageSize = rowLimit > 0 ? rowLimit : currentTotal;
+  const totalPages = pageSize > 0 ? Math.max(1, Math.ceil(currentTotal / pageSize)) : 1;
+  const validPage = Math.min(currentPage, totalPages);
+  const startIndex = (validPage - 1) * pageSize;
+  const endIndex = rowLimit > 0 ? Math.min(startIndex + pageSize, currentTotal) : currentTotal;
+
+  const displayedProducts = filteredProducts.slice(startIndex, endIndex);
 
   const formatRupiah = (amount?: number) => {
     if (amount === undefined || amount === null || isNaN(amount)) return "Rp 0";
@@ -888,8 +899,8 @@ export default function AdminProductsPage() {
           style={{
             paddingTop: "48px",
             paddingBottom: "96px",
-            paddingLeft: "48px",
-            paddingRight: "48px",
+            paddingLeft: "24px",
+            paddingRight: "24px",
             maxWidth: "1440px",
             marginLeft: "auto",
             marginRight: "auto",
@@ -1140,12 +1151,13 @@ export default function AdminProductsPage() {
                     }`}
                   >
                     <tr>
-                      <th style={{ padding: "18px 20px" }} className="font-bold whitespace-nowrap">FOTO</th>
-                      <th style={{ padding: "18px 20px" }} className="font-bold whitespace-nowrap">NAMA PRODUK</th>
-                      <th style={{ padding: "18px 20px" }} className="font-bold whitespace-nowrap">KATEGORI</th>
-                      <th style={{ padding: "18px 20px" }} className="font-bold whitespace-nowrap">HARGA</th>
-                      <th style={{ padding: "18px 20px" }} className="font-bold whitespace-nowrap">STOK</th>
-                      <th style={{ padding: "18px 20px" }} className="font-bold text-right whitespace-nowrap">AKSI</th>
+                      <th style={{ padding: "14px 10px", width: "40px" }} className="font-bold whitespace-nowrap">NO.</th>
+                      <th style={{ padding: "14px 10px", width: "60px" }} className="font-bold whitespace-nowrap">FOTO</th>
+                      <th style={{ padding: "14px 12px" }} className="font-bold whitespace-nowrap">NAMA PRODUK</th>
+                      <th style={{ padding: "14px 12px" }} className="font-bold whitespace-nowrap">KATEGORI</th>
+                      <th style={{ padding: "14px 12px" }} className="font-bold whitespace-nowrap">HARGA</th>
+                      <th style={{ padding: "14px 12px" }} className="font-bold whitespace-nowrap">STOK</th>
+                      <th style={{ padding: "14px 12px" }} className="font-bold text-right whitespace-nowrap">AKSI</th>
                     </tr>
                   </thead>
                   <tbody
@@ -1156,7 +1168,7 @@ export default function AdminProductsPage() {
                     {displayedProducts.length === 0 ? (
                       <tr>
                         <td
-                          colSpan={6}
+                          colSpan={7}
                           style={{ padding: "48px 24px" }}
                           className={`text-center ${
                             isDarkMode ? "text-[#777777]" : "text-[#6B7280]"
@@ -1166,7 +1178,7 @@ export default function AdminProductsPage() {
                         </td>
                       </tr>
                     ) : (
-                      displayedProducts.map((prod) => {
+                      displayedProducts.map((prod, idx) => {
                         const imgUrl = prod.image
                           ? prod.image.startsWith("http")
                             ? prod.image
@@ -1180,9 +1192,12 @@ export default function AdminProductsPage() {
                               isDarkMode ? "hover:bg-white/[0.02]" : "hover:bg-gray-50/80"
                             }`}
                           >
-                            <td style={{ padding: "16px 20px" }}>
+                            <td style={{ padding: "12px 10px" }} className={`font-mono font-bold text-center whitespace-nowrap ${isDarkMode ? "text-[#8A8A8A]" : "text-gray-500"}`}>
+                              {startIndex + idx + 1}
+                            </td>
+                            <td style={{ padding: "12px 10px" }} className="whitespace-nowrap">
                               <div
-                                style={{ width: "56px", height: "64px" }}
+                                style={{ width: "44px", height: "52px" }}
                                 className="rounded-md overflow-hidden bg-black/20 border border-white/10 relative shrink-0"
                               >
                                 <img
@@ -1192,12 +1207,12 @@ export default function AdminProductsPage() {
                                 />
                               </div>
                             </td>
-                            <td style={{ padding: "16px 20px" }}>
-                              <div className="font-bold text-sm tracking-wide">{prod.name}</div>
+                            <td style={{ padding: "12px 12px" }} className="whitespace-nowrap">
+                              <div className="font-bold text-xs tracking-wide whitespace-nowrap">{prod.name}</div>
                               {prod.material && (
                                 <div
-                                  style={{ marginTop: "3px", fontSize: "11px" }}
-                                  className={`font-mono ${
+                                  style={{ marginTop: "2px", fontSize: "10px" }}
+                                  className={`font-mono whitespace-nowrap ${
                                     isDarkMode ? "text-[#8A8A8A]" : "text-gray-500"
                                   }`}
                                 >
@@ -1205,11 +1220,11 @@ export default function AdminProductsPage() {
                                 </div>
                               )}
                             </td>
-                            <td style={{ padding: "16px 20px" }}>
-                              <div className="flex flex-col gap-1 items-start">
+                            <td style={{ padding: "12px 12px" }} className="whitespace-nowrap">
+                              <div className="flex flex-col gap-0.5 items-start whitespace-nowrap">
                                 <span
-                                  style={{ padding: "4px 10px", borderRadius: "4px", fontSize: "11px" }}
-                                  className={`font-mono font-bold tracking-wider uppercase border ${
+                                  style={{ padding: "3px 8px", borderRadius: "4px", fontSize: "10px" }}
+                                  className={`font-mono font-bold tracking-wider uppercase border whitespace-nowrap ${
                                     isDarkMode
                                       ? "bg-white/5 border-white/10 text-gray-300"
                                       : "bg-gray-100 border-gray-200 text-gray-700"
@@ -1218,35 +1233,35 @@ export default function AdminProductsPage() {
                                   {prod.category?.name || "Uncategorized"}
                                 </span>
                                 {prod.collection && (
-                                  <span style={{ fontSize: "10px" }} className="font-mono text-[#B6A47E] font-medium tracking-wider uppercase">
+                                  <span style={{ fontSize: "9px" }} className="font-mono text-[#B6A47E] font-medium tracking-wider uppercase whitespace-nowrap">
                                     FOCUS: {prod.collection}
                                   </span>
                                 )}
                               </div>
                             </td>
-                            <td style={{ padding: "16px 20px" }} className="font-mono font-bold">
-                              <div>{formatRupiah(prod.price)}</div>
+                            <td style={{ padding: "12px 12px" }} className="font-mono font-bold whitespace-nowrap text-xs">
+                              <div className="whitespace-nowrap">{formatRupiah(prod.price)}</div>
                               {prod.original_price && prod.original_price > prod.price && (
-                                <div style={{ fontSize: "10px", marginTop: "2px" }} className="text-red-500 line-through">
+                                <div style={{ fontSize: "9px", marginTop: "1px" }} className="text-red-500 line-through whitespace-nowrap">
                                   {formatRupiah(prod.original_price)}
                                 </div>
                               )}
                             </td>
-                            <td style={{ padding: "16px 20px" }}>
+                            <td style={{ padding: "12px 12px" }} className="whitespace-nowrap">
                               <span
-                                style={{ padding: "4px 12px", borderRadius: "9999px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.05em" }}
-                                className={`inline-flex items-center gap-1.5 uppercase font-mono border ${
+                                style={{ padding: "3px 10px", borderRadius: "9999px", fontSize: "10px", fontWeight: 700, letterSpacing: "0.05em" }}
+                                className={`inline-flex items-center gap-1 uppercase font-mono border whitespace-nowrap ${
                                   prod.stock > 0
                                     ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                                     : "bg-red-500/10 text-red-400 border-red-500/20"
                                 }`}
                               >
                                 <span className={`w-1.5 h-1.5 rounded-full ${prod.stock > 0 ? "bg-emerald-400" : "bg-red-400"}`} />
-                                {prod.stock > 0 ? `${prod.stock} UNIT` : "STOK HABIS"}
+                                {prod.stock > 0 ? `${prod.stock} UNIT` : "HABIS"}
                               </span>
                             </td>
-                            <td style={{ padding: "16px 20px" }} className="text-right">
-                              <div className="flex items-center justify-end gap-2">
+                            <td style={{ padding: "12px 12px" }} className="text-right whitespace-nowrap">
+                              <div className="flex items-center justify-end gap-1 whitespace-nowrap">
                                 <button
                                   type="button"
                                   onClick={() =>
@@ -1255,8 +1270,8 @@ export default function AdminProductsPage() {
                                       data: { limited: !prod.limited },
                                     })
                                   }
-                                  style={{ padding: "8px 12px", borderRadius: "6px" }}
-                                  className={`text-xs font-bold tracking-wider uppercase transition-all duration-200 cursor-pointer flex items-center gap-1 border ${
+                                  style={{ padding: "5px 8px", borderRadius: "4px" }}
+                                  className={`text-[10px] font-bold tracking-wider uppercase transition-all duration-200 cursor-pointer flex items-center gap-1 border whitespace-nowrap ${
                                     prod.limited
                                       ? "bg-[#B6A47E]/15 border-[#B6A47E] text-[#B6A47E] hover:bg-[#B6A47E] hover:text-black"
                                       : "bg-white/5 border-white/10 text-gray-400 hover:text-gray-200 hover:border-gray-500"
@@ -1268,25 +1283,25 @@ export default function AdminProductsPage() {
 
                                 <button
                                   onClick={() => openEditModal(prod)}
-                                  style={{ padding: "8px 14px", borderRadius: "6px" }}
-                                  className={`text-xs font-bold tracking-wider uppercase transition-all duration-200 cursor-pointer flex items-center gap-1.5 border ${
+                                  style={{ padding: "5px 8px", borderRadius: "4px" }}
+                                  className={`text-[10px] font-bold tracking-wider uppercase transition-all duration-200 cursor-pointer flex items-center gap-1 border whitespace-nowrap ${
                                     isDarkMode
                                       ? "bg-white/5 border-white/10 text-white hover:border-[#B6A47E] hover:text-[#B6A47E]"
                                       : "bg-gray-100 border-gray-200 text-gray-800 hover:border-[#B6A47E] hover:text-[#B6A47E]"
                                   }`}
                                 >
-                                  <Pencil className="w-3.5 h-3.5" />
+                                  <Pencil className="w-3 h-3" />
                                   <span>EDIT</span>
                                 </button>
                                 <button
                                   onClick={() =>
                                     confirmDelete(prod.name, () => deleteProductMut.mutate(prod.id))
                                   }
-                                  style={{ padding: "8px 12px", borderRadius: "6px" }}
-                                  className="text-xs font-bold tracking-wider uppercase transition-all duration-200 cursor-pointer flex items-center gap-1.5 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:border-red-500/40"
+                                  style={{ padding: "5px 8px", borderRadius: "4px" }}
+                                  className="text-[10px] font-bold tracking-wider uppercase transition-all duration-200 cursor-pointer flex items-center gap-1 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:border-red-500/40 whitespace-nowrap"
                                   title="Hapus Produk"
                                 >
-                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <Trash2 className="w-3 h-3" />
                                 </button>
                               </div>
                             </td>
@@ -1297,6 +1312,82 @@ export default function AdminProductsPage() {
                   </tbody>
                 </table>
               </div>
+
+              {/* PAGINATION FOOTER CONTROL BAR */}
+              {rowLimit > 0 && currentTotal > rowLimit && (
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "16px",
+                    marginTop: "24px",
+                    padding: "16px 20px",
+                    borderRadius: "8px",
+                    backgroundColor: isDarkMode ? "#18181C" : "#FFFFFF",
+                    border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #E5E7EB",
+                  }}
+                >
+                  <span className={`text-xs font-bold font-mono ${isDarkMode ? "text-[#8A8A8A]" : "text-gray-600"}`}>
+                    Menampilkan <span className="text-[#B6A47E] font-extrabold">{currentTotal > 0 ? startIndex + 1 : 0}</span> –{" "}
+                    <span className="text-[#B6A47E] font-extrabold">{endIndex}</span> dari{" "}
+                    <span className="text-[#B6A47E] font-extrabold">{currentTotal}</span> data (Halaman {validPage} dari {totalPages})
+                  </span>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={validPage <= 1}
+                      onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                      style={{ padding: "8px 16px" }}
+                      className={`rounded-[5px] text-[11px] font-bold uppercase tracking-wider transition-all border ${
+                        validPage <= 1
+                          ? "opacity-40 cursor-not-allowed border-transparent text-gray-500"
+                          : isDarkMode
+                          ? "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-[#B6A47E] cursor-pointer"
+                          : "bg-gray-100 border-gray-200 text-gray-800 hover:bg-gray-200 cursor-pointer"
+                      }`}
+                    >
+                      Sebelumnya
+                    </button>
+
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((pg) => (
+                      <button
+                        key={pg}
+                        type="button"
+                        onClick={() => setCurrentPage(pg)}
+                        style={{ width: "32px", height: "32px" }}
+                        className={`rounded-[5px] text-[11px] font-bold font-mono transition-all border cursor-pointer flex items-center justify-center ${
+                          pg === validPage
+                            ? "bg-[#B6A47E] border-[#B6A47E] text-black font-extrabold"
+                            : isDarkMode
+                            ? "bg-white/5 border-white/10 text-white hover:bg-white/10"
+                            : "bg-gray-100 border-gray-200 text-gray-800 hover:bg-gray-200"
+                        }`}
+                      >
+                        {pg}
+                      </button>
+                    ))}
+
+                    <button
+                      type="button"
+                      disabled={validPage >= totalPages}
+                      onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                      style={{ padding: "8px 16px" }}
+                      className={`rounded-[5px] text-[11px] font-bold uppercase tracking-wider transition-all border ${
+                        validPage >= totalPages
+                          ? "opacity-40 cursor-not-allowed border-transparent text-gray-500"
+                          : isDarkMode
+                          ? "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-[#B6A47E] cursor-pointer"
+                          : "bg-gray-100 border-gray-200 text-gray-800 hover:bg-gray-200 cursor-pointer"
+                      }`}
+                    >
+                      Selanjutnya
+                    </button>
+                  </div>
+                </div>
+              )}
             </>
           )}
 

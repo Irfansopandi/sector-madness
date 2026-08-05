@@ -12,7 +12,7 @@ import {
   uploadAdminImage,
   AdminHeroBanner,
 } from "@/utils/api";
-import { Image as ImageIcon, Plus, X, Pencil, Trash2, Upload, Search, Filter, Loader2 } from "lucide-react";
+import { Image as ImageIcon, Plus, X, Pencil, Trash2, Upload, Search, Filter, Loader2, Info } from "lucide-react";
 import Swal from "sweetalert2";
 
 export default function AdminHeroBannersPage() {
@@ -30,6 +30,11 @@ export default function AdminHeroBannersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [rowLimit, setRowLimit] = useState<number>(10);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, rowLimit]);
 
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>, setImageState: (val: string) => void) => {
     const file = e.target.files?.[0];
@@ -113,6 +118,29 @@ export default function AdminHeroBannersPage() {
       newErrors.image = "Foto hero banner wajib diunggah!";
     }
 
+    if (formSortOrder < 1 || formSortOrder > 5) {
+      newErrors.sort_order = "Sort order harus di antara 1 dan 5!";
+    }
+
+    const isSortOrderTaken = banners.some((b) => {
+      if (modalMode === "edit" && selectedBanner) {
+        return Number(b.id) !== Number(selectedBanner.id) && Number(b.sort_order) === Number(formSortOrder);
+      }
+      return Number(b.sort_order) === Number(formSortOrder);
+    });
+
+    if (isSortOrderTaken) {
+      newErrors.sort_order = `Nomor Sort Order ${formSortOrder} sudah digunakan oleh banner lain.`;
+      Swal.fire({
+        icon: "warning",
+        title: "SORT ORDER SUDAH DIGUNAKAN",
+        text: `Nomor urutan (Sort Order) ${formSortOrder} sudah dipakai oleh banner lain. Silakan pilih nomor urutan 1-5 yang belum digunakan.`,
+        background: isDarkMode ? "#18181C" : "#ffffff",
+        color: isDarkMode ? "#f5f5f5" : "#0a0a0a",
+        confirmButtonColor: "#B6A47E",
+      });
+    }
+
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length > 0) {
@@ -185,13 +213,33 @@ export default function AdminHeroBannersPage() {
   };
 
   const openAddModal = () => {
+    if (banners.length >= 5) {
+      Swal.fire({
+        icon: "warning",
+        title: "BATAS MAKSIMAL BANNER",
+        text: "Maksimal banner hero slider adalah 5 gambar. Silakan edit atau hapus banner yang ada terlebih dahulu jika ingin menambah yang baru.",
+        background: isDarkMode ? "#18181C" : "#ffffff",
+        color: isDarkMode ? "#f5f5f5" : "#0a0a0a",
+        confirmButtonColor: "#B6A47E",
+      });
+      return;
+    }
+    const usedOrders = banners.map((b) => Number(b.sort_order));
+    let nextAvailable = 1;
+    for (let i = 1; i <= 5; i++) {
+      if (!usedOrders.includes(i)) {
+        nextAvailable = i;
+        break;
+      }
+    }
+
     setErrors({});
     setModalMode("add");
     setSelectedBanner(null);
     setFormImagePath("");
     setFormImageFile(null);
     setFormImagePreview("");
-    setFormSortOrder(banners.length + 1);
+    setFormSortOrder(nextAvailable);
     setFormIsActive(true);
   };
 
@@ -265,7 +313,14 @@ export default function AdminHeroBannersPage() {
     return matchesSearch && matchesStatus;
   });
 
-  const displayedBanners = rowLimit === 0 ? filteredBanners : filteredBanners.slice(0, rowLimit);
+  const currentTotal = filteredBanners.length;
+  const pageSize = rowLimit > 0 ? rowLimit : currentTotal;
+  const totalPages = pageSize > 0 ? Math.max(1, Math.ceil(currentTotal / pageSize)) : 1;
+  const validPage = Math.min(currentPage, totalPages);
+  const startIndex = (validPage - 1) * pageSize;
+  const endIndex = rowLimit > 0 ? Math.min(startIndex + pageSize, currentTotal) : currentTotal;
+
+  const displayedBanners = filteredBanners.slice(startIndex, endIndex);
 
   return (
     <div
@@ -278,8 +333,8 @@ export default function AdminHeroBannersPage() {
 
       <div className="flex-1 flex flex-col min-w-0">
         <AdminHeader
-          title="HERO SLIDERS & BANNERS"
-          subtitle="Manage homepage campaign banners and slider images"
+          title="KELOLA HERO SLIDER & BANNER"
+          subtitle="Manajemen banner promosi dan gambar slider halaman utama"
           isDarkMode={isDarkMode}
           onToggleTheme={toggleTheme}
         />
@@ -315,29 +370,38 @@ export default function AdminHeroBannersPage() {
             </div>
           )}
 
-          <div style={{ marginBottom: "32px" }} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <h2
-              style={{
-                fontSize: "11px",
-                letterSpacing: "0.22em",
-                fontWeight: 700,
-                fontFamily: "'Inter', -apple-system, sans-serif",
-              }}
-              className={`uppercase ${isDarkMode ? "text-[#8A8A8A]" : "text-[#4B5563]"}`}
-            >
-              {filteredBanners.length} HERO BANNERS FOUND ({banners.length} TOTAL)
-            </h2>
+          <div style={{ marginBottom: "36px" }} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h2
+                style={{
+                  fontSize: "11px",
+                  letterSpacing: "0.22em",
+                  fontWeight: 700,
+                  fontFamily: "'Inter', -apple-system, sans-serif",
+                }}
+                className={`uppercase ${isDarkMode ? "text-[#8A8A8A]" : "text-[#4B5563]"}`}
+              >
+                {filteredBanners.length} HERO BANNER DITEMUKAN ({banners.length}/5 TOTAL BANNER)
+              </h2>
+              <p className={`text-xs mt-2.5 flex items-center gap-1.5 font-mono font-medium ${banners.length >= 5 ? "text-amber-400 font-bold" : isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
+                <Info className="w-4 h-4 text-[#B6A47E] shrink-0" />
+                <span>Maksimal 5 banner hero slider yang dapat diunggah / diaktifkan untuk halaman utama.</span>
+              </p>
+            </div>
             <button
               onClick={openAddModal}
+              disabled={banners.length >= 5}
               style={{ padding: "12px 28px" }}
-              className={`group rounded-[6px] text-xs font-bold tracking-widest uppercase transition-all duration-200 cursor-pointer flex items-center gap-2 shadow-sm ${
-                isDarkMode
-                  ? "bg-[#B6A47E] text-[#0A0A0A] hover:bg-[#a3926d]"
-                  : "bg-[#0A0A0A] text-white hover:bg-[#222222]"
+              className={`group rounded-[6px] text-xs font-bold tracking-widest uppercase transition-all duration-200 flex items-center gap-2 shadow-sm ${
+                banners.length >= 5
+                  ? "opacity-50 cursor-not-allowed bg-gray-600 text-gray-300 border border-gray-500"
+                  : isDarkMode
+                  ? "bg-[#B6A47E] text-[#0A0A0A] hover:bg-[#a3926d] cursor-pointer"
+                  : "bg-[#0A0A0A] text-white hover:bg-[#222222] cursor-pointer"
               }`}
             >
               <Plus className="w-4 h-4 transition-transform duration-300 group-hover:rotate-90" />
-              <span>ADD NEW HERO BANNER</span>
+              <span>TAMBAH HERO BANNER</span>
             </button>
           </div>
 
@@ -372,81 +436,73 @@ export default function AdminHeroBannersPage() {
                 />
                 <input
                   type="text"
+                  placeholder="Cari berdasarkan path / url banner..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Cari Path Foto Banner..."
                   style={{
                     width: "100%",
-                    paddingLeft: "38px",
-                    paddingRight: "14px",
-                    paddingTop: "9px",
-                    paddingBottom: "9px",
+                    paddingLeft: "36px",
+                    paddingRight: "16px",
+                    paddingTop: "8px",
+                    paddingBottom: "8px",
                     fontSize: "12px",
-                    fontWeight: 600,
                     borderRadius: "6px",
-                    outline: "none",
-                    backgroundColor: isDarkMode ? "#121214" : "#F9FAFB",
-                    border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #D1D5DB",
+                    backgroundColor: isDarkMode ? "rgba(255, 255, 255, 0.05)" : "#F9FAFB",
+                    border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid #D1D5DB",
                     color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
+                    outline: "none",
                   }}
                 />
               </div>
 
-              {/* Status Filter Dropdown */}
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <Filter style={{ width: "14px", height: "14px", color: "#B6A47E" }} />
+              {/* Status Filter */}
+              <div className="flex items-center gap-2">
+                <Filter className={`w-4 h-4 ${isDarkMode ? "text-[#8A8A8A]" : "text-[#6B7280]"}`} />
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
                   style={{
-                    padding: "9px 14px",
+                    padding: "8px 12px",
                     fontSize: "12px",
-                    fontWeight: 700,
                     borderRadius: "6px",
-                    outline: "none",
-                    textTransform: "uppercase",
-                    cursor: "pointer",
-                    backgroundColor: isDarkMode ? "#121214" : "#F9FAFB",
-                    border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #D1D5DB",
+                    backgroundColor: isDarkMode ? "rgba(255, 255, 255, 0.05)" : "#F9FAFB",
+                    border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid #D1D5DB",
                     color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
+                    outline: "none",
                   }}
                 >
                   <option value="ALL">SEMUA STATUS</option>
-                  <option value="ACTIVE">AKTIF SAJA</option>
-                  <option value="INACTIVE">NON-AKTIF SAJA</option>
+                  <option value="ACTIVE">AKTIF</option>
+                  <option value="INACTIVE">NONAKTIF</option>
                 </select>
               </div>
             </div>
 
-            {/* Row Limit Select */}
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <span style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: isDarkMode ? "#8A8A8A" : "#6B7280" }}>
-                TAMPILKAN:
-              </span>
+            {/* Row Limit Selector */}
+            <div className="flex items-center gap-2">
+              <span className={`text-xs font-mono font-semibold ${isDarkMode ? "text-[#8A8A8A]" : "text-gray-500"}`}>SHOW:</span>
               <select
                 value={rowLimit}
                 onChange={(e) => setRowLimit(Number(e.target.value))}
                 style={{
-                  padding: "9px 14px",
+                  padding: "8px 12px",
                   fontSize: "12px",
-                  fontWeight: 700,
                   borderRadius: "6px",
-                  outline: "none",
-                  cursor: "pointer",
-                  backgroundColor: isDarkMode ? "#121214" : "#F9FAFB",
-                  border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #D1D5DB",
+                  backgroundColor: isDarkMode ? "rgba(255, 255, 255, 0.05)" : "#F9FAFB",
+                  border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid #D1D5DB",
                   color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
+                  outline: "none",
                 }}
               >
-                <option value={5}>5 BARIS</option>
                 <option value={10}>10 BARIS</option>
-                <option value={25}>25 BARIS</option>
+                <option value={20}>20 BARIS</option>
                 <option value={50}>50 BARIS</option>
-                <option value={0}>SEMUA ({filteredBanners.length})</option>
+                <option value={0}>SEMUA BARIS</option>
               </select>
             </div>
           </div>
 
+          {/* HERO BANNERS TABLE */}
           <div
             className={`border rounded-[6px] overflow-hidden shadow-sm transition-colors ${
               isDarkMode
@@ -577,6 +633,82 @@ export default function AdminHeroBannersPage() {
               </table>
             </div>
           </div>
+
+          {/* PAGINATION FOOTER CONTROL BAR */}
+          {rowLimit > 0 && currentTotal > rowLimit && (
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "16px",
+                marginTop: "24px",
+                padding: "16px 20px",
+                borderRadius: "8px",
+                backgroundColor: isDarkMode ? "#18181C" : "#FFFFFF",
+                border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #E5E7EB",
+              }}
+            >
+              <span className={`text-xs font-bold font-mono ${isDarkMode ? "text-[#8A8A8A]" : "text-gray-600"}`}>
+                Menampilkan <span className="text-[#B6A47E] font-extrabold">{currentTotal > 0 ? startIndex + 1 : 0}</span> –{" "}
+                <span className="text-[#B6A47E] font-extrabold">{endIndex}</span> dari{" "}
+                <span className="text-[#B6A47E] font-extrabold">{currentTotal}</span> data (Halaman {validPage} dari {totalPages})
+              </span>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={validPage <= 1}
+                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                  style={{ padding: "8px 16px" }}
+                  className={`rounded-[5px] text-[11px] font-bold uppercase tracking-wider transition-all border ${
+                    validPage <= 1
+                      ? "opacity-40 cursor-not-allowed border-transparent text-gray-500"
+                      : isDarkMode
+                      ? "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-[#B6A47E] cursor-pointer"
+                      : "bg-gray-100 border-gray-200 text-gray-800 hover:bg-gray-200 cursor-pointer"
+                  }`}
+                >
+                  Sebelumnya
+                </button>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pg) => (
+                  <button
+                    key={pg}
+                    type="button"
+                    onClick={() => setCurrentPage(pg)}
+                    style={{ width: "32px", height: "32px" }}
+                    className={`rounded-[5px] text-[11px] font-bold font-mono transition-all border cursor-pointer flex items-center justify-center ${
+                      pg === validPage
+                        ? "bg-[#B6A47E] border-[#B6A47E] text-black font-extrabold"
+                        : isDarkMode
+                        ? "bg-white/5 border-white/10 text-white hover:bg-white/10"
+                        : "bg-gray-100 border-gray-200 text-gray-800 hover:bg-gray-200"
+                    }`}
+                  >
+                    {pg}
+                  </button>
+                ))}
+
+                <button
+                  type="button"
+                  disabled={validPage >= totalPages}
+                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                  style={{ padding: "8px 16px" }}
+                  className={`rounded-[5px] text-[11px] font-bold uppercase tracking-wider transition-all border ${
+                    validPage >= totalPages
+                      ? "opacity-40 cursor-not-allowed border-transparent text-gray-500"
+                      : isDarkMode
+                      ? "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-[#B6A47E] cursor-pointer"
+                      : "bg-gray-100 border-gray-200 text-gray-800 hover:bg-gray-200 cursor-pointer"
+                  }`}
+                >
+                  Selanjutnya
+                </button>
+              </div>
+            </div>
+          )}
         </main>
       </div>
 
@@ -744,14 +876,15 @@ export default function AdminHeroBannersPage() {
                     fontWeight: 700,
                     letterSpacing: "0.12em",
                     textTransform: "uppercase",
-                    color: isDarkMode ? "#CCCCCC" : "#374151",
+                    color: errors.sort_order ? "#EF4444" : (isDarkMode ? "#CCCCCC" : "#374151"),
                   }}
                 >
-                  SORT ORDER (URUTAN TAMPIL)
+                  SORT ORDER (URUTAN TAMPIL: 1 – 5) *
                 </label>
                 <div style={{ display: "flex", alignItems: "center", gap: "0" }}>
                   <button
                     type="button"
+                    disabled={formSortOrder <= 1}
                     onClick={() => setFormSortOrder(Math.max(1, formSortOrder - 1))}
                     style={{
                       width: "42px",
@@ -762,14 +895,15 @@ export default function AdminHeroBannersPage() {
                       fontSize: "18px",
                       fontWeight: 700,
                       borderRadius: "6px 0 0 6px",
-                      cursor: "pointer",
+                      cursor: formSortOrder <= 1 ? "not-allowed" : "pointer",
+                      opacity: formSortOrder <= 1 ? 0.4 : 1,
                       backgroundColor: isDarkMode ? "#1E1E22" : "#F3F4F6",
                       border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #D1D5DB",
                       color: isDarkMode ? "#CCCCCC" : "#374151",
                       transition: "all 0.15s ease",
                       userSelect: "none",
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#B6A47E"; e.currentTarget.style.color = "#0A0A0A"; }}
+                    onMouseEnter={(e) => { if (formSortOrder > 1) { e.currentTarget.style.backgroundColor = "#B6A47E"; e.currentTarget.style.color = "#0A0A0A"; } }}
                     onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = isDarkMode ? "#1E1E22" : "#F3F4F6"; e.currentTarget.style.color = isDarkMode ? "#CCCCCC" : "#374151"; }}
                   >
                     −
@@ -777,8 +911,18 @@ export default function AdminHeroBannersPage() {
                   <input
                     type="number"
                     min={1}
+                    max={5}
+                    id="field-sort_order"
                     value={formSortOrder}
-                    onChange={(e) => setFormSortOrder(Math.max(1, Number(e.target.value)))}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      if (val >= 1 && val <= 5) {
+                        setFormSortOrder(val);
+                        setErrors((prev) => ({ ...prev, sort_order: "" }));
+                      } else if (e.target.value === "") {
+                        setFormSortOrder(1);
+                      }
+                    }}
                     style={{
                       flex: 1,
                       height: "44px",
@@ -788,8 +932,8 @@ export default function AdminHeroBannersPage() {
                       textAlign: "center",
                       outline: "none",
                       backgroundColor: isDarkMode ? "#121214" : "#ffffff",
-                      borderTop: isDarkMode ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #D1D5DB",
-                      borderBottom: isDarkMode ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #D1D5DB",
+                      borderTop: errors.sort_order ? "1px solid #EF4444" : (isDarkMode ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #D1D5DB"),
+                      borderBottom: errors.sort_order ? "1px solid #EF4444" : (isDarkMode ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #D1D5DB"),
                       borderLeft: "none",
                       borderRight: "none",
                       color: "#B6A47E",
@@ -798,7 +942,8 @@ export default function AdminHeroBannersPage() {
                   />
                   <button
                     type="button"
-                    onClick={() => setFormSortOrder(formSortOrder + 1)}
+                    disabled={formSortOrder >= 5}
+                    onClick={() => setFormSortOrder(Math.min(5, formSortOrder + 1))}
                     style={{
                       width: "42px",
                       height: "44px",
@@ -808,22 +953,29 @@ export default function AdminHeroBannersPage() {
                       fontSize: "18px",
                       fontWeight: 700,
                       borderRadius: "0 6px 6px 0",
-                      cursor: "pointer",
+                      cursor: formSortOrder >= 5 ? "not-allowed" : "pointer",
+                      opacity: formSortOrder >= 5 ? 0.4 : 1,
                       backgroundColor: isDarkMode ? "#1E1E22" : "#F3F4F6",
                       border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #D1D5DB",
                       color: isDarkMode ? "#CCCCCC" : "#374151",
                       transition: "all 0.15s ease",
                       userSelect: "none",
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#B6A47E"; e.currentTarget.style.color = "#0A0A0A"; }}
+                    onMouseEnter={(e) => { if (formSortOrder < 5) { e.currentTarget.style.backgroundColor = "#B6A47E"; e.currentTarget.style.color = "#0A0A0A"; } }}
                     onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = isDarkMode ? "#1E1E22" : "#F3F4F6"; e.currentTarget.style.color = isDarkMode ? "#CCCCCC" : "#374151"; }}
                   >
                     +
                   </button>
                 </div>
-                <p style={{ fontSize: "10px", fontWeight: 600, color: isDarkMode ? "#8A8A8A" : "#6B7280", marginTop: "2px" }}>
-                  * Angka lebih kecil akan tampil lebih dulu di slider
-                </p>
+                {errors?.sort_order ? (
+                  <p style={{ fontSize: "11px", fontWeight: 600, color: "#EF4444", marginTop: "2px" }}>
+                    * {errors.sort_order}
+                  </p>
+                ) : (
+                  <p style={{ fontSize: "10px", fontWeight: 600, color: isDarkMode ? "#8A8A8A" : "#6B7280", marginTop: "2px" }}>
+                    * Pilih nomor urutan 1 sampai 5 (setiap nomor hanya bisa dipakai 1 banner).
+                  </p>
+                )}
               </div>
 
               <div style={{ display: "flex", alignItems: "center", gap: "10px", paddingTop: "8px" }}>

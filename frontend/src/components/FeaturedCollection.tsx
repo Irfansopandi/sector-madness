@@ -1,13 +1,17 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getProducts, getImageUrl } from "@/utils/api";
-import { products as localProducts } from "@/data/products";
 import ProductCard from "./ProductCard";
 
 export default function FeaturedCollection() {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [isPaused, setIsPaused] = useState(false);
+  const isDraggingRef = useRef(false);
+  const startXRef = useRef(0);
+  const scrollLeftStartRef = useRef(0);
+  const hasInitializedScrollRef = useRef(false);
 
   const { data: apiProducts } = useQuery({
     queryKey: ["products"],
@@ -35,11 +39,89 @@ export default function FeaturedCollection() {
 
   const featuredProducts = productsList.slice(0, 10);
 
-  const scroll = (direction: "left" | "right") => {
-    if (scrollRef.current) {
-      const scrollAmount = direction === "left" ? -450 : 450;
-      scrollRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+  // Triple duplicated list for seamless bidirectional infinite scrolling
+  const displayProducts = featuredProducts.length > 0
+    ? [...featuredProducts, ...featuredProducts, ...featuredProducts]
+    : [];
+
+  // Normalize scroll position seamlessly in mid-range (0.5x to 1.5x setWidth) to eliminate any edge boundary pause/jeda
+  const normalizeScroll = useCallback(() => {
+    if (!scrollRef.current || featuredProducts.length === 0) return;
+    const container = scrollRef.current;
+    const children = container.children;
+    const N = featuredProducts.length;
+
+    if (children.length < N * 2) return;
+
+    const item0 = children[0] as HTMLElement;
+    const itemN = children[N] as HTMLElement;
+    if (!item0 || !itemN) return;
+
+    const setWidth = itemN.offsetLeft - item0.offsetLeft;
+    if (setWidth <= 0) return;
+
+    if (container.scrollLeft >= setWidth * 1.5) {
+      container.scrollLeft -= setWidth;
+    } else if (container.scrollLeft <= setWidth * 0.5) {
+      container.scrollLeft += setWidth;
     }
+  }, [featuredProducts.length]);
+
+  // Set initial scroll position to the middle set (Set 2)
+  useEffect(() => {
+    if (scrollRef.current && featuredProducts.length > 0 && !hasInitializedScrollRef.current) {
+      const container = scrollRef.current;
+      const children = container.children;
+      const N = featuredProducts.length;
+      if (children.length >= N * 2) {
+        const item0 = children[0] as HTMLElement;
+        const itemN = children[N] as HTMLElement;
+        if (item0 && itemN) {
+          const setWidth = itemN.offsetLeft - item0.offsetLeft;
+          container.scrollLeft = setWidth;
+          hasInitializedScrollRef.current = true;
+        }
+      }
+    }
+  }, [featuredProducts.length]);
+
+  // Continuous Smooth Auto-Scroll
+  useEffect(() => {
+    let animationFrameId: number;
+
+    const autoScrollStep = () => {
+      if (!isPaused && !isDraggingRef.current && scrollRef.current) {
+        scrollRef.current.scrollLeft += 0.8;
+        normalizeScroll();
+      }
+      animationFrameId = requestAnimationFrame(autoScrollStep);
+    };
+
+    animationFrameId = requestAnimationFrame(autoScrollStep);
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [isPaused, normalizeScroll]);
+
+  // Mouse Drag Handlers for Desktop
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!scrollRef.current) return;
+    isDraggingRef.current = true;
+    setIsPaused(true);
+    startXRef.current = e.pageX - scrollRef.current.offsetLeft;
+    scrollLeftStartRef.current = scrollRef.current.scrollLeft;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDraggingRef.current || !scrollRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = (x - startXRef.current) * 1.5;
+    scrollRef.current.scrollLeft = scrollLeftStartRef.current - walk;
+    normalizeScroll();
+  };
+
+  const handleMouseUpOrLeave = () => {
+    isDraggingRef.current = false;
+    setIsPaused(false);
   };
 
   return (
@@ -64,35 +146,24 @@ export default function FeaturedCollection() {
 
       {/* 100% Full Screen Viewport Width Carousel Wrapper */}
       <div className="relative w-full">
-        {/* Floating Left Arrow Button */}
-        <button
-          onClick={() => scroll("left")}
-          aria-label="Previous"
-          className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 md:w-12 md:h-12 bg-[#F5F5F5] text-[#0A0A0A] flex items-center justify-center shadow-2xl opacity-90 hover:opacity-100 transition-all duration-300 cursor-pointer"
-        >
-          <span className="text-[20px] font-bold">‹</span>
-        </button>
-
-        {/* Floating Right Arrow Button */}
-        <button
-          onClick={() => scroll("right")}
-          aria-label="Next"
-          className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 md:w-12 md:h-12 bg-[#F5F5F5] text-[#0A0A0A] flex items-center justify-center shadow-2xl opacity-90 hover:opacity-100 transition-all duration-300 cursor-pointer"
-        >
-          <span className="text-[20px] font-bold">›</span>
-        </button>
-
         {/* Parent Track Wrapper with Symmetrical 60px Left & Right Inset */}
         <div style={{ paddingLeft: "60px", paddingRight: "60px" }} className="w-full">
           <div
             ref={scrollRef}
+            onScroll={normalizeScroll}
+            onMouseLeave={handleMouseUpOrLeave}
+            onTouchStart={() => setIsPaused(true)}
+            onTouchEnd={() => setIsPaused(false)}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUpOrLeave}
             style={{ scrollbarWidth: "none", msOverflowStyle: "none", touchAction: "pan-x" }}
-            className="w-full flex overflow-x-auto overflow-y-hidden gap-4 md:gap-5 lg:gap-6 scrollbar-none snap-x snap-mandatory scroll-smooth pb-6 select-none"
+            className="w-full flex overflow-x-auto overflow-y-hidden gap-4 md:gap-5 lg:gap-6 scrollbar-none pb-6 select-none cursor-grab active:cursor-grabbing"
           >
-            {featuredProducts.map((product, index) => (
+            {displayProducts.map((product, index) => (
               <div
-                key={product.id}
-                className="flex-none w-[270px] sm:w-[310px] md:w-[340px] lg:w-[360px] snap-start"
+                key={`${product.id}-${index}`}
+                className="flex-none w-[270px] sm:w-[310px] md:w-[340px] lg:w-[360px]"
               >
                 <ProductCard
                   slug={product.slug}
@@ -108,7 +179,10 @@ export default function FeaturedCollection() {
                   isFlashSale={product.isFlashSale}
                   image={product.image}
                   limited={product.limited}
-                  index={index}
+                  index={index % (featuredProducts.length || 1)}
+                  hideDetailsOnIdle={true}
+                  onHoverImageStart={() => setIsPaused(true)}
+                  onHoverImageEnd={() => setIsPaused(false)}
                 />
               </div>
             ))}

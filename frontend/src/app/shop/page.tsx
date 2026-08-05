@@ -16,9 +16,14 @@ function ShopContent() {
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get("category");
 
+  const [activeCategory, setActiveCategory] = useState(categoryParam ? categoryParam.toUpperCase() : "ALL");
+  const [gridCols, setGridCols] = useState<4 | 6>(4);
+  const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState("SELECTED");
+
   const { data: apiProducts, isLoading: loadingProducts } = useQuery({
     queryKey: ["products"],
-    queryFn: getProducts,
+    queryFn: () => getProducts(),
   });
 
   const { data: apiCategories } = useQuery({
@@ -30,11 +35,6 @@ function ShopContent() {
     queryKey: ["sortOptions"],
     queryFn: getSortOptions,
   });
-
-  const [activeCategory, setActiveCategory] = useState(categoryParam ? categoryParam.toUpperCase() : "ALL");
-  const [gridCols, setGridCols] = useState<4 | 6>(4);
-  const [showFilters, setShowFilters] = useState(false);
-  const [sortBy, setSortBy] = useState("SELECTED");
 
   // Sync URL query param with state
   useEffect(() => {
@@ -104,6 +104,8 @@ function ShopContent() {
     details: p.details || [],
     story: p.story || p.description,
     limited: Boolean(p.limited),
+    category: p.category,
+    categoryId: p.category_id,
   })) : [];
 
   const dynamicCategories = (apiCategories && apiCategories.length > 0)
@@ -114,20 +116,18 @@ function ShopContent() {
     ? apiSortOptions.map(s => s.name.toUpperCase())
     : ["SELECTED"];
 
-  // Filter products logic
+  // Filter products logic — based strictly on DB Category relationship
   const filteredProducts = productsList.filter((p) => {
     const cat = activeCategory.toUpperCase();
     if (cat === "ALL" || cat === "ALL PRODUCTS" || cat === "SHOP") return true;
     if (cat === "NEW ARRIVALS") return p.collectionCode === "SECTOR 002" || Number(p.id) >= 5;
-    if (cat === "OUTERWEAR") return Boolean(p.name.toLowerCase().match(/(bomber|trench|anorak|vest|jacket|coat)/i) || p.description.toLowerCase().match(/(jacket|coat|outerwear)/i));
-    if (cat === "T-SHIRTS" || cat === "T-SHIRT") return p.name.toLowerCase().includes("tee") || p.name.toLowerCase().includes("t-shirt") || p.name.toLowerCase().includes("shirt");
-    if (cat === "BOTTOMS") return Boolean(p.name.toLowerCase().match(/(cargo|trousers|pants|shorts)/i));
-    if (cat === "ACCESSORIES") return p.name.toLowerCase().includes("vest") || p.name.toLowerCase().includes("cap") || p.id === "008";
-    if (cat === "SALE") return Number(p.id) % 2 === 0 || p.id === "002" || p.id === "004";
-    if (cat === "FW026" || cat === "BI-FACE | FW026") return p.collection === "The Atelier Series" || p.name.toLowerCase().includes("trench") || p.name.toLowerCase().includes("anorak") || p.name.toLowerCase().includes("zip") || p.id === "002";
-    if (cat === "ATELIER ARCHIVE") return p.collection === "The Atelier Series" || p.collectionCode === "SECTOR 002";
-    if (cat === "TACTICAL SERIES") return p.name.toLowerCase().includes("tactical") || p.name.toLowerCase().includes("cargo") || p.name.toLowerCase().includes("vest") || p.name.toLowerCase().includes("zip") || p.id === "002";
-    return p.name.toLowerCase().includes(cat.toLowerCase()) || p.description.toLowerCase().includes(cat.toLowerCase()) || p.collection.toLowerCase().includes(cat.toLowerCase());
+
+    if (p.category) {
+      const pCatName = (p.category.name || "").toUpperCase();
+      const pCatSlug = (p.category.slug || "").toUpperCase();
+      return pCatName === cat || pCatSlug === cat;
+    }
+    return false;
   });
 
   // Sort products
@@ -297,26 +297,26 @@ function ShopContent() {
                   )}
 
                   {product.limited && (!product.discountPercentage || product.discountPercentage === 0) && (
-                    <div className="absolute top-4 left-4">
+                    <div className="absolute top-4 left-4 z-10">
                       <span className="text-[9px] tracking-[0.2em] uppercase text-[#B6A47E] font-[family-name:var(--font-body)]">
                         Limited Release
                       </span>
                     </div>
                   )}
 
-                  {/* Hover overlay */}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-500" />
-
-                  {/* View Product - appears on hover */}
-                  <div className="absolute bottom-0 left-0 right-0 p-5 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out">
-                    <span className="text-[10px] tracking-[0.2em] uppercase text-[#F5F5F5]">
-                      View Product →
+                  {/* VIEW PRODUCT label - inside image at bottom-4 left-4 */}
+                  <div className="absolute bottom-4 left-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <span className="text-[9px] tracking-[0.2em] uppercase text-[#F5F5F5] font-[family-name:var(--font-body)] font-medium">
+                      VIEW PRODUCT
                     </span>
                   </div>
+
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-500" />
                 </div>
 
                 {/* Info */}
-                <div className="space-y-2">
+                <div className="mt-3.5 px-4 space-y-1">
                   <span className="text-[9px] tracking-[0.25em] uppercase text-[#8A8A8A] font-[family-name:var(--font-body)] block">
                     {product.collectionCode}
                   </span>
@@ -326,7 +326,7 @@ function ShopContent() {
                   <p className="text-[11px] text-[#8A8A8A] font-[family-name:var(--font-body)] font-light">
                     {product.material} · {product.weight}
                   </p>
-                  <div className="flex items-center gap-2 pt-1 flex-wrap">
+                  <div className="flex items-center gap-2 pt-0.5 flex-wrap">
                     <span className="text-[13px] text-[#0A0A0A] font-[family-name:var(--font-body)] font-medium">
                       Rp {(product.price < 1000 ? product.price * 1000 : product.price).toLocaleString("id-ID")}
                     </span>

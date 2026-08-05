@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Sun, Moon, Bell, Menu } from "lucide-react";
+import { Sun, Moon, Bell, Menu, User } from "lucide-react";
 
 interface AdminHeaderProps {
   title: string;
@@ -17,23 +17,11 @@ export default function AdminHeader({
   onToggleTheme,
   onToggleSidebar,
 }: AdminHeaderProps) {
-  const [currentDate, setCurrentDate] = useState("Minggu, 02 Agustus 2026");
-  const [userInitial, setUserInitial] = useState("A");
+  const [currentDate, setCurrentDate] = useState("");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       document.title = "Sector Madness - Admin Panel";
-      try {
-        const userData = localStorage.getItem("sector_madness_user");
-        if (userData) {
-          const parsed = JSON.parse(userData);
-          const name =
-            parsed.name ||
-            [parsed.firstName, parsed.lastName].filter(Boolean).join(" ") ||
-            (parsed.email ? parsed.email.split("@")[0] : "A");
-          if (name) setUserInitial(name.charAt(0).toUpperCase());
-        }
-      } catch {}
     }
 
     const updateClock = () => {
@@ -59,7 +47,7 @@ export default function AdminHeader({
 
   return (
     <header
-      style={{ paddingLeft: "48px", paddingRight: "48px" }}
+      style={{ paddingLeft: "24px", paddingRight: "24px" }}
       className={`sticky top-0 z-30 w-full h-[80px] flex items-center justify-between transition-colors duration-200 ${
         isDarkMode
           ? "bg-[#121214] border-b border-[#242428] text-[#F5F5F5]"
@@ -67,7 +55,7 @@ export default function AdminHeader({
       }`}
     >
       {/* Left side: Hamburger Button + Title */}
-      <div className="flex items-center gap-3.5">
+      <div className="flex items-center gap-3.5 min-w-0 pr-4">
         <button
           onClick={() => {
             if (onToggleSidebar) {
@@ -87,7 +75,7 @@ export default function AdminHeader({
         </button>
 
         <h1
-          className={`text-base md:text-lg font-bold tracking-tight ${
+          className={`text-base md:text-lg font-bold tracking-tight truncate ${
             isDarkMode ? "text-[#F5F5F5]" : "text-[#0A0A0A]"
           }`}
         >
@@ -95,14 +83,14 @@ export default function AdminHeader({
         </h1>
       </div>
 
-      {/* Right side: Theme Toggle + Notification + Date + Profile Circle */}
-      <div className="flex items-center gap-4 sm:gap-5">
+      {/* Right side: Theme Toggle + Date + Notification Bell + User Icon Circle */}
+      <div className="flex items-center justify-end gap-3 sm:gap-4 shrink-0 ml-auto">
         {/* Dark / Light Mode Toggle Button */}
         <button
           onClick={onToggleTheme}
           title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-          style={{ paddingLeft: "14px", paddingRight: "16px", height: "36px" }}
-          className={`flex items-center gap-2.5 rounded-full text-xs font-mono font-bold uppercase tracking-wider border transition-all duration-200 cursor-pointer shrink-0 ${
+          style={{ paddingLeft: "12px", paddingRight: "14px", height: "36px" }}
+          className={`flex items-center justify-center gap-2 rounded-full text-xs font-mono font-bold uppercase tracking-wider border transition-all duration-200 cursor-pointer shrink-0 ${
             isDarkMode
               ? "bg-[#161616] border-white/20 text-[#F5F5F5] hover:border-[#B6A47E]"
               : "bg-[#F3F4F6] border-[#CBD5E1] text-[#0A0A0A] hover:border-[#B6A47E]"
@@ -116,30 +104,35 @@ export default function AdminHeader({
           </span>
         </button>
 
-        {/* Notification Bell */}
-        <button
-          className={`transition-colors p-1.5 cursor-pointer ${
-            isDarkMode
-              ? "text-[#8A8A8A] hover:text-[#F5F5F5]"
-              : "text-[#6B7280] hover:text-[#111827]"
-          }`}
-        >
-          <Bell className="w-5 h-5 stroke-[1.75]" />
-        </button>
-
         {/* Date string */}
         <span
           suppressHydrationWarning
-          className={`hidden sm:inline-block text-xs font-mono font-medium ${
+          className={`hidden md:inline-block text-xs font-mono font-medium text-center tabular-nums shrink-0 ${
             isDarkMode ? "text-[#8A8A8A]" : "text-[#6B7280]"
           }`}
         >
           {currentDate}
         </span>
 
-        {/* Profile Avatar Circle */}
-        <div className="w-9 h-9 rounded-full bg-[#B6A47E] text-[#0A0A0A] font-bold text-sm flex items-center justify-center shadow-xs shrink-0">
-          {userInitial}
+        {/* Notification Bell */}
+        <button
+          className={`transition-colors p-1.5 cursor-pointer shrink-0 ${
+            isDarkMode
+              ? "text-[#8A8A8A] hover:text-[#F5F5F5]"
+              : "text-[#6B7280] hover:text-[#111827]"
+          }`}
+          title="Notifikasi"
+        >
+          <Bell className="w-5 h-5 stroke-[1.75]" />
+        </button>
+
+        {/* Profile Avatar Circle with User Icon */}
+        <div
+          suppressHydrationWarning
+          title="User Profile"
+          className="w-9 h-9 rounded-full bg-[#B6A47E] text-[#0A0A0A] flex items-center justify-center shadow-xs shrink-0 cursor-pointer hover:bg-[#a3926d] transition-colors"
+        >
+          <User className="w-4.5 h-4.5 stroke-[2.2]" />
         </div>
       </div>
     </header>

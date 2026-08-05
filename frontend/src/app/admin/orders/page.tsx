@@ -19,14 +19,16 @@ import Swal from "sweetalert2";
 export default function AdminOrdersPage() {
   const queryClient = useQueryClient();
   const [isMounted, setIsMounted] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const savedTheme = localStorage.getItem("sector_madness_admin_theme");
+      return savedTheme === null ? true : savedTheme === "dark";
+    }
+    return true;
+  });
 
   useEffect(() => {
     setIsMounted(true);
-    const savedTheme = localStorage.getItem("sector_madness_admin_theme");
-    if (savedTheme !== null) {
-      setIsDarkMode(savedTheme === "dark");
-    }
   }, []);
 
   const [selectedOrder, setSelectedOrder] = useState<AdminOrder | null>(null);
@@ -144,6 +146,11 @@ export default function AdminOrdersPage() {
   const tabRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
   const [rowLimit, setRowLimit] = useState<number>(10);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, activeTab, statusFilter, rowLimit]);
 
   const showSuccessAlert = (msg: string) => {
     Swal.fire({
@@ -346,7 +353,14 @@ export default function AdminOrdersPage() {
     return matchesSearch && matchesTab && matchesStatus;
   });
 
-  const displayedOrders = rowLimit === 0 ? filteredOrders : filteredOrders.slice(0, rowLimit);
+  const currentTotal = filteredOrders.length;
+  const pageSize = rowLimit > 0 ? rowLimit : currentTotal;
+  const totalPages = pageSize > 0 ? Math.max(1, Math.ceil(currentTotal / pageSize)) : 1;
+  const validPage = Math.min(currentPage, totalPages);
+  const startIndex = (validPage - 1) * pageSize;
+  const endIndex = rowLimit > 0 ? Math.min(startIndex + pageSize, currentTotal) : currentTotal;
+
+  const displayedOrders = filteredOrders.slice(startIndex, endIndex);
 
   return (
     <div
@@ -471,7 +485,7 @@ export default function AdminOrdersPage() {
                     fontSize: "12px",
                     fontWeight: 800,
                     letterSpacing: "0.08em",
-                    transition: "color 0.25s ease",
+                    transition: "all 0.25s ease",
                     backgroundColor: "transparent",
                     color: isActive
                       ? isDarkMode
@@ -482,9 +496,13 @@ export default function AdminOrdersPage() {
                       : "#6B7280",
                     border: "none",
                   }}
-                  className="shrink-0 font-mono tracking-wider uppercase"
+                  className={`group shrink-0 font-mono tracking-wider uppercase transition-colors duration-200 ${
+                    isDarkMode
+                      ? "hover:text-[#FFFFFF] hover:bg-white/[0.04]"
+                      : "hover:text-[#0A0A0A] hover:bg-black/[0.04]"
+                  }`}
                 >
-                  <IconComponent className={`w-4 h-4 transition-colors ${isActive ? "text-[#B6A47E]" : ""}`} />
+                  <IconComponent className={`w-4 h-4 transition-colors ${isActive ? "text-[#B6A47E]" : "group-hover:text-[#B6A47E]"}`} />
                   <span>{tab.label}</span>
                   <span
                     style={{
@@ -506,6 +524,13 @@ export default function AdminOrdersPage() {
                         : "#374151",
                       transition: "all 0.25s ease",
                     }}
+                    className={
+                      isActive
+                        ? ""
+                        : isDarkMode
+                        ? "group-hover:bg-[#B6A47E]/20 group-hover:text-[#B6A47E]"
+                        : "group-hover:bg-[#B6A47E]/20 group-hover:text-[#B6A47E]"
+                    }
                   >
                     {tab.count}
                   </span>

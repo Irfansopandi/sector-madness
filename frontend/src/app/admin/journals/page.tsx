@@ -30,6 +30,11 @@ export default function AdminJournalsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("ALL");
   const [rowLimit, setRowLimit] = useState<number>(10);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, categoryFilter, rowLimit]);
 
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>, setImageState: (val: string) => void) => {
     const file = e.target.files?.[0];
@@ -300,7 +305,14 @@ export default function AdminJournalsPage() {
     return matchesSearch && matchesCategory;
   });
 
-  const displayedJournals = rowLimit === 0 ? filteredJournals : filteredJournals.slice(0, rowLimit);
+  const currentTotal = filteredJournals.length;
+  const pageSize = rowLimit > 0 ? rowLimit : currentTotal;
+  const totalPages = pageSize > 0 ? Math.max(1, Math.ceil(currentTotal / pageSize)) : 1;
+  const validPage = Math.min(currentPage, totalPages);
+  const startIndex = (validPage - 1) * pageSize;
+  const endIndex = rowLimit > 0 ? Math.min(startIndex + pageSize, currentTotal) : currentTotal;
+
+  const displayedJournals = filteredJournals.slice(startIndex, endIndex);
 
   return (
     <div
@@ -313,8 +325,8 @@ export default function AdminJournalsPage() {
 
       <div className="flex-1 flex flex-col min-w-0">
         <AdminHeader
-          title="JOURNAL ARTICLES"
-          subtitle="Manage brand editorial stories and publications"
+          title="KELOLA ARTIKEL JURNAL"
+          subtitle="Manajemen publikasi artikel, cerita brand, dan jurnal editorial"
           isDarkMode={isDarkMode}
           onToggleTheme={toggleTheme}
         />
@@ -350,7 +362,7 @@ export default function AdminJournalsPage() {
             </div>
           )}
 
-          <div style={{ marginBottom: "32px" }} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div style={{ marginBottom: "36px" }} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h2
               style={{
                 fontSize: "11px",
@@ -360,7 +372,7 @@ export default function AdminJournalsPage() {
               }}
               className={`uppercase ${isDarkMode ? "text-[#8A8A8A]" : "text-[#4B5563]"}`}
             >
-              {filteredJournals.length} JOURNAL ARTICLES FOUND ({journals.length} TOTAL)
+              {filteredJournals.length} ARTIKEL JURNAL DITEMUKAN ({journals.length} TOTAL)
             </h2>
             <button
               onClick={openAddModal}
@@ -372,7 +384,7 @@ export default function AdminJournalsPage() {
               }`}
             >
               <Plus className="w-4 h-4 transition-transform duration-300 group-hover:rotate-90" />
-              <span>WRITE NEW ARTICLE</span>
+              <span>TAMBAH ARTIKEL JURNAL</span>
             </button>
           </div>
 
@@ -502,7 +514,7 @@ export default function AdminJournalsPage() {
                   }`}
                 >
                   <tr>
-                    <th style={{ padding: "18px 24px" }} className="font-bold">ID</th>
+                    <th style={{ padding: "18px 24px" }} className="font-bold">NO.</th>
                     <th style={{ padding: "18px 24px" }} className="font-bold">ARTICLE TITLE</th>
                     <th style={{ padding: "18px 24px" }} className="font-bold">CATEGORY</th>
                     <th style={{ padding: "18px 24px" }} className="font-bold">ISSUE / VOL</th>
@@ -540,14 +552,14 @@ export default function AdminJournalsPage() {
                       </td>
                     </tr>
                   ) : (
-                    displayedJournals.map((art) => (
+                    displayedJournals.map((art, idx) => (
                       <tr
                         key={art.id}
                         className={`transition-colors ${
                           isDarkMode ? "hover:bg-white/[0.02]" : "hover:bg-[#F9FAFB]"
                         }`}
                       >
-                        <td style={{ padding: "20px 24px" }} className="font-mono font-bold">{art.id}</td>
+                        <td style={{ padding: "20px 24px" }} className={`font-mono font-bold ${isDarkMode ? "text-[#8A8A8A]" : "text-gray-500"}`}>{startIndex + idx + 1}</td>
                         <td
                           style={{ padding: "20px 24px" }}
                           className={`font-bold ${
@@ -612,6 +624,82 @@ export default function AdminJournalsPage() {
               </table>
             </div>
           </div>
+
+          {/* PAGINATION FOOTER CONTROL BAR */}
+          {rowLimit > 0 && currentTotal > rowLimit && (
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "16px",
+                marginTop: "24px",
+                padding: "16px 20px",
+                borderRadius: "8px",
+                backgroundColor: isDarkMode ? "#18181C" : "#FFFFFF",
+                border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #E5E7EB",
+              }}
+            >
+              <span className={`text-xs font-bold font-mono ${isDarkMode ? "text-[#8A8A8A]" : "text-gray-600"}`}>
+                Menampilkan <span className="text-[#B6A47E] font-extrabold">{currentTotal > 0 ? startIndex + 1 : 0}</span> –{" "}
+                <span className="text-[#B6A47E] font-extrabold">{endIndex}</span> dari{" "}
+                <span className="text-[#B6A47E] font-extrabold">{currentTotal}</span> data (Halaman {validPage} dari {totalPages})
+              </span>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={validPage <= 1}
+                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                  style={{ padding: "8px 16px" }}
+                  className={`rounded-[5px] text-[11px] font-bold uppercase tracking-wider transition-all border ${
+                    validPage <= 1
+                      ? "opacity-40 cursor-not-allowed border-transparent text-gray-500"
+                      : isDarkMode
+                      ? "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-[#B6A47E] cursor-pointer"
+                      : "bg-gray-100 border-gray-200 text-gray-800 hover:bg-gray-200 cursor-pointer"
+                  }`}
+                >
+                  Sebelumnya
+                </button>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pg) => (
+                  <button
+                    key={pg}
+                    type="button"
+                    onClick={() => setCurrentPage(pg)}
+                    style={{ width: "32px", height: "32px" }}
+                    className={`rounded-[5px] text-[11px] font-bold font-mono transition-all border cursor-pointer flex items-center justify-center ${
+                      pg === validPage
+                        ? "bg-[#B6A47E] border-[#B6A47E] text-black font-extrabold"
+                        : isDarkMode
+                        ? "bg-white/5 border-white/10 text-white hover:bg-white/10"
+                        : "bg-gray-100 border-gray-200 text-gray-800 hover:bg-gray-200"
+                    }`}
+                  >
+                    {pg}
+                  </button>
+                ))}
+
+                <button
+                  type="button"
+                  disabled={validPage >= totalPages}
+                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                  style={{ padding: "8px 16px" }}
+                  className={`rounded-[5px] text-[11px] font-bold uppercase tracking-wider transition-all border ${
+                    validPage >= totalPages
+                      ? "opacity-40 cursor-not-allowed border-transparent text-gray-500"
+                      : isDarkMode
+                      ? "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-[#B6A47E] cursor-pointer"
+                      : "bg-gray-100 border-gray-200 text-gray-800 hover:bg-gray-200 cursor-pointer"
+                  }`}
+                >
+                  Selanjutnya
+                </button>
+              </div>
+            </div>
+          )}
         </main>
       </div>
 

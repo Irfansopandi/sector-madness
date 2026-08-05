@@ -38,14 +38,16 @@ import {
 
 export default function AdminDashboardPage() {
   const [isMounted, setIsMounted] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const savedTheme = localStorage.getItem("sector_madness_admin_theme");
+      return savedTheme === null ? true : savedTheme === "dark";
+    }
+    return true;
+  });
 
   useEffect(() => {
     setIsMounted(true);
-    const savedTheme = localStorage.getItem("sector_madness_admin_theme");
-    if (savedTheme !== null) {
-      setIsDarkMode(savedTheme === "dark");
-    }
   }, []);
   const [greeting, setGreeting] = useState("GOOD DAY,");
   const [adminName, setAdminName] = useState("Admin SectorMadness");

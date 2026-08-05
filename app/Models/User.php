@@ -22,6 +22,7 @@ class User extends Authenticatable
         'password',
         'phone',
         'birth_date',
+        'is_active',
         'last_login_at',
     ];
 
@@ -42,6 +43,7 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
+            'is_active' => 'boolean',
             'last_login_at' => 'datetime',
             'password' => 'hashed',
         ];
@@ -55,5 +57,10 @@ class User extends Authenticatable
     public function orders()
     {
         return $this->hasMany(Order::class);
+    }
+
+    public function shippingAddresses()
+    {
+        return $this->hasMany(ShippingAddress::class);
     }
 }
