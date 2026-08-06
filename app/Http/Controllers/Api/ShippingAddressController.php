@@ -115,12 +115,16 @@ class ShippingAddressController extends Controller
     public function update(Request $request, $id)
     {
         $user = $this->getUser($request);
+        if (!$user) {
+            return response()->json(['status' => false, 'message' => 'Authentication required'], 401);
+        }
+
         $address = ShippingAddress::where('id', $id)
-            ->when($user, fn($q) => $q->where('user_id', $user->id))
+            ->where('user_id', $user->id)
             ->first();
 
         if (!$address) {
-            return response()->json(['status' => false, 'message' => 'Address not found'], 404);
+            return response()->json(['status' => false, 'message' => 'Address record not found or unauthorized access'], 404);
         }
 
         $validator = Validator::make($request->all(), [
@@ -175,13 +179,19 @@ class ShippingAddressController extends Controller
     public function destroy(Request $request, $id)
     {
         $user = $this->getUser($request);
+        if (!$user) {
+            return response()->json(['status' => false, 'message' => 'Authentication required'], 401);
+        }
+
         $address = ShippingAddress::where('id', $id)
-            ->when($user, fn($q) => $q->where('user_id', $user->id))
+            ->where('user_id', $user->id)
             ->first();
 
-        if ($address) {
-            $address->delete();
+        if (!$address) {
+            return response()->json(['status' => false, 'message' => 'Address record not found or unauthorized access'], 404);
         }
+
+        $address->delete();
 
         return response()->json([
             'status'  => true,

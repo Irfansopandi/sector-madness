@@ -21,6 +21,18 @@ class SizeGuideController extends Controller
         ]);
     }
 
+    public function adminIndex()
+    {
+        $sizeGuides = SizeGuide::orderBy('sort_order', 'asc')
+            ->orderBy('id', 'asc')
+            ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $sizeGuides
+        ]);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([

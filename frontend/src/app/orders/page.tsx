@@ -7,9 +7,28 @@ import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { getOrders } from "@/utils/api";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { BagItemSkeleton, ErrorState, EmptyState } from "@/components/UIState";
 
 export default function OrdersListPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const userDataStr = localStorage.getItem("sector_madness_user");
+        if (userDataStr) {
+          const parsed = JSON.parse(userDataStr);
+          const isAdminUser = parsed && (parsed.is_admin === true || parsed.isAdmin === true || parsed.role === "admin" || parsed.role === "administrator" || parsed.role === "Administrator");
+          if (isAdminUser) {
+            router.replace("/admin/orders");
+          }
+        }
+      } catch {}
+    }
+  }, [router]);
+
   const { data: orders = [], isLoading, isError, refetch } = useQuery({
     queryKey: ["orders"],
     queryFn: getOrders,

@@ -20,6 +20,20 @@ export default function InteractiveMap({
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
 
+  const mapRef = useRef<any>(null);
+  const markerRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (mapRef.current && markerRef.current) {
+      const numLat = Number(lat);
+      const numLng = Number(lng);
+      if (!isNaN(numLat) && !isNaN(numLng)) {
+        markerRef.current.setLatLng([numLat, numLng]);
+        mapRef.current.panTo([numLat, numLng]);
+      }
+    }
+  }, [lat, lng]);
+
   useEffect(() => {
     // Inject Leaflet CSS
     if (!document.getElementById("leaflet-css")) {
@@ -50,28 +64,33 @@ export default function InteractiveMap({
       }
     };
 
-    let mapInstance: unknown = null;
-
     const initMap = () => {
       if (!mapContainerRef.current) return;
       const L = (window as unknown as { L: any }).L;
       if (!L) return;
 
+      const numLat = Number(lat);
+      const numLng = Number(lng);
+
       // Avoid double initialization
       if ((mapContainerRef.current as any)._leaflet_id) {
+        if (mapRef.current && markerRef.current) {
+          markerRef.current.setLatLng([numLat, numLng]);
+          mapRef.current.panTo([numLat, numLng]);
+        }
         setMapLoaded(true);
         return;
       }
 
       // Initialize map with dark tile theme
       const map = L.map(mapContainerRef.current, {
-        center: [lat, lng],
+        center: [numLat, numLng],
         zoom: zoom,
         zoomControl: false,
         scrollWheelZoom: false,
       });
 
-      mapInstance = map;
+      mapRef.current = map;
 
       // Custom minimal zoom control
       L.control.zoom({ position: "bottomright" }).addTo(map);
@@ -123,7 +142,8 @@ export default function InteractiveMap({
       });
 
       // Add Marker
-      const marker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
+      const marker = L.marker([numLat, numLng], { icon: customIcon }).addTo(map);
+      markerRef.current = marker;
 
       // Minimal Dark Popup
       const popupContent = `
@@ -161,8 +181,9 @@ export default function InteractiveMap({
     loadLeafletScript();
 
     return () => {
-      if (mapInstance && (mapInstance as any).remove) {
-        (mapInstance as any).remove();
+      if (mapRef.current && mapRef.current.remove) {
+        mapRef.current.remove();
+        mapRef.current = null;
       }
     };
   }, [lat, lng, zoom, title, subtitle]);

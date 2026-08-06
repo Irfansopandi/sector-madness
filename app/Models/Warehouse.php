@@ -18,6 +18,8 @@ class Warehouse extends Model
         'city',
         'province',
         'postal_code',
+        'latitude',
+        'longitude',
         'area_id',
         'is_primary',
         'notes',

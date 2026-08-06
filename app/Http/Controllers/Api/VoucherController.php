@@ -11,11 +11,34 @@ use Illuminate\Validation\Rule;
 class VoucherController extends Controller
 {
     /**
+     * Strictly verify if active request is authenticated as an Admin.
+     */
+    private function checkAdmin(Request $request)
+    {
+        $user = $request->user('sanctum') ?: $request->user();
+        if ($user instanceof \App\Models\Admin || (isset($user->is_admin) && $user->is_admin)) {
+            return true;
+        }
+        $authHeader = $request->header('Authorization');
+        if ($authHeader && str_contains($authHeader, 'Bearer')) {
+            $token = trim(str_replace('Bearer ', '', $authHeader));
+            $pat = \Laravel\Sanctum\PersonalAccessToken::findToken($token);
+            if ($pat && ($pat->tokenable instanceof \App\Models\Admin || (isset($pat->tokenable->is_admin) && $pat->tokenable->is_admin))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Admin: Get all vouchers with search and status filter
      * Endpoint: GET /api/admin/vouchers
      */
     public function adminIndex(Request $request)
     {
+        if (!$this->checkAdmin($request)) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized admin access'], 403);
+        }
         $query = Voucher::query();
 
         // Search by Code or Name
@@ -58,6 +81,9 @@ class VoucherController extends Controller
      */
     public function adminStore(Request $request)
     {
+        if (!$this->checkAdmin($request)) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized admin access'], 403);
+        }
         $validator = Validator::make($request->all(), [
             'code'             => 'required|string|max:50|unique:vouchers,code',
             'name'             => 'required|string|max:255',
@@ -106,8 +132,11 @@ class VoucherController extends Controller
      * Admin: Show voucher detail
      * Endpoint: GET /api/admin/vouchers/{id}
      */
-    public function adminShow($id)
+    public function adminShow(Request $request, $id)
     {
+        if (!$this->checkAdmin($request)) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized admin access'], 403);
+        }
         $voucher = Voucher::find($id);
 
         if (!$voucher) {
@@ -129,6 +158,9 @@ class VoucherController extends Controller
      */
     public function adminUpdate(Request $request, $id)
     {
+        if (!$this->checkAdmin($request)) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized admin access'], 403);
+        }
         $voucher = Voucher::find($id);
 
         if (!$voucher) {
@@ -205,6 +237,9 @@ class VoucherController extends Controller
      */
     public function adminToggleStatus(Request $request, $id)
     {
+        if (!$this->checkAdmin($request)) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized admin access'], 403);
+        }
         $voucher = Voucher::find($id);
 
         if (!$voucher) {
@@ -228,8 +263,11 @@ class VoucherController extends Controller
      * Admin: Delete voucher
      * Endpoint: DELETE /api/admin/vouchers/{id}
      */
-    public function adminDestroy($id)
+    public function adminDestroy(Request $request, $id)
     {
+        if (!$this->checkAdmin($request)) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized admin access'], 403);
+        }
         $voucher = Voucher::find($id);
 
         if (!$voucher) {

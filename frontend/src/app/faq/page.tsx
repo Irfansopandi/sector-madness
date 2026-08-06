@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { getFaqs } from "@/utils/api";
+import { getFaqs, getContactSettings, formatWhatsAppUrl } from "@/utils/api";
 
 interface FAQItem {
   id: string;
@@ -127,13 +127,14 @@ export default function FAQPage() {
   });
 
   // Fetch dynamic FAQs from Laravel backend API
+  const [waLink, setWaLink] = useState<string>("https://wa.me/6285946653103?text=Halo%20SECTOR%20MADNESS%2C%20saya%20ingin%20bertanya%20mengenai%20FAQ.");
+
   useEffect(() => {
     async function loadFaqs() {
       try {
         const data = await getFaqs();
         if (Array.isArray(data) && data.length > 0) {
           setFaqData(data);
-          // Open first item of first category by default if available
           if (data[0]?.items[0]?.id) {
             setOpenItems({ [data[0].items[0].id]: true });
           }
@@ -145,7 +146,18 @@ export default function FAQPage() {
       }
     }
 
+    async function loadContact() {
+      const contacts = await getContactSettings();
+      const whatsapp = contacts.find(
+        (c) => c.code === "02" || c.title.toLowerCase().includes("messaging") || c.title.toLowerCase().includes("whatsapp") || c.title.toLowerCase().includes("phone")
+      );
+      if (whatsapp) {
+        setWaLink(formatWhatsAppUrl(whatsapp.value, "Halo SECTOR MADNESS, saya ingin bertanya mengenai FAQ."));
+      }
+    }
+
     loadFaqs();
+    loadContact();
   }, []);
 
   const toggleItem = (id: string) => {
@@ -346,7 +358,7 @@ export default function FAQPage() {
 
               <div className="pt-2">
                 <a
-                  href="https://wa.me/6285946653103?text=Halo%20SECTOR%20MADNESS%2C%20saya%20ingin%20bertanya%20mecanai%20FAQ."
+                  href={waLink}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group inline-flex items-center text-[12px] md:text-[13px] tracking-[0.28em] uppercase font-medium text-[#F5F5F5] opacity-90 hover:opacity-100 hover:text-[#B6A47E] transition-all duration-300 ease-out"

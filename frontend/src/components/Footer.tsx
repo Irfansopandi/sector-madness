@@ -1,8 +1,31 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { getContactSettings } from "@/utils/api";
 
 export default function Footer() {
+  const [socialLinks, setSocialLinks] = useState<{ name: string; url: string }[]>([
+    { name: "Instagram", url: "https://www.instagram.com/sectormadness.id?igsh=dWRjeGR4M3l3ZWw5" },
+  ]);
+
+  useEffect(() => {
+    async function loadSocial() {
+      const data = await getContactSettings();
+      if (data && data.length > 0) {
+        const socials = data
+          .filter((item) => item.type === "social" || item.subtitle?.toLowerCase().includes("social") || item.title.toLowerCase().includes("archive"))
+          .map((item) => ({
+            name: item.value || item.title,
+            url: item.link || "#",
+          }));
+        if (socials.length > 0) {
+          setSocialLinks(socials);
+        }
+      }
+    }
+    loadSocial();
+  }, []);
   return (
     <footer className="w-full bg-[#0A0A0A] text-[#F5F5F5] mt-12 md:mt-16 lg:mt-20 pb-12 md:pb-16 border-t border-[#222222]/80">
       {/* Upper Content Container - Infallible explicit style padding for generous top & bottom boundaries */}
@@ -170,11 +193,9 @@ export default function Footer() {
             </span>
           </div>
 
-          {/* Social Links (Typography Only) */}
+          {/* Social Links (Dynamic from DB Contact Settings) */}
           <div className="flex items-center gap-8 md:gap-10 shrink-0 pt-2 lg:pt-0">
-            {[
-              { name: "Instagram", url: "https://www.instagram.com/sectormadness.id?igsh=dWRjeGR4M3l3ZWw5" },
-            ].map((social) => (
+            {socialLinks.map((social) => (
               <a
                 key={social.name}
                 href={social.url}

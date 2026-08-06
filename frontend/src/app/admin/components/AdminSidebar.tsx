@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Swal from "sweetalert2";
@@ -14,6 +15,9 @@ interface AdminSidebarProps {
 export default function AdminSidebar({ activeTab, isDarkMode }: AdminSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const navContainerRef = useRef<HTMLDivElement>(null);
+  const activeItemRef = useRef<HTMLAnchorElement>(null);
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
   const [isOpenMobile, setIsOpenMobile] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
@@ -41,6 +45,42 @@ export default function AdminSidebar({ activeTab, isDarkMode }: AdminSidebarProp
       setInternalDarkMode(saved === "dark");
     }
   }, []);
+
+  // Reset pending state when pathname changes
+  useEffect(() => {
+    setPendingHref(null);
+  }, [pathname]);
+
+  // Synchronous ref callback for 0-frame scroll restoration
+  const setNavRef = (el: HTMLDivElement | null) => {
+    (navContainerRef as any).current = el;
+    if (el && typeof window !== "undefined") {
+      const savedScroll = sessionStorage.getItem("sector_madness_sidebar_scroll");
+      if (savedScroll !== null) {
+        el.scrollTop = parseInt(savedScroll, 10);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (activeItemRef.current && navContainerRef.current) {
+      const container = navContainerRef.current;
+      const activeEl = activeItemRef.current;
+      const containerRect = container.getBoundingClientRect();
+      const activeRect = activeEl.getBoundingClientRect();
+
+      if (activeRect.top < containerRect.top || activeRect.bottom > containerRect.bottom) {
+        activeEl.scrollIntoView({ block: "nearest", behavior: "instant" as ScrollBehavior });
+      }
+    }
+  }, [pathname, activeTab, pendingHref]);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("sector_madness_sidebar_scroll", String(e.currentTarget.scrollTop));
+    }
+  };
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [adminUser, setAdminUser] = useState({
     name: "Admin SectorMadness",
     role: "Administrator",
@@ -71,6 +111,7 @@ export default function AdminSidebar({ activeTab, isDarkMode }: AdminSidebarProp
       },
     }).then(async (result) => {
       if (result.isConfirmed) {
+        setIsLoggingOut(true);
         try {
           await adminApiLogout();
         } catch {
@@ -265,6 +306,47 @@ export default function AdminSidebar({ activeTab, isDarkMode }: AdminSidebarProp
       ],
     },
     {
+      category: "SETTINGS",
+      items: [
+        {
+          id: "contact-settings",
+          label: "Contact Settings",
+          href: "/admin/contact-settings",
+          icon: (
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+            </svg>
+          ),
+        },
+        {
+          id: "faq",
+          label: "FAQ",
+          href: "/admin/faq",
+          icon: (
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+          ),
+        },
+        {
+          id: "size-guide",
+          label: "Size Guide",
+          href: "/admin/size-guide",
+          icon: (
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.4 2.4 0 0 1 0-3.4l2.6-2.6a2.4 2.4 0 0 1 3.4 0z" />
+              <path d="m14.5 12.5 2-2" />
+              <path d="m11.5 9.5 2-2" />
+              <path d="m8.5 6.5 2-2" />
+              <path d="m17.5 15.5 2-2" />
+            </svg>
+          ),
+        },
+      ],
+    },
+    {
       category: "STOREFRONT",
       items: [
         {
@@ -313,20 +395,20 @@ export default function AdminSidebar({ activeTab, isDarkMode }: AdminSidebarProp
               <img src="/images/logo.png" alt="Sector Madness Logo" className="w-full h-full object-contain" />
             </div>
             {!isCollapsed && (
-              <div className="flex flex-col justify-center min-w-0 leading-tight">
+              <div className="flex flex-col justify-center min-w-0 leading-snug">
                 <span
-                  className={`text-[13px] font-black tracking-widest uppercase font-[family-name:var(--font-display)] ${
+                  className={`text-sm font-black tracking-wider uppercase font-[family-name:var(--font-display)] whitespace-nowrap ${
                     activeDarkMode ? "text-[#F5F5F5]" : "text-[#0A0A0A]"
                   }`}
                 >
-                  SECTOR
+                  SECTOR MADNESS
                 </span>
                 <span
-                  className={`text-[13px] font-black tracking-widest uppercase font-[family-name:var(--font-display)] ${
-                    activeDarkMode ? "text-[#F5F5F5]" : "text-[#0A0A0A]"
+                  className={`text-[10px] font-mono font-bold tracking-[0.2em] uppercase ${
+                    activeDarkMode ? "text-[#B6A47E]" : "text-[#666666]"
                   }`}
                 >
-                  MADNESS
+                  ADMIN PANEL
                 </span>
               </div>
             )}
@@ -335,6 +417,8 @@ export default function AdminSidebar({ activeTab, isDarkMode }: AdminSidebarProp
 
         {/* Middle Categorized Navigation List */}
         <div
+          ref={setNavRef}
+          onScroll={handleScroll}
           className={`flex-1 min-h-0 overflow-y-auto w-full pb-2 [&::-webkit-scrollbar]:w-1.5 ${
             activeDarkMode
               ? "[&::-webkit-scrollbar-thumb]:bg-white/10"
@@ -359,10 +443,12 @@ export default function AdminSidebar({ activeTab, isDarkMode }: AdminSidebarProp
                 <div className="flex flex-col gap-1.5">
                   {group.items.map((item) => {
                     const isActive =
-                      activeTab === item.id ||
-                      (item.href !== "/" &&
-                        (pathname === item.href ||
-                          (item.href !== "/admin" && pathname?.startsWith(item.href))));
+                      pendingHref === item.href ||
+                      (!pendingHref &&
+                        (activeTab === item.id ||
+                          (item.href !== "/" &&
+                            (pathname === item.href ||
+                              (item.href !== "/admin" && pathname?.startsWith(item.href))))));
 
                     if (isCollapsed) {
                       return (
@@ -381,9 +467,12 @@ export default function AdminSidebar({ activeTab, isDarkMode }: AdminSidebarProp
                           onMouseLeave={() => setHoveredTooltip(null)}
                         >
                           <Link
+                            ref={isActive ? activeItemRef : undefined}
                             href={item.href}
+                            prefetch={true}
+                            onClick={() => setPendingHref(item.href)}
                             target={(item as any).target}
-                            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer shrink-0 ${
+                            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors duration-150 cursor-pointer shrink-0 ${
                               isActive
                                 ? activeDarkMode
                                   ? "bg-white/[0.12] text-[#B6A47E] font-bold shadow-sm"
@@ -412,16 +501,19 @@ export default function AdminSidebar({ activeTab, isDarkMode }: AdminSidebarProp
                     return (
                       <Link
                         key={item.id}
+                        ref={isActive ? activeItemRef : undefined}
                         href={item.href}
+                        prefetch={true}
+                        onClick={() => setPendingHref(item.href)}
                         target={(item as any).target}
-                        className={`flex items-center gap-3.5 min-h-[40px] py-6 pr-4 text-[14px] tracking-wide transition-all duration-200 cursor-pointer font-semibold border-l-[3.5px] rounded-r-md ${
+                        className={`flex items-center gap-3.5 min-h-[40px] py-6 pr-4 text-[14px] tracking-wide transition-colors duration-150 cursor-pointer font-semibold border-l-[3.5px] rounded-r-md ${
                           isActive
                             ? activeDarkMode
                               ? "bg-white/[0.08] text-[#F5F5F5] font-bold border-[#B6A47E] shadow-sm"
                               : "bg-white text-[#0A0A0A] font-bold border-[#B6A47E] shadow-xs"
                             : activeDarkMode
-                            ? "border-transparent text-[#8A8A8A] hover:bg-white/[0.05] hover:text-[#D0D0D0] hover:border-white/40 transform hover:translate-x-1.5"
-                            : "border-transparent text-[#555555] hover:bg-white/60 hover:text-[#0A0A0A] hover:border-[#CBCED6] transform hover:translate-x-1.5"
+                            ? "border-transparent text-[#8A8A8A] hover:bg-white/[0.05] hover:text-[#D0D0D0] hover:border-white/40"
+                            : "border-transparent text-[#555555] hover:bg-white/60 hover:text-[#0A0A0A] hover:border-[#CBCED6]"
                         }`}
                         style={{
                           paddingLeft: "22px",
@@ -556,6 +648,26 @@ export default function AdminSidebar({ activeTab, isDarkMode }: AdminSidebarProp
           <span>{hoveredTooltip.label}</span>
         </div>
       )}
+
+      {/* Fullscreen Loading Overlay on Logout */}
+      {isLoggingOut &&
+        typeof window !== "undefined" &&
+        createPortal(
+          <div className="fixed inset-0 z-[999999] flex flex-col items-center justify-center bg-black/90 backdrop-blur-md transition-opacity duration-300">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-12 h-12 border-3 border-[#B6A47E]/20 border-t-[#B6A47E] rounded-full animate-spin mb-6" />
+              <div className="space-y-2">
+                <span className="block font-mono text-xs font-bold text-[#B6A47E] uppercase tracking-[0.25em] animate-pulse">
+                  LOGGING OUT...
+                </span>
+                <span className="block text-xs font-mono text-[#8A8A8A] tracking-wide">
+                  Sedang keluar dari akun admin...
+                </span>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </>
   );
 }

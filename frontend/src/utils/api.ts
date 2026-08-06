@@ -29,15 +29,25 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor: auto-clear stale auth on 401
+// Response interceptor: auto-clear stale auth on 401/403
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error?.response?.status === 401 && typeof window !== "undefined") {
-      // Token is invalid/expired — clean up client state to prevent leakage
+    if (typeof window !== "undefined") {
+      const status = error?.response?.status;
       const currentPath = window.location.pathname;
-      // Don't clear on login/register pages (those are expected 401s)
-      if (!currentPath.startsWith("/login") && !currentPath.startsWith("/register")) {
+
+      if ((status === 401 || status === 403) && currentPath.startsWith("/admin")) {
+        // Customer or unauthenticated user attempting to access Admin endpoints -> Kick out to login
+        localStorage.removeItem("sector_madness_token");
+        localStorage.removeItem("sector_madness_user");
+        window.dispatchEvent(new Event("sector_auth_change"));
+        window.dispatchEvent(new Event("sector_bag_update"));
+        window.location.href = "/login?error=admin_unauthorized";
+        return Promise.reject(error);
+      }
+
+      if (status === 401 && !currentPath.startsWith("/login") && !currentPath.startsWith("/register")) {
         localStorage.removeItem("sector_madness_token");
         localStorage.removeItem("sector_madness_user");
         window.dispatchEvent(new Event("sector_auth_change"));
@@ -189,6 +199,9 @@ export interface VoucherResult {
   name: string;
   discount_amount: number;
   minimum_purchase: number;
+  discount_type?: string;
+  discount_value?: number;
+  expires_at?: string | null;
 }
 
 export interface PaymentMethod {
@@ -435,6 +448,18 @@ export const getProductBySlug = async (slug: string): Promise<any> => {
 };
 
 // FAQ API
+export interface AdminFaqItem {
+  id: number;
+  category: string;
+  category_code?: string;
+  question: string;
+  answer: string;
+  sort_order?: number;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export const getFaqs = async (): Promise<any[]> => {
   try {
     const res = await api.get("/faqs");
@@ -443,6 +468,26 @@ export const getFaqs = async (): Promise<any[]> => {
     console.warn("Failed to fetch FAQs from API:", e);
     return [];
   }
+};
+
+export const getAdminFaqs = async (): Promise<AdminFaqItem[]> => {
+  const res = await api.get("/admin/faqs");
+  return res.data?.data || [];
+};
+
+export const createAdminFaq = async (data: Partial<AdminFaqItem>) => {
+  const res = await api.post("/admin/faqs", data);
+  return res.data;
+};
+
+export const updateAdminFaq = async ({ id, data }: { id: number | string; data: Partial<AdminFaqItem> }) => {
+  const res = await api.put(`/admin/faqs/${id}`, data);
+  return res.data;
+};
+
+export const deleteAdminFaq = async (id: number | string) => {
+  const res = await api.delete(`/admin/faqs/${id}`);
+  return res.data;
 };
 
 // Customer Information
@@ -783,9 +828,29 @@ export const getSizeGuides = async (): Promise<SizeGuideItem[]> => {
   return [];
 };
 
+export const getAdminSizeGuides = async (): Promise<SizeGuideItem[]> => {
+  const res = await api.get("/admin/size-guides");
+  return res.data?.data || [];
+};
+
+export const createAdminSizeGuide = async (data: Partial<SizeGuideItem>) => {
+  const res = await api.post("/admin/size-guides", data);
+  return res.data;
+};
+
+export const updateAdminSizeGuide = async ({ id, data }: { id: number | string; data: Partial<SizeGuideItem> }) => {
+  const res = await api.put(`/admin/size-guides/${id}`, data);
+  return res.data;
+};
+
+export const deleteAdminSizeGuide = async (id: number | string) => {
+  const res = await api.delete(`/admin/size-guides/${id}`);
+  return res.data;
+};
+
 export interface ContactSettingItem {
   id: number;
-  type: "channel" | "warehouse";
+  type: "channel" | "warehouse" | "email" | "phone" | "schedule" | "social" | "address" | string;
   code?: string;
   title: string;
   subtitle?: string;
@@ -798,6 +863,56 @@ export interface ContactSettingItem {
   is_active?: boolean;
 }
 
+export interface AdminWarehouseItem {
+  id: number;
+  name: string;
+  contact_name: string;
+  phone?: string;
+  email?: string;
+  address: string;
+  city: string;
+  province: string;
+  postal_code: string;
+  latitude?: number | string;
+  longitude?: number | string;
+  area_id?: string;
+  is_primary?: boolean;
+  notes?: string;
+}
+
+export interface AdminContactSettingsResponse {
+  settings: ContactSettingItem[];
+  warehouse: AdminWarehouseItem | null;
+}
+
+/**
+ * Utility helper to format a raw phone number string into a clean WhatsApp URL
+ * Converts 0812... or +62812... or 62812... to international 62812... format
+ */
+export const formatWhatsAppUrl = (phoneRaw?: string | null, messageText?: string): string => {
+  if (!phoneRaw) return "https://wa.me/";
+  let cleaned = phoneRaw.replace(/[^\d]/g, "");
+  if (cleaned.startsWith("0")) {
+    cleaned = "62" + cleaned.substring(1);
+  }
+  const textQuery = messageText ? `?text=${encodeURIComponent(messageText)}` : "";
+  return `https://wa.me/${cleaned}${textQuery}`;
+};
+
+/**
+ * Utility helper to format a raw email string or mailto: link into a clean mailto URL with subject
+ */
+export const formatMailtoUrl = (emailOrLink?: string | null, defaultSubject: string = "INQUIRY - SECTOR MADNESS"): string => {
+  if (!emailOrLink) return "mailto:info@sectormadness.com?subject=" + encodeURIComponent(defaultSubject);
+
+  let clean = emailOrLink.trim().replace(/^mailto:/i, "");
+  if (clean.includes("?")) {
+    clean = clean.split("?")[0];
+  }
+
+  return `mailto:${clean}?subject=${encodeURIComponent(defaultSubject)}`;
+};
+
 export const getContactSettings = async (): Promise<ContactSettingItem[]> => {
   try {
     const res = await api.get("/contact-settings");
@@ -808,6 +923,36 @@ export const getContactSettings = async (): Promise<ContactSettingItem[]> => {
     console.error("Failed to fetch contact settings from API:", error);
   }
   return [];
+};
+
+export const getAdminContactSettings = async (): Promise<AdminContactSettingsResponse> => {
+  try {
+    const res = await api.get("/admin/contact-settings");
+    if (res.data && res.data.status === "success" && res.data.data) {
+      return {
+        settings: Array.isArray(res.data.data.settings) ? res.data.data.settings : [],
+        warehouse: res.data.data.warehouse || null,
+      };
+    }
+  } catch (error) {
+    console.error("Failed to fetch admin contact settings:", error);
+  }
+  return { settings: [], warehouse: null };
+};
+
+export const createContactSetting = async (data: Record<string, any>): Promise<ContactSettingItem> => {
+  const res = await api.post("/admin/contact-settings", data);
+  return res.data.data;
+};
+
+export const updateContactSetting = async (id: number | string, data: Record<string, any>): Promise<ContactSettingItem> => {
+  const res = await api.put(`/admin/contact-settings/${id}`, data);
+  return res.data.data;
+};
+
+export const deleteContactSetting = async (id: number | string): Promise<boolean> => {
+  await api.delete(`/admin/contact-settings/${id}`);
+  return true;
 };
 
 /* ====================================================
@@ -1280,6 +1425,31 @@ export const toggleAdminVoucherStatus = async (id: number, is_active?: boolean) 
 
 export const deleteAdminVoucher = async (id: number) => {
   const res = await api.delete(`/admin/vouchers/${id}`);
+  return res.data;
+};
+
+export interface SalesPoint {
+  label: string;
+  revenue: number;
+  orders_count: number;
+}
+
+export interface TopProductPoint {
+  product_id: number | string;
+  product_name: string;
+  quantity_sold: number;
+  revenue: number;
+}
+
+export interface AdminDashboardChartData {
+  status: boolean;
+  period: string;
+  sales: SalesPoint[];
+  top_products: TopProductPoint[];
+}
+
+export const getAdminDashboardCharts = async (period: string = "month"): Promise<AdminDashboardChartData> => {
+  const res = await api.get(`/admin/dashboard-charts?period=${period}`);
   return res.data;
 };
 

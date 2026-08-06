@@ -9,7 +9,6 @@ import {
   getCategories, createCategory, updateCategory, deleteCategory, CategoryItem,
   getCollections, createCollection, updateCollection, deleteCollection, CollectionItem,
   getSortOptions, createSortOption, updateSortOption, deleteSortOption, SortOptionItem,
-  getJournals, createJournal, updateJournal, deleteJournal, JournalArticle,
 } from "@/utils/api";
 import { SlidersHorizontal, Plus, X, Pencil, Trash2, Upload, Search, Loader2 } from "lucide-react";
 import Swal from "sweetalert2";
@@ -25,7 +24,7 @@ export default function AdminCatalogPage() {
     }
     return true;
   });
-  const [activeTab, setActiveTab] = useState<"categories" | "collections" | "sort" | "journals">("categories");
+  const [activeTab, setActiveTab] = useState<"categories" | "collections" | "sort">("categories");
 
   const tabRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
@@ -110,10 +109,6 @@ export default function AdminCatalogPage() {
   const [formCode, setFormCode] = useState("");
   const [formDescription, setFormDescription] = useState("");
   const [formSortOrder, setFormSortOrder] = useState<number>(0);
-  const [formIssue, setFormIssue] = useState("");
-  const [formCategory, setFormCategory] = useState("Collection Stories");
-  const [formImage, setFormImage] = useState("");
-  const [formQuote, setFormQuote] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
 
   useEffect(() => {
@@ -152,12 +147,6 @@ export default function AdminCatalogPage() {
   const { data: sortOptions = [], isLoading: loadingSorts } = useQuery({
     queryKey: ["sortOptions"],
     queryFn: getSortOptions,
-    refetchInterval: 5000,
-  });
-
-  const { data: journals = [], isLoading: loadingJournals } = useQuery({
-    queryKey: ["journals"],
-    queryFn: () => getJournals(),
     refetchInterval: 5000,
   });
 
@@ -252,42 +241,13 @@ export default function AdminCatalogPage() {
     },
   });
 
-  // Journal Mutations
-  const addJournalMut = useMutation({
-    mutationFn: createJournal,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["journals"] });
-      closeModal();
-      showStatus("Journal article created successfully!");
-    },
-  });
-
-  const updateJournalMut = useMutation({
-    mutationFn: ({ id, data }: { id: number | string; data: any }) => updateJournal(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["journals"] });
-      closeModal();
-      showStatus("Journal article updated successfully!");
-    },
-  });
-
-  const deleteJournalMut = useMutation({
-    mutationFn: deleteJournal,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["journals"] });
-      showStatus("Journal article deleted successfully!");
-    },
-  });
-
   const isSubmitting =
     addCategoryMut.isPending ||
     updateCategoryMut.isPending ||
     addCollectionMut.isPending ||
     updateCollectionMut.isPending ||
     addSortMut.isPending ||
-    updateSortMut.isPending ||
-    addJournalMut.isPending ||
-    updateJournalMut.isPending;
+    updateSortMut.isPending;
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -298,14 +258,6 @@ export default function AdminCatalogPage() {
     }
     if ((activeTab === "categories" || activeTab === "collections") && !formDescription.trim()) {
       newErrors.description = "Deskripsi wajib diisi!";
-    }
-    if (activeTab === "journals") {
-      if (!formImage.trim()) {
-        newErrors.image = "Foto item / sampul wajib diunggah!";
-      }
-      if (!formDescription.trim()) {
-        newErrors.description = "Ringkasan / deskripsi wajib diisi!";
-      }
     }
 
     setErrors(newErrors);
@@ -334,10 +286,6 @@ export default function AdminCatalogPage() {
     setFormCode("");
     setFormDescription("");
     setFormSortOrder(0);
-    setFormIssue("VOL. 01");
-    setFormCategory("Collection Stories");
-    setFormImage("");
-    setFormQuote("");
   };
 
   const openEditModal = (item: any) => {
@@ -348,10 +296,6 @@ export default function AdminCatalogPage() {
     setFormCode(item.code || "");
     setFormDescription(item.description || item.summary || "");
     setFormSortOrder(item.sort_order ?? 0);
-    setFormIssue(item.issue || "VOL. 01");
-    setFormCategory(item.category || "Collection Stories");
-    setFormImage(item.image || "");
-    setFormQuote(item.quote || "");
   };
 
   const closeModal = () => {
@@ -362,9 +306,6 @@ export default function AdminCatalogPage() {
     setFormCode("");
     setFormDescription("");
     setFormSortOrder(0);
-    setFormIssue("");
-    setFormImage("");
-    setFormQuote("");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -389,22 +330,6 @@ export default function AdminCatalogPage() {
       } else if (modalMode === "edit" && selectedItem) {
         updateSortMut.mutate({ id: selectedItem.id, data: { name: formName, code: formCode, sort_order: formSortOrder } });
       }
-    } else if (activeTab === "journals") {
-      const journalPayload = {
-        title: formName,
-        category: formCategory,
-        issue: formIssue,
-        summary: formDescription,
-        image: formImage,
-        quote: formQuote,
-        sort_order: formSortOrder,
-      };
-
-      if (modalMode === "add") {
-        addJournalMut.mutate(journalPayload);
-      } else if (modalMode === "edit" && selectedItem) {
-        updateJournalMut.mutate({ id: selectedItem.id, data: journalPayload });
-      }
     }
   };
 
@@ -423,16 +348,10 @@ export default function AdminCatalogPage() {
     return !q || s.name.toLowerCase().includes(q) || (s.code || "").toLowerCase().includes(q);
   });
 
-  const filteredCatJournals = journals.filter((j) => {
-    const q = searchQuery.toLowerCase().trim();
-    return !q || j.title.toLowerCase().includes(q) || (j.category || "").toLowerCase().includes(q) || (j.summary || "").toLowerCase().includes(q);
-  });
-
   const getActiveTabFilteredData = () => {
     if (activeTab === "categories") return filteredCats;
     if (activeTab === "collections") return filteredCols;
-    if (activeTab === "sort") return filteredSorts;
-    return filteredCatJournals;
+    return filteredSorts;
   };
 
   const currentTabItems = getActiveTabFilteredData();
@@ -446,7 +365,6 @@ export default function AdminCatalogPage() {
   const displayedCats = activeTab === "categories" ? filteredCats.slice(startIndex, endIndex) : [];
   const displayedCols = activeTab === "collections" ? filteredCols.slice(startIndex, endIndex) : [];
   const displayedSorts = activeTab === "sort" ? filteredSorts.slice(startIndex, endIndex) : [];
-  const displayedCatJournals = activeTab === "journals" ? filteredCatJournals.slice(startIndex, endIndex) : [];
 
   useEffect(() => {
     const updateIndicator = () => {
@@ -462,7 +380,7 @@ export default function AdminCatalogPage() {
     updateIndicator();
     window.addEventListener("resize", updateIndicator);
     return () => window.removeEventListener("resize", updateIndicator);
-  }, [activeTab, categories.length, collections.length, sortOptions.length, journals.length]);
+  }, [activeTab, categories.length, collections.length, sortOptions.length]);
 
   return (
     <div
@@ -476,7 +394,7 @@ export default function AdminCatalogPage() {
       <div className="flex-1 flex flex-col min-w-0">
         <AdminHeader
           title="MANAJEMEN KATALOG"
-          subtitle="Kelola kategori produk, koleksi focus on, opsi pengurutan, dan artikel jurnal"
+          subtitle="Kelola kategori produk, koleksi focus on, dan opsi pengurutan"
           isDarkMode={isDarkMode}
           onToggleTheme={toggleTheme}
         />
@@ -552,7 +470,6 @@ export default function AdminCatalogPage() {
               { id: "categories", label: `KATEGORI (${categories.length})` },
               { id: "collections", label: `KOLEKSI FOCUS ON (${collections.length})` },
               { id: "sort", label: `OPSI URUTAN (${sortOptions.length})` },
-              { id: "journals", label: `ARTIKEL JURNAL (${journals.length})` },
             ].map((tab) => {
               const isActive = activeTab === tab.id;
               return (
@@ -610,7 +527,6 @@ export default function AdminCatalogPage() {
               {activeTab === "categories" && "Kelola kategori produk yang tampil di filter Toko & menu Navigasi."}
               {activeTab === "collections" && "Kelola koleksi unggulan Focus On yang tampil di menu dropdown Navigasi."}
               {activeTab === "sort" && "Kelola opsi urutan produk pada filter halaman Toko."}
-              {activeTab === "journals" && "Kelola artikel publikasi, cerita brand, dan jurnal editorial."}
             </p>
             <button
               onClick={openAddModal}
@@ -628,9 +544,7 @@ export default function AdminCatalogPage() {
                   ? "KATEGORI"
                   : activeTab === "collections"
                   ? "KOLEKSI"
-                  : activeTab === "sort"
-                  ? "OPSI URUTAN"
-                  : "JURNAL"}{" "}
+                  : "OPSI URUTAN"}{" "}
                 BARU
               </span>
             </button>
@@ -963,89 +877,6 @@ export default function AdminCatalogPage() {
             </div>
           )}
 
-          {/* JOURNALS TABLE */}
-          {activeTab === "journals" && (
-            <div
-              className={`border rounded-[6px] overflow-hidden shadow-sm transition-colors ${
-                isDarkMode
-                  ? "bg-[#18181C] border-white/10"
-                  : "bg-white border-[#D1D5DB]"
-              }`}
-            >
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs uppercase tracking-wider">
-                  <thead
-                    className={`border-b ${
-                      isDarkMode
-                        ? "bg-[#1E1E22] border-white/10 text-[#8A8A8A]"
-                        : "bg-[#F9FAFB] border-[#E5E7EB] text-[#4B5563]"
-                    }`}
-                  >
-                    <tr>
-                      <th style={{ padding: "18px 24px" }} className="font-bold">NO.</th>
-                      <th style={{ padding: "18px 24px" }} className="font-bold">TITLE</th>
-                      <th style={{ padding: "18px 24px" }} className="font-bold">CATEGORY</th>
-                      <th style={{ padding: "18px 24px" }} className="font-bold">ISSUE</th>
-                      <th style={{ padding: "18px 24px" }} className="font-bold">SUMMARY</th>
-                      <th style={{ padding: "18px 24px" }} className="font-bold text-right">ACTIONS</th>
-                    </tr>
-                  </thead>
-                  <tbody className={`divide-y ${isDarkMode ? "divide-white/[0.05]" : "divide-[#E5E7EB]"}`}>
-                    {loadingJournals ? (
-                      <tr>
-                        <td colSpan={6} style={{ padding: "48px 24px" }} className={`text-center ${isDarkMode ? "text-[#777777]" : "text-[#6B7280]"}`}>Loading journal articles...</td>
-                      </tr>
-                    ) : displayedCatJournals.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} style={{ padding: "48px 24px" }} className={`text-center ${isDarkMode ? "text-[#777777]" : "text-[#6B7280]"}`}>Tidak ada artikel jurnal yang sesuai dengan pencarian.</td>
-                      </tr>
-                    ) : (
-                      displayedCatJournals.map((art: JournalArticle, idx: number) => (
-                        <tr key={art.id} className={`transition-colors ${isDarkMode ? "hover:bg-white/[0.02]" : "hover:bg-[#F9FAFB]"}`}>
-                          <td style={{ padding: "20px 24px" }} className={`font-mono font-bold ${isDarkMode ? "text-[#8A8A8A]" : "text-gray-500"}`}>{startIndex + idx + 1}</td>
-                          <td style={{ padding: "20px 24px" }} className={`font-bold ${isDarkMode ? "text-[#F5F5F5]" : "text-[#111827]"}`}>{art.title}</td>
-                          <td style={{ padding: "20px 24px" }} className="font-semibold text-[#B6A47E]">{art.category}</td>
-                          <td style={{ padding: "20px 24px" }} className={`font-mono ${isDarkMode ? "text-[#8A8A8A]" : "text-[#6B7280]"}`}>{art.issue || "—"}</td>
-                          <td style={{ padding: "20px 24px" }} className={`max-w-xs truncate ${isDarkMode ? "text-[#8A8A8A]" : "text-[#6B7280]"}`}>{art.summary || "—"}</td>
-                          <td style={{ padding: "20px 24px" }} className="text-right">
-                            <div className="flex items-center justify-end gap-3">
-                              <button
-                                onClick={() => openEditModal(art)}
-                                style={{ padding: "8px 16px" }}
-                                className={`inline-flex items-center gap-2 rounded-[5px] text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer border ${
-                                  isDarkMode
-                                    ? "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-[#B6A47E] hover:text-[#B6A47E]"
-                                    : "bg-gray-100 border-gray-200 text-gray-800 hover:bg-gray-200 hover:border-black"
-                                }`}
-                              >
-                                <Pencil className="w-3.5 h-3.5" />
-                                <span>EDIT</span>
-                              </button>
-                              <button
-                                onClick={() => {
-                                  confirmDelete(art.title, () => deleteJournalMut.mutate(art.id));
-                                }}
-                                style={{ padding: "8px 16px" }}
-                                className={`inline-flex items-center gap-2 rounded-[5px] text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer border ${
-                                  isDarkMode
-                                    ? "bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20 hover:border-red-500/40"
-                                    : "bg-red-50 border-red-200 text-red-600 hover:bg-red-100"
-                                }`}
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                                <span>DELETE</span>
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
           {/* PAGINATION FOOTER CONTROL BAR */}
           {rowLimit > 0 && currentTotal > rowLimit && (
             <div
@@ -1243,190 +1074,6 @@ export default function AdminCatalogPage() {
                 )}
               </div>
 
-              {activeTab === "journals" && (
-                <>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    <label
-                      style={{
-                        fontSize: "11px",
-                        fontWeight: 700,
-                        letterSpacing: "0.12em",
-                        textTransform: "uppercase",
-                        color: isDarkMode ? "#CCCCCC" : "#374151",
-                      }}
-                    >
-                      CATEGORY *
-                    </label>
-                    <select
-                      value={formCategory}
-                      onChange={(e) => setFormCategory(e.target.value)}
-                      style={{
-                        width: "100%",
-                        padding: "12px 16px",
-                        fontSize: "13px",
-                        fontWeight: 600,
-                        borderRadius: "6px",
-                        outline: "none",
-                        textTransform: "uppercase",
-                        cursor: "pointer",
-                        backgroundColor: isDarkMode ? "#121214" : "#ffffff",
-                        border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #D1D5DB",
-                        color: isDarkMode ? "#ffffff" : "#0A0A0A",
-                      }}
-                    >
-                      <option value="Collection Stories">Collection Stories</option>
-                      <option value="Brand Philosophy">Brand Philosophy</option>
-                      <option value="Materials & Craftsmanship">Materials & Craftsmanship</option>
-                      <option value="Campaign">Campaign</option>
-                      <option value="Archive">Archive</option>
-                    </select>
-                  </div>
-
-                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    <label
-                      style={{
-                        fontSize: "11px",
-                        fontWeight: 700,
-                        letterSpacing: "0.12em",
-                        textTransform: "uppercase",
-                        color: isDarkMode ? "#CCCCCC" : "#374151",
-                      }}
-                    >
-                      ISSUE / VOL (OPTIONAL)
-                    </label>
-                    <input
-                      type="text"
-                      value={formIssue}
-                      onChange={(e) => setFormIssue(e.target.value)}
-                      placeholder="e.g. VOL. 01"
-                      style={{
-                        width: "100%",
-                        padding: "12px 16px",
-                        fontSize: "13px",
-                        fontWeight: 600,
-                        borderRadius: "6px",
-                        outline: "none",
-                        textTransform: "uppercase",
-                        backgroundColor: isDarkMode ? "#121214" : "#ffffff",
-                        border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #D1D5DB",
-                        color: isDarkMode ? "#ffffff" : "#0A0A0A",
-                      }}
-                    />
-                  </div>
-
-                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    <label
-                      style={{
-                        fontSize: "11px",
-                        fontWeight: 700,
-                        letterSpacing: "0.12em",
-                        textTransform: "uppercase",
-                        color: errors.image ? "#EF4444" : (isDarkMode ? "#CCCCCC" : "#374151"),
-                      }}
-                    >
-                      UPLOAD ITEM / COVER IMAGE *
-                    </label>
-                    <div
-                      id="field-image"
-                      tabIndex={-1}
-                      style={{
-                        border: errors.image ? "2px dashed #EF4444" : (isDarkMode ? "2px dashed rgba(255, 255, 255, 0.2)" : "2px dashed #D1D5DB"),
-                        borderRadius: "8px",
-                        padding: "20px",
-                        textAlign: "center",
-                        backgroundColor: isDarkMode ? "#121214" : "#F9FAFB",
-                        cursor: "pointer",
-                        position: "relative",
-                        transition: "all 0.2s ease",
-                      }}
-                      onClick={() => document.getElementById("catalogImageInput")?.click()}
-                    >
-                      <input
-                        type="file"
-                        id="catalogImageInput"
-                        accept="image/*"
-                        style={{ display: "none" }}
-                        onChange={(e) => {
-                          handleImageFileChange(e, setFormImage);
-                          if (errors.image) setErrors((prev) => ({ ...prev, image: "" }));
-                        }}
-                      />
-                      {formImage ? (
-                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
-                          <img
-                            src={formImage}
-                            alt="Preview"
-                            style={{ maxHeight: "140px", borderRadius: "6px", objectFit: "cover", border: isDarkMode ? "1px solid rgba(255,255,255,0.1)" : "1px solid #E5E7EB" }}
-                          />
-                          <span
-                            style={{
-                              fontSize: "11px",
-                              fontWeight: 700,
-                              letterSpacing: "0.08em",
-                              textTransform: "uppercase",
-                              color: "#B6A47E",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "6px",
-                            }}
-                          >
-                            <Upload style={{ width: "14px", height: "14px" }} />
-                            CLICK TO CHANGE PHOTO
-                          </span>
-                        </div>
-                      ) : (
-                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
-                          <Upload style={{ width: "24px", height: "24px", color: errors.image ? "#EF4444" : "#B6A47E" }} />
-                          <span style={{ fontSize: "12px", fontWeight: 600, color: errors.image ? "#EF4444" : (isDarkMode ? "#EEEEEE" : "#374151") }}>
-                            CLICK OR DRAG PHOTO TO UPLOAD
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    {errors.image ? (
-                      <p style={{ fontSize: "11px", fontWeight: 600, color: "#EF4444", marginTop: "2px" }}>
-                        * {errors.image}
-                      </p>
-                    ) : (
-                      <p style={{ fontSize: "10px", fontWeight: 600, color: isDarkMode ? "#8A8A8A" : "#6B7280", marginTop: "2px" }}>
-                        * Maksimal ukuran file: 5 MB (Format: JPG, PNG, WEBP)
-                      </p>
-                    )}
-                  </div>
-
-                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    <label
-                      style={{
-                        fontSize: "11px",
-                        fontWeight: 700,
-                        letterSpacing: "0.12em",
-                        textTransform: "uppercase",
-                        color: isDarkMode ? "#CCCCCC" : "#374151",
-                      }}
-                    >
-                      EDITORIAL QUOTE (OPTIONAL)
-                    </label>
-                    <input
-                      type="text"
-                      value={formQuote}
-                      onChange={(e) => setFormQuote(e.target.value)}
-                      placeholder="e.g. True luxury is found in permanence..."
-                      style={{
-                        width: "100%",
-                        padding: "12px 16px",
-                        fontSize: "13px",
-                        fontWeight: 500,
-                        borderRadius: "6px",
-                        outline: "none",
-                        backgroundColor: isDarkMode ? "#121214" : "#ffffff",
-                        border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #D1D5DB",
-                        color: isDarkMode ? "#ffffff" : "#0A0A0A",
-                      }}
-                    />
-                  </div>
-                </>
-              )}
-
               {(activeTab === "collections" || activeTab === "sort") && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                   <label
@@ -1461,7 +1108,7 @@ export default function AdminCatalogPage() {
                 </div>
               )}
 
-              {(activeTab === "sort" || activeTab === "journals") && (
+              {activeTab === "sort" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                   <label
                     style={{
@@ -1493,7 +1140,7 @@ export default function AdminCatalogPage() {
                 </div>
               )}
 
-              {(activeTab === "categories" || activeTab === "collections" || activeTab === "journals") && (
+              {(activeTab === "categories" || activeTab === "collections") && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                   <label
                     style={{
@@ -1504,7 +1151,7 @@ export default function AdminCatalogPage() {
                       color: errors.description ? "#EF4444" : (isDarkMode ? "#CCCCCC" : "#374151"),
                     }}
                   >
-                    {activeTab === "journals" ? "SUMMARY / DESCRIPTION *" : "DESCRIPTION *"}
+                    DESCRIPTION *
                   </label>
                   <textarea
                     id="field-description"

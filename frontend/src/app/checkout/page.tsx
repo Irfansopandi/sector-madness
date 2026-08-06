@@ -6,12 +6,13 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, CheckCircle2 } from "lucide-react";
+import { Plus, CheckCircle2, Ticket, Tag, Trash2, Sparkles } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CustomPaymentModal from "@/components/CustomPaymentModal";
 import AddressModal from "@/components/AddressModal";
 import {
+  checkVoucher,
   getCustomerProfile,
   getCart,
   clearCart,
@@ -193,7 +194,20 @@ function CheckoutContent() {
 
   useEffect(() => {
     setIsMounted(true);
-  }, []);
+    if (typeof window !== "undefined") {
+      try {
+        const userDataStr = localStorage.getItem("sector_madness_user");
+        if (userDataStr) {
+          const parsed = JSON.parse(userDataStr);
+          const isAdminUser = parsed && (parsed.is_admin === true || parsed.isAdmin === true || parsed.role === "admin" || parsed.role === "administrator" || parsed.role === "Administrator");
+          if (isAdminUser) {
+            // Admin is strictly not allowed to use customer checkout -> Redirect to Admin Control Panel
+            router.replace("/admin");
+          }
+        }
+      } catch {}
+    }
+  }, [router]);
 
   const { data: existingOrder, isLoading: isExistingOrderLoading } = useQuery({
     queryKey: ["order-detail", orderNumberParam],
@@ -562,45 +576,44 @@ function CheckoutContent() {
      6. PROMO / DISCOUNT CODE VAULT SYSTEM
   ==================================================== */
   const [promoInput, setPromoInput] = useState("");
-  const [appliedPromo, setAppliedPromo] = useState<{ code: string; label: string; amount: number } | null>(null);
+  const [appliedPromo, setAppliedPromo] = useState<{ code: string; label: string; amount: number; expiresAt?: string | null } | null>(null);
+  const [isCheckingPromo, setIsCheckingPromo] = useState(false);
 
   const displayItems = existingOrder?.products || (existingOrder as any)?.items || cartData?.items;
   const isItemsLoading = !isMounted || isCartLoading || isExistingOrderLoading;
   const subtotal = existingOrder?.summary?.subtotal || (existingOrder as any)?.total || cartData?.subtotal || 0;
   const shippingCost = existingOrder?.summary?.shipping !== undefined ? existingOrder.summary.shipping : (selectedRate?.shipping_price || 0);
 
-  const handleApplyPromo = () => {
-    if (!promoInput.trim()) return;
-    const code = promoInput.trim().toUpperCase();
-    let discount = 0;
-    let label = "";
+  const handleApplyPromo = async () => {
+    if (!promoInput.trim() || isCheckingPromo) return;
+    const rawCode = promoInput.trim();
+    setIsCheckingPromo(true);
 
-    if (code === "ATELIER10" || code === "DISKON10") {
-      discount = Math.round(subtotal * 0.1);
-      label = "10% OFF SUBTOTAL";
-    } else if (code === "MADNESS20" || code === "SECTOR20" || code === "DISKON20") {
-      discount = Math.round(subtotal * 0.2);
-      label = "20% OFF SUBTOTAL";
-    } else if (code === "VIP" || code === "FREESHIPPING" || code === "ONGKIR") {
-      discount = shippingCost || 38000;
-      label = "FREE SHIPPING REWARD";
-    } else if (code === "SECTOR50" || code === "DISKON50") {
-      discount = 50000;
-      label = "RP 50.000 FLAT CUT";
-    } else {
-      // Universal courtesy reward for any other custom code
-      discount = Math.min(Math.round(subtotal * 0.15) || 50000, 150000);
-      label = "15% ATELIER VAULT REWARD";
+    try {
+      const res = await checkVoucher(rawCode);
+      if (res && res.code) {
+        const discountAmt = Number(res.discount_amount) || 0;
+        setAppliedPromo({
+          code: res.code,
+          label: res.name || `DISCOUNT (${res.code})`,
+          amount: discountAmt,
+          expiresAt: res.expires_at || null,
+        });
+        showToast(`Voucher code "${res.code}" applied successfully!`, "success", "VOUCHER APPLIED");
+      }
+    } catch (err: any) {
+      setAppliedPromo(null);
+      const errMsg = err?.response?.data?.message || "Invalid or unregistered voucher code.";
+      showToast(errMsg, "error", "VOUCHER INVALID");
+    } finally {
+      setIsCheckingPromo(false);
     }
-
-    setAppliedPromo({ code, label, amount: discount });
-    showToast(`Promo Code "${code}" applied: ${label}`, "success", "PROMO VERIFIED");
   };
 
   const handleRemovePromo = () => {
     setAppliedPromo(null);
     setPromoInput("");
-    showToast("Discount promo code has been removed.", "info", "PROMO RESET");
+    showToast("Promo voucher code removed.", "info", "VOUCHER RESET");
   };
 
   const discountAmount = appliedPromo ? appliedPromo.amount : (existingOrder?.summary?.discount || 0);
@@ -707,8 +720,8 @@ function CheckoutContent() {
       className="min-h-screen bg-[#0A0A0A] text-[#FFFFFF] flex flex-col selection:bg-[#FFFFFF] selection:text-[#0A0A0A]"
     >
       <Script
-        src="https://app.sandbox.midtrans.com/snap/snap.js"
-        data-client-key="Mid-client-sBSqTk7RhzcH4GEK"
+        src={process.env.NEXT_PUBLIC_MIDTRANS_SNAP_URL || (process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === "true" ? "https://app.midtrans.com/snap/snap.js" : "https://app.sandbox.midtrans.com/snap/snap.js")}
+        data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || "Mid-client-sBSqTk7RhzcH4GEK"}
         strategy="afterInteractive"
       />
       <Navbar />
@@ -1319,48 +1332,78 @@ function CheckoutContent() {
                 {/* ── DISCOUNT & PROMO CODE INPUT SECTION ── */}
                 <div style={{ marginBottom: "36px" }}>
                   <label className="text-xs text-[#AAAAAA] font-mono tracking-[0.2em] uppercase block mb-3 font-bold">
-                    HAVE A PROMO OR DISCOUNT CODE ?
+                    HAVE A PROMO OR VOUCHER CODE ?
                   </label>
+
                   <div className="flex items-stretch gap-2 font-mono">
-                    <input
-                      type="text"
-                      value={promoInput}
-                      onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
-                      placeholder="ENTER CODE (e.g. SECTOR20)"
-                      disabled={!!appliedPromo}
-                      style={{ padding: "16px 18px" }}
-                      className="flex-1 bg-[#121212] border border-[#2B2B2B] text-xs text-white uppercase tracking-wider placeholder:text-[#555555] focus:border-white outline-none transition-colors font-extrabold disabled:opacity-50 disabled:bg-[#101010] rounded-none"
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          handleApplyPromo();
-                        }
-                      }}
-                    />
+                    <div className="relative flex-1">
+                      <input
+                        type="text"
+                        value={promoInput}
+                        onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                        placeholder="ENTER VOUCHER CODE (e.g. SECTOR20)"
+                        disabled={!!appliedPromo}
+                        style={{ padding: "16px 18px" }}
+                        className="w-full bg-[#121212] border border-[#2B2B2B] text-xs text-white uppercase tracking-wider placeholder:text-[#555555] focus:border-[#B6A47E] outline-none transition-colors font-extrabold disabled:opacity-50 disabled:bg-[#101010] rounded-lg"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleApplyPromo();
+                          }
+                        }}
+                      />
+                    </div>
+
                     <button
                       type="button"
                       onClick={handleApplyPromo}
-                      disabled={!!appliedPromo || !promoInput.trim()}
-                      style={{ padding: "0 24px" }}
-                      className="bg-white text-[#0A0A0A] font-mono font-extrabold text-xs tracking-widest uppercase hover:bg-[#E0E0E0] transition-colors shrink-0 disabled:bg-[#202020] disabled:text-[#555555] disabled:cursor-not-allowed cursor-pointer rounded-none"
+                      disabled={!!appliedPromo || !promoInput.trim() || isCheckingPromo}
+                      style={{ padding: "0 26px" }}
+                      className="bg-[#B6A47E] text-[#0A0A0A] font-mono font-black text-xs tracking-widest uppercase hover:bg-[#a3926d] transition-colors shrink-0 disabled:bg-[#202020] disabled:text-[#555555] disabled:cursor-not-allowed cursor-pointer rounded-lg flex items-center gap-2"
                     >
-                      APPLY
+                      {isCheckingPromo ? (
+                        <>
+                          <div className="w-3.5 h-3.5 border-2 border-[#0A0A0A] border-t-transparent rounded-full animate-spin" />
+                          VERIFYING...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3.5 h-3.5" />
+                          APPLY
+                        </>
+                      )}
                     </button>
                   </div>
 
-                  {/* Applied Promo Indicator Banner */}
+                  {/* Clean Minimal Applied Voucher Card */}
                   {appliedPromo && (
-                    <div style={{ marginTop: "14px", padding: "14px 16px" }} className="bg-[#141414] border border-[#2B2B2B] flex items-center justify-between text-xs font-mono">
-                      <div className="flex items-center gap-2 text-white">
-                        <span className="font-extrabold text-xs text-[#CCCCCC]">[ACTIVE]</span>
-                        <span className="font-bold tracking-wider uppercase text-[#CCCCCC]">
-                          CODE <strong>{appliedPromo.code}</strong> ACTIVATED ({appliedPromo.label})
-                        </span>
+                    <div
+                      style={{ marginTop: "14px", padding: "14px 18px" }}
+                      className="bg-[#121214] border border-[#B6A47E]/40 rounded-lg flex items-center justify-between gap-4 font-mono transition-all"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-md bg-[#B6A47E]/10 border border-[#B6A47E]/30 flex items-center justify-center text-[#B6A47E] shrink-0">
+                          <Ticket className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0 text-left">
+                          <span className="font-bold text-xs text-[#F5F5F5] tracking-wider uppercase block">
+                            {appliedPromo.code}
+                          </span>
+                          <p className="text-[11px] text-[#A0A0A0] mt-0.5 truncate">
+                            {appliedPromo.label}
+                            {appliedPromo.expiresAt && (
+                              <span className="text-[10px] text-[#777777] font-mono ml-2 font-medium">
+                                • Exp: {appliedPromo.expiresAt}
+                              </span>
+                            )}
+                          </p>
+                        </div>
                       </div>
-                      <button 
+
+                      <button
                         type="button"
-                        onClick={handleRemovePromo} 
-                        className="text-[#FF4444] hover:text-white underline font-bold text-[11px] uppercase tracking-wider pl-4 shrink-0 cursor-pointer"
+                        onClick={handleRemovePromo}
+                        className="text-rose-400 hover:text-rose-300 font-bold text-xs uppercase tracking-wider shrink-0 cursor-pointer transition-colors px-2 py-1"
                       >
                         REMOVE
                       </button>

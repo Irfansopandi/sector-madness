@@ -29,7 +29,20 @@ export default function ShoppingBagPage() {
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    if (typeof window !== "undefined") {
+      try {
+        const userDataStr = localStorage.getItem("sector_madness_user");
+        if (userDataStr) {
+          const parsed = JSON.parse(userDataStr);
+          const isAdminUser = parsed && (parsed.is_admin === true || parsed.isAdmin === true || parsed.role === "admin" || parsed.role === "administrator" || parsed.role === "Administrator");
+          if (isAdminUser) {
+            // Admin is strictly not allowed to use customer bag -> Redirect to Admin Control Panel
+            router.replace("/admin");
+          }
+        }
+      } catch {}
+    }
+  }, [router]);
 
   // Load cart directly from Laravel API with real-time sync
   const { data: cartData, isLoading, isError, refetch } = useQuery({

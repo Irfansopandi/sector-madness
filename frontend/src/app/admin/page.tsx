@@ -19,11 +19,15 @@ import {
   Truck,
   Printer,
   TrendingUp,
+  AlertTriangle,
+  Package,
+  PhoneCall,
 } from "lucide-react";
 import Swal from "sweetalert2";
 import AdminSidebar from "./components/AdminSidebar";
 import AdminHeader from "./components/AdminHeader";
 import AdminStatCard from "./components/AdminStatCard";
+import AdminDashboardCharts from "./components/AdminDashboardCharts";
 import {
   getAdminOrders,
   getAdminProducts,
@@ -32,6 +36,7 @@ import {
   getAdminHeroBanners,
   getCategories,
   getOrderDetail,
+  getAdminDashboardCharts,
   OrderDetailData,
   getImageUrl,
 } from "@/utils/api";
@@ -269,6 +274,20 @@ export default function AdminDashboardPage() {
     retry: false,
   });
 
+  const [chartPeriod, setChartPeriod] = useState<string>("month");
+
+  const {
+    data: chartData,
+    isLoading: isChartLoading,
+    isError: isChartError,
+    refetch: refetchChartData,
+  } = useQuery({
+    queryKey: ["admin-dashboard-charts", chartPeriod],
+    queryFn: () => getAdminDashboardCharts(chartPeriod),
+    refetchInterval: 15000,
+    retry: false,
+  });
+
   // Calculate real-time metrics dynamically from active database state
   const totalRevenue = orders.reduce((sum, ord) => sum + (ord.total || 0), 0);
   const formattedRevenue = `Rp ${totalRevenue.toLocaleString("id-ID")}`;
@@ -308,71 +327,43 @@ export default function AdminDashboardPage() {
     })
     .slice(0, 6);
 
-  // Aggregate top 6 best-selling products from all non-cancelled orders
-  const topProducts = (() => {
-    const map = new Map<string, { name: string; image: string; qty: number; revenue: number; unitPrice: number }>();
-    orders
-      .filter((ord) => {
-        const st = (ord.shipping_status || "").toUpperCase();
-        return st !== "CANCELLED" && st !== "CANCELED" && st !== "DIBATALKAN";
+  // Get products where overall stock <= 5 OR any variant stock <= 5 (sorted by minStock ASC, max 6 products) for "Stok Produk Menipis" table
+  const lowStockProducts = (() => {
+    if (!products || products.length === 0) return [];
+
+    return products
+      .map((p: any) => {
+        const totalStock = Number(p.stock) || 0;
+        const vars = Array.isArray(p.variants) ? p.variants : [];
+
+        let minVariantStock = totalStock;
+        if (vars.length > 0) {
+          minVariantStock = Math.min(...vars.map((v: any) => Number(v.stock) || 0));
+        }
+
+        const effectiveStock = vars.length > 0 ? minVariantStock : totalStock;
+        const rawP = Number(p.price) || 0;
+        const price = rawP < 1000 ? rawP * 1000 : rawP;
+
+        return {
+          id: p.id,
+          name: p.name || p.title || "Produk",
+          image: p.image || p.photo || "",
+          stock: totalStock,
+          minStock: effectiveStock,
+          price,
+          category: p.collection || p.collection_code || "Kategori",
+          variants: vars,
+          sizes: Array.isArray(p.sizes) ? p.sizes : [],
+        };
       })
-      .forEach((ord) => {
-        const items: any[] = (ord as any).items || (ord as any).products || [];
-        items.forEach((item: any) => {
-          const rawName: string = item.product_name || item.name || "Unknown Product";
-          const qty: number = Number(item.quantity) || 1;
-
-          // Match with official catalog products first by ID or Name
-          let matchedProd: any = null;
-          if (products.length > 0) {
-            matchedProd = products.find((p: any) => {
-              const pId = String(p.id || "");
-              const iId = String(item.product_id || item.id || "");
-              if (iId && pId === iId) return true;
-
-              const pName = (p.name || p.title || "").toLowerCase().trim();
-              const iName = rawName.toLowerCase().trim();
-              return pName === iName || pName.includes(iName) || iName.includes(pName);
-            });
-          }
-
-          const displayName = matchedProd?.name || rawName;
-
-          // Image: Always prioritize live catalog image
-          let image: string = "";
-          if (matchedProd && (matchedProd.image || matchedProd.photo)) {
-            image = matchedProd.image || matchedProd.photo;
-          } else {
-            image = item.product_image || item.image || item.photo || "";
-          }
-
-          // Price: Always prioritize live catalog price
-          let unitPrice = 0;
-          if (matchedProd && matchedProd.price) {
-            const rawP = Number(matchedProd.price) || 0;
-            unitPrice = rawP < 1000 ? rawP * 1000 : rawP;
-          } else {
-            const rawP = Number(item.price || item.unit_price) || 0;
-            const normalizedP = rawP < 1000 ? rawP * 1000 : rawP;
-            unitPrice = normalizedP > 1000000 && qty > 1 ? Math.round(normalizedP / qty) : normalizedP;
-          }
-
-          const existing = map.get(displayName);
-          if (existing) {
-            existing.qty += qty;
-            existing.revenue += unitPrice * qty;
-            if (image && (!existing.image || (matchedProd && matchedProd.image))) {
-              existing.image = image;
-            }
-          } else {
-            map.set(displayName, { name: displayName, image, qty, revenue: unitPrice * qty, unitPrice });
-          }
-        });
-      });
-    return Array.from(map.values())
-      .sort((a, b) => b.revenue - a.revenue || b.qty - a.qty)
+      .filter((p: any) => p.minStock <= 5 || p.stock <= 5)
+      .sort((a: any, b: any) => a.minStock - b.minStock || a.stock - b.stock)
       .slice(0, 6)
-      .map((p, i) => ({ ...p, rank: i + 1 }));
+      .map((p: any, i: number) => ({
+        ...p,
+        rank: i + 1,
+      }));
   })();
 
   return (
@@ -491,13 +482,24 @@ export default function AdminDashboardPage() {
             </div>
           </section>
 
+          {/* Admin Dashboard 2-Charts Section (Line Chart & Horizontal Bar Chart) */}
+          <AdminDashboardCharts
+            data={chartData}
+            isLoading={isChartLoading}
+            isError={isChartError}
+            refetch={refetchChartData}
+            period={chartPeriod}
+            onPeriodChange={setChartPeriod}
+            isDarkMode={isDarkMode}
+          />
+
           {/* Main Workspace 2-Column Grid Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Left Column (8 cols): 6 Produk Terlaris */}
+            {/* Left Column (8 cols): Stok Produk Menipis */}
             <section className="lg:col-span-8">
               <div style={{ marginBottom: "18px" }} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4" style={{ color: "#B6A47E" }} />
+                  <AlertTriangle className="w-4 h-4" style={{ color: "#B6A47E" }} />
                   <h2
                     style={{
                       fontSize: "11px",
@@ -507,119 +509,192 @@ export default function AdminDashboardPage() {
                     }}
                     className={`uppercase ${isDarkMode ? "text-[#8A8A8A]" : "text-[#4B5563]"}`}
                   >
-                    6 PRODUK TERLARIS
+                    STOK PRODUK MENIPIS
                   </h2>
                 </div>
                 <span
                   style={{ fontSize: "10px", fontFamily: "'Inter', -apple-system, sans-serif" }}
                   className={`font-medium tracking-wider uppercase ${isDarkMode ? "text-[#666666]" : "text-[#9CA3AF]"}`}
                 >
-                  BERDASARKAN TOTAL PENGHASILAN
+                  STOK ≤ 5 PCS
                 </span>
               </div>
 
               <div
-                className={`border rounded-[6px] overflow-hidden shadow-sm ${
+                className={`border rounded-[12px] overflow-hidden shadow-sm ${
                   isDarkMode ? "bg-[#18181C] border-white/10" : "bg-white border-[#D1D5DB]"
                 }`}
               >
-                {topProducts.length === 0 ? (
+                {lowStockProducts.length === 0 ? (
                   <div
                     style={{ padding: "48px 24px" }}
-                    className={`text-center text-xs ${isDarkMode ? "text-[#777777]" : "text-[#6B7280]"}`}
+                    className={`text-center text-xs font-mono font-medium ${isDarkMode ? "text-[#8A8A8A]" : "text-[#6B7280]"}`}
                   >
-                    Belum ada data penjualan produk.
+                    Stok produk dalam kondisi aman.
                   </div>
                 ) : (
                   <div className={`divide-y ${isDarkMode ? "divide-white/[0.05]" : "divide-[#E5E7EB]"}`}>
-                    {topProducts.map((prod) => {
+                    {lowStockProducts.map((prod) => {
                       const prodImg = prod.image ? getImageUrl(prod.image) : null;
+                      const isZero = prod.minStock === 0 || prod.stock === 0;
+
                       return (
                         <div
-                          key={prod.name}
-                          style={{ padding: "18px 24px" }}
-                          className={`flex items-center gap-4 transition-colors ${
+                          key={prod.id || prod.name}
+                          style={{ padding: "18px 28px" }}
+                          className={`flex items-start justify-between gap-4 transition-colors ${
                             isDarkMode ? "hover:bg-white/[0.02]" : "hover:bg-[#F9FAFB]"
                           }`}
                         >
-                          {/* Rank badge */}
-                          <span
-                            style={{ width: "32px", height: "32px", borderRadius: "6px", flexShrink: 0 }}
-                            className={`inline-flex items-center justify-center font-black text-xs font-mono ${
-                              prod.rank === 1
-                                ? "bg-amber-500/20 text-amber-400 border border-amber-500/40"
-                                : prod.rank === 2
-                                ? "bg-slate-500/15 text-slate-400 border border-slate-500/30"
-                                : prod.rank === 3
-                                ? "bg-orange-900/20 text-orange-400 border border-orange-500/30"
-                                : isDarkMode
-                                ? "bg-white/5 text-[#8A8A8A] border border-white/10"
-                                : "bg-gray-100 text-gray-500 border border-gray-200"
-                            }`}
-                          >
-                            {prod.rank}
-                          </span>
-
-                          {/* Product Image Thumbnail */}
-                          <div
-                            style={{ width: "48px", height: "48px", borderRadius: "6px", flexShrink: 0 }}
-                            className={`overflow-hidden border relative flex items-center justify-center ${
-                              isDarkMode ? "bg-white/5 border-white/10" : "bg-gray-100 border-gray-200"
-                            }`}
-                          >
-                            {prodImg ? (
-                              <img
-                                src={prodImg}
-                                alt={prod.name}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <ShoppingBag className={`w-5 h-5 ${isDarkMode ? "text-[#8A8A8A]" : "text-gray-400"}`} />
-                            )}
-                          </div>
-
-                          {/* Product Name + Unit Price & Total Revenue */}
-                          <div className="flex-1 min-w-0 flex flex-col gap-1">
+                          <div className="flex items-start gap-4 min-w-0 flex-1">
+                            {/* Rank badge */}
                             <span
-                              className={`font-bold text-xs uppercase tracking-wide truncate ${
-                                isDarkMode ? "text-[#F5F5F5]" : "text-[#111827]"
+                              style={{ width: "32px", height: "32px", borderRadius: "6px", flexShrink: 0 }}
+                              className={`inline-flex items-center justify-center font-black text-xs font-mono mt-0.5 ${
+                                isZero
+                                  ? "bg-rose-500/20 text-rose-400 border border-rose-500/40"
+                                  : "bg-amber-500/15 text-amber-400 border border-amber-500/30"
                               }`}
                             >
-                              {prod.name}
+                              {prod.rank}
                             </span>
-                            <div className="flex items-center gap-2 text-[11px] font-mono">
+
+                            {/* Product Image Thumbnail */}
+                            <div
+                              style={{ width: "48px", height: "48px", borderRadius: "6px", flexShrink: 0 }}
+                              className={`overflow-hidden border relative flex items-center justify-center ${
+                                isDarkMode ? "bg-white/5 border-white/10" : "bg-gray-100 border-gray-200"
+                              }`}
+                            >
+                              {prodImg ? (
+                                <img
+                                  src={prodImg}
+                                  alt={prod.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <ShoppingBag className={`w-5 h-5 ${isDarkMode ? "text-[#8A8A8A]" : "text-gray-400"}`} />
+                              )}
+                            </div>
+
+                            {/* Product Name + Price & Category */}
+                            <div className="flex-1 min-w-0 flex flex-col gap-1">
                               <span
-                                className={`font-semibold ${
-                                  prod.rank === 1
-                                    ? "text-[#B6A47E]"
-                                    : isDarkMode
-                                    ? "text-[#CCCCCC]"
-                                    : "text-[#374151]"
+                                className={`font-bold text-xs uppercase tracking-wide truncate ${
+                                  isDarkMode ? "text-[#F5F5F5]" : "text-[#111827]"
                                 }`}
                               >
-                                Rp {prod.unitPrice.toLocaleString("id-ID")}
-                                <span className="text-[10px] opacity-60 font-normal"> / pcs</span>
+                                {prod.name}
                               </span>
-                              <span className="text-gray-500 font-sans opacity-50">•</span>
-                              <span className={`text-[10px] ${isDarkMode ? "text-[#777777]" : "text-[#6B7280]"}`}>
-                                Total: Rp {prod.revenue.toLocaleString("id-ID")}
-                              </span>
+                              <div className="flex items-center gap-2 text-[11px] font-mono flex-wrap">
+                                <span
+                                  className={`font-semibold ${
+                                    isZero
+                                      ? "text-rose-400"
+                                      : "text-[#B6A47E]"
+                                  }`}
+                                >
+                                  Rp {prod.price.toLocaleString("id-ID")}
+                                </span>
+                                <span className="text-gray-500 font-sans opacity-50">•</span>
+                                <span className={`text-[10px] uppercase ${isDarkMode ? "text-[#777777]" : "text-[#6B7280]"}`}>
+                                  {prod.category}
+                                </span>
+                              </div>
+
+                              {/* Variant & Size Stock Breakdown (ONLY variants with stock <= 5) */}
+                              {prod.variants && prod.variants.length > 0 ? (() => {
+                                const lowVars = prod.variants.filter((v: any) => Number(v.stock) <= 5);
+                                if (lowVars.length === 0) return null;
+
+                                return (
+                                  <div className="flex flex-wrap items-center gap-2 mt-2">
+                                    {lowVars.map((v: any, vIdx: number) => {
+                                      const vStk = Number(v.stock) || 0;
+                                      const isVZero = vStk === 0;
+                                      const sizeLabel = v.size || "M";
+                                      const colorLabel = v.color && v.color !== "Default" && v.color !== "DEFAULT" ? ` (${v.color})` : "";
+                                      return (
+                                        <span
+                                          key={vIdx}
+                                          style={{
+                                            paddingLeft: "16px",
+                                            paddingRight: "16px",
+                                            paddingTop: "5px",
+                                            paddingBottom: "5px",
+                                            borderRadius: "9999px",
+                                            display: "inline-flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            whiteSpace: "nowrap",
+                                            lineHeight: "1",
+                                          }}
+                                          className={`text-[10px] font-mono font-bold uppercase tracking-normal border shadow-xs ${
+                                            isVZero
+                                              ? "bg-rose-950/40 text-rose-400 border-rose-500/60"
+                                              : "bg-amber-950/40 text-amber-400 border-amber-500/60"
+                                          }`}
+                                        >
+                                          <span>{sizeLabel}{colorLabel}:</span>
+                                          <span className="font-black ml-1.5">{vStk} pcs</span>
+                                        </span>
+                                      );
+                                    })}
+                                  </div>
+                                );
+                              })() : null}
                             </div>
                           </div>
 
-                          {/* Qty pill */}
-                          <span
-                            style={{ padding: "6px 16px", borderRadius: "6px", flexShrink: 0 }}
-                            className={`font-black font-mono text-sm ${
-                              prod.rank === 1
-                                ? "bg-amber-500/15 text-amber-400 border border-amber-500/30"
-                                : isDarkMode
-                                ? "bg-white/5 text-[#F5F5F5] border border-white/10"
-                                : "bg-gray-100 text-[#111827] border border-gray-200"
-                            }`}
-                          >
-                            {prod.qty} <span className="font-normal opacity-60 text-[10px]">pcs</span>
-                          </span>
+                          {/* Stock Summary Pill + Status Badge */}
+                          <div className="flex items-start gap-3 shrink-0 ml-2">
+                            <div
+                              style={{ padding: "6px 14px", borderRadius: "8px" }}
+                              className={`flex flex-col items-end justify-center font-mono text-xs border ${
+                                isZero
+                                  ? "bg-rose-500/15 text-rose-400 border-rose-500/40 shadow-xs"
+                                  : "bg-amber-500/15 text-amber-400 border-amber-500/40 shadow-xs"
+                              }`}
+                            >
+                              <div className="flex items-center gap-1.5 font-bold">
+                                <span className="text-[10px] font-normal opacity-70 uppercase tracking-wider">Total:</span>
+                                <span className="text-sm font-black">{prod.stock} pcs</span>
+                              </div>
+                              {prod.variants && prod.variants.length > 0 && (
+                                <div className="flex items-center gap-1 text-[10px] opacity-85 mt-0.5">
+                                  <span className="opacity-70">Min Varian:</span>
+                                  <span className="font-extrabold">{prod.minStock} pcs</span>
+                                </div>
+                              )}
+                            </div>
+
+                            <span
+                              style={{
+                                paddingLeft: "16px",
+                                paddingRight: "16px",
+                                paddingTop: "6px",
+                                paddingBottom: "6px",
+                                borderRadius: "9999px",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                whiteSpace: "nowrap",
+                                lineHeight: "1",
+                              }}
+                              className={`text-[10px] font-mono font-bold uppercase tracking-normal border shadow-xs shrink-0 gap-2 ${
+                                isZero
+                                  ? "bg-rose-950/40 text-rose-400 border-rose-500/60"
+                                  : "bg-amber-950/40 text-amber-400 border-amber-500/60"
+                              }`}
+                            >
+                              <span
+                                className={`w-1.5 h-1.5 rounded-full animate-pulse shrink-0 ${
+                                  isZero ? "bg-rose-400" : "bg-amber-400"
+                                }`}
+                              />
+                              <span>{isZero ? "HABIS" : "MENIPIS"}</span>
+                            </span>
+                          </div>
                         </div>
                       );
                     })}
@@ -687,6 +762,47 @@ export default function AdminDashboardPage() {
                         }`}
                       >
                         Manage customer orders &amp; tracking
+                      </p>
+                    </div>
+                  </div>
+                  <ArrowRight
+                    className={`w-4 h-4 group-hover:text-[#B6A47E] group-hover:translate-x-1 transition-all shrink-0 ${
+                      isDarkMode ? "text-[#8A8A8A]" : "text-[#9CA3AF]"
+                    }`}
+                  />
+                </Link>
+
+                <Link
+                  href="/admin/products"
+                  style={{ padding: "20px 22px" }}
+                  className={`border rounded-[6px] hover:border-[#B6A47E] transition-all duration-200 group shadow-sm flex items-center justify-between gap-4 ${
+                    isDarkMode
+                      ? "bg-[#18181C] border-white/10"
+                      : "bg-white border-[#D1D5DB]"
+                  }`}
+                >
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div
+                      style={{ width: "46px", height: "46px" }}
+                      className="flex items-center justify-center bg-[#B6A47E]/10 border border-[#B6A47E]/25 text-[#B6A47E] rounded-[4px] shrink-0 group-hover:bg-[#B6A47E] group-hover:text-[#0A0A0A] transition-all duration-200"
+                    >
+                      <Package className="w-5 h-5 stroke-[1.75]" />
+                    </div>
+                    <div className="min-w-0 text-left">
+                      <h3
+                        style={{ fontFamily: "'Inter', -apple-system, sans-serif" }}
+                        className={`font-bold text-xs tracking-wider uppercase group-hover:text-[#B6A47E] transition-colors truncate ${
+                          isDarkMode ? "text-[#F5F5F5]" : "text-[#111827]"
+                        }`}
+                      >
+                        PRODUCTS &amp; INVENTORY
+                      </h3>
+                      <p
+                        className={`text-[11px] mt-0.5 leading-relaxed font-medium truncate ${
+                          isDarkMode ? "text-[#8A8A8A]" : "text-[#6B7280]"
+                        }`}
+                      >
+                        Manage products, variants &amp; stock
                       </p>
                     </div>
                   </div>
@@ -810,6 +926,47 @@ export default function AdminDashboardPage() {
                         }`}
                       >
                         Homepage hero campaign sliders
+                      </p>
+                    </div>
+                  </div>
+                  <ArrowRight
+                    className={`w-4 h-4 group-hover:text-[#B6A47E] group-hover:translate-x-1 transition-all shrink-0 ${
+                      isDarkMode ? "text-[#8A8A8A]" : "text-[#9CA3AF]"
+                    }`}
+                  />
+                </Link>
+
+                <Link
+                  href="/admin/contact-settings"
+                  style={{ padding: "20px 22px" }}
+                  className={`border rounded-[6px] hover:border-[#B6A47E] transition-all duration-200 group shadow-sm flex items-center justify-between gap-4 ${
+                    isDarkMode
+                      ? "bg-[#18181C] border-white/10"
+                      : "bg-white border-[#D1D5DB]"
+                  }`}
+                >
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div
+                      style={{ width: "46px", height: "46px" }}
+                      className="flex items-center justify-center bg-[#B6A47E]/10 border border-[#B6A47E]/25 text-[#B6A47E] rounded-[4px] shrink-0 group-hover:bg-[#B6A47E] group-hover:text-[#0A0A0A] transition-all duration-200"
+                    >
+                      <PhoneCall className="w-5 h-5 stroke-[1.75]" />
+                    </div>
+                    <div className="min-w-0 text-left">
+                      <h3
+                        style={{ fontFamily: "'Inter', -apple-system, sans-serif" }}
+                        className={`font-bold text-xs tracking-wider uppercase group-hover:text-[#B6A47E] transition-colors truncate ${
+                          isDarkMode ? "text-[#F5F5F5]" : "text-[#111827]"
+                        }`}
+                      >
+                        CONTACT SETTINGS
+                      </h3>
+                      <p
+                        className={`text-[11px] mt-0.5 leading-relaxed font-medium truncate ${
+                          isDarkMode ? "text-[#8A8A8A]" : "text-[#6B7280]"
+                        }`}
+                      >
+                        Social links, WhatsApp &amp; address
                       </p>
                     </div>
                   </div>

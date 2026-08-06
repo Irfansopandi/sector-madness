@@ -11,13 +11,30 @@ interface AdminHeaderProps {
   onToggleSidebar?: () => void;
 }
 
+const getFormattedClock = () => {
+  if (typeof window === "undefined") return "";
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("id-ID", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const timeStr = now.toLocaleTimeString("id-ID", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+  return `${dateStr} • ${timeStr}`;
+};
+
 export default function AdminHeader({
   title,
   isDarkMode = true,
   onToggleTheme,
   onToggleSidebar,
 }: AdminHeaderProps) {
-  const [currentDate, setCurrentDate] = useState("");
+  const [currentDate, setCurrentDate] = useState<string>(getFormattedClock);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -25,19 +42,7 @@ export default function AdminHeader({
     }
 
     const updateClock = () => {
-      const now = new Date();
-      const dateStr = now.toLocaleDateString("id-ID", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      });
-      const timeStr = now.toLocaleTimeString("id-ID", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      });
-      setCurrentDate(`${dateStr} • ${timeStr}`);
+      setCurrentDate(getFormattedClock());
     };
 
     updateClock();

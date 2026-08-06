@@ -12,11 +12,34 @@ use Illuminate\Support\Facades\Validator;
 class CustomerController extends Controller
 {
     /**
+     * Strictly verify if active request is authenticated as an Admin.
+     */
+    private function checkAdmin(Request $request)
+    {
+        $user = $request->user('sanctum') ?: $request->user();
+        if ($user instanceof \App\Models\Admin || (isset($user->is_admin) && $user->is_admin)) {
+            return true;
+        }
+        $authHeader = $request->header('Authorization');
+        if ($authHeader && str_contains($authHeader, 'Bearer')) {
+            $token = trim(str_replace('Bearer ', '', $authHeader));
+            $pat = \Laravel\Sanctum\PersonalAccessToken::findToken($token);
+            if ($pat && ($pat->tokenable instanceof \App\Models\Admin || (isset($pat->tokenable->is_admin) && $pat->tokenable->is_admin))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Admin: Get all customers with search and status filter
      * Endpoint: GET /api/admin/customers
      */
     public function adminIndex(Request $request)
     {
+        if (!$this->checkAdmin($request)) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized admin access'], 403);
+        }
         $query = User::with(['shippingAddresses' => function ($q) {
             $q->orderBy('is_default', 'desc')->orderBy('created_at', 'desc');
         }])->withCount('orders');
@@ -53,8 +76,11 @@ class CustomerController extends Controller
      * Admin: Get customer detail by ID
      * Endpoint: GET /api/admin/customers/{id}
      */
-    public function adminShow($id)
+    public function adminShow(Request $request, $id)
     {
+        if (!$this->checkAdmin($request)) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized admin access'], 403);
+        }
         $customer = User::with(['shippingAddresses' => function ($q) {
             $q->orderBy('is_default', 'desc')->orderBy('created_at', 'desc');
         }])->withCount('orders')->find($id);
@@ -78,6 +104,9 @@ class CustomerController extends Controller
      */
     public function adminStore(Request $request)
     {
+        if (!$this->checkAdmin($request)) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized admin access'], 403);
+        }
         $validator = Validator::make($request->all(), [
             'name'       => 'required|string|max:255',
             'email'      => 'required|string|email|max:255|unique:users,email',
@@ -120,6 +149,9 @@ class CustomerController extends Controller
      */
     public function adminUpdate(Request $request, $id)
     {
+        if (!$this->checkAdmin($request)) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized admin access'], 403);
+        }
         $customer = User::find($id);
 
         if (!$customer) {
@@ -172,6 +204,9 @@ class CustomerController extends Controller
      */
     public function adminToggleStatus(Request $request, $id)
     {
+        if (!$this->checkAdmin($request)) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized admin access'], 403);
+        }
         $customer = User::find($id);
 
         if (!$customer) {
@@ -200,8 +235,11 @@ class CustomerController extends Controller
      * Admin: Delete customer account
      * Endpoint: DELETE /api/admin/customers/{id}
      */
-    public function adminDestroy($id)
+    public function adminDestroy(Request $request, $id)
     {
+        if (!$this->checkAdmin($request)) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized admin access'], 403);
+        }
         $customer = User::find($id);
 
         if (!$customer) {

@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import InteractiveMap from "@/components/InteractiveMap";
-import { getContactSettings, ContactSettingItem } from "@/utils/api";
+import { getContactSettings, formatWhatsAppUrl, formatMailtoUrl, ContactSettingItem } from "@/utils/api";
 
 export default function ContactPage() {
   const [channels, setChannels] = useState<ContactSettingItem[]>([]);
@@ -27,8 +27,8 @@ export default function ContactPage() {
     fetchData();
   }, []);
 
-  const mapLat = warehouse?.latitude ?? -6.3533;
-  const mapLng = warehouse?.longitude ?? 107.2831;
+  const mapLat = warehouse?.latitude ? Number(warehouse.latitude) : -6.3117;
+  const mapLng = warehouse?.longitude ? Number(warehouse.longitude) : 107.3015;
   const warehouseTitle = warehouse?.title || "CENTRAL FULFILLMENT DOCK";
   const warehouseSubtitle = warehouse?.subtitle || "OUR WAREHOUSE";
   const warehouseAddressLines = warehouse?.value ? warehouse.value.split("\n") : [];
@@ -128,39 +128,97 @@ export default function ContactPage() {
                     className={`${isLast ? "" : "border-b border-[#333333] mb-6 md:mb-8"} space-y-3`}
                   >
                     <span className="text-[11px] font-mono font-bold tracking-[0.25em] text-[#B6A47E] uppercase block mb-2">
-                      {item.code ? `${item.code} / ${item.title}` : item.title}
+                      {item.title}
                     </span>
-                    {item.subtitle && (
+                    {item.subtitle && item.subtitle !== item.title && (
                       <h2 className="text-sm md:text-base font-bold tracking-[0.2em] uppercase text-[#FFFFFF]">
                         {item.subtitle}
                       </h2>
                     )}
 
-                    {/* Value rendering: Link vs Text */}
-                    {item.link ? (
-                      <a
-                        href={item.link}
-                        target={item.link.startsWith("http") ? "_blank" : "_self"}
-                        rel="noopener noreferrer"
-                        className="group inline-flex items-center text-base md:text-lg text-[#F5F5F5] font-light hover:text-[#B6A47E] transition-colors tracking-wide"
-                      >
-                        <span>{item.value}</span>
-                        <span className="ml-3 transition-transform duration-300 group-hover:translate-x-1">
-                          {item.link.startsWith("mailto") ? "→" : "↗"}
-                        </span>
-                      </a>
-                    ) : (
-                      <div className="text-sm md:text-base text-[#F5F5F5] font-light space-y-1">
-                        {valueLines.map((line, lIdx) => (
-                          <div
-                            key={lIdx}
-                            className={lIdx > 0 ? "text-[#A0A0A0] text-xs font-mono" : ""}
+                    {/* Value rendering: Link vs Generated WhatsApp / Text */}
+                    {(() => {
+                      const isEmailChannel = item.code === "01" || item.type === "email" || item.title.toLowerCase().includes("email") || item.value.includes("@") || (item.link && item.link.startsWith("mailto:"));
+                      const isPhoneChannel = item.code === "02" || item.title.toLowerCase().includes("messaging") || item.title.toLowerCase().includes("whatsapp") || item.title.toLowerCase().includes("phone");
+
+                      let hrefUrl: string | null = null;
+                      if (isEmailChannel) {
+                        const baseEmail = item.link || item.value;
+                        const subjectText = `INQUIRY - ${item.title.toUpperCase()}`;
+                        hrefUrl = formatMailtoUrl(baseEmail, subjectText);
+                      } else if (item.link) {
+                        hrefUrl = item.link;
+                      } else if (isPhoneChannel) {
+                        hrefUrl = formatWhatsAppUrl(item.value, "Halo SECTOR MADNESS, saya ingin bertanya mengenai produk dan layanan.");
+                      }
+
+                      if (hrefUrl) {
+                        return (
+                          <a
+                            href={hrefUrl}
+                            target={hrefUrl.startsWith("http") ? "_blank" : "_self"}
+                            rel="noopener noreferrer"
+                            className="group inline-flex items-center text-base md:text-lg text-[#F5F5F5] font-light hover:text-[#B6A47E] transition-colors tracking-wide"
                           >
-                            {line}
+                            <span>{item.value}</span>
+                            <span className="ml-3 transition-transform duration-300 group-hover:translate-x-1">
+                              {hrefUrl.startsWith("mailto") ? "→" : "↗"}
+                            </span>
+                          </a>
+                        );
+                      }
+
+                      const isWarehouse = item.type === "warehouse" || item.type === "address" || item.code === "05" || item.code === "W1";
+                      const isSchedule = item.type === "schedule" || item.code === "03" || item.title.toLowerCase().includes("operational") || item.title.toLowerCase().includes("schedule");
+
+                      if (isSchedule) {
+                        let daysText = item.value;
+                        let hoursText = "";
+
+                        if (item.value.includes("\n")) {
+                          const parts = item.value.split("\n");
+                          daysText = parts[0].trim();
+                          hoursText = parts.slice(1).join(" ").trim();
+                        } else if (item.value.includes(",")) {
+                          const parts = item.value.split(",");
+                          daysText = parts[0].trim();
+                          hoursText = parts.slice(1).join(" ").trim();
+                        }
+
+                        return (
+                          <div className="space-y-1 mt-1">
+                            <div className="text-sm md:text-base font-semibold text-[#F5F5F5]">
+                              {daysText}
+                            </div>
+                            {hoursText && (
+                              <div className="text-xs font-mono text-[#A0A0A0] tracking-wide">
+                                {hoursText}
+                              </div>
+                            )}
                           </div>
-                        ))}
-                      </div>
-                    )}
+                        );
+                      }
+
+                      const cleanLines = Array.from(new Set(valueLines.map(l => l.trim()).filter(l => {
+                        if (!l) return false;
+                        const low = l.toLowerCase();
+                        if (isWarehouse && (low.includes("sector madness central warehouse") || low === item.title.toLowerCase())) return false;
+                        return true;
+                      })));
+
+                      return (
+                        <div className="text-sm md:text-base text-[#F5F5F5] font-light space-y-1">
+                          {cleanLines.map((line, lIdx) => (
+                            <div
+                              key={lIdx}
+                              className={lIdx > 0 ? "text-[#A0A0A0] text-xs font-mono" : ""}
+                            >
+                              {line}
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
 
                     {item.note && (
                       <p className="text-xs text-[#8A8A8A] font-light">
@@ -210,7 +268,15 @@ export default function ContactPage() {
               />
               <div className="flex items-center justify-between text-[11px] text-[#666666] font-mono tracking-wider pt-1">
                 <span>LAT: {mapLat}° S, LNG: {mapLng}° E</span>
-                <span className="text-[#B6A47E]">KARAWANG, INDONESIA</span>
+                <a
+                  href={`https://www.google.com/maps?q=${mapLat},${mapLng}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#B6A47E] hover:underline font-bold flex items-center gap-1 uppercase tracking-wider"
+                >
+                  <span>Open in Google Maps</span>
+                  <span>↗</span>
+                </a>
               </div>
             </div>
 

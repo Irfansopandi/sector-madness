@@ -50,6 +50,7 @@ class FaqController extends Controller
                 'question' => $faq->question,
                 'answer' => $faq->answer,
                 'sort_order' => $faq->sort_order,
+                'is_active' => $faq->is_active,
             ];
         }
 
@@ -57,6 +58,25 @@ class FaqController extends Controller
             'success' => true,
             'data' => array_values($grouped),
             'raw' => $faqs,
+        ]);
+    }
+
+    /**
+     * Display a full listing of all FAQs for Admin management.
+     */
+    public function adminIndex()
+    {
+        if (Faq::count() === 0) {
+            $this->seedDefaults();
+        }
+
+        $faqs = Faq::orderBy('sort_order', 'asc')
+            ->orderBy('id', 'asc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $faqs,
         ]);
     }
 

@@ -163,34 +163,44 @@ class CheckoutController extends Controller
         }
 
         $code = strtoupper(trim($request->code));
-        $voucher = Voucher::where('code', $code)->where('is_active', true)->first();
+        $voucher = Voucher::where('code', $code)->first();
 
         if (!$voucher) {
             return response()->json([
                 'status'  => false,
-                'message' => 'Invalid or inactive voucher promo code.',
+                'message' => 'Voucher code not found or invalid.',
             ], 404);
+        }
+
+        if (!$voucher->is_active) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Voucher code is currently inactive.',
+            ], 422);
         }
 
         if ($voucher->expires_at && $voucher->expires_at < now()) {
             return response()->json([
                 'status'  => false,
-                'message' => 'This voucher code has expired.',
+                'message' => 'Voucher code has expired.',
             ], 422);
         }
 
-        if ($subtotal < $voucher->minimum_purchase) {
+        if ($subtotal > 0 && $subtotal < (float)$voucher->minimum_purchase) {
             return response()->json([
                 'status'  => false,
-                'message' => "Minimum order of Rp " . number_format($voucher->minimum_purchase, 0, ',', '.') . " required for this voucher.",
+                'message' => "Minimum purchase of Rp " . number_format($voucher->minimum_purchase, 0, ',', '.') . " is required for this voucher.",
             ], 422);
         }
 
         $discount = 0;
-        if ($voucher->discount_type === 'percentage') {
-            $discount = ($subtotal * $voucher->discount_value) / 100;
-        } else {
-            $discount = $voucher->discount_value;
+        if ($subtotal > 0) {
+            if ($voucher->discount_type === 'percentage') {
+                $discount = ($subtotal * (float)$voucher->discount_value) / 100;
+            } else {
+                $discount = (float)$voucher->discount_value;
+            }
+            $discount = min($subtotal, $discount);
         }
 
         return response()->json([
@@ -201,6 +211,9 @@ class CheckoutController extends Controller
                 'name'             => $voucher->name,
                 'discount_amount'  => (float)$discount,
                 'minimum_purchase' => (float)$voucher->minimum_purchase,
+                'discount_type'    => $voucher->discount_type,
+                'discount_value'   => (float)$voucher->discount_value,
+                'expires_at'       => $voucher->expires_at ? $voucher->expires_at->format('d M Y') : null,
             ]
         ], 200);
     }
@@ -255,13 +268,20 @@ class CheckoutController extends Controller
         $discount = 0;
 
         if (!empty($voucherCode)) {
-            $voucher = Voucher::where('code', strtoupper($voucherCode))->where('is_active', true)->first();
-            if ($voucher && ($subtotal >= $voucher->minimum_purchase)) {
+            $code = strtoupper(trim($voucherCode));
+            $voucher = Voucher::where('code', $code)->first();
+            if (
+                $voucher &&
+                $voucher->is_active &&
+                (!$voucher->expires_at || $voucher->expires_at >= now()) &&
+                ($subtotal >= (float)$voucher->minimum_purchase)
+            ) {
                 if ($voucher->discount_type === 'percentage') {
-                    $discount = ($subtotal * $voucher->discount_value) / 100;
+                    $discount = ($subtotal * (float)$voucher->discount_value) / 100;
                 } else {
                     $discount = (float)$voucher->discount_value;
                 }
+                $discount = min($subtotal, $discount);
             }
         }
 
@@ -424,25 +444,44 @@ class CheckoutController extends Controller
             ];
         }
 
-        // 6. Validasi Voucher
+        // 6. Validasi Voucher (Strict Backend Enforcement)
         $discount = 0;
         $voucherCode = $request->voucher_code;
         if (!empty($voucherCode)) {
-            $voucher = Voucher::where('code', strtoupper($voucherCode))->where('is_active', true)->first();
-            if (!$voucher || ($voucher->expires_at && $voucher->expires_at < now()) || $subtotal < $voucher->minimum_purchase) {
-                return response()->json(['status' => false, 'message' => 'The promotional voucher code applied is invalid or conditions not met.'], 422);
+            $code = strtoupper(trim($voucherCode));
+            $voucher = Voucher::where('code', $code)->first();
+
+            if (!$voucher) {
+                return response()->json(['status' => false, 'message' => 'Voucher code not found or invalid.'], 422);
             }
+            if (!$voucher->is_active) {
+                return response()->json(['status' => false, 'message' => 'Voucher code is currently inactive.'], 422);
+            }
+            if ($voucher->expires_at && $voucher->expires_at < now()) {
+                return response()->json(['status' => false, 'message' => 'Voucher code has expired.'], 422);
+            }
+            if ($subtotal < (float)$voucher->minimum_purchase) {
+                return response()->json([
+                    'status'  => false,
+                    'message' => "Minimum purchase of Rp " . number_format($voucher->minimum_purchase, 0, ',', '.') . " is required for this voucher.",
+                ], 422);
+            }
+
             if ($voucher->discount_type === 'percentage') {
-                $discount = (int)(($subtotal * $voucher->discount_value) / 100);
+                $discount = (int)(($subtotal * (float)$voucher->discount_value) / 100);
             } else {
                 $discount = (int)$voucher->discount_value;
             }
+            $discount = min((int)$subtotal, $discount);
+
             $itemDetailsForMidtrans[] = [
                 'id'       => 'VOUCHER-DISC',
                 'price'    => -$discount,
                 'quantity' => 1,
-                'name'     => substr("Promo Code ({$voucher->code})", 0, 48),
+                'name'     => substr("Voucher ({$voucher->code})", 0, 48),
             ];
+
+            $voucherCode = $voucher->code;
         }
 
         $shippingCost = (int)$request->shipping_price;

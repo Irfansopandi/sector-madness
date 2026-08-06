@@ -10,6 +10,7 @@ import {
   updateJournal,
   deleteJournal,
   uploadAdminImage,
+  getImageUrl,
   JournalArticle,
 } from "@/utils/api";
 import { BookOpen, Plus, X, Pencil, Trash2, Upload, Search, Filter } from "lucide-react";
@@ -135,6 +136,19 @@ export default function AdminJournalsPage() {
       newErrors.content = "Konten utama artikel wajib diisi!";
     }
 
+    if (formSortOrder > 0) {
+      const duplicate = journals.find((j: JournalArticle) => {
+        const sameCategory = (j.category || "").trim().toLowerCase() === formCategory.trim().toLowerCase();
+        const sameSort = Number(j.sort_order) === Number(formSortOrder);
+        const isNotCurrent = modalMode === "edit" && selectedArticle ? String(j.id) !== String(selectedArticle.id) : true;
+        return sameCategory && sameSort && isNotCurrent;
+      });
+
+      if (duplicate) {
+        newErrors.sort_order = `Nomor urutan ${formSortOrder} sudah ditempati oleh jurnal "${duplicate.title}" dalam kategori "${formCategory}"! Silakan pilih nomor urutan lain.`;
+      }
+    }
+
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length > 0) {
@@ -232,7 +246,7 @@ export default function AdminJournalsPage() {
     setFormSummary(article.summary || "");
     setFormImage(article.image || "");
     setFormImageFile(null);
-    setFormImagePreview(article.image ? `http://brand.test${article.image}` : "");
+    setFormImagePreview(article.image ? getImageUrl(article.image) : "");
     setFormQuote(article.quote || "");
     setFormContent(
       Array.isArray(article.content) ? article.content.join("\n\n") : article.content || ""
@@ -900,14 +914,14 @@ export default function AdminJournalsPage() {
                     }}
                   />
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <div id="field-sort_order" style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                   <label
                     style={{
                       fontSize: "11px",
                       fontWeight: 700,
                       letterSpacing: "0.12em",
                       textTransform: "uppercase",
-                      color: isDarkMode ? "#CCCCCC" : "#374151",
+                      color: errors.sort_order ? "#EF4444" : (isDarkMode ? "#CCCCCC" : "#374151"),
                     }}
                   >
                     SORT ORDER (URUTAN TAMPIL)
@@ -927,7 +941,7 @@ export default function AdminJournalsPage() {
                         borderRadius: "6px 0 0 6px",
                         cursor: "pointer",
                         backgroundColor: isDarkMode ? "#1E1E22" : "#F3F4F6",
-                        border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #D1D5DB",
+                        border: errors.sort_order ? "1px solid #EF4444" : (isDarkMode ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #D1D5DB"),
                         color: isDarkMode ? "#CCCCCC" : "#374151",
                         transition: "all 0.15s ease",
                         userSelect: "none",
@@ -941,7 +955,10 @@ export default function AdminJournalsPage() {
                       type="number"
                       min={0}
                       value={formSortOrder}
-                      onChange={(e) => setFormSortOrder(Math.max(0, Number(e.target.value)))}
+                      onChange={(e) => {
+                        setFormSortOrder(Math.max(0, Number(e.target.value)));
+                        if (errors.sort_order) setErrors((prev) => ({ ...prev, sort_order: "" }));
+                      }}
                       style={{
                         flex: 1,
                         height: "44px",
@@ -951,11 +968,11 @@ export default function AdminJournalsPage() {
                         textAlign: "center",
                         outline: "none",
                         backgroundColor: isDarkMode ? "#121214" : "#ffffff",
-                        borderTop: isDarkMode ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #D1D5DB",
-                        borderBottom: isDarkMode ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #D1D5DB",
+                        borderTop: errors.sort_order ? "1px solid #EF4444" : (isDarkMode ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #D1D5DB"),
+                        borderBottom: errors.sort_order ? "1px solid #EF4444" : (isDarkMode ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #D1D5DB"),
                         borderLeft: "none",
                         borderRight: "none",
-                        color: "#B6A47E",
+                        color: errors.sort_order ? "#EF4444" : "#B6A47E",
                       }}
                     />
                     <button
@@ -972,7 +989,7 @@ export default function AdminJournalsPage() {
                         borderRadius: "0 6px 6px 0",
                         cursor: "pointer",
                         backgroundColor: isDarkMode ? "#1E1E22" : "#F3F4F6",
-                        border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #D1D5DB",
+                        border: errors.sort_order ? "1px solid #EF4444" : (isDarkMode ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #D1D5DB"),
                         color: isDarkMode ? "#CCCCCC" : "#374151",
                         transition: "all 0.15s ease",
                         userSelect: "none",
@@ -983,9 +1000,15 @@ export default function AdminJournalsPage() {
                       +
                     </button>
                   </div>
-                  <p style={{ fontSize: "10px", fontWeight: 600, color: isDarkMode ? "#8A8A8A" : "#6B7280", marginTop: "2px" }}>
-                    * Angka lebih kecil akan tampil lebih dulu. 0 = urutan default
-                  </p>
+                  {errors.sort_order ? (
+                    <p style={{ fontSize: "11px", fontWeight: 600, color: "#EF4444", marginTop: "2px" }}>
+                      * {errors.sort_order}
+                    </p>
+                  ) : (
+                    <p style={{ fontSize: "10px", fontWeight: 600, color: isDarkMode ? "#8A8A8A" : "#6B7280", marginTop: "2px" }}>
+                      * Angka lebih kecil akan tampil lebih dulu. 0 = urutan default
+                    </p>
+                  )}
                 </div>
               </div>
 

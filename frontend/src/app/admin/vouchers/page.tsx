@@ -467,7 +467,7 @@ export default function AdminVouchersPage() {
                   : "bg-[#0A0A0A] text-white hover:bg-[#222222]"
               }`}
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 transition-transform duration-300 group-hover:rotate-90" />
               <span>TAMBAH VOUCHER</span>
             </button>
           </div>

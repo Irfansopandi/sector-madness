@@ -9,6 +9,23 @@ use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
+    private function checkAdmin(Request $request)
+    {
+        $user = $request->user('sanctum') ?: $request->user();
+        if ($user instanceof \App\Models\Admin || (isset($user->is_admin) && $user->is_admin)) {
+            return true;
+        }
+        $authHeader = $request->header('Authorization');
+        if ($authHeader && str_contains($authHeader, 'Bearer')) {
+            $token = trim(str_replace('Bearer ', '', $authHeader));
+            $pat = \Laravel\Sanctum\PersonalAccessToken::findToken($token);
+            if ($pat && ($pat->tokenable instanceof \App\Models\Admin || (isset($pat->tokenable->is_admin) && $pat->tokenable->is_admin))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * Dapatkan user aktif atau fallback ke customer demo.
      */
@@ -17,7 +34,7 @@ class OrderController extends Controller
         $user = $request->user('sanctum') ?: $request->user();
         if (!$user) {
             $memberEmail = $request->header('X-Member-Email');
-            if ($memberEmail) {
+            if ($memberEmail && (app()->environment('local') || app()->environment('testing'))) {
                 $user = User::where('email', $memberEmail)->first();
             }
         }
@@ -101,9 +118,22 @@ class OrderController extends Controller
     public function show(Request $request, $order_number)
     {
         $user = $this->getUser($request);
-        $order = Order::with(['items.product', 'payment', 'shipment'])
-            ->where('order_number', $order_number)
-            ->first();
+        
+        $query = Order::with(['items.product', 'payment', 'shipment'])
+            ->where('order_number', $order_number);
+
+        // Strict ownership check: non-admin users can only access their own orders
+        if (!$user || !($user instanceof \App\Models\Admin)) {
+            if (!$user) {
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'Authentication required',
+                ], 401);
+            }
+            $query->where('user_id', $user->id);
+        }
+
+        $order = $query->first();
 
         if (!$order) {
             return response()->json([
@@ -284,6 +314,9 @@ class OrderController extends Controller
      */
     public function adminOrders(Request $request)
     {
+        if (!$this->checkAdmin($request)) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized admin access'], 403);
+        }
         $orders = Order::with(['user', 'items', 'payment', 'shipment'])->latest()->get();
 
         $formatted = $orders->map(function ($order) {
@@ -336,6 +369,9 @@ class OrderController extends Controller
      */
     public function adminUpdateShipment(Request $request, $order_number)
     {
+        if (!$this->checkAdmin($request)) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized admin access'], 403);
+        }
         $order = Order::where('order_number', $order_number)->first();
         if (!$order) {
             return response()->json(['status' => false, 'message' => 'Order not found'], 404);
@@ -404,6 +440,207 @@ class OrderController extends Controller
             'status'  => true,
             'message' => 'Order confirmed as received successfully',
             'data'    => $order->load('shipment', 'payment', 'items'),
+        ], 200);
+    }
+
+    /**
+     * Admin: Get Sales Trend and Top Products Chart Analytics
+     * Endpoint: GET /api/admin/dashboard-charts?period=week|month|3months|year
+     */
+    public function adminDashboardCharts(Request $request)
+    {
+        if (!$this->checkAdmin($request)) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized admin access'], 403);
+        }
+        $period = strtolower((string)$request->query('period', 'month'));
+        if (!in_array($period, ['week', 'month', '3months', 'year'])) {
+            $period = 'month';
+        }
+
+        $now = \Carbon\Carbon::now();
+        switch ($period) {
+            case 'week':
+                $startDate = $now->copy()->subDays(6)->startOfDay();
+                break;
+            case '3months':
+                $startDate = $now->copy()->subDays(89)->startOfDay();
+                break;
+            case 'year':
+                $startDate = $now->copy()->subMonths(11)->startOfMonth();
+                break;
+            case 'month':
+            default:
+                $startDate = $now->copy()->subDays(29)->startOfDay();
+                break;
+        }
+
+        // Fetch valid non-cancelled orders within period
+        $orders = Order::with(['items', 'payment', 'shipment'])
+            ->where('created_at', '>=', $startDate)
+            ->get()
+            ->reject(function ($ord) {
+                $st = strtoupper((string)($ord->status ?? ''));
+                $shipSt = strtoupper((string)($ord->shipment ? $ord->shipment->status : ''));
+                $paySt = strtoupper((string)($ord->payment ? $ord->payment->payment_status : ''));
+                return in_array($st, ['CANCELLED', 'CANCELED', 'DIBATALKAN']) ||
+                       in_array($shipSt, ['CANCELLED', 'CANCELED', 'DIBATALKAN']) ||
+                       in_array($paySt, ['CANCELLED', 'CANCELED', 'DIBATALKAN']);
+            });
+
+        // 1. Group Sales Trend Data based on period
+        $salesTrend = [];
+        if ($period === 'week') {
+            for ($i = 6; $i >= 0; $i--) {
+                $day = $now->copy()->subDays($i);
+                $dayStr = $day->format('Y-m-d');
+                $label = $day->locale('id')->isoFormat('dddd, D MMM');
+                
+                $dayOrders = $orders->filter(fn($o) => \Carbon\Carbon::parse($o->created_at)->format('Y-m-d') === $dayStr);
+                $revenue = $dayOrders->sum(function($order) {
+                    $calcSubtotal = $order->items->sum(function($item) {
+                        $rawP = (float)$item->price;
+                        $itemP = ($rawP > 50000000) ? round($rawP / 15000) : $rawP;
+                        $priceIdr = $itemP < 1000 ? $itemP * 1000 : $itemP;
+                        return $priceIdr * $item->quantity;
+                    });
+                    $shipCost = $order->shipment ? (float)$order->shipment->shipping_cost : 0;
+                    return (float)$order->grand_total > 0 ? (float)$order->grand_total : max(0, $calcSubtotal + $shipCost);
+                });
+                
+                $salesTrend[] = [
+                    'label' => $label,
+                    'revenue' => (float)$revenue,
+                    'orders_count' => $dayOrders->count(),
+                ];
+            }
+        } else if ($period === 'month') {
+            for ($i = 29; $i >= 0; $i--) {
+                $day = $now->copy()->subDays($i);
+                $dayStr = $day->format('Y-m-d');
+                $label = $day->locale('id')->isoFormat('D MMM');
+                
+                $dayOrders = $orders->filter(fn($o) => \Carbon\Carbon::parse($o->created_at)->format('Y-m-d') === $dayStr);
+                $revenue = $dayOrders->sum(function($order) {
+                    $calcSubtotal = $order->items->sum(function($item) {
+                        $rawP = (float)$item->price;
+                        $itemP = ($rawP > 50000000) ? round($rawP / 15000) : $rawP;
+                        $priceIdr = $itemP < 1000 ? $itemP * 1000 : $itemP;
+                        return $priceIdr * $item->quantity;
+                    });
+                    $shipCost = $order->shipment ? (float)$order->shipment->shipping_cost : 0;
+                    return (float)$order->grand_total > 0 ? (float)$order->grand_total : max(0, $calcSubtotal + $shipCost);
+                });
+
+                $salesTrend[] = [
+                    'label' => $label,
+                    'revenue' => (float)$revenue,
+                    'orders_count' => $dayOrders->count(),
+                ];
+            }
+        } else if ($period === '3months') {
+            for ($i = 11; $i >= 0; $i--) {
+                $weekStart = $now->copy()->subWeeks($i)->startOfWeek();
+                $weekEnd = $now->copy()->subWeeks($i)->endOfWeek();
+                $label = 'Minggu ' . (12 - $i) . ' (' . $weekStart->format('d/m') . ')';
+
+                $wOrders = $orders->filter(function($o) use ($weekStart, $weekEnd) {
+                    $cAt = \Carbon\Carbon::parse($o->created_at);
+                    return $cAt->between($weekStart, $weekEnd);
+                });
+
+                $revenue = $wOrders->sum(function($order) {
+                    $calcSubtotal = $order->items->sum(function($item) {
+                        $rawP = (float)$item->price;
+                        $itemP = ($rawP > 50000000) ? round($rawP / 15000) : $rawP;
+                        $priceIdr = $itemP < 1000 ? $itemP * 1000 : $itemP;
+                        return $priceIdr * $item->quantity;
+                    });
+                    $shipCost = $order->shipment ? (float)$order->shipment->shipping_cost : 0;
+                    return (float)$order->grand_total > 0 ? (float)$order->grand_total : max(0, $calcSubtotal + $shipCost);
+                });
+
+                $salesTrend[] = [
+                    'label' => $label,
+                    'revenue' => (float)$revenue,
+                    'orders_count' => $wOrders->count(),
+                ];
+            }
+        } else if ($period === 'year') {
+            for ($i = 11; $i >= 0; $i--) {
+                $m = $now->copy()->subMonths($i);
+                $mStr = $m->format('Y-m');
+                $label = $m->locale('id')->isoFormat('MMM YYYY');
+
+                $mOrders = $orders->filter(fn($o) => \Carbon\Carbon::parse($o->created_at)->format('Y-m') === $mStr);
+                $revenue = $mOrders->sum(function($order) {
+                    $calcSubtotal = $order->items->sum(function($item) {
+                        $rawP = (float)$item->price;
+                        $itemP = ($rawP > 50000000) ? round($rawP / 15000) : $rawP;
+                        $priceIdr = $itemP < 1000 ? $itemP * 1000 : $itemP;
+                        return $priceIdr * $item->quantity;
+                    });
+                    $shipCost = $order->shipment ? (float)$order->shipment->shipping_cost : 0;
+                    return (float)$order->grand_total > 0 ? (float)$order->grand_total : max(0, $calcSubtotal + $shipCost);
+                });
+
+                $salesTrend[] = [
+                    'label' => $label,
+                    'revenue' => (float)$revenue,
+                    'orders_count' => $mOrders->count(),
+                ];
+            }
+        }
+
+        // 2. Aggregate Top 6 Products from valid orders
+        $productsMap = [];
+        $catalogProducts = \App\Models\Product::all();
+
+        foreach ($orders as $order) {
+            foreach ($order->items as $item) {
+                $pId = $item->product_id ?: $item->id;
+                $rawName = $item->product_name ?: 'Product #' . $pId;
+                $qty = (int)$item->quantity;
+
+                // Match catalog product
+                $matched = $catalogProducts->first(function($p) use ($pId, $rawName) {
+                    if ((string)$p->id === (string)$pId) return true;
+                    $pName = strtolower(trim($p->name ?? ''));
+                    $iName = strtolower(trim($rawName));
+                    return $pName && $iName && ($pName === $iName || str_contains($pName, $iName) || str_contains($iName, $pName));
+                });
+
+                $displayName = $matched ? $matched->name : $rawName;
+                $rawP = (float)($matched ? $matched->price : $item->price);
+                $unitPrice = $rawP < 1000 ? $rawP * 1000 : $rawP;
+
+                if (!isset($productsMap[$displayName])) {
+                    $productsMap[$displayName] = [
+                        'product_id' => $pId,
+                        'product_name' => $displayName,
+                        'quantity_sold' => 0,
+                        'revenue' => 0,
+                    ];
+                }
+                $productsMap[$displayName]['quantity_sold'] += $qty;
+                $productsMap[$displayName]['revenue'] += ($unitPrice * $qty);
+            }
+        }
+
+        $topProducts = array_values($productsMap);
+        usort($topProducts, function($a, $b) {
+            if ($b['quantity_sold'] === $a['quantity_sold']) {
+                return $b['revenue'] <=> $a['revenue'];
+            }
+            return $b['quantity_sold'] <=> $a['quantity_sold'];
+        });
+
+        $top6Products = array_slice($topProducts, 0, 6);
+
+        return response()->json([
+            'status' => true,
+            'period' => $period,
+            'sales' => $salesTrend,
+            'top_products' => $top6Products,
         ], 200);
     }
 }

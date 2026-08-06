@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { getJournals, JournalArticle } from "@/utils/api";
+import { getJournals, getImageUrl, JournalArticle } from "@/utils/api";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
@@ -125,7 +125,7 @@ export default function JournalPage() {
                   {/* Raw Photographic Canvas */}
                   <div className="lg:col-span-8 relative w-full aspect-[16/10] bg-[#161616] overflow-hidden border border-[#222222]">
                     <Image
-                      src={featuredArticle.image || "/images/campaign/campaign-1.png"}
+                      src={getImageUrl(featuredArticle.image) || "/images/campaign/campaign-1.png"}
                       alt={featuredArticle.title}
                       fill
                       priority
@@ -184,15 +184,13 @@ export default function JournalPage() {
                     viewport={{ once: true, margin: "-50px" }}
                     transition={{ duration: 0.6, delay: idx * 0.1 }}
                     onClick={() => setSelectedArticle(item)}
-                    className={`group cursor-pointer flex flex-col justify-start ${
-                      idx === 0 && gridArticles.length % 3 !== 0 ? "md:col-span-2 lg:col-span-2" : ""
-                    }`}
+                    className="group cursor-pointer flex flex-col justify-start"
                   >
                     <div>
                       {/* Clean Unfettered Photograph */}
-                      <div className={`relative w-full ${idx === 0 && gridArticles.length % 3 !== 0 ? "aspect-[16/9]" : "aspect-[4/3]"} bg-[#141414] overflow-hidden mb-8 border border-[#222222]`}>
+                      <div className="relative w-full aspect-[4/3] bg-[#141414] overflow-hidden mb-8 border border-[#222222]">
                         <Image
-                          src={item.image || "/images/campaign/campaign-1.png"}
+                          src={getImageUrl(item.image) || "/images/campaign/campaign-1.png"}
                           alt={item.title}
                           fill
                           sizes="(max-width: 1024px) 100vw, 40vw"
@@ -256,7 +254,7 @@ export default function JournalPage() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.35 }}
             onClick={() => setSelectedArticle(null)}
-            className="fixed inset-0 z-50 bg-[#000000]/95 backdrop-blur-md overflow-y-auto p-4 sm:p-8 md:p-12 sm:flex items-center justify-center cursor-zoom-out"
+            className="fixed inset-0 z-50 bg-[#000000]/95 backdrop-blur-md p-4 sm:p-6 md:p-8 flex items-center justify-center cursor-zoom-out"
           >
             <motion.div
               initial={{ opacity: 0, y: 40, scale: 0.98 }}
@@ -264,97 +262,95 @@ export default function JournalPage() {
               exit={{ opacity: 0, y: 20, scale: 0.98 }}
               transition={{ duration: 0.45, ease: "easeOut" }}
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-[960px] bg-[#0A0A0A] border border-[#2A2A2A] text-[#F5F5F5] my-auto cursor-auto shadow-2xl overflow-hidden"
+              className="relative w-full max-w-[960px] max-h-[85vh] md:max-h-[88vh] bg-[#0A0A0A] border border-[#2A2A2A] text-[#F5F5F5] cursor-auto shadow-2xl flex flex-col overflow-hidden rounded-[4px]"
             >
-              {/* Top Navigation Bar */}
-              <div className="sticky top-0 z-20 flex items-center justify-between px-6 md:px-10 py-5 bg-[#0A0A0A]/95 backdrop-blur-md border-b border-[#222222]">
-                <span className="text-[11px] uppercase tracking-[0.2em] text-[#A0A0A0] font-medium">
-                  SECTOR MADNESS JOURNAL — {selectedArticle.category}
-                </span>
-                <button
-                  onClick={() => setSelectedArticle(null)}
-                  style={{ fontSize: "11px", letterSpacing: "0.2em" }}
-                  className="uppercase font-bold text-white hover:opacity-60 transition-opacity cursor-pointer px-3 py-1"
-                >
-                  CLOSE [X]
-                </button>
-              </div>
+              {/* Floating Minimalist Close Button */}
+              <button
+                onClick={() => setSelectedArticle(null)}
+                style={{ fontSize: "11px", letterSpacing: "0.22em" }}
+                className="absolute top-4 right-4 sm:top-5 sm:right-6 z-30 text-white/80 hover:text-white transition-colors cursor-pointer bg-transparent border-none outline-none py-2 px-3 select-none drop-shadow-md uppercase font-semibold tracking-[0.2em]"
+              >
+                CLOSE X
+              </button>
 
-              {/* Unobstructed Cover Photograph */}
-              <div className="relative w-full aspect-[21/10] bg-[#161616]">
-                <Image
-                  src={selectedArticle.image || "/images/campaign/campaign-1.png"}
-                  alt={selectedArticle.title}
-                  fill
-                  priority
-                  sizes="100vw"
-                  className="object-cover"
-                />
-              </div>
+              {/* Scrollable Inner Body */}
+              <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 hover:[&::-webkit-scrollbar-thumb]:bg-white/40 [&::-webkit-scrollbar-thumb]:rounded-full">
+                {/* Unobstructed Cover Photograph */}
+                <div className="relative w-full aspect-[21/10] bg-[#161616]">
+                  <Image
+                    src={getImageUrl(selectedArticle.image) || "/images/campaign/campaign-1.png"}
+                    alt={selectedArticle.title}
+                    fill
+                    priority
+                    sizes="100vw"
+                    className="object-cover"
+                  />
+                </div>
 
-              {/* Editorial Article Body */}
-              <div style={{ paddingLeft: "clamp(32px, 5vw, 64px)", paddingRight: "clamp(32px, 5vw, 64px)" }} className="py-10 md:py-16 space-y-10">
-                
-                <div className="space-y-4 border-b border-[#222222] pb-8">
-                  <div className="flex items-center gap-3 text-[12px] text-[#B6A47E] uppercase tracking-[0.2em] font-semibold">
-                    <span>{selectedArticle.category}</span>
-                    {selectedArticle.date && (
-                      <>
-                        <span>•</span>
-                        <span>{selectedArticle.date}</span>
-                      </>
-                    )}
-                  </div>
+                {/* Editorial Article Body */}
+                <div style={{ paddingLeft: "clamp(32px, 5vw, 64px)", paddingRight: "clamp(32px, 5vw, 64px)" }} className="py-10 md:py-16 space-y-10">
                   
-                  <h2
-                    style={{
-                      fontSize: "clamp(2.2rem, 4.5vw, 4rem)",
-                      lineHeight: "1.05",
-                      fontWeight: 800,
-                      letterSpacing: "-0.03em",
-                      fontFamily: "'Inter', -apple-system, sans-serif",
-                    }}
-                    className="text-[#FFFFFF]"
-                  >
-                    {selectedArticle.title}
-                  </h2>
-                </div>
-
-                {/* Body Paragraphs */}
-                <div className="space-y-6 sm:space-y-8 text-[16px] md:text-[17px] text-[#C2C2C2] leading-[1.9] font-light text-justify md:text-left">
-                  {(() => {
-                    if (!selectedArticle.content) return null;
-                    const paragraphs = Array.isArray(selectedArticle.content)
-                      ? selectedArticle.content
-                      : [selectedArticle.content];
-                    return paragraphs.map((paragraph: string, idx: number) => (
-                      <p key={idx}>{paragraph}</p>
-                    ));
-                  })()}
-                </div>
-
-                {/* Highlight Quote Box */}
-                {selectedArticle.quote && (
-                  <div className="my-10 p-8 border-l-4 border-[#B6A47E] bg-[#141414]/60">
-                    <p style={{ fontSize: "20px", lineHeight: "1.5", fontWeight: 600 }} className="text-[#FFFFFF] italic">
-                      &ldquo;{selectedArticle.quote}&rdquo;
-                    </p>
+                  <div className="space-y-4 border-b border-[#222222] pb-8">
+                    <div className="flex items-center gap-3 text-[12px] text-[#B6A47E] uppercase tracking-[0.2em] font-semibold">
+                      <span>{selectedArticle.category}</span>
+                      {selectedArticle.date && (
+                        <>
+                          <span>•</span>
+                          <span>{selectedArticle.date}</span>
+                        </>
+                      )}
+                    </div>
+                    
+                    <h2
+                      style={{
+                        fontSize: "clamp(2.2rem, 4.5vw, 4rem)",
+                        lineHeight: "1.05",
+                        fontWeight: 800,
+                        letterSpacing: "-0.03em",
+                        fontFamily: "'Inter', -apple-system, sans-serif",
+                      }}
+                      className="text-[#FFFFFF]"
+                    >
+                      {selectedArticle.title}
+                    </h2>
                   </div>
-                )}
 
-                {/* Bottom Footer Action */}
-                <div className="pt-8 border-t border-[#222222] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <span className="text-[11px] uppercase tracking-[0.2em] text-[#777777]">
-                    SECTOR MADNESS EDITORIAL ARCHIVES
-                  </span>
-                  <Link
-                    href="/shop"
-                    onClick={() => setSelectedArticle(null)}
-                    style={{ fontSize: "11.5px", letterSpacing: "0.22em", padding: "14px 28px" }}
-                    className="bg-[#FFFFFF] text-[#0A0A0A] uppercase font-bold hover:bg-[#B6A47E] hover:text-[#0A0A0A] transition-colors rounded-none text-center sm:text-right"
-                  >
-                    EXPLORE THE COLLECTION →
-                  </Link>
+                  {/* Body Paragraphs */}
+                  <div className="space-y-6 sm:space-y-8 text-[16px] md:text-[17px] text-[#C2C2C2] leading-[1.9] font-light text-justify md:text-left">
+                    {(() => {
+                      if (!selectedArticle.content) return null;
+                      const paragraphs = Array.isArray(selectedArticle.content)
+                        ? selectedArticle.content
+                        : [selectedArticle.content];
+                      return paragraphs.map((paragraph: string, idx: number) => (
+                        <p key={idx}>{paragraph}</p>
+                      ));
+                    })()}
+                  </div>
+
+                  {/* Highlight Quote Box */}
+                  {selectedArticle.quote && (
+                    <div style={{ marginTop: "20px", marginBottom: "20px" }} className="p-8 md:p-12 border-l-4 border-[#B6A47E] bg-[#141414]/60">
+                      <p style={{ fontSize: "20px", lineHeight: "1.65", fontWeight: 600 }} className="text-[#FFFFFF] italic">
+                        &ldquo;{selectedArticle.quote}&rdquo;
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Bottom Footer Action */}
+                  <div style={{ marginTop: "50px", paddingTop: "20px", paddingBottom: "40px" }} className="border-t border-[#222222] flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                    <span className="text-[11px] uppercase tracking-[0.2em] text-[#777777]">
+                      SECTOR MADNESS EDITORIAL ARCHIVES
+                    </span>
+                    <Link
+                      href="/shop"
+                      onClick={() => setSelectedArticle(null)}
+                      style={{ fontSize: "12px", letterSpacing: "0.22em", padding: "18px 42px" }}
+                      className="bg-[#FFFFFF] text-[#0A0A0A] uppercase font-bold hover:bg-[#B6A47E] hover:text-[#0A0A0A] transition-colors rounded-none text-center sm:text-right shrink-0"
+                    >
+                      EXPLORE THE COLLECTION →
+                    </Link>
+                  </div>
                 </div>
               </div>
             </motion.div>

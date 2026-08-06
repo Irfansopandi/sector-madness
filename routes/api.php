@@ -29,9 +29,9 @@ use App\Http\Controllers\Api\VoucherController;
 | Customer & Admin Authentication Routes
 |--------------------------------------------------------------------------
 */
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/admin/login', [AuthController::class, 'adminLogin']);
+Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:10,1');
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
+Route::post('/admin/login', [AuthController::class, 'adminLogin'])->middleware('throttle:10,1');
 
 // Hero Banners API (Public & Admin Management)
 Route::get('/hero-banners', [HeroBannerController::class, 'index']);
@@ -43,9 +43,9 @@ Route::delete('/admin/hero-banners/{id}', [HeroBannerController::class, 'destroy
 // Admin Image Upload
 Route::post('/admin/upload', [UploadController::class, 'uploadImage']);
 
-Route::post('/forgot-password/send-otp', [ForgotPasswordController::class, 'sendOtp']);
-Route::post('/forgot-password/verify-otp', [ForgotPasswordController::class, 'verifyOtp']);
-Route::post('/forgot-password/reset', [ForgotPasswordController::class, 'resetPassword']);
+Route::post('/forgot-password/send-otp', [ForgotPasswordController::class, 'sendOtp'])->middleware('throttle:5,1');
+Route::post('/forgot-password/verify-otp', [ForgotPasswordController::class, 'verifyOtp'])->middleware('throttle:5,1');
+Route::post('/forgot-password/reset', [ForgotPasswordController::class, 'resetPassword'])->middleware('throttle:5,1');
 
 // Categories API (Public & Admin Management)
 Route::get('/categories', [CategoryController::class, 'index']);
@@ -68,12 +68,14 @@ Route::delete('/admin/sort-options/{id}', [SortOptionController::class, 'destroy
 
 // FAQ API (Public & Admin Management)
 Route::get('/faqs', [FaqController::class, 'index']);
+Route::get('/admin/faqs', [FaqController::class, 'adminIndex']);
 Route::post('/admin/faqs', [FaqController::class, 'store']);
 Route::put('/admin/faqs/{id}', [FaqController::class, 'update']);
 Route::delete('/admin/faqs/{id}', [FaqController::class, 'destroy']);
 
 // Size Guide API (Public & Admin Management)
 Route::get('/size-guides', [SizeGuideController::class, 'index']);
+Route::get('/admin/size-guides', [SizeGuideController::class, 'adminIndex']);
 Route::post('/admin/size-guides', [SizeGuideController::class, 'store']);
 Route::put('/admin/size-guides/{id}', [SizeGuideController::class, 'update']);
 Route::delete('/admin/size-guides/{id}', [SizeGuideController::class, 'destroy']);
@@ -87,6 +89,7 @@ Route::delete('/admin/journals/{id}', [JournalController::class, 'destroy']);
 
 // Contact Settings API (Public & Admin Management)
 Route::get('/contact-settings', [ContactSettingController::class, 'index']);
+Route::get('/admin/contact-settings', [ContactSettingController::class, 'adminIndex']);
 Route::post('/admin/contact-settings', [ContactSettingController::class, 'store']);
 Route::put('/admin/contact-settings/{id}', [ContactSettingController::class, 'update']);
 Route::delete('/admin/contact-settings/{id}', [ContactSettingController::class, 'destroy']);
@@ -151,7 +154,7 @@ Route::get('/wishlist/check/{product_id}', [WishlistController::class, 'check'])
 Route::get('/checkout/summary', [CheckoutController::class, 'summary']);
 Route::post('/checkout/summary', [CheckoutController::class, 'summary']);
 Route::get('/checkout/status/{order_number}', [CheckoutController::class, 'checkPaymentStatus']);
-Route::post('/voucher/check', [CheckoutController::class, 'checkVoucher']);
+Route::post('/voucher/check', [CheckoutController::class, 'checkVoucher'])->middleware('throttle:15,1');
 Route::get('/payment-methods', [CheckoutController::class, 'paymentMethods']);
 Route::post('/payment/create', [CheckoutController::class, 'createPayment']);
 Route::post('/checkout', [CheckoutController::class, 'createPayment']);
@@ -162,8 +165,9 @@ Route::get('/orders/{order_number}', [OrderController::class, 'show']);
 Route::post('/orders/{order_number}/cancel', [OrderController::class, 'cancel']);
 Route::post('/orders/{order_number}/confirm-received', [OrderController::class, 'confirmReceived']);
 
-// Admin Order & Shipment Tracking Control API
+// Admin Order, Dashboard Charts & Shipment Tracking Control API
 Route::get('/admin/orders', [OrderController::class, 'adminOrders']);
+Route::get('/admin/dashboard-charts', [OrderController::class, 'adminDashboardCharts']);
 Route::put('/admin/orders/{order_number}/shipment', [OrderController::class, 'adminUpdateShipment']);
 
 // Admin Customer Management API

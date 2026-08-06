@@ -80,7 +80,11 @@ export default function OrderDetailPage() {
       style={{ fontFamily: "'Inter', -apple-system, sans-serif" }}
       className="min-h-screen bg-[#0A0A0A] text-[#FFFFFF] flex flex-col selection:bg-[#FFFFFF] selection:text-[#0A0A0A]"
     >
-      <Script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="Mid-client-sBSqTk7RhzcH4GEK" strategy="afterInteractive" />
+      <Script
+        src={process.env.NEXT_PUBLIC_MIDTRANS_SNAP_URL || (process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === "true" ? "https://app.midtrans.com/snap/snap.js" : "https://app.sandbox.midtrans.com/snap/snap.js")}
+        data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || "Mid-client-sBSqTk7RhzcH4GEK"}
+        strategy="afterInteractive"
+      />
       
       <Navbar />
 

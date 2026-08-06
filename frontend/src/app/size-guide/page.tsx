@@ -4,12 +4,21 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { getSizeGuides, SizeGuideItem } from "@/utils/api";
+import { getSizeGuides, getContactSettings, formatWhatsAppUrl, SizeGuideItem } from "@/utils/api";
+
+interface GroupedCategory {
+  category: string;
+  category_code: string;
+  guides: SizeGuideItem[];
+}
 
 export default function SizeGuidePage() {
   const [sizeGuides, setSizeGuides] = useState<SizeGuideItem[]>([]);
-  const [activeCategoryId, setActiveCategoryId] = useState<number | null>(null);
+  const [activeCategoryName, setActiveCategoryName] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [waLink, setWaLink] = useState<string>(
+    "https://wa.me/6285946653103?text=Halo%20SECTOR%20MADNESS%2C%20saya%20ingin%20konsultasi%20mengenai%20panduan%20ukuran%20(Size%20Guide)."
+  );
 
   useEffect(() => {
     async function fetchGuides() {
@@ -17,14 +26,63 @@ export default function SizeGuidePage() {
       const data = await getSizeGuides();
       setSizeGuides(data);
       if (data.length > 0) {
-        setActiveCategoryId(data[0].id);
+        setActiveCategoryName(data[0].category);
       }
       setIsLoading(false);
     }
+    async function fetchContact() {
+      const contacts = await getContactSettings();
+      const whatsapp = contacts.find(
+        (c) =>
+          c.code === "02" ||
+          c.title.toLowerCase().includes("messaging") ||
+          c.title.toLowerCase().includes("whatsapp") ||
+          c.title.toLowerCase().includes("phone")
+      );
+      if (whatsapp) {
+        setWaLink(
+          formatWhatsAppUrl(
+            whatsapp.value,
+            "Halo SECTOR MADNESS, saya ingin konsultasi mengenai panduan ukuran (Size Guide)."
+          )
+        );
+      }
+    }
     fetchGuides();
+    fetchContact();
   }, []);
 
-  const activeGuide = sizeGuides.find((g) => g.id === activeCategoryId) || sizeGuides[0];
+  // Group guides by unique category name
+  const groupedCategories: GroupedCategory[] = [];
+  sizeGuides.forEach((guide) => {
+    let existing = groupedCategories.find(
+      (g) => g.category.trim().toUpperCase() === guide.category.trim().toUpperCase()
+    );
+    if (!existing) {
+      existing = {
+        category: guide.category,
+        category_code: guide.category_code || "01",
+        guides: [],
+      };
+      groupedCategories.push(existing);
+    }
+    existing.guides.push(guide);
+  });
+
+  // Sort categories by category_code (e.g. 01, 02, 03...)
+  groupedCategories.sort(
+    (a, b) => (parseInt(a.category_code, 10) || 0) - (parseInt(b.category_code, 10) || 0)
+  );
+
+  // Sort guides inside each category by sort_order
+  groupedCategories.forEach((gCat) => {
+    gCat.guides.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+  });
+
+  const activeGroup =
+    groupedCategories.find(
+      (g) => g.category.trim().toUpperCase() === activeCategoryName.trim().toUpperCase()
+    ) || groupedCategories[0];
 
   return (
     <main
@@ -102,86 +160,98 @@ export default function SizeGuidePage() {
           {/* LEFT: DYNAMIC SIZE TABLES & MEASUREMENT INSTRUCTIONS (8 COLS) */}
           <div className="lg:col-span-8">
             
-            {/* DYNAMIC CATEGORY SELECTOR TABS FROM DATABASE */}
-            {sizeGuides.length > 0 && (
+            {/* DYNAMIC UNIQUE CATEGORY SELECTOR TABS FROM DATABASE */}
+            {groupedCategories.length > 0 && (
               <div className="flex items-center gap-8 md:gap-10 border-b border-[#222222] pb-5 mb-10 md:mb-14 overflow-x-auto no-scrollbar">
-                {sizeGuides.map((guide) => (
-                  <button
-                    key={guide.id}
-                    onClick={() => setActiveCategoryId(guide.id)}
-                    className={`text-xs md:text-sm font-semibold tracking-[0.22em] uppercase transition-colors duration-200 shrink-0 pb-1 ${
-                      activeCategoryId === guide.id
-                        ? "text-[#B6A47E] border-b-2 border-[#B6A47E]"
-                        : "text-[#8A8A8A] hover:text-[#FFFFFF]"
-                    }`}
-                  >
-                    {guide.category_code ? `${guide.category_code} / ${guide.category}` : guide.category}
-                  </button>
-                ))}
+                {groupedCategories.map((group, idx) => {
+                  const isActive =
+                    activeCategoryName.trim().toUpperCase() === group.category.trim().toUpperCase();
+                  return (
+                    <button
+                      key={group.category}
+                      onClick={() => setActiveCategoryName(group.category)}
+                      className={`text-xs md:text-sm font-semibold tracking-[0.22em] uppercase transition-colors duration-200 shrink-0 pb-1 ${
+                        isActive
+                          ? "text-[#B6A47E] border-b-2 border-[#B6A47E]"
+                          : "text-[#8A8A8A] hover:text-[#FFFFFF]"
+                      }`}
+                    >
+                      {`${String(idx + 1).padStart(2, "0")} / ${group.category}`}
+                    </button>
+                  );
+                })}
               </div>
             )}
 
-            {/* DYNAMIC ACTIVE CATEGORY MEASUREMENT TABLE */}
+            {/* DYNAMIC ACTIVE CATEGORY ALL MEASUREMENT TABLES */}
             {isLoading ? (
               <div className="py-20 text-center text-[#8A8A8A] text-sm animate-pulse tracking-widest uppercase">
                 Loading Garment Measurements...
               </div>
-            ) : activeGuide ? (
+            ) : activeGroup && activeGroup.guides.length > 0 ? (
               <motion.div
-                key={activeGuide.id}
+                key={activeGroup.category}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4 }}
-                className="space-y-8"
+                className="space-y-6"
               >
-                {/* Section Header with Explicit Top Space from Tab Divider */}
-                <div
-                  style={{ marginTop: "24px", paddingTop: "20px", paddingBottom: "24px" }}
-                  className="border-b border-[#333333] mb-10 md:mb-12"
-                >
-                  <h2
-                    style={{ marginTop: "12px" }}
-                    className="text-sm md:text-base lg:text-lg font-bold tracking-[0.25em] uppercase text-[#FFFFFF] mb-3"
+                {activeGroup.guides.map((guide, idx) => (
+                  <div
+                    key={guide.id}
+                    style={idx > 0 ? { marginTop: "36px", paddingTop: "24px" } : {}}
+                    className={idx > 0 ? "border-t border-[#333333]" : ""}
                   >
-                    {activeGuide.category} {activeGuide.fit_description ? `(${activeGuide.fit_description})` : ""}
-                  </h2>
-                  {activeGuide.description && (
-                    <p className="text-xs md:text-sm text-[#999999] font-light leading-relaxed">
-                      {activeGuide.description}
-                    </p>
-                  )}
-                </div>
+                    {/* Section Header with Tightened Space & Divider Line */}
+                    <div
+                      style={{ marginTop: "8px", paddingBottom: "16px" }}
+                      className="border-b border-[#333333] mb-6 md:mb-8"
+                    >
+                      <h2
+                        style={{ marginTop: "4px" }}
+                        className="text-sm md:text-base lg:text-lg font-bold tracking-[0.25em] uppercase text-[#FFFFFF] mb-2"
+                      >
+                        {guide.category} {guide.fit_description ? `(${guide.fit_description})` : ""}
+                      </h2>
+                      {guide.description && (
+                        <p className="text-xs md:text-sm text-[#999999] font-light leading-relaxed">
+                          {guide.description}
+                        </p>
+                      )}
+                    </div>
 
-                {/* Table with Centered Dynamic Column Content */}
-                <div className="overflow-x-auto pt-2">
-                  <table className="w-full text-center border-collapse text-xs md:text-sm">
-                    <thead>
-                      <tr className="border-b border-[#333333] text-[#B6A47E] font-mono tracking-[0.2em] uppercase">
-                        {activeGuide.columns?.map((colHeader, index) => (
-                          <th key={index} className="py-4 px-4 font-semibold text-center">
-                            {colHeader}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#222222]">
-                      {activeGuide.rows?.map((row, rowIndex) => (
-                        <tr key={rowIndex} className="hover:bg-[#121212] transition-colors">
-                          {activeGuide.columns?.map((colHeader, colIndex) => (
-                            <td
-                              key={colIndex}
-                              className={`py-5 px-4 text-center ${
-                                colIndex === 0 ? "font-bold text-[#FFFFFF]" : "text-[#A0A0A0]"
-                              }`}
-                            >
-                              {row[colHeader] || "-"}
-                            </td>
+                    {/* Table with Centered Dynamic Column Content */}
+                    <div className="overflow-x-auto pt-2 mb-12">
+                      <table className="w-full text-center border-collapse text-xs md:text-sm">
+                        <thead>
+                          <tr className="border-b border-[#333333] text-[#B6A47E] font-mono tracking-[0.2em] uppercase">
+                            {guide.columns?.map((colHeader, index) => (
+                              <th key={index} className="py-4 px-4 font-semibold text-center">
+                                {colHeader}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[#222222]">
+                          {guide.rows?.map((row, rowIndex) => (
+                            <tr key={rowIndex} className="hover:bg-[#121212] transition-colors">
+                              {guide.columns?.map((colHeader, colIndex) => (
+                                <td
+                                  key={colIndex}
+                                  className={`py-5 px-4 text-center ${
+                                    colIndex === 0 ? "font-bold text-[#FFFFFF]" : "text-[#A0A0A0]"
+                                  }`}
+                                >
+                                  {row[colHeader] || "-"}
+                                </td>
+                              ))}
+                            </tr>
                           ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ))}
               </motion.div>
             ) : null}
 
@@ -205,56 +275,44 @@ export default function SizeGuidePage() {
                 </h3>
               </div>
 
-              {/* Instructions Grid with EXPLICIT marginTop (36px) and paddingTop (28px) so "1. CHEST / BUST" sits FAR BELOW line */}
+              {/* Instructions Grid */}
               <div
                 style={{ marginTop: "36px", paddingTop: "28px" }}
-                className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-14 text-xs md:text-sm"
+                className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12"
               >
                 <div className="space-y-3">
-                  <h4
-                    style={{ marginTop: "12px" }}
-                    className="font-semibold text-[#FFFFFF] tracking-wider uppercase mb-2"
-                  >
-                    1. CHEST / BUST
+                  <h4 className="text-xs font-mono font-bold tracking-[0.2em] text-[#B6A47E] uppercase">
+                    01. CHEST / BUST
                   </h4>
-                  <p className="text-[#A0A0A0] font-light leading-relaxed">
-                    Measure around the fullest part of your chest, keeping the tape measure horizontal and flat across your back.
+                  <p className="text-xs text-[#999999] leading-relaxed font-light">
+                    Measure horizontally around the fullest part of your chest, keeping the tape flat across your back and level with the ground.
                   </p>
                 </div>
 
                 <div className="space-y-3">
-                  <h4
-                    style={{ marginTop: "12px" }}
-                    className="font-semibold text-[#FFFFFF] tracking-wider uppercase mb-2"
-                  >
-                    2. SHOULDER WIDTH
+                  <h4 className="text-xs font-mono font-bold tracking-[0.2em] text-[#B6A47E] uppercase">
+                    02. SHOULDER WIDTH
                   </h4>
-                  <p className="text-[#A0A0A0] font-light leading-relaxed">
-                    Measure straight across the back from the edge of your left shoulder seam to your right shoulder seam.
+                  <p className="text-xs text-[#999999] leading-relaxed font-light">
+                    Measure across the back from the edge of one shoulder bone straight to the edge of the opposite shoulder bone.
                   </p>
                 </div>
 
                 <div className="space-y-3">
-                  <h4
-                    style={{ marginTop: "12px" }}
-                    className="font-semibold text-[#FFFFFF] tracking-wider uppercase mb-2"
-                  >
-                    3. GARMENT LENGTH
+                  <h4 className="text-xs font-mono font-bold tracking-[0.2em] text-[#B6A47E] uppercase">
+                    03. GARMENT LENGTH
                   </h4>
-                  <p className="text-[#A0A0A0] font-light leading-relaxed">
-                    Measure vertically from the highest point of the shoulder seam straight down to the bottom hemline.
+                  <p className="text-xs text-[#999999] leading-relaxed font-light">
+                    Measure vertically from the highest point of the shoulder seam straight down to the bottom hem of the garment.
                   </p>
                 </div>
 
                 <div className="space-y-3">
-                  <h4
-                    style={{ marginTop: "12px" }}
-                    className="font-semibold text-[#FFFFFF] tracking-wider uppercase mb-2"
-                  >
-                    4. WAIST
+                  <h4 className="text-xs font-mono font-bold tracking-[0.2em] text-[#B6A47E] uppercase">
+                    04. WAIST / OUTSEAM
                   </h4>
-                  <p className="text-[#A0A0A0] font-light leading-relaxed">
-                    Measure around your natural waistline, keeping the tape comfortably loose and level.
+                  <p className="text-xs text-[#999999] leading-relaxed font-light">
+                    For bottoms, measure natural waist circumference or total length from the waistband down to the bottom leg opening outseam.
                   </p>
                 </div>
               </div>
@@ -262,7 +320,7 @@ export default function SizeGuidePage() {
 
           </div>
 
-          {/* RIGHT: FIT ASSISTANCE SIDEBAR (4 COLS) */}
+          {/* RIGHT: PERSONAL ASSISTANT / NEED FIT ADVICE SIDEBAR CARD (4 COLS) */}
           <div className="lg:col-span-4 lg:sticky lg:top-28">
             <div
               style={{
@@ -288,13 +346,13 @@ export default function SizeGuidePage() {
                 </h3>
 
                 <p className="text-[14px] text-[#A0A0A0] font-light leading-relaxed">
-                  Unsure which size fits your personal height and weight silhouette best? Contact our team directly on WhatsApp for tailored fit recommendation.
+                  Unsure which size fits your height and weight silhouette best? Contact our team directly on WhatsApp for tailored sizing recommendation.
                 </p>
               </div>
 
               <div className="pt-2">
                 <a
-                  href="https://wa.me/6285946653103?text=Halo%20SECTOR%20MADNESS%2C%20saya%20ingin%20konsultasi%20mengenai%20panduan%20ukuran%20(Size%20Guide)."
+                  href={waLink}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group inline-flex items-center text-[12px] md:text-[13px] tracking-[0.28em] uppercase font-medium text-[#F5F5F5] opacity-90 hover:opacity-100 hover:text-[#B6A47E] transition-all duration-300 ease-out"
@@ -313,7 +371,6 @@ export default function SizeGuidePage() {
         </div>
       </section>
 
-      {/* FOOTER */}
       <Footer />
     </main>
   );

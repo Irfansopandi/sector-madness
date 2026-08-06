@@ -38,23 +38,38 @@ class ShippingController extends Controller
         $apiKey = env('BITESHIP_API_KEY');
         $warehouse = \App\Models\Warehouse::where('is_primary', true)->first() 
             ?? \App\Models\Warehouse::first();
-        $originAreaId = $warehouse ? $warehouse->area_id : env('BITESHIP_ORIGIN_AREA_ID', 'IDNPJ001');
+
+        $originCity = strtolower(trim($warehouse->city ?? 'karawang'));
+        $originProvince = strtolower(trim($warehouse->province ?? 'jawa barat'));
+        $originPostcode = (string)($warehouse->postal_code ?? '41361');
+        $originAreaId = $warehouse->area_id ?? null;
+        $originLat = $warehouse->latitude ?? null;
+        $originLng = $warehouse->longitude ?? null;
 
         // Panggil Biteship API asli bila API key terdaftar
         if (!empty($apiKey)) {
             try {
                 $payload = [
-                    'origin_area_id' => $originAreaId, // Lokasi Gudang Sector Madness (Loaded from DB)
-                    'destination_area_id' => $request->destination_area_id ?? 'IDNPJ002',
-                    'couriers' => $request->couriers ?? 'jne,jnt',
-                    'items' => [
+                    'origin_area_id'      => $originAreaId ?: env('BITESHIP_ORIGIN_AREA_ID', 'IDNPJ001'),
+                    'origin_postal_code'  => (int)$originPostcode,
+                    'destination_area_id' => $request->destination_area_id ?: 'IDNPJ002',
+                    'couriers'            => $request->couriers ?? 'jne,jnt',
+                    'items'               => [
                         [
-                            'name'   => 'Sector Madness Package',
+                            'name'        => 'Sector Madness Package',
                             'description' => 'Luxury Technical Garment',
-                            'weight' => $request->weight ?? 1500, // default 1.5 kg
+                            'weight'      => $request->weight ?? 1500, // default 1.5 kg
                         ]
                     ],
                 ];
+
+                if (!empty($request->destination_postcode)) {
+                    $payload['destination_postal_code'] = (int)$request->destination_postcode;
+                }
+                if ($originLat && $originLng) {
+                    $payload['origin_latitude']  = (float)$originLat;
+                    $payload['origin_longitude'] = (float)$originLng;
+                }
 
                 $response = Http::withHeaders([
                     'Authorization' => 'Bearer ' . $apiKey,
@@ -85,61 +100,80 @@ class ShippingController extends Controller
             }
         }
 
-        // Dynamic pricing calculation based on destination address & regional zoning
-        $dest = strtolower(trim(($request->district ?? '') . ' ' . ($request->city ?? '') . ' ' . ($request->province ?? '') . ' ' . ($request->destination_postcode ?? '')));
-        
+        // Dynamic origin-aware fallback calculation
+        $destCity = strtolower(trim($request->city ?? ''));
+        $destProvince = strtolower(trim($request->province ?? ''));
+        $destDistrict = strtolower(trim($request->district ?? ''));
+        $destPostcode = (string)($request->destination_postcode ?? '');
+        $destFull = strtolower(trim("{$destDistrict} {$destCity} {$destProvince} {$destPostcode}"));
+
+        // Default prices
         $jnePrice = 20000;
         $jntPrice = 22000;
         $jneEst = '2 - 3 Days';
         $jntEst = '1 - 2 Days';
 
-        if (str_contains($dest, 'jakarta') || str_contains($dest, 'dki') || str_contains($dest, 'tangerang') || str_contains($dest, 'tangsel') || str_contains($dest, 'bsd') || str_contains($dest, 'bintaro') || str_contains($dest, 'serpong') || str_contains($dest, 'bekasi') || str_contains($dest, 'cikarang') || str_contains($dest, 'bogor') || str_contains($dest, 'depok') || str_contains($dest, 'sentul') || preg_match('/^1[0-7]/', $request->destination_postcode ?? '')) {
+        // 1. Same City or Matching Postcode Prefix (Local City Delivery)
+        $isSameCity = (!empty($destCity) && (str_contains($destCity, $originCity) || str_contains($originCity, $destCity)))
+            || (!empty($destPostcode) && substr($destPostcode, 0, 3) === substr($originPostcode, 0, 3));
+
+        if ($isSameCity) {
             $jnePrice = 10000;
             $jntPrice = 12000;
             $jneEst = '1 - 2 Days';
-            $jntEst = '1 Day (Priority)';
-        } elseif (str_contains($dest, 'karawang') || str_contains($dest, 'tempuran') || str_contains($dest, 'rengasdengklok') || str_contains($dest, 'klari') || str_contains($dest, 'cikampek') || str_contains($dest, 'purwakarta') || str_contains($dest, 'subang') || str_contains($dest, 'bandung') || str_contains($dest, 'cimahi') || str_contains($dest, 'sumedang') || preg_match('/^4[0-1]/', $request->destination_postcode ?? '')) {
+            $jntEst = '1 Day (Local Express)';
+        }
+        // 2. Neighboring Cities / Same Province (Inter-city Regional Delivery)
+        elseif (
+            (!empty($destProvince) && (str_contains($destProvince, $originProvince) || str_contains($originProvince, $destProvince)))
+            || (str_contains($originCity, 'karawang') && (str_contains($destFull, 'jakarta') || str_contains($destFull, 'bekasi') || str_contains($destFull, 'cikarang') || str_contains($destFull, 'purwakarta') || str_contains($destFull, 'subang') || str_contains($destFull, 'bandung') || str_contains($destFull, 'bogor') || str_contains($destFull, 'depok') || str_contains($destFull, 'tangerang')))
+            || (str_contains($originCity, 'jakarta') && (str_contains($destFull, 'karawang') || str_contains($destFull, 'bekasi') || str_contains($destFull, 'bogor') || str_contains($destFull, 'depok') || str_contains($destFull, 'tangerang') || str_contains($destFull, 'banten')))
+            || (str_contains($originCity, 'bandung') && (str_contains($destFull, 'karawang') || str_contains($destFull, 'purwakarta') || str_contains($destFull, 'cimahi') || str_contains($destFull, 'sumedang') || str_contains($destFull, 'jakarta')))
+        ) {
             $jnePrice = 15000;
             $jntPrice = 18000;
             $jneEst = '1 - 2 Days';
             $jntEst = '1 Day (Express)';
-        } elseif (str_contains($dest, 'banten') || str_contains($dest, 'serang') || str_contains($dest, 'cilegon') || str_contains($dest, 'pandeglang') || str_contains($dest, 'lebak') || preg_match('/^42/', $request->destination_postcode ?? '')) {
-            $jnePrice = 14000;
-            $jntPrice = 16000;
-            $jneEst = '1 - 2 Days';
-            $jntEst = '1 Day';
-        } elseif (str_contains($dest, 'jawa barat') || str_contains($dest, 'jabar') || str_contains($dest, 'cirebon') || str_contains($dest, 'indramayu') || str_contains($dest, 'sukabumi') || str_contains($dest, 'garut') || str_contains($dest, 'tasikmalaya') || preg_match('/^4[3-6]/', $request->destination_postcode ?? '')) {
-            $jnePrice = 18000;
-            $jntPrice = 20000;
-        } elseif (str_contains($dest, 'jawa tengah') || str_contains($dest, 'jateng') || str_contains($dest, 'yogyakarta') || str_contains($dest, 'jogja') || str_contains($dest, 'semarang') || str_contains($dest, 'solo') || str_contains($dest, 'magelang') || str_contains($dest, 'pekalongan') || preg_match('/^5[0-9]/', $request->destination_postcode ?? '')) {
+        }
+        // 3. Other Java Provinces (Jateng, Jatim, DIY)
+        elseif (str_contains($destFull, 'jawa') || str_contains($destFull, 'yogyakarta') || str_contains($destFull, 'jogja') || str_contains($destFull, 'semarang') || str_contains($destFull, 'surabaya') || str_contains($destFull, 'malang') || preg_match('/^[5-6][0-9]/', $destPostcode)) {
             $jnePrice = 20000;
             $jntPrice = 22000;
-        } elseif (str_contains($dest, 'jawa timur') || str_contains($dest, 'jatim') || str_contains($dest, 'surabaya') || str_contains($dest, 'malang') || str_contains($dest, 'sidoarjo') || str_contains($dest, 'gresik') || str_contains($dest, 'kediri') || str_contains($dest, 'madiun') || str_contains($dest, 'banyuwangi') || preg_match('/^6[0-9]/', $request->destination_postcode ?? '')) {
-            $jnePrice = 24000;
-            $jntPrice = 26000;
-        } elseif (str_contains($dest, 'bali') || str_contains($dest, 'denpasar') || str_contains($dest, 'badung') || str_contains($dest, 'canggu') || str_contains($dest, 'seminyak') || str_contains($dest, 'ntb') || str_contains($dest, 'ntt') || str_contains($dest, 'mataram') || preg_match('/^8[0-5]/', $request->destination_postcode ?? '')) {
-            $jnePrice = 32000;
-            $jntPrice = 35000;
+            $jneEst = '2 - 3 Days';
+            $jntEst = '1 - 2 Days';
+        }
+        // 4. Bali & NTB/NTT
+        elseif (str_contains($destFull, 'bali') || str_contains($destFull, 'denpasar') || str_contains($destFull, 'badung') || str_contains($destFull, 'canggu') || str_contains($destFull, 'mataram') || preg_match('/^8[0-5]/', $destPostcode)) {
+            $jnePrice = 28000;
+            $jntPrice = 30000;
             $jneEst = '3 - 4 Days';
             $jntEst = '2 - 3 Days';
-        } elseif (str_contains($dest, 'sumatera') || str_contains($dest, 'sumatra') || str_contains($dest, 'medan') || str_contains($dest, 'palembang') || str_contains($dest, 'pekanbaru') || str_contains($dest, 'padang') || str_contains($dest, 'batam') || str_contains($dest, 'lampung') || preg_match('/^[2-3][0-9]/', $request->destination_postcode ?? '')) {
-            $jnePrice = 38000;
-            $jntPrice = 40000;
+        }
+        // 5. Sumatra
+        elseif (str_contains($destFull, 'sumatera') || str_contains($destFull, 'sumatra') || str_contains($destFull, 'medan') || str_contains($destFull, 'palembang') || str_contains($destFull, 'pekanbaru') || str_contains($destFull, 'padang') || str_contains($destFull, 'lampung') || preg_match('/^[2-3][0-9]/', $destPostcode)) {
+            $jnePrice = 35000;
+            $jntPrice = 38000;
             $jneEst = '3 - 5 Days';
             $jntEst = '2 - 4 Days';
-        } elseif (str_contains($dest, 'kalimantan') || str_contains($dest, 'banjarmasin') || str_contains($dest, 'samarinda') || str_contains($dest, 'balikpapan') || str_contains($dest, 'pontianak') || str_contains($dest, 'ikn') || preg_match('/^7[0-9]/', $request->destination_postcode ?? '')) {
-            $jnePrice = 45000;
-            $jntPrice = 48000;
+        }
+        // 6. Kalimantan
+        elseif (str_contains($destFull, 'kalimantan') || str_contains($destFull, 'banjarmasin') || str_contains($destFull, 'samarinda') || str_contains($destFull, 'balikpapan') || str_contains($destFull, 'pontianak') || preg_match('/^7[0-9]/', $destPostcode)) {
+            $jnePrice = 42000;
+            $jntPrice = 45000;
             $jneEst = '3 - 5 Days';
             $jntEst = '2 - 4 Days';
-        } elseif (str_contains($dest, 'sulawesi') || str_contains($dest, 'makassar') || str_contains($dest, 'manado') || str_contains($dest, 'palu') || str_contains($dest, 'kendari') || preg_match('/^9[0-6]/', $request->destination_postcode ?? '')) {
-            $jnePrice = 52000;
-            $jntPrice = 55000;
+        }
+        // 7. Sulawesi
+        elseif (str_contains($destFull, 'sulawesi') || str_contains($destFull, 'makassar') || str_contains($destFull, 'manado') || str_contains($destFull, 'palu') || preg_match('/^9[0-6]/', $destPostcode)) {
+            $jnePrice = 48000;
+            $jntPrice = 50000;
             $jneEst = '4 - 6 Days';
             $jntEst = '3 - 5 Days';
-        } elseif (str_contains($dest, 'papua') || str_contains($dest, 'maluku') || str_contains($dest, 'ambon') || str_contains($dest, 'jayapura') || preg_match('/^9[7-9]/', $request->destination_postcode ?? '')) {
-            $jnePrice = 85000;
-            $jntPrice = 90000;
+        }
+        // 8. Papua / Maluku
+        elseif (str_contains($destFull, 'papua') || str_contains($destFull, 'maluku') || str_contains($destFull, 'ambon') || str_contains($destFull, 'jayapura') || preg_match('/^9[7-9]/', $destPostcode)) {
+            $jnePrice = 80000;
+            $jntPrice = 85000;
             $jneEst = '5 - 7 Days';
             $jntEst = '4 - 6 Days';
         }

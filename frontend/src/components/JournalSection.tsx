@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { getJournals } from "@/utils/api";
+import { getJournals, getImageUrl } from "@/utils/api";
 import AnimatedSection from "./AnimatedSection";
 
 export default function JournalSection() {
@@ -65,7 +65,7 @@ export default function JournalSection() {
               <Link href="/journal" className="block cursor-pointer">
                 <div className="relative w-full aspect-[4/3] bg-[#141414] overflow-hidden mb-8">
                   <Image
-                    src={article.image || "/images/campaign/campaign-1.png"}
+                    src={getImageUrl(article.image) || "/images/campaign/campaign-1.png"}
                     alt={article.title}
                     fill
                     sizes="(max-width: 768px) 100vw, 33vw"

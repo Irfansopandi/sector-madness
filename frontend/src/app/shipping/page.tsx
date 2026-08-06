@@ -1,12 +1,28 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { getContactSettings, formatWhatsAppUrl } from "@/utils/api";
 
 export default function ShippingPage() {
+  const [waLink, setWaLink] = useState<string>("https://wa.me/6285946653103?text=Halo%20SECTOR%20MADNESS%2C%20saya%20ingin%20bertanya%20mengenai%20pengiriman%20pesanan%20saya.");
+
+  useEffect(() => {
+    async function fetchContact() {
+      const contacts = await getContactSettings();
+      const whatsapp = contacts.find(
+        (c) => c.code === "02" || c.title.toLowerCase().includes("messaging") || c.title.toLowerCase().includes("whatsapp") || c.title.toLowerCase().includes("phone")
+      );
+      if (whatsapp) {
+        setWaLink(formatWhatsAppUrl(whatsapp.value, "Halo SECTOR MADNESS, saya ingin bertanya mengenai pengiriman pesanan saya."));
+      }
+    }
+    fetchContact();
+  }, []);
   const steps = [
     {
       id: "placed",
@@ -589,7 +605,7 @@ export default function ShippingPage() {
 
             <div className="pt-3 md:pt-4">
               <a
-                href="https://wa.me/6285946653103?text=Halo%20SECTOR%20MADNESS%2C%20saya%20ingin%20bertanya%20mengenai%20pengiriman%20pesanan%20saya."
+                href={waLink}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group inline-flex items-center text-[12px] md:text-[13px] tracking-[0.28em] uppercase font-medium text-[#F5F5F5] opacity-90 hover:opacity-100 hover:text-[#B6A47E] transition-all duration-300 ease-out"
