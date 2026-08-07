@@ -365,7 +365,7 @@ export default function AdminOrdersPage() {
   return (
     <div
       suppressHydrationWarning
-      className={`flex flex-col lg:flex-row min-h-screen transition-colors duration-200 font-[family-name:var(--font-body)] ${
+      className={`flex flex-col md:flex-row min-h-screen transition-colors duration-200 font-[family-name:var(--font-body)] ${
         isDarkMode ? "bg-[#121214] text-[#F5F5F5]" : "bg-[#F4F4F6] text-[#0A0A0A]"
       }`}
     >
@@ -417,44 +417,19 @@ export default function AdminOrdersPage() {
             </span>
           </div>
 
-          {/* Smooth Sliding Button Pill Navigation Tabs (Matching Admin Catalog Page) */}
+          {/* Button Pill Navigation Tabs (2-Column Grid on Tablet/iPad, 1-Row Flex on Desktop) */}
           <div
             style={{
-              position: "relative",
-              display: "flex",
-              flexWrap: "wrap",
-              alignItems: "center",
-              gap: "8px",
               padding: "6px",
               borderRadius: "10px",
-              backgroundColor: isDarkMode ? "#18181C" : "#E5E7EB",
-              border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #D1D5DB",
               marginBottom: "28px",
-              width: "fit-content",
             }}
+            className={`grid grid-cols-2 gap-2 sm:gap-2.5 lg:flex lg:flex-row lg:items-center lg:w-max w-full border ${
+              isDarkMode
+                ? "bg-[#18181C] border-white/10"
+                : "bg-[#E5E7EB] border-[#D1D5DB]"
+            }`}
           >
-            {/* Sliding Active Pill Indicator */}
-            {indicatorStyle.width > 0 && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "6px",
-                  bottom: "6px",
-                  left: `${indicatorStyle.left}px`,
-                  width: `${indicatorStyle.width}px`,
-                  borderRadius: "7px",
-                  backgroundColor: isDarkMode ? "#121214" : "#FFFFFF",
-                  border: "1.5px solid #B6A47E",
-                  boxShadow: isDarkMode
-                    ? "0 4px 14px rgba(0,0,0,0.6)"
-                    : "0 2px 8px rgba(0,0,0,0.1)",
-                  transition: "left 0.35s cubic-bezier(0.16, 1, 0.3, 1), width 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
-                  pointerEvents: "none",
-                  zIndex: 1,
-                }}
-              />
-            )}
-
             {[
               { id: "ALL", label: "SEMUA ORDERAN", count: countAll, icon: PackageCheck },
               { id: "PROCESSING", label: "SEDANG DIPROSES", count: countProcessing, icon: Clock },
@@ -466,27 +441,25 @@ export default function AdminOrdersPage() {
               return (
                 <button
                   key={tab.id}
-                  ref={(el) => { tabRefs.current[tab.id] = el; }}
                   type="button"
                   onClick={() => {
                     setActiveTab(tab.id as any);
                     if (tab.id === "ALL") setStatusFilter("ALL");
                   }}
                   style={{
-                    position: "relative",
-                    zIndex: 2,
-                    padding: "10px 20px",
+                    padding: "10px 16px",
                     borderRadius: "7px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "10px",
                     cursor: "pointer",
                     whiteSpace: "nowrap",
                     fontSize: "12px",
                     fontWeight: 800,
                     letterSpacing: "0.08em",
-                    transition: "all 0.25s ease",
-                    backgroundColor: "transparent",
+                    transition: "all 0.2s ease",
+                    backgroundColor: isActive
+                      ? isDarkMode
+                        ? "#121214"
+                        : "#FFFFFF"
+                      : "transparent",
                     color: isActive
                       ? isDarkMode
                         ? "#F5F5F5"
@@ -494,16 +467,25 @@ export default function AdminOrdersPage() {
                       : isDarkMode
                       ? "#8A8A8A"
                       : "#6B7280",
-                    border: "none",
+                    border: isActive
+                      ? "1.5px solid #B6A47E"
+                      : "1.5px solid transparent",
+                    boxShadow: isActive
+                      ? isDarkMode
+                        ? "0 4px 14px rgba(0,0,0,0.6)"
+                        : "0 2px 8px rgba(0,0,0,0.1)"
+                      : "none",
                   }}
-                  className={`group shrink-0 font-mono tracking-wider uppercase transition-colors duration-200 ${
-                    isDarkMode
+                  className={`group flex items-center justify-center sm:justify-start gap-2 sm:gap-2.5 w-full lg:w-auto font-mono tracking-wider uppercase transition-all duration-200 ${
+                    isActive
+                      ? ""
+                      : isDarkMode
                       ? "hover:text-[#FFFFFF] hover:bg-white/[0.04]"
                       : "hover:text-[#0A0A0A] hover:bg-black/[0.04]"
                   }`}
                 >
-                  <IconComponent className={`w-4 h-4 transition-colors ${isActive ? "text-[#B6A47E]" : "group-hover:text-[#B6A47E]"}`} />
-                  <span>{tab.label}</span>
+                  <IconComponent className={`w-4 h-4 shrink-0 transition-colors ${isActive ? "text-[#B6A47E]" : "group-hover:text-[#B6A47E]"}`} />
+                  <span className="truncate">{tab.label}</span>
                   <span
                     style={{
                       padding: "2px 8px",
@@ -521,16 +503,9 @@ export default function AdminOrdersPage() {
                         ? "#B6A47E"
                         : isDarkMode
                         ? "#8A8A8A"
-                        : "#374151",
-                      transition: "all 0.25s ease",
+                        : "#6B7280",
                     }}
-                    className={
-                      isActive
-                        ? ""
-                        : isDarkMode
-                        ? "group-hover:bg-[#B6A47E]/20 group-hover:text-[#B6A47E]"
-                        : "group-hover:bg-[#B6A47E]/20 group-hover:text-[#B6A47E]"
-                    }
+                    className="shrink-0"
                   >
                     {tab.count}
                   </span>
@@ -539,24 +514,23 @@ export default function AdminOrdersPage() {
             })}
           </div>
 
-          {/* TABLE CONTROL BAR: SEARCH, FILTER & ROW LIMIT */}
+          {/* TABLE CONTROL BAR: SEARCH, FILTER & ROW LIMIT (2-Row on Tablet/Mobile, Side-by-side on Desktop) */}
           <div
             style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "16px",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: "24px",
               padding: "16px 20px",
               borderRadius: "8px",
-              backgroundColor: isDarkMode ? "#18181C" : "#FFFFFF",
-              border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #E5E7EB",
+              marginBottom: "24px",
             }}
+            className={`border shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 ${
+              isDarkMode
+                ? "bg-[#18181C] border-white/10"
+                : "bg-white border-[#E5E7EB]"
+            }`}
           >
-            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "12px", flex: 1, minWidth: "280px" }}>
+            {/* ROW 1 (Mobile/Tablet) / LEFT (Desktop): Search Bar & Filter Dropdown (Side-by-side) */}
+            <div className="flex flex-nowrap items-center gap-2.5 sm:gap-3 flex-1 min-w-0 w-full lg:w-auto">
               {/* Search Bar */}
-              <div style={{ position: "relative", flex: 1, minWidth: "220px" }}>
+              <div className="relative flex-1 min-w-[140px] sm:w-64 lg:w-72 shrink">
                 <Search
                   style={{
                     position: "absolute",
@@ -591,7 +565,7 @@ export default function AdminOrdersPage() {
               </div>
 
               {/* Status Filter Dropdown */}
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <div className="flex items-center gap-2 shrink-0">
                 <Filter style={{ width: "14px", height: "14px", color: "#B6A47E" }} />
                 <select
                   value={statusFilter}
@@ -619,8 +593,8 @@ export default function AdminOrdersPage() {
               </div>
             </div>
 
-            {/* Row Limit Select */}
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            {/* ROW 2 (Mobile/Tablet) / RIGHT (Desktop): Row Limit Select */}
+            <div className="flex items-center gap-2.5 shrink-0">
               <span style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: isDarkMode ? "#8A8A8A" : "#6B7280" }}>
                 TAMPILKAN:
               </span>
@@ -859,6 +833,73 @@ export default function AdminOrdersPage() {
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination Bar */}
+            {totalPages > 1 && (
+              <div
+                style={{ padding: "16px 24px" }}
+                className={`border-t flex flex-wrap items-center justify-between gap-4 font-mono text-xs ${
+                  isDarkMode ? "border-white/10" : "border-[#E5E7EB]"
+                }`}
+              >
+                <span className={isDarkMode ? "text-[#8A8A8A]" : "text-gray-500"}>
+                  Menampilkan <span className="font-bold text-[#B6A47E]">{displayedOrders.length}</span> dari{" "}
+                  <span className="text-[#B6A47E] font-extrabold">{currentTotal}</span> data (Halaman {validPage} dari {totalPages})
+                </span>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={validPage <= 1}
+                    onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                    style={{ padding: "8px 16px" }}
+                    className={`rounded-[5px] text-[11px] font-bold uppercase tracking-wider transition-all border ${
+                      validPage <= 1
+                        ? "opacity-40 cursor-not-allowed border-transparent text-gray-500"
+                        : isDarkMode
+                        ? "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-[#B6A47E] cursor-pointer"
+                        : "bg-gray-100 border-gray-200 text-gray-800 hover:bg-gray-200 cursor-pointer"
+                    }`}
+                  >
+                    Sebelumnya
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((pg) => (
+                    <button
+                      key={pg}
+                      type="button"
+                      onClick={() => setCurrentPage(pg)}
+                      style={{ width: "32px", height: "32px" }}
+                      className={`rounded-[5px] text-[11px] font-bold font-mono transition-all border cursor-pointer flex items-center justify-center ${
+                        pg === validPage
+                          ? "bg-[#B6A47E] border-[#B6A47E] text-black font-extrabold"
+                          : isDarkMode
+                          ? "bg-white/5 border-white/10 text-white hover:bg-white/10"
+                          : "bg-gray-100 border-gray-200 text-gray-800 hover:bg-gray-200"
+                      }`}
+                    >
+                      {pg}
+                    </button>
+                  ))}
+
+                  <button
+                    type="button"
+                    disabled={validPage >= totalPages}
+                    onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                    style={{ padding: "8px 16px" }}
+                    className={`rounded-[5px] text-[11px] font-bold uppercase tracking-wider transition-all border ${
+                      validPage >= totalPages
+                        ? "opacity-40 cursor-not-allowed border-transparent text-gray-500"
+                        : isDarkMode
+                        ? "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-[#B6A47E] cursor-pointer"
+                        : "bg-gray-100 border-gray-200 text-gray-800 hover:bg-gray-200 cursor-pointer"
+                    }`}
+                  >
+                    Selanjutnya
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </main>
       </div>

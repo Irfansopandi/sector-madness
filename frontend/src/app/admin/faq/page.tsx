@@ -342,7 +342,7 @@ export default function AdminFaqPage() {
   return (
     <div
       suppressHydrationWarning
-      className={`flex flex-col lg:flex-row min-h-screen transition-colors duration-200 font-[family-name:var(--font-body)] ${
+      className={`flex flex-col md:flex-row min-h-screen transition-colors duration-200 font-[family-name:var(--font-body)] ${
         isDarkMode ? "bg-[#121214] text-[#F5F5F5]" : "bg-[#F4F4F6] text-[#0A0A0A]"
       }`}
     >
@@ -384,71 +384,69 @@ export default function AdminFaqPage() {
             <button
               onClick={openAddModal}
               style={{ padding: "12px 28px" }}
-              className={`group inline-flex items-center justify-center font-bold text-xs tracking-[0.15em] uppercase rounded-[6px] transition-all duration-200 cursor-pointer shrink-0 gap-2.5 shadow-sm ${
+              className={`group inline-flex items-center justify-center font-bold text-xs tracking-[0.15em] uppercase rounded-[6px] transition-all duration-200 cursor-pointer shrink-0 gap-2.5 shadow-sm whitespace-nowrap ${
                 isDarkMode
                   ? "bg-[#B6A47E] text-[#0A0A0A] hover:bg-[#a3926d]"
                   : "bg-[#0A0A0A] text-white hover:bg-[#222222]"
               }`}
             >
               <Plus className="w-4 h-4 stroke-[2.5] shrink-0 transition-transform duration-300 group-hover:rotate-90" />
-              <span>TAMBAH FAQ BARU</span>
+              <span>FAQ BARU</span>
             </button>
           </div>
 
-          {/* TABLE CONTROL BAR: SEARCH & FILTERS */}
+          {/* TABLE CONTROL BAR: SEARCH, FILTER & ROW LIMIT */}
           <div
             style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "16px",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: "24px",
               padding: "16px 20px",
               borderRadius: "8px",
-              backgroundColor: isDarkMode ? "#18181C" : "#FFFFFF",
-              border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #E5E7EB",
+              marginBottom: "24px",
             }}
+            className={`border shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 sm:gap-4 ${
+              isDarkMode
+                ? "bg-[#18181C] border-white/10"
+                : "bg-white border-[#E5E7EB]"
+            }`}
           >
-            {/* Search Input */}
-            <div style={{ position: "relative", flex: 1, minWidth: "240px" }}>
-              <Search
-                style={{
-                  position: "absolute",
-                  left: "12px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  width: "16px",
-                  height: "16px",
-                  color: isDarkMode ? "#8A8A8A" : "#9CA3AF",
-                }}
-              />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari pertanyaan atau jawaban FAQ..."
-                style={{
-                  width: "100%",
-                  paddingLeft: "38px",
-                  paddingRight: "14px",
-                  paddingTop: "9px",
-                  paddingBottom: "9px",
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  borderRadius: "6px",
-                  outline: "none",
-                  backgroundColor: isDarkMode ? "#121214" : "#F9FAFB",
-                  border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #D1D5DB",
-                  color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
-                }}
-              />
-            </div>
+            {/* ROW 1 (Tablet/Mobile): Full Width Search | LEFT GROUP (Desktop): Search + Category + Status */}
+            <div className="flex flex-col sm:flex-row lg:flex-row items-stretch sm:items-center gap-3 lg:gap-3 flex-1 min-w-0 w-full lg:w-auto">
+              {/* Search Bar */}
+              <div className="relative flex-1 min-w-[140px] sm:w-64 lg:w-72 shrink">
+                <Search
+                  style={{
+                    position: "absolute",
+                    left: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    width: "16px",
+                    height: "16px",
+                    color: isDarkMode ? "#8A8A8A" : "#9CA3AF",
+                  }}
+                />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Cari pertanyaan atau jawaban FAQ..."
+                  style={{
+                    width: "100%",
+                    paddingLeft: "38px",
+                    paddingRight: "14px",
+                    paddingTop: "9px",
+                    paddingBottom: "9px",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    borderRadius: "6px",
+                    outline: "none",
+                    backgroundColor: isDarkMode ? "#121214" : "#F9FAFB",
+                    border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #D1D5DB",
+                    color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
+                  }}
+                />
+              </div>
 
-            {/* Filters */}
-            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "12px" }}>
-              {/* Category Filter */}
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              {/* Category Filter Dropdown on Desktop (lg:) */}
+              <div className="hidden lg:flex items-center gap-2 shrink-0">
                 <Filter style={{ width: "14px", height: "14px", color: "#B6A47E" }} />
                 <select
                   value={categoryFilter}
@@ -475,30 +473,91 @@ export default function AdminFaqPage() {
                 </select>
               </div>
 
-              {/* Status Filter */}
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as any)}
-                style={{
-                  padding: "9px 14px",
-                  fontSize: "12px",
-                  fontWeight: 700,
-                  borderRadius: "6px",
-                  outline: "none",
-                  cursor: "pointer",
-                  textTransform: "uppercase",
-                  backgroundColor: isDarkMode ? "#121214" : "#F9FAFB",
-                  border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #D1D5DB",
-                  color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
-                }}
-              >
-                <option value="ALL">SEMUA STATUS</option>
-                <option value="ACTIVE">AKTIF</option>
-                <option value="INACTIVE">NON-AKTIF</option>
-              </select>
+              {/* Status Filter Dropdown on Desktop (lg:) */}
+              <div className="hidden lg:block shrink-0">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as any)}
+                  style={{
+                    padding: "9px 14px",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    borderRadius: "6px",
+                    outline: "none",
+                    cursor: "pointer",
+                    textTransform: "uppercase",
+                    backgroundColor: isDarkMode ? "#121214" : "#F9FAFB",
+                    border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #D1D5DB",
+                    color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
+                  }}
+                >
+                  <option value="ALL">SEMUA STATUS</option>
+                  <option value="ACTIVE">AKTIF</option>
+                  <option value="INACTIVE">NON-AKTIF</option>
+                </select>
+              </div>
+            </div>
+
+            {/* ROW 2 (Tablet/Mobile): Filters & Row Limit Select (Stacked on Left under Kategori) */}
+            <div className="flex flex-col sm:flex-row lg:flex-row items-start sm:items-center justify-between lg:justify-end gap-3 shrink-0 w-full lg:w-auto">
+              <div className="flex lg:hidden items-center gap-2.5 flex-wrap shrink-0 min-w-0">
+                {/* Category Filter on Tablet/Mobile */}
+                <div className="flex items-center gap-1.5 shrink-0 min-w-0">
+                  <Filter style={{ width: "14px", height: "14px", color: "#B6A47E" }} className="shrink-0" />
+                  <select
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    style={{
+                      padding: "9px 12px",
+                      fontSize: "12px",
+                      fontWeight: 700,
+                      borderRadius: "6px",
+                      outline: "none",
+                      cursor: "pointer",
+                      textTransform: "uppercase",
+                      backgroundColor: isDarkMode ? "#121214" : "#F9FAFB",
+                      border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #D1D5DB",
+                      color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
+                    }}
+                    className="max-w-[150px] sm:max-w-[200px] truncate"
+                  >
+                    <option value="ALL">SEMUA KATEGORI</option>
+                    {existingCategories.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Status Filter on Tablet/Mobile */}
+                <div className="shrink-0">
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value as any)}
+                    style={{
+                      padding: "9px 12px",
+                      fontSize: "12px",
+                      fontWeight: 700,
+                      borderRadius: "6px",
+                      outline: "none",
+                      cursor: "pointer",
+                      textTransform: "uppercase",
+                      backgroundColor: isDarkMode ? "#121214" : "#F9FAFB",
+                      border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #D1D5DB",
+                      color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
+                    }}
+                    className="max-w-[130px] sm:max-w-[160px] truncate"
+                  >
+                    <option value="ALL">SEMUA STATUS</option>
+                    <option value="ACTIVE">AKTIF</option>
+                    <option value="INACTIVE">NON-AKTIF</option>
+                  </select>
+                </div>
+              </div>
 
               {/* Row Limit Select */}
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <div className="flex items-center gap-2.5 shrink-0">
                 <span style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: isDarkMode ? "#8A8A8A" : "#6B7280" }}>
                   TAMPILKAN:
                 </span>
@@ -517,11 +576,10 @@ export default function AdminFaqPage() {
                     color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
                   }}
                 >
-                  <option value={5}>5 BARIS</option>
                   <option value={10}>10 BARIS</option>
-                  <option value={25}>25 BARIS</option>
+                  <option value={20}>20 BARIS</option>
                   <option value={50}>50 BARIS</option>
-                  <option value={0}>SEMUA DATA</option>
+                  <option value={0}>SEMUA BARIS</option>
                 </select>
               </div>
             </div>

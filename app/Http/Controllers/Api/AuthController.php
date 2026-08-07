@@ -276,4 +276,118 @@ class AuthController extends Controller
             'data'    => $user,
         ], 200);
     }
+
+    /**
+     * Get Admin Profile Data
+     * Endpoint: GET /api/admin/profile
+     */
+    public function getAdminProfile(Request $request)
+    {
+        $admin = $request->user('sanctum') ?: $request->user();
+        if (!$admin) {
+            $adminEmail = $request->header('X-Admin-Email') ?: $request->query('admin_email');
+            if ($adminEmail) {
+                $admin = Admin::where('email', $adminEmail)->first() 
+                      ?: User::where('email', $adminEmail)->where('is_admin', true)->first();
+            }
+        }
+
+        if (!$admin) {
+            $admin = Admin::first() ?: User::where('is_admin', true)->first();
+        }
+
+        if (!$admin) {
+            return response()->json(['status' => false, 'message' => 'Admin not found'], 404);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data'   => [
+                'id'            => $admin->id,
+                'name'          => $admin->name,
+                'email'         => $admin->email,
+                'role'          => 'Administrator',
+                'is_admin'      => true,
+                'last_login_at' => $admin->last_login_at ? (is_string($admin->last_login_at) ? $admin->last_login_at : $admin->last_login_at->format('Y-m-d H:i:s')) : null,
+            ],
+        ], 200);
+    }
+
+    /**
+     * Update Admin Profile Data (Name, Email, Password)
+     * Endpoint: PUT /api/admin/profile
+     */
+    public function updateAdminProfile(Request $request)
+    {
+        $admin = $request->user('sanctum') ?: $request->user();
+        if (!$admin) {
+            $adminEmail = $request->header('X-Admin-Email') ?: $request->input('admin_email');
+            if ($adminEmail) {
+                $admin = Admin::where('email', $adminEmail)->first() 
+                      ?: User::where('email', $adminEmail)->where('is_admin', true)->first();
+            }
+        }
+
+        if (!$admin) {
+            $admin = Admin::first() ?: User::where('is_admin', true)->first();
+        }
+
+        if (!$admin) {
+            return response()->json(['status' => false, 'message' => 'Admin tidak ditemukan'], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'name'             => 'required|string|max:255',
+            'email'            => 'required|email|max:255',
+            'current_password' => 'nullable|string',
+            'new_password'     => 'nullable|string|min:6',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Validation Error',
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        // Email uniqueness check
+        $existingAdmin = Admin::where('email', $request->email)->where('id', '!=', $admin->id)->first();
+        $existingUser  = User::where('email', $request->email)->where('id', '!=', $admin->id)->first();
+        if ($existingAdmin || $existingUser) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Email sudah digunakan oleh pengguna lain.',
+            ], 422);
+        }
+
+        // Password change validation
+        if (!empty($request->new_password)) {
+            if (!empty($request->current_password)) {
+                if (!Hash::check($request->current_password, $admin->password)) {
+                    return response()->json([
+                        'status'  => false,
+                        'message' => 'Password lama (current password) tidak sesuai.',
+                    ], 422);
+                }
+            }
+            $admin->password = Hash::make($request->new_password);
+        }
+
+        $admin->name  = $request->name;
+        $admin->email = $request->email;
+        $admin->save();
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Profil Admin berhasil diperbarui',
+            'data'    => [
+                'id'       => $admin->id,
+                'name'     => $admin->name,
+                'email'    => $admin->email,
+                'role'     => 'Administrator',
+                'is_admin' => true,
+            ],
+        ], 200);
+    }
 }

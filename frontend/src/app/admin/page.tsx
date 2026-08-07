@@ -369,7 +369,7 @@ export default function AdminDashboardPage() {
   return (
     <div
       suppressHydrationWarning
-      className={`flex flex-col lg:flex-row min-h-screen transition-colors duration-200 font-[family-name:var(--font-body)] ${
+      className={`flex flex-col md:flex-row min-h-screen transition-colors duration-200 font-[family-name:var(--font-body)] ${
         isDarkMode ? "bg-[#121214] text-[#F5F5F5]" : "bg-[#F4F4F6] text-[#0A0A0A]"
       }`}
     >
@@ -446,7 +446,7 @@ export default function AdminDashboardPage() {
                 SYSTEM OVERVIEW
               </h2>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
               <AdminStatCard
                 label="TOTAL REVENUE"
                 value={formattedRevenue}
@@ -493,10 +493,10 @@ export default function AdminDashboardPage() {
             isDarkMode={isDarkMode}
           />
 
-          {/* Main Workspace 2-Column Grid Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Left Column (8 cols): Stok Produk Menipis */}
-            <section className="lg:col-span-8">
+          {/* Main Workspace Grid Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+            {/* Left Column (Full width on Mobile/Tablet, 8 cols on Desktop): Stok Produk Menipis */}
+            <section className="col-span-12 lg:col-span-8">
               <div style={{ marginBottom: "18px" }} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4" style={{ color: "#B6A47E" }} />
@@ -703,8 +703,8 @@ export default function AdminDashboardPage() {
               </div>
             </section>
 
-            {/* Right Column (4 cols): Management Shortcuts Stacked Vertically */}
-            <section className="lg:col-span-4">
+            {/* Right Column (4 cols on Desktop, Hidden on Mobile/Tablet): Management Shortcuts */}
+            <section className="hidden lg:block lg:col-span-4">
               <div style={{ marginBottom: "18px" }} className="flex items-center justify-between">
                 <h2
                   style={{

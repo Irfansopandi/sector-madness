@@ -23,7 +23,6 @@ import {
   Plus,
   Pencil,
   Trash2,
-  Search,
   CheckCircle2,
   XCircle,
   ExternalLink,
@@ -444,7 +443,7 @@ export default function AdminContactSettingsPage() {
   return (
     <div
       suppressHydrationWarning
-      className={`flex flex-col lg:flex-row min-h-screen transition-colors duration-200 font-[family-name:var(--font-body)] ${
+      className={`flex flex-col md:flex-row min-h-screen transition-colors duration-200 font-[family-name:var(--font-body)] ${
         isDarkMode ? "bg-[#0F0F11] text-[#F5F5F5]" : "bg-[#F4F5F8] text-[#0A0A0A]"
       }`}
     >
@@ -508,7 +507,7 @@ export default function AdminContactSettingsPage() {
                   else if (activeSubTab === "social") openAddModal("channel", "04");
                 }}
                 style={{ padding: "12px 28px" }}
-                className={`group inline-flex items-center justify-center font-bold text-xs tracking-[0.15em] uppercase rounded-[6px] transition-all duration-200 cursor-pointer shrink-0 gap-2.5 shadow-sm ${
+                className={`group inline-flex items-center justify-center font-bold text-xs tracking-[0.15em] uppercase rounded-[6px] transition-all duration-200 cursor-pointer shrink-0 gap-2.5 shadow-sm whitespace-nowrap ${
                   isDarkMode
                     ? "bg-[#B6A47E] text-[#0A0A0A] hover:bg-[#a3926d]"
                     : "bg-[#0A0A0A] text-white hover:bg-[#222222]"
@@ -516,7 +515,6 @@ export default function AdminContactSettingsPage() {
               >
                 <Plus className="w-4 h-4 stroke-[2.5] shrink-0 transition-transform duration-300 group-hover:rotate-90" />
                 <span>
-                  TAMBAH{" "}
                   {activeSubTab === "email"
                     ? "EMAIL"
                     : activeSubTab === "phone"
@@ -530,44 +528,19 @@ export default function AdminContactSettingsPage() {
             )}
           </div>
 
-          {/* SMOOTH SLIDING BUTTON PILL NAVIGATION TABS (Matching Orders Page) */}
+          {/* Button Pill Navigation Tabs (Grid on Mobile/Tablet, 1-Row Flex on Desktop) */}
           <div
             style={{
-              position: "relative",
-              display: "flex",
-              flexWrap: "wrap",
-              alignItems: "center",
-              gap: "8px",
               padding: "6px",
               borderRadius: "10px",
-              backgroundColor: isDarkMode ? "#18181C" : "#E5E7EB",
-              border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #D1D5DB",
               marginBottom: "28px",
-              width: "fit-content",
             }}
+            className={`grid grid-cols-2 sm:grid-cols-3 lg:flex lg:flex-row lg:items-center lg:w-max w-full border ${
+              isDarkMode
+                ? "bg-[#18181C] border-white/10"
+                : "bg-[#E5E7EB] border-[#D1D5DB]"
+            }`}
           >
-            {/* Sliding Active Pill Indicator */}
-            {indicatorStyle.width > 0 && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "6px",
-                  bottom: "6px",
-                  left: `${indicatorStyle.left}px`,
-                  width: `${indicatorStyle.width}px`,
-                  borderRadius: "7px",
-                  backgroundColor: isDarkMode ? "#121214" : "#FFFFFF",
-                  border: "1.5px solid #B6A47E",
-                  boxShadow: isDarkMode
-                    ? "0 4px 14px rgba(0,0,0,0.6)"
-                    : "0 2px 8px rgba(0,0,0,0.1)",
-                  transition: "left 0.35s cubic-bezier(0.16, 1, 0.3, 1), width 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
-                  pointerEvents: "none",
-                  zIndex: 1,
-                }}
-              />
-            )}
-
             {[
               { id: "address", label: "1. Address & Warehouse", icon: MapPin },
               { id: "email", label: "2. Email Inquiries", icon: Mail },
@@ -580,28 +553,21 @@ export default function AdminContactSettingsPage() {
               return (
                 <button
                   key={tab.id}
-                  ref={(el) => { tabRefs.current[tab.id] = el; }}
                   type="button"
                   onClick={() => {
                     setActiveSubTab(tab.id as any);
                     setCurrentPage(1);
                   }}
                   style={{
-                    position: "relative",
-                    zIndex: 2,
-                    padding: "10px 20px",
+                    padding: "10px 14px",
                     borderRadius: "7px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    fontSize: "11px",
-                    fontWeight: 700,
-                    letterSpacing: "0.14em",
-                    textTransform: "uppercase",
                     cursor: "pointer",
-                    transition: "color 0.2s ease, opacity 0.2s ease",
-                    border: "none",
-                    background: "transparent",
+                    transition: "all 0.2s ease",
+                    backgroundColor: isActive
+                      ? isDarkMode
+                        ? "#121214"
+                        : "#FFFFFF"
+                      : "transparent",
                     color: isActive
                       ? isDarkMode
                         ? "#F5F5F5"
@@ -609,114 +575,38 @@ export default function AdminContactSettingsPage() {
                       : isDarkMode
                       ? "#8A8A8A"
                       : "#6B7280",
+                    border: isActive
+                      ? "1.5px solid #B6A47E"
+                      : "1.5px solid transparent",
+                    boxShadow: isActive
+                      ? isDarkMode
+                        ? "0 4px 14px rgba(0,0,0,0.6)"
+                        : "0 2px 8px rgba(0,0,0,0.1)"
+                      : "none",
                   }}
-                  className="group hover:opacity-100"
+                  className={`group flex items-center justify-center sm:justify-start gap-2 w-full lg:w-auto font-mono text-[11px] font-bold tracking-wider uppercase transition-all duration-200 ${
+                    isActive
+                      ? ""
+                      : isDarkMode
+                      ? "hover:text-[#FFFFFF] hover:bg-white/[0.04]"
+                      : "hover:text-[#0A0A0A] hover:bg-black/[0.04]"
+                  }`}
                 >
                   <IconComponent
-                    className={`w-3.5 h-3.5 transition-colors duration-200 ${
+                    className={`w-3.5 h-3.5 shrink-0 transition-colors duration-200 ${
                       isActive ? "text-[#B6A47E]" : isDarkMode ? "text-[#8A8A8A] group-hover:text-[#B6A47E]" : "text-[#6B7280] group-hover:text-[#B6A47E]"
                     }`}
                   />
-                  <span>{tab.label}</span>
+                  <span className="truncate">{tab.label}</span>
                 </button>
               );
             })}
           </div>
 
-          {/* TABLE CONTROL BAR: SEARCH & ROW LIMIT (Matching Catalog Page) */}
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "16px",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: "24px",
-              padding: "16px 20px",
-              borderRadius: "8px",
-              backgroundColor: isDarkMode ? "#18181C" : "#FFFFFF",
-              border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #E5E7EB",
-            }}
-          >
-            <div style={{ position: "relative", flex: 1, minWidth: "240px" }}>
-              <Search
-                style={{
-                  position: "absolute",
-                  left: "12px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  width: "16px",
-                  height: "16px",
-                  color: isDarkMode ? "#8A8A8A" : "#9CA3AF",
-                }}
-              />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={`Cari data kontak...`}
-                style={{
-                  width: "100%",
-                  paddingLeft: "38px",
-                  paddingRight: "14px",
-                  paddingTop: "9px",
-                  paddingBottom: "9px",
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  borderRadius: "6px",
-                  outline: "none",
-                  backgroundColor: isDarkMode ? "#121214" : "#F9FAFB",
-                  border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #D1D5DB",
-                  color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
-                }}
-              />
-            </div>
-
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <span
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                  color: isDarkMode ? "#8A8A8A" : "#6B7280",
-                }}
-              >
-                TAMPILKAN BARIS:
-              </span>
-              <select
-                value={itemsPerPage}
-                onChange={(e) => {
-                  setItemsPerPage(Number(e.target.value));
-                  setCurrentPage(1);
-                }}
-                style={{
-                  paddingTop: "8px",
-                  paddingBottom: "8px",
-                  paddingLeft: "12px",
-                  paddingRight: "28px",
-                  fontSize: "12px",
-                  fontWeight: 700,
-                  borderRadius: "6px",
-                  outline: "none",
-                  cursor: "pointer",
-                  backgroundColor: isDarkMode ? "#121214" : "#F9FAFB",
-                  border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #D1D5DB",
-                  color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
-                }}
-              >
-                <option value={5}>5 Baris</option>
-                <option value={10}>10 Baris</option>
-                <option value={20}>20 Baris</option>
-                <option value={50}>50 Baris</option>
-              </select>
-            </div>
-          </div>
-
           {/* MAIN CONTENT AREA */}
           {isLoading ? (
-            <div className="py-24 text-center">
-              <div className="w-8 h-8 border-2 border-[#B6A47E] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <div className="py-24 flex flex-col items-center justify-center text-center">
+              <div className="w-8 h-8 border-2 border-[#B6A47E] border-t-transparent rounded-full animate-spin mb-4" />
               <p className="text-xs font-mono tracking-widest uppercase text-[#8A8A8A]">
                 Memuat data contact settings dari database...
               </p>
@@ -724,24 +614,25 @@ export default function AdminContactSettingsPage() {
           ) : activeSubTab === "address" ? (
             /* SECTION 1: ADDRESS & WAREHOUSE INTEGRATION (Matching Catalog / Orders Card Styling) */
             <div
-              style={{
-                borderRadius: "10px",
-                backgroundColor: isDarkMode ? "#18181C" : "#FFFFFF",
-                border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #E5E7EB",
-                padding: "44px 40px",
-              }}
+              style={{ padding: "28px", borderRadius: "12px" }}
+              className={`border shadow-sm ${
+                isDarkMode ? "bg-[#18181C] border-white/10" : "bg-white border-[#D1D5DB]"
+              }`}
             >
               {/* Warehouse Header */}
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6">
-                <div className="flex items-center gap-5">
-                  <div className="w-12 h-12 rounded-lg bg-[#B6A47E]/15 text-[#B6A47E] flex items-center justify-center shrink-0">
-                    <Building className="w-6 h-6" />
+              <div
+                style={{ paddingBottom: "20px", marginBottom: "28px" }}
+                className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-6 border-b border-inherit"
+              >
+                <div className="flex items-center gap-4 sm:gap-5">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#B6A47E]/15 border border-[#B6A47E]/30 flex items-center justify-center text-[#B6A47E] shrink-0">
+                    <Building className="w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
                   <div>
-                    <span className="text-[11px] font-mono font-bold tracking-[0.25em] text-[#B6A47E] uppercase block mb-2">
+                    <span className="text-[10px] sm:text-[11px] font-mono font-bold tracking-[0.2em] sm:tracking-[0.25em] text-[#B6A47E] uppercase block mb-1">
                       PRIMARY WAREHOUSE &amp; FULFILLMENT DOCK
                     </span>
-                    <h3 className={`text-2xl font-extrabold tracking-tight leading-snug ${isDarkMode ? "text-white" : "text-[#111827]"}`}>
+                    <h3 className={`text-xl sm:text-2xl font-extrabold tracking-tight leading-snug ${isDarkMode ? "text-white" : "text-[#111827]"}`}>
                       {primaryWarehouse?.name || "Sector Madness Central Warehouse & Archive Lab"}
                     </h3>
                   </div>
@@ -749,26 +640,15 @@ export default function AdminContactSettingsPage() {
 
                 <span
                   style={{ padding: "6px 16px", borderRadius: "9999px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.06em" }}
-                  className="inline-flex items-center gap-2 uppercase font-mono border bg-emerald-500/10 text-emerald-400 border-emerald-500/20 self-start md:self-auto shrink-0"
+                  className="inline-flex items-center gap-2 uppercase font-mono border bg-emerald-500/10 text-emerald-400 border-emerald-500/20 self-start lg:self-auto shrink-0"
                 >
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                   SINGLE SOURCE OF TRUTH (ACTIVE DB)
                 </span>
               </div>
 
-              {/* Explicit Divider Line with 28px top and 36px bottom margin */}
-              <div
-                style={{
-                  marginTop: "28px",
-                  marginBottom: "36px",
-                  height: "1px",
-                  width: "100%",
-                  backgroundColor: isDarkMode ? "rgba(255, 255, 255, 0.1)" : "#E5E7EB",
-                }}
-              />
-
               {/* Warehouse Detail Fields */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
                 <div className="space-y-2">
                   <span className={`text-[11px] font-mono uppercase tracking-[0.18em] font-bold block ${isDarkMode ? "text-[#8A8A8A]" : "text-[#6B7280]"}`}>
                     OPERATIONS CONTACT
@@ -787,22 +667,22 @@ export default function AdminContactSettingsPage() {
                   </p>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-2 md:col-span-2 lg:col-span-1">
                   <span className={`text-[11px] font-mono uppercase tracking-[0.18em] font-bold block ${isDarkMode ? "text-[#8A8A8A]" : "text-[#6B7280]"}`}>
                     SUPPORT EMAIL
                   </span>
                   <p className={`text-base font-semibold ${isDarkMode ? "text-white" : "text-[#111827]"}`}>
                     <a
                       href={formatMailtoUrl(primaryWarehouse?.email || "logistics@sectormadness.com", "LOGISTICS SUPPORT INQUIRY")}
-                      className="hover:text-[#B6A47E] transition-colors hover:underline"
+                      className="hover:text-[#B6A47E] transition-colors hover:underline break-all sm:break-normal"
                     >
                       {primaryWarehouse?.email || "logistics@sectormadness.com"}
                     </a>
                   </p>
                 </div>
 
-                <div className={`md:col-span-3 pt-10 border-t space-y-3 ${isDarkMode ? "border-white/10" : "border-gray-200"}`}>
-                  <div className="flex items-center justify-between">
+                <div style={{ paddingTop: "28px", marginTop: "28px" }} className="md:col-span-2 lg:col-span-3 border-t border-inherit space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <span className={`text-[11px] font-mono uppercase tracking-[0.18em] font-bold block ${isDarkMode ? "text-[#8A8A8A]" : "text-[#6B7280]"}`}>
                       FULL PHYSICAL ADDRESS &amp; LOCATION MAP
                     </span>
@@ -810,13 +690,13 @@ export default function AdminContactSettingsPage() {
                       href={`https://www.google.com/maps?q=${primaryWarehouse?.latitude || -6.3533},${primaryWarehouse?.longitude || 107.2831}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-[#B6A47E] hover:underline uppercase tracking-wider"
+                      className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-[#B6A47E] hover:underline uppercase tracking-wider self-start sm:self-auto"
                     >
                       <span>Open in Google Maps</span>
                       <ExternalLink className="w-3.5 h-3.5" />
                     </a>
                   </div>
-                  <p className={`text-lg font-medium leading-relaxed whitespace-pre-line ${isDarkMode ? "text-[#F4F4F5]" : "text-[#374151]"}`}>
+                  <p className={`text-base sm:text-lg font-medium leading-relaxed whitespace-pre-line ${isDarkMode ? "text-[#F4F4F5]" : "text-[#374151]"}`}>
                     {(() => {
                       const raw = primaryWarehouse?.address || "Kawasan Industri KIIC, Jl. Harapan V Lot KK-2, Karawang Barat";
                       const cityStr = primaryWarehouse?.city || "Karawang";
@@ -826,7 +706,7 @@ export default function AdminContactSettingsPage() {
                     {primaryWarehouse?.city || "Karawang"}, {primaryWarehouse?.province || "Jawa Barat"} {primaryWarehouse?.postal_code || "41361"}, Indonesia
                   </p>
 
-                  <div className="pt-2">
+                  <div style={{ marginTop: "16px" }}>
                     <AdminLocationPickerMap
                       lat={primaryWarehouse?.latitude ? Number(primaryWarehouse.latitude) : -6.3117}
                       lng={primaryWarehouse?.longitude ? Number(primaryWarehouse.longitude) : 107.3015}
@@ -838,7 +718,7 @@ export default function AdminContactSettingsPage() {
                 </div>
 
                 {primaryWarehouse?.notes && (
-                  <div className={`md:col-span-3 pt-8 border-t space-y-2 ${isDarkMode ? "border-white/10" : "border-gray-200"}`}>
+                  <div style={{ paddingTop: "28px", marginTop: "28px" }} className="md:col-span-2 lg:col-span-3 border-t border-inherit space-y-2">
                     <span className={`text-[11px] font-mono uppercase tracking-[0.18em] font-bold block ${isDarkMode ? "text-[#8A8A8A]" : "text-[#6B7280]"}`}>
                       INTERNAL DOCK NOTES
                     </span>

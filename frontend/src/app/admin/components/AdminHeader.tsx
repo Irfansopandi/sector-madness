@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Sun, Moon, Bell, Menu, User } from "lucide-react";
+import { setSidebarCollapsedCache } from "@/utils/sidebarCache";
 
 interface AdminHeaderProps {
   title: string;
@@ -66,7 +68,12 @@ export default function AdminHeader({
             if (onToggleSidebar) {
               onToggleSidebar();
             } else if (typeof window !== "undefined") {
-              window.dispatchEvent(new Event("sector_sidebar_collapse_toggle"));
+              const saved = localStorage.getItem("sector_madness_sidebar_collapsed");
+              const next = saved === "true" ? false : true;
+              setSidebarCollapsedCache(next);
+              window.dispatchEvent(
+                new CustomEvent("sector_sidebar_collapse_toggle", { detail: { collapsed: next } })
+              );
             }
           }}
           className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer shrink-0 border ${
@@ -132,13 +139,14 @@ export default function AdminHeader({
         </button>
 
         {/* Profile Avatar Circle with User Icon */}
-        <div
+        <Link
+          href="/admin/profile"
           suppressHydrationWarning
-          title="User Profile"
-          className="w-9 h-9 rounded-full bg-[#B6A47E] text-[#0A0A0A] flex items-center justify-center shadow-xs shrink-0 cursor-pointer hover:bg-[#a3926d] transition-colors"
+          title="Profil Admin"
+          className="w-9 h-9 rounded-full bg-[#B6A47E] text-[#0A0A0A] flex items-center justify-center shadow-xs shrink-0 cursor-pointer hover:bg-[#a3926d] hover:scale-105 transition-all"
         >
           <User className="w-4.5 h-4.5 stroke-[2.2]" />
-        </div>
+        </Link>
       </div>
     </header>
   );

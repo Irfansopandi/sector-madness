@@ -385,7 +385,7 @@ export default function AdminCatalogPage() {
   return (
     <div
       suppressHydrationWarning
-      className={`flex flex-col lg:flex-row min-h-screen transition-colors duration-200 font-[family-name:var(--font-body)] ${
+      className={`flex flex-col md:flex-row min-h-screen transition-colors duration-200 font-[family-name:var(--font-body)] ${
         isDarkMode ? "bg-[#121214] text-[#F5F5F5]" : "bg-[#F4F4F6] text-[#0A0A0A]"
       }`}
     >
@@ -428,44 +428,19 @@ export default function AdminCatalogPage() {
             </div>
           )}
 
-          {/* Smooth Sliding Button Pill Navigation Tabs */}
+          {/* Button Pill Navigation Tabs (2-Column Grid on Tablet/iPad, 1-Row Flex on Desktop) */}
           <div
             style={{
-              position: "relative",
-              display: "flex",
-              flexWrap: "wrap",
-              alignItems: "center",
-              gap: "8px",
               padding: "6px",
               borderRadius: "10px",
-              backgroundColor: isDarkMode ? "#18181C" : "#E5E7EB",
-              border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #D1D5DB",
               marginBottom: "32px",
-              width: "fit-content",
             }}
+            className={`grid grid-cols-2 sm:grid-cols-3 gap-2 lg:flex lg:flex-row lg:items-center lg:w-max w-full border ${
+              isDarkMode
+                ? "bg-[#18181C] border-white/10"
+                : "bg-[#E5E7EB] border-[#D1D5DB]"
+            }`}
           >
-            {/* Sliding Active Pill Indicator */}
-            {indicatorStyle.width > 0 && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "6px",
-                  bottom: "6px",
-                  left: `${indicatorStyle.left}px`,
-                  width: `${indicatorStyle.width}px`,
-                  borderRadius: "7px",
-                  backgroundColor: isDarkMode ? "#121214" : "#FFFFFF",
-                  border: "1.5px solid #B6A47E",
-                  boxShadow: isDarkMode
-                    ? "0 4px 14px rgba(0,0,0,0.6)"
-                    : "0 2px 8px rgba(0,0,0,0.1)",
-                  transition: "left 0.35s cubic-bezier(0.16, 1, 0.3, 1), width 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
-                  pointerEvents: "none",
-                  zIndex: 1,
-                }}
-              />
-            )}
-
             {[
               { id: "categories", label: `KATEGORI (${categories.length})` },
               { id: "collections", label: `KOLEKSI FOCUS ON (${collections.length})` },
@@ -475,40 +450,47 @@ export default function AdminCatalogPage() {
               return (
                 <button
                   key={tab.id}
-                  ref={(el) => { tabRefs.current[tab.id] = el; }}
+                  type="button"
                   onClick={() => setActiveTab(tab.id as any)}
                   style={{
-                    position: "relative",
-                    zIndex: 2,
-                    padding: "10px 20px",
+                    padding: "10px 16px",
                     fontSize: "11px",
-                    letterSpacing: "0.14em",
+                    letterSpacing: "0.12em",
                     fontWeight: 700,
                     textTransform: "uppercase",
                     borderRadius: "7px",
                     cursor: "pointer",
-                    border: "none",
-                    background: "transparent",
+                    transition: "all 0.2s ease",
+                    backgroundColor: isActive
+                      ? isDarkMode
+                        ? "#121214"
+                        : "#FFFFFF"
+                      : "transparent",
                     color: isActive
-                      ? "#B6A47E"
+                      ? isDarkMode
+                        ? "#FFFFFF"
+                        : "#0A0A0A"
                       : isDarkMode
                       ? "#8A8A8A"
-                      : "#4B5563",
-                    transition: "color 0.3s ease, transform 0.3s ease",
-                    transform: isActive ? "scale(1.02)" : "scale(1)",
+                      : "#6B7280",
+                    border: isActive
+                      ? "1.5px solid #B6A47E"
+                      : "1.5px solid transparent",
+                    boxShadow: isActive
+                      ? isDarkMode
+                        ? "0 4px 14px rgba(0,0,0,0.6)"
+                        : "0 2px 8px rgba(0,0,0,0.1)"
+                      : "none",
                   }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.color = isDarkMode ? "#FFFFFF" : "#0A0A0A";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.color = isDarkMode ? "#8A8A8A" : "#4B5563";
-                    }
-                  }}
+                  className={`flex items-center justify-center text-center w-full lg:w-auto font-mono uppercase transition-all duration-200 ${
+                    isActive
+                      ? ""
+                      : isDarkMode
+                      ? "hover:text-[#FFFFFF] hover:bg-white/[0.04]"
+                      : "hover:text-[#0A0A0A] hover:bg-black/[0.04]"
+                  }`}
                 >
-                  {tab.label}
+                  <span className="truncate">{tab.label}</span>
                 </button>
               );
             })}
@@ -531,7 +513,7 @@ export default function AdminCatalogPage() {
             <button
               onClick={openAddModal}
               style={{ padding: "12px 28px" }}
-              className={`group inline-flex items-center justify-center font-bold text-xs tracking-[0.15em] uppercase rounded-[6px] transition-all duration-200 cursor-pointer shrink-0 gap-2.5 shadow-sm ${
+              className={`group inline-flex items-center justify-center font-bold text-xs tracking-[0.15em] uppercase rounded-[6px] transition-all duration-200 cursor-pointer shrink-0 gap-2.5 shadow-sm whitespace-nowrap ${
                 isDarkMode
                   ? "bg-[#B6A47E] text-[#0A0A0A] hover:bg-[#a3926d]"
                   : "bg-[#0A0A0A] text-white hover:bg-[#222222]"
@@ -539,7 +521,6 @@ export default function AdminCatalogPage() {
             >
               <Plus className="w-4 h-4 stroke-[2.5] shrink-0 transition-transform duration-300 group-hover:rotate-90" />
               <span>
-                TAMBAH{" "}
                 {activeTab === "categories"
                   ? "KATEGORI"
                   : activeTab === "collections"
@@ -550,57 +531,58 @@ export default function AdminCatalogPage() {
             </button>
           </div>
 
-          {/* TABLE CONTROL BAR: SEARCH & ROW LIMIT */}
+          {/* TABLE CONTROL BAR: SEARCH & ROW LIMIT (2-Row on Tablet/Mobile, Side-by-side on Desktop) */}
           <div
             style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "16px",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: "24px",
               padding: "16px 20px",
               borderRadius: "8px",
-              backgroundColor: isDarkMode ? "#18181C" : "#FFFFFF",
-              border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #E5E7EB",
+              marginBottom: "24px",
             }}
+            className={`border shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 ${
+              isDarkMode
+                ? "bg-[#18181C] border-white/10"
+                : "bg-white border-[#E5E7EB]"
+            }`}
           >
-            <div style={{ position: "relative", flex: 1, minWidth: "240px" }}>
-              <Search
-                style={{
-                  position: "absolute",
-                  left: "12px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  width: "16px",
-                  height: "16px",
-                  color: isDarkMode ? "#8A8A8A" : "#9CA3AF",
-                }}
-              />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={`Cari data ${activeTab.toUpperCase()}...`}
-                style={{
-                  width: "100%",
-                  paddingLeft: "38px",
-                  paddingRight: "14px",
-                  paddingTop: "9px",
-                  paddingBottom: "9px",
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  borderRadius: "6px",
-                  outline: "none",
-                  backgroundColor: isDarkMode ? "#121214" : "#F9FAFB",
-                  border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #D1D5DB",
-                  color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
-                }}
-              />
+            {/* ROW 1 (Mobile/Tablet) / LEFT (Desktop): Search Bar */}
+            <div className="flex flex-nowrap items-center gap-2.5 sm:gap-3 flex-1 min-w-0 w-full lg:w-auto">
+              <div className="relative flex-1 min-w-[140px] sm:w-64 lg:w-72 shrink">
+                <Search
+                  style={{
+                    position: "absolute",
+                    left: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    width: "16px",
+                    height: "16px",
+                    color: isDarkMode ? "#8A8A8A" : "#9CA3AF",
+                  }}
+                />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={`Cari data ${activeTab.toUpperCase()}...`}
+                  style={{
+                    width: "100%",
+                    paddingLeft: "38px",
+                    paddingRight: "14px",
+                    paddingTop: "9px",
+                    paddingBottom: "9px",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    borderRadius: "6px",
+                    outline: "none",
+                    backgroundColor: isDarkMode ? "#121214" : "#F9FAFB",
+                    border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #D1D5DB",
+                    color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
+                  }}
+                />
+              </div>
             </div>
 
-            {/* Row Limit Select */}
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            {/* ROW 2 (Mobile/Tablet) / RIGHT (Desktop): Row Limit Select */}
+            <div className="flex items-center gap-2.5 shrink-0">
               <span style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: isDarkMode ? "#8A8A8A" : "#6B7280" }}>
                 TAMPILKAN:
               </span>
@@ -619,11 +601,10 @@ export default function AdminCatalogPage() {
                   color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
                 }}
               >
-                <option value={5}>5 BARIS</option>
                 <option value={10}>10 BARIS</option>
-                <option value={25}>25 BARIS</option>
+                <option value={20}>20 BARIS</option>
                 <option value={50}>50 BARIS</option>
-                <option value={0}>SEMUA DATA</option>
+                <option value={0}>SEMUA BARIS</option>
               </select>
             </div>
           </div>

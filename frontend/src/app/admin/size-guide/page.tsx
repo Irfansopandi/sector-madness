@@ -382,7 +382,7 @@ export default function AdminSizeGuidePage() {
   return (
     <div
       suppressHydrationWarning
-      className={`flex flex-col lg:flex-row min-h-screen transition-colors duration-200 font-[family-name:var(--font-body)] ${
+      className={`flex flex-col md:flex-row min-h-screen transition-colors duration-200 font-[family-name:var(--font-body)] ${
         isDarkMode ? "bg-[#121214] text-[#F5F5F5]" : "bg-[#F4F4F6] text-[#0A0A0A]"
       }`}
     >
@@ -424,71 +424,69 @@ export default function AdminSizeGuidePage() {
             <button
               onClick={openAddModal}
               style={{ padding: "12px 28px" }}
-              className={`group inline-flex items-center justify-center font-bold text-xs tracking-[0.15em] uppercase rounded-[6px] transition-all duration-200 cursor-pointer shrink-0 gap-2.5 shadow-sm ${
+              className={`group inline-flex items-center justify-center font-bold text-xs tracking-[0.15em] uppercase rounded-[6px] transition-all duration-200 cursor-pointer shrink-0 gap-2.5 shadow-sm whitespace-nowrap ${
                 isDarkMode
                   ? "bg-[#B6A47E] text-[#0A0A0A] hover:bg-[#a3926d]"
                   : "bg-[#0A0A0A] text-white hover:bg-[#222222]"
               }`}
             >
               <Plus className="w-4 h-4 stroke-[2.5] shrink-0 transition-transform duration-300 group-hover:rotate-90" />
-              <span>TAMBAH SIZE GUIDE BARU</span>
+              <span>SIZE GUIDE BARU</span>
             </button>
           </div>
 
-          {/* TABLE CONTROL BAR: SEARCH & FILTERS */}
+          {/* TABLE CONTROL BAR: SEARCH, FILTER & ROW LIMIT (2-Row on Tablet/Mobile, Side-by-side on Desktop) */}
           <div
             style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "16px",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: "28px",
               padding: "16px 20px",
               borderRadius: "8px",
-              backgroundColor: isDarkMode ? "#18181C" : "#FFFFFF",
-              border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #E5E7EB",
+              marginBottom: "24px",
             }}
+            className={`border shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 sm:gap-4 ${
+              isDarkMode
+                ? "bg-[#18181C] border-white/10"
+                : "bg-white border-[#E5E7EB]"
+            }`}
           >
-            {/* Search Input */}
-            <div style={{ position: "relative", flex: 1, minWidth: "240px" }}>
-              <Search
-                style={{
-                  position: "absolute",
-                  left: "12px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  width: "16px",
-                  height: "16px",
-                  color: isDarkMode ? "#8A8A8A" : "#9CA3AF",
-                }}
-              />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari kategori atau deskripsi fit..."
-                style={{
-                  width: "100%",
-                  paddingLeft: "38px",
-                  paddingRight: "14px",
-                  paddingTop: "9px",
-                  paddingBottom: "9px",
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  borderRadius: "6px",
-                  outline: "none",
-                  backgroundColor: isDarkMode ? "#121214" : "#F9FAFB",
-                  border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #D1D5DB",
-                  color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
-                }}
-              />
-            </div>
+            {/* ROW 1 (Tablet/Mobile): Full Width Search | LEFT GROUP (Desktop): Search + Category + Status */}
+            <div className="flex flex-col sm:flex-row lg:flex-row items-stretch sm:items-center gap-3 lg:gap-3 flex-1 min-w-0 w-full lg:w-auto">
+              {/* Search Bar */}
+              <div className="relative flex-1 min-w-[140px] sm:w-64 lg:w-72 shrink">
+                <Search
+                  style={{
+                    position: "absolute",
+                    left: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    width: "16px",
+                    height: "16px",
+                    color: isDarkMode ? "#8A8A8A" : "#9CA3AF",
+                  }}
+                />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Cari kategori atau deskripsi fit..."
+                  style={{
+                    width: "100%",
+                    paddingLeft: "38px",
+                    paddingRight: "14px",
+                    paddingTop: "9px",
+                    paddingBottom: "9px",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    borderRadius: "6px",
+                    outline: "none",
+                    backgroundColor: isDarkMode ? "#121214" : "#F9FAFB",
+                    border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #D1D5DB",
+                    color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
+                  }}
+                />
+              </div>
 
-            {/* Filters */}
-            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "12px" }}>
-              {/* Category Filter */}
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              {/* Category Filter Dropdown on Desktop (lg:) */}
+              <div className="hidden lg:flex items-center gap-2 shrink-0">
                 <Filter style={{ width: "14px", height: "14px", color: "#B6A47E" }} />
                 <select
                   value={categoryFilter}
@@ -515,30 +513,91 @@ export default function AdminSizeGuidePage() {
                 </select>
               </div>
 
-              {/* Status Filter */}
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as any)}
-                style={{
-                  padding: "9px 14px",
-                  fontSize: "12px",
-                  fontWeight: 700,
-                  borderRadius: "6px",
-                  outline: "none",
-                  cursor: "pointer",
-                  textTransform: "uppercase",
-                  backgroundColor: isDarkMode ? "#121214" : "#F9FAFB",
-                  border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #D1D5DB",
-                  color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
-                }}
-              >
-                <option value="ALL">SEMUA STATUS</option>
-                <option value="ACTIVE">AKTIF</option>
-                <option value="INACTIVE">NON-AKTIF</option>
-              </select>
+              {/* Status Filter Dropdown on Desktop (lg:) */}
+              <div className="hidden lg:block shrink-0">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as any)}
+                  style={{
+                    padding: "9px 14px",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    borderRadius: "6px",
+                    outline: "none",
+                    cursor: "pointer",
+                    textTransform: "uppercase",
+                    backgroundColor: isDarkMode ? "#121214" : "#F9FAFB",
+                    border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #D1D5DB",
+                    color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
+                  }}
+                >
+                  <option value="ALL">SEMUA STATUS</option>
+                  <option value="ACTIVE">AKTIF</option>
+                  <option value="INACTIVE">NON-AKTIF</option>
+                </select>
+              </div>
+            </div>
+
+            {/* ROW 2 (Tablet/Mobile): Filters & Row Limit Select (Stacked on Left under Kategori) */}
+            <div className="flex flex-col sm:flex-row lg:flex-row items-start sm:items-center justify-between lg:justify-end gap-3 shrink-0 w-full lg:w-auto">
+              <div className="flex lg:hidden items-center gap-2.5 flex-wrap shrink-0 min-w-0">
+                {/* Category Filter on Tablet/Mobile */}
+                <div className="flex items-center gap-1.5 shrink-0 min-w-0">
+                  <Filter style={{ width: "14px", height: "14px", color: "#B6A47E" }} className="shrink-0" />
+                  <select
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    style={{
+                      padding: "9px 12px",
+                      fontSize: "12px",
+                      fontWeight: 700,
+                      borderRadius: "6px",
+                      outline: "none",
+                      cursor: "pointer",
+                      textTransform: "uppercase",
+                      backgroundColor: isDarkMode ? "#121214" : "#F9FAFB",
+                      border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #D1D5DB",
+                      color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
+                    }}
+                    className="max-w-[150px] sm:max-w-[200px] truncate"
+                  >
+                    <option value="ALL">SEMUA KATEGORI</option>
+                    {dbCategories.map((cat) => (
+                      <option key={cat.id} value={cat.name.toUpperCase()}>
+                        {cat.name.toUpperCase()}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Status Filter on Tablet/Mobile */}
+                <div className="shrink-0">
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value as any)}
+                    style={{
+                      padding: "9px 12px",
+                      fontSize: "12px",
+                      fontWeight: 700,
+                      borderRadius: "6px",
+                      outline: "none",
+                      cursor: "pointer",
+                      textTransform: "uppercase",
+                      backgroundColor: isDarkMode ? "#121214" : "#F9FAFB",
+                      border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #D1D5DB",
+                      color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
+                    }}
+                    className="max-w-[130px] sm:max-w-[160px] truncate"
+                  >
+                    <option value="ALL">SEMUA STATUS</option>
+                    <option value="ACTIVE">AKTIF</option>
+                    <option value="INACTIVE">NON-AKTIF</option>
+                  </select>
+                </div>
+              </div>
 
               {/* Row Limit Select */}
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <div className="flex items-center gap-2.5 shrink-0">
                 <span style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: isDarkMode ? "#8A8A8A" : "#6B7280" }}>
                   TAMPILKAN:
                 </span>
@@ -557,11 +616,10 @@ export default function AdminSizeGuidePage() {
                     color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
                   }}
                 >
-                  <option value={5}>5 BARIS</option>
                   <option value={10}>10 BARIS</option>
-                  <option value={25}>25 BARIS</option>
+                  <option value={20}>20 BARIS</option>
                   <option value={50}>50 BARIS</option>
-                  <option value={0}>SEMUA DATA</option>
+                  <option value={0}>SEMUA BARIS</option>
                 </select>
               </div>
             </div>
@@ -602,33 +660,33 @@ export default function AdminSizeGuidePage() {
                   }`}
                 >
                   {/* Card Header */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
-                    <div className="flex items-center gap-3.5">
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4 border-b border-white/10 pb-4">
+                    <div className="flex items-center gap-3.5 min-w-0">
                       <div className="w-11 h-11 rounded-md bg-[#B6A47E]/15 text-[#B6A47E] flex items-center justify-center shrink-0">
                         <Tag className="w-5 h-5" />
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2.5">
-                          <span className="text-xs font-mono font-bold tracking-widest text-[#B6A47E] uppercase">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                          <span className="text-xs font-mono font-bold tracking-widest text-[#B6A47E] uppercase whitespace-nowrap">
                             {guide.category}
                           </span>
-                          <span className="text-xs font-mono text-[#8A8A8A]">
+                          <span className="text-xs font-mono text-[#8A8A8A] whitespace-nowrap">
                             (Code: {guide.category_code} | Sort: #{guide.sort_order})
                           </span>
                         </div>
                         {guide.fit_description && (
-                          <h3 className="text-sm font-black tracking-wider mt-1 uppercase font-[family-name:var(--font-display)]">
+                          <h3 className="text-sm font-black tracking-wider mt-1 uppercase font-[family-name:var(--font-display)] truncate">
                             {guide.fit_description}
                           </h3>
                         )}
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3.5 self-end sm:self-auto">
+                    <div className="flex items-center gap-2.5 sm:gap-3.5 self-start lg:self-auto flex-wrap shrink-0">
                       {/* STATUS BADGE MATCHING CONTACT SETTINGS */}
                       <span
                         style={{ padding: "4px 12px", borderRadius: "9999px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.05em" }}
-                        className={`inline-flex items-center gap-1.5 uppercase font-mono border ${
+                        className={`inline-flex items-center gap-1.5 uppercase font-mono border shrink-0 ${
                           guide.is_active !== false
                             ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                             : "bg-amber-500/10 text-amber-400 border-amber-500/20"
@@ -641,7 +699,7 @@ export default function AdminSizeGuidePage() {
                       <button
                         onClick={() => openEditModal(guide)}
                         style={{ padding: "8px 16px" }}
-                        className={`inline-flex items-center gap-2 rounded-[5px] text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer border ${
+                        className={`inline-flex items-center gap-2 rounded-[5px] text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer border shrink-0 ${
                           isDarkMode
                             ? "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-[#B6A47E] hover:text-[#B6A47E]"
                             : "bg-gray-100 border-gray-200 text-gray-800 hover:bg-gray-200 hover:border-black"
@@ -656,7 +714,7 @@ export default function AdminSizeGuidePage() {
                           confirmDelete(guide.category, () => deleteMut.mutate(guide.id));
                         }}
                         style={{ padding: "8px 16px" }}
-                        className={`inline-flex items-center gap-2 rounded-[5px] text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer border ${
+                        className={`inline-flex items-center gap-2 rounded-[5px] text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer border shrink-0 ${
                           isDarkMode
                             ? "bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20 hover:border-red-500/40"
                             : "bg-red-50 border-red-200 text-red-600 hover:bg-red-100"

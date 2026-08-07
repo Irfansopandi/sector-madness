@@ -1453,6 +1453,114 @@ export const getAdminDashboardCharts = async (period: string = "month"): Promise
   return res.data;
 };
 
+/* ====================================================
+   ADMIN REPORTS API (PENJUALAN & CUSTOMER)
+==================================================== */
+export interface SalesReportOrder {
+  id: number;
+  order_number: string;
+  created_at: string;
+  created_at_fmt: string;
+  customer_name: string;
+  customer_email: string;
+  items_count: number;
+  status: string;
+  payment_status: string;
+  total_amount: number;
+}
+
+export interface SalesReportData {
+  period: {
+    start_date: string;
+    end_date: string;
+    start_fmt: string;
+    end_fmt: string;
+  };
+  summary: {
+    total_revenue: number;
+    total_orders: number;
+    total_items_sold: number;
+  };
+  orders: SalesReportOrder[];
+}
+
+export interface SalesReportResponse {
+  status: boolean;
+  message?: string;
+  data?: SalesReportData;
+}
+
+export interface CustomerReportItem {
+  user_id: number | null;
+  customer_name: string;
+  customer_email: string;
+  valid_orders_count: number;
+  total_spent: number;
+  last_order_date: string;
+  last_order_fmt: string;
+}
+
+export interface CustomerReportData {
+  period: {
+    start_date: string;
+    end_date: string;
+    start_fmt: string;
+    end_fmt: string;
+  };
+  summary: {
+    total_customers: number;
+    total_orders: number;
+    total_spent: number;
+  };
+  customers: CustomerReportItem[];
+}
+
+export interface CustomerReportResponse {
+  status: boolean;
+  message?: string;
+  data?: CustomerReportData;
+}
+
+export const getAdminSalesReport = async (params: { start_date: string; end_date: string; status?: string }): Promise<SalesReportResponse> => {
+  const res = await api.get("/admin/reports/sales", { params });
+  return res.data;
+};
+
+export const getAdminCustomerReport = async (params: { start_date: string; end_date: string }): Promise<CustomerReportResponse> => {
+  const res = await api.get("/admin/reports/customers", { params });
+  return res.data;
+};
+
+export interface AdminProfileData {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  is_admin: boolean;
+  last_login_at?: string | null;
+}
+
+export interface AdminProfileResponse {
+  status: boolean;
+  message?: string;
+  data?: AdminProfileData;
+}
+
+export const getAdminProfile = async (): Promise<AdminProfileResponse> => {
+  const res = await api.get("/admin/profile");
+  return res.data;
+};
+
+export const updateAdminProfile = async (payload: {
+  name: string;
+  email: string;
+  current_password?: string;
+  new_password?: string;
+}): Promise<AdminProfileResponse> => {
+  const res = await api.put("/admin/profile", payload);
+  return res.data;
+};
+
 export const getImageUrl = (path?: string): string => {
   if (!path) return "/images/placeholder.png";
   if (path.startsWith("http://") || path.startsWith("https://")) return path;

@@ -52,17 +52,18 @@ export default function AdminDashboardCharts({
       const itemData = payload[0].payload;
       return (
         <div
-          className={`p-3.5 rounded-[8px] shadow-xl border text-xs font-mono space-y-1.5 min-w-[170px] ${
+          style={{ padding: "16px 28px", minWidth: "270px" }}
+          className={`rounded-[12px] shadow-2xl border text-xs font-mono space-y-2.5 ${
             isDarkMode
               ? "bg-[#1C1C20] border-white/15 text-[#F5F5F5]"
               : "bg-white border-[#E2E8F0] text-[#0A0A0A]"
           }`}
         >
-          <p className="font-bold text-[13px] text-[#B6A47E] pb-1 border-b border-white/10 uppercase">
+          <p className="font-bold text-[13px] text-[#B6A47E] pb-2 border-b border-white/10 uppercase tracking-wider">
             {label}
           </p>
-          <div className="pt-0.5 space-y-1">
-            <p className="flex justify-between items-center gap-4">
+          <div className="pt-1 space-y-2">
+            <p className="flex justify-between items-center gap-8">
               <span className={isDarkMode ? "text-[#A0A0A0]" : "text-[#64748B]"}>
                 Pendapatan:
               </span>
@@ -70,7 +71,7 @@ export default function AdminDashboardCharts({
                 {formatRupiah(itemData.revenue || 0)}
               </span>
             </p>
-            <p className="flex justify-between items-center gap-4">
+            <p className="flex justify-between items-center gap-8">
               <span className={isDarkMode ? "text-[#A0A0A0]" : "text-[#64748B]"}>
                 Pesanan:
               </span>
@@ -91,17 +92,18 @@ export default function AdminDashboardCharts({
       const itemData = payload[0].payload;
       return (
         <div
-          className={`p-3.5 rounded-[8px] shadow-xl border text-xs font-mono space-y-1.5 min-w-[180px] ${
+          style={{ padding: "16px 28px", minWidth: "280px" }}
+          className={`rounded-[12px] shadow-2xl border text-xs font-mono space-y-2.5 ${
             isDarkMode
               ? "bg-[#1C1C20] border-white/15 text-[#F5F5F5]"
               : "bg-white border-[#E2E8F0] text-[#0A0A0A]"
           }`}
         >
-          <p className="font-bold text-[12px] text-[#B6A47E] pb-1 border-b border-white/10 truncate max-w-[220px]">
+          <p className="font-bold text-[12px] text-[#B6A47E] pb-2 border-b border-white/10 truncate max-w-[280px]">
             Nama Produk: {itemData.product_name}
           </p>
-          <div className="pt-0.5 space-y-1">
-            <p className="flex justify-between items-center gap-4">
+          <div className="pt-1 space-y-2">
+            <p className="flex justify-between items-center gap-8">
               <span className={isDarkMode ? "text-[#A0A0A0]" : "text-[#64748B]"}>
                 Jumlah Terjual:
               </span>
@@ -110,7 +112,7 @@ export default function AdminDashboardCharts({
               </span>
             </p>
             {itemData.revenue > 0 && (
-              <p className="flex justify-between items-center gap-4">
+              <p className="flex justify-between items-center gap-8">
                 <span className={isDarkMode ? "text-[#A0A0A0]" : "text-[#64748B]"}>
                   Total Omset:
                 </span>
@@ -146,7 +148,7 @@ export default function AdminDashboardCharts({
         </div>
 
         {/* Global Indonesian Period Filter Selector */}
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-2.5 shrink-0">
           <span
             style={{ fontSize: "11px", letterSpacing: "0.2em" }}
             className={`font-mono font-bold uppercase ${
@@ -159,7 +161,7 @@ export default function AdminDashboardCharts({
             value={period}
             onChange={(e) => onPeriodChange(e.target.value)}
             style={{
-              padding: "9px 24px 9px 16px",
+              padding: "5px 20px 5px 10px",
               fontSize: "12px",
               fontWeight: 700,
               borderRadius: "20px",
@@ -169,7 +171,7 @@ export default function AdminDashboardCharts({
               border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.16)" : "1px solid #D1D5DB",
               color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
             }}
-            className="transition-all hover:border-[#B6A47E] focus:border-[#B6A47E] font-mono shadow-xs"
+            className="transition-all hover:border-[#B6A47E] focus:border-[#B6A47E] font-mono shadow-xs cursor-pointer"
           >
             <option value="week" style={{ backgroundColor: isDarkMode ? "#18181C" : "#FFFFFF", color: isDarkMode ? "#FFFFFF" : "#0A0A0A" }}>Minggu</option>
             <option value="month" style={{ backgroundColor: isDarkMode ? "#18181C" : "#FFFFFF", color: isDarkMode ? "#FFFFFF" : "#0A0A0A" }}>Bulan</option>
@@ -179,8 +181,8 @@ export default function AdminDashboardCharts({
         </div>
       </div>
 
-      {/* 2-Column Balanced Charts Grid (Side-by-side on Desktop, Stacked on Mobile) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 items-stretch">
+      {/* 2-Column Balanced Charts Grid (Side-by-side on Desktop, Stacked on Mobile & Tablet) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
         
         {/* ── CARD 1: LINE CHART — PENJUALAN ── */}
         <div
@@ -433,10 +435,10 @@ export default function AdminDashboardCharts({
                     type="category"
                     dataKey="product_name"
                     stroke={isDarkMode ? "#666666" : "#94A3B8"}
-                    tick={{ fontSize: 11, fill: isDarkMode ? "#CCCCCC" : "#334155" }}
+                    tick={{ fontSize: 10, fill: isDarkMode ? "#CCCCCC" : "#334155" }}
                     tickLine={false}
-                    width={125}
-                    tickFormatter={(v) => (v.length > 20 ? `${v.substring(0, 19)}…` : v)}
+                    width={110}
+                    tickFormatter={(v) => (v.length > 16 ? `${v.substring(0, 15)}…` : v)}
                   />
                   <Tooltip content={<ProductsTooltip />} />
                   <Bar dataKey="quantity_sold" fill="#B6A47E" radius={[0, 5, 5, 0]} barSize={22} />

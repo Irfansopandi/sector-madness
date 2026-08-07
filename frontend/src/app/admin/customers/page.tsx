@@ -403,7 +403,7 @@ export default function AdminCustomersPage() {
   return (
     <div
       suppressHydrationWarning
-      className={`flex flex-col lg:flex-row min-h-screen transition-colors duration-200 font-[family-name:var(--font-body)] ${
+      className={`flex flex-col md:flex-row min-h-screen transition-colors duration-200 font-[family-name:var(--font-body)] ${
         isDarkMode ? "bg-[#121214] text-[#F5F5F5]" : "bg-[#F4F4F6] text-[#0A0A0A]"
       }`}
     >
@@ -474,37 +474,34 @@ export default function AdminCustomersPage() {
             <button
               onClick={handleOpenAddModal}
               style={{ padding: "12px 28px" }}
-              className={`group rounded-[6px] text-xs font-bold tracking-widest uppercase transition-all duration-200 cursor-pointer flex items-center gap-2 shadow-sm ${
+              className={`group rounded-[6px] text-xs font-bold tracking-widest uppercase transition-all duration-200 cursor-pointer flex items-center gap-2 shadow-sm whitespace-nowrap shrink-0 ${
                 isDarkMode
                   ? "bg-[#B6A47E] text-[#0A0A0A] hover:bg-[#a3926d]"
                   : "bg-[#0A0A0A] text-white hover:bg-[#222222]"
               }`}
             >
               <Plus className="w-4 h-4 transition-transform duration-300 group-hover:rotate-90" />
-              <span>TAMBAH CUSTOMER</span>
+              <span>CUSTOMER BARU</span>
             </button>
           </div>
 
-          {/* TABLE CONTROL BAR: SEARCH, FILTER & ROW LIMIT (Matching Admin Products Page) */}
+          {/* TABLE CONTROL BAR: SEARCH, FILTER & ROW LIMIT (2-Row on Tablet/Mobile, Side-by-side on Desktop) */}
           <div
             style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "16px",
-              alignItems: "center",
-              justifyContent: "space-between",
               padding: "16px 20px",
-              borderRadius: "6px",
+              borderRadius: "8px",
               marginBottom: "24px",
             }}
-            className={`border shadow-sm ${
+            className={`border shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 ${
               isDarkMode
                 ? "bg-[#18181C] border-white/10"
-                : "bg-white border-[#D1D5DB]"
+                : "bg-white border-[#E5E7EB]"
             }`}
           >
-            <div className="flex flex-wrap items-center gap-3 flex-1 min-w-[280px]">
-              <div className="relative flex-1 min-w-[200px]">
+            {/* ROW 1 (Mobile/Tablet) / LEFT (Desktop): Search Bar & Filter Dropdown (Side-by-side) */}
+            <div className="flex flex-nowrap items-center gap-2.5 sm:gap-3 flex-1 min-w-0 w-full lg:w-auto">
+              {/* Search Bar */}
+              <div className="relative flex-1 min-w-[140px] sm:w-64 lg:w-72 shrink">
                 <Search
                   className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 ${
                     isDarkMode ? "text-[#8A8A8A]" : "text-gray-400"
@@ -518,13 +515,13 @@ export default function AdminCustomersPage() {
                   style={{
                     paddingLeft: "40px",
                     paddingRight: "14px",
-                    paddingTop: "10px",
-                    paddingBottom: "10px",
+                    paddingTop: "9px",
+                    paddingBottom: "9px",
                   }}
-                  className={`w-full text-xs font-medium rounded-[4px] border outline-none transition-colors ${
+                  className={`w-full text-xs font-semibold rounded-[6px] border outline-none transition-colors ${
                     isDarkMode
                       ? "bg-[#121214] border-white/10 text-white focus:border-[#B6A47E]"
-                      : "bg-gray-50 border-gray-300 text-gray-900 focus:border-[#B6A47E]"
+                      : "bg-[#F9FAFB] border-[#D1D5DB] text-gray-900 focus:border-[#B6A47E]"
                   }`}
                 />
                 {searchQuery && (
@@ -537,16 +534,17 @@ export default function AdminCustomersPage() {
                 )}
               </div>
 
-              <div className="flex items-center gap-2">
-                <Filter className={`w-3.5 h-3.5 ${isDarkMode ? "text-[#8A8A8A]" : "text-gray-400"}`} />
+              {/* Status Filter Dropdown */}
+              <div className="flex items-center gap-2 shrink-0">
+                <Filter className="w-3.5 h-3.5 text-[#B6A47E]" />
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value as any)}
-                  style={{ padding: "10px 14px" }}
-                  className={`text-xs font-bold tracking-wider uppercase rounded-[4px] border outline-none cursor-pointer transition-colors ${
+                  style={{ padding: "9px 14px" }}
+                  className={`text-xs font-bold tracking-wider uppercase rounded-[6px] border outline-none cursor-pointer transition-colors ${
                     isDarkMode
                       ? "bg-[#121214] border-white/10 text-white focus:border-[#B6A47E]"
-                      : "bg-gray-50 border-gray-300 text-gray-900 focus:border-[#B6A47E]"
+                      : "bg-[#F9FAFB] border-[#D1D5DB] text-gray-900 focus:border-[#B6A47E]"
                   }`}
                 >
                   <option value="ALL">SEMUA STATUS</option>
@@ -556,18 +554,19 @@ export default function AdminCustomersPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            {/* ROW 2 (Mobile/Tablet) / RIGHT (Desktop): Row Limit Select */}
+            <div className="flex items-center gap-2.5 shrink-0">
               <span className={`text-[11px] font-bold tracking-wider uppercase ${isDarkMode ? "text-[#8A8A8A]" : "text-gray-500"}`}>
                 TAMPILKAN:
               </span>
               <select
                 value={rowLimit}
                 onChange={(e) => setRowLimit(Number(e.target.value))}
-                style={{ padding: "10px 14px" }}
-                className={`text-xs font-bold tracking-wider uppercase rounded-[4px] border outline-none cursor-pointer transition-colors ${
+                style={{ padding: "9px 14px" }}
+                className={`text-xs font-bold tracking-wider uppercase rounded-[6px] border outline-none cursor-pointer transition-colors ${
                   isDarkMode
                     ? "bg-[#121214] border-white/10 text-white focus:border-[#B6A47E]"
-                    : "bg-gray-50 border-gray-300 text-gray-900 focus:border-[#B6A47E]"
+                    : "bg-[#F9FAFB] border-[#D1D5DB] text-gray-900 focus:border-[#B6A47E]"
                 }`}
               >
                 <option value={10}>10 BARIS</option>

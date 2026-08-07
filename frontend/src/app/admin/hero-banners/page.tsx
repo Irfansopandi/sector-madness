@@ -12,7 +12,7 @@ import {
   uploadAdminImage,
   AdminHeroBanner,
 } from "@/utils/api";
-import { Image as ImageIcon, Plus, X, Pencil, Trash2, Upload, Search, Filter, Loader2, Info } from "lucide-react";
+import { Image as ImageIcon, Plus, X, Pencil, Trash2, Upload, Loader2, Info } from "lucide-react";
 import Swal from "sweetalert2";
 
 export default function AdminHeroBannersPage() {
@@ -325,7 +325,7 @@ export default function AdminHeroBannersPage() {
   return (
     <div
       suppressHydrationWarning
-      className={`flex flex-col lg:flex-row min-h-screen transition-colors duration-200 font-[family-name:var(--font-body)] ${
+      className={`flex flex-col md:flex-row min-h-screen transition-colors duration-200 font-[family-name:var(--font-body)] ${
         isDarkMode ? "bg-[#121214] text-[#F5F5F5]" : "bg-[#F4F4F6] text-[#0A0A0A]"
       }`}
     >
@@ -392,7 +392,7 @@ export default function AdminHeroBannersPage() {
               onClick={openAddModal}
               disabled={banners.length >= 5}
               style={{ padding: "12px 28px" }}
-              className={`group rounded-[6px] text-xs font-bold tracking-widest uppercase transition-all duration-200 flex items-center gap-2 shadow-sm ${
+              className={`group rounded-[6px] text-xs font-bold tracking-widest uppercase transition-all duration-200 flex items-center gap-2 shadow-sm whitespace-nowrap shrink-0 ${
                 banners.length >= 5
                   ? "opacity-50 cursor-not-allowed bg-gray-600 text-gray-300 border border-gray-500"
                   : isDarkMode
@@ -401,105 +401,8 @@ export default function AdminHeroBannersPage() {
               }`}
             >
               <Plus className="w-4 h-4 transition-transform duration-300 group-hover:rotate-90" />
-              <span>TAMBAH HERO BANNER</span>
+              <span>HERO BANNER BARU</span>
             </button>
-          </div>
-
-          {/* TABLE CONTROL BAR: SEARCH, FILTER & ROW LIMIT */}
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "16px",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: "24px",
-              padding: "16px 20px",
-              borderRadius: "8px",
-              backgroundColor: isDarkMode ? "#18181C" : "#FFFFFF",
-              border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #E5E7EB",
-            }}
-          >
-            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "12px", flex: 1, minWidth: "280px" }}>
-              {/* Search Bar */}
-              <div style={{ position: "relative", flex: 1, minWidth: "220px" }}>
-                <Search
-                  style={{
-                    position: "absolute",
-                    left: "12px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    width: "16px",
-                    height: "16px",
-                    color: isDarkMode ? "#8A8A8A" : "#9CA3AF",
-                  }}
-                />
-                <input
-                  type="text"
-                  placeholder="Cari berdasarkan path / url banner..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{
-                    width: "100%",
-                    paddingLeft: "36px",
-                    paddingRight: "16px",
-                    paddingTop: "8px",
-                    paddingBottom: "8px",
-                    fontSize: "12px",
-                    borderRadius: "6px",
-                    backgroundColor: isDarkMode ? "rgba(255, 255, 255, 0.05)" : "#F9FAFB",
-                    border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid #D1D5DB",
-                    color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
-                    outline: "none",
-                  }}
-                />
-              </div>
-
-              {/* Status Filter */}
-              <div className="flex items-center gap-2">
-                <Filter className={`w-4 h-4 ${isDarkMode ? "text-[#8A8A8A]" : "text-[#6B7280]"}`} />
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  style={{
-                    padding: "8px 12px",
-                    fontSize: "12px",
-                    borderRadius: "6px",
-                    backgroundColor: isDarkMode ? "rgba(255, 255, 255, 0.05)" : "#F9FAFB",
-                    border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid #D1D5DB",
-                    color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
-                    outline: "none",
-                  }}
-                >
-                  <option value="ALL">SEMUA STATUS</option>
-                  <option value="ACTIVE">AKTIF</option>
-                  <option value="INACTIVE">NONAKTIF</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Row Limit Selector */}
-            <div className="flex items-center gap-2">
-              <span className={`text-xs font-mono font-semibold ${isDarkMode ? "text-[#8A8A8A]" : "text-gray-500"}`}>SHOW:</span>
-              <select
-                value={rowLimit}
-                onChange={(e) => setRowLimit(Number(e.target.value))}
-                style={{
-                  padding: "8px 12px",
-                  fontSize: "12px",
-                  borderRadius: "6px",
-                  backgroundColor: isDarkMode ? "rgba(255, 255, 255, 0.05)" : "#F9FAFB",
-                  border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid #D1D5DB",
-                  color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
-                  outline: "none",
-                }}
-              >
-                <option value={10}>10 BARIS</option>
-                <option value={20}>20 BARIS</option>
-                <option value={50}>50 BARIS</option>
-                <option value={0}>SEMUA BARIS</option>
-              </select>
-            </div>
           </div>
 
           {/* HERO BANNERS TABLE */}

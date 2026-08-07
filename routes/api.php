@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\JournalController;
 use App\Http\Controllers\Api\UploadController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\VoucherController;
+use App\Http\Controllers\Api\ReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -185,6 +186,14 @@ Route::get('/admin/vouchers/{id}', [VoucherController::class, 'adminShow']);
 Route::put('/admin/vouchers/{id}', [VoucherController::class, 'adminUpdate']);
 Route::put('/admin/vouchers/{id}/status', [VoucherController::class, 'adminToggleStatus']);
 Route::delete('/admin/vouchers/{id}', [VoucherController::class, 'adminDestroy']);
+
+// Admin Reports API (Penjualan & Customer)
+Route::get('/admin/reports/sales', [ReportController::class, 'sales']);
+Route::get('/admin/reports/customers', [ReportController::class, 'customers']);
+
+// Admin Profile Management API
+Route::get('/admin/profile', [AuthController::class, 'getAdminProfile']);
+Route::put('/admin/profile', [AuthController::class, 'updateAdminProfile']);
 
 /*
 |--------------------------------------------------------------------------

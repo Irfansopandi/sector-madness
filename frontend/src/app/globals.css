@@ -231,3 +231,21 @@ input[type="number"] {
   -moz-appearance: textfield;
   appearance: textfield;
 }
+
+/* =============================================
+   DATE PICKER CALENDAR INDICATOR STYLES
+   ============================================= */
+
+input[type="date"].custom-date-input::-webkit-calendar-picker-indicator {
+  display: none !important;
+  opacity: 0 !important;
+  -webkit-appearance: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer !important;
+}
+
+

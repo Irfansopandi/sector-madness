@@ -408,7 +408,7 @@ export default function AdminVouchersPage() {
   return (
     <div
       suppressHydrationWarning
-      className={`flex flex-col lg:flex-row min-h-screen transition-colors duration-200 font-[family-name:var(--font-body)] ${
+      className={`flex flex-col md:flex-row min-h-screen transition-colors duration-200 font-[family-name:var(--font-body)] ${
         isDarkMode ? "bg-[#121214] text-[#F5F5F5]" : "bg-[#F4F4F6] text-[#0A0A0A]"
       }`}
     >
@@ -434,15 +434,16 @@ export default function AdminVouchersPage() {
 
         <main
           style={{
-            flex: 1,
             paddingTop: "48px",
             paddingBottom: "96px",
             paddingLeft: "48px",
             paddingRight: "48px",
             maxWidth: "1440px",
+            marginLeft: "auto",
+            marginRight: "auto",
             width: "100%",
           }}
-          className="mx-auto"
+          className="flex-1 min-w-0"
         >
           {/* PAGE HEADER: TITLE COUNTER & ADD BUTTON (Matching Admin Customers Page) */}
           <div style={{ marginBottom: "36px" }} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -461,35 +462,34 @@ export default function AdminVouchersPage() {
             <button
               onClick={handleOpenAddModal}
               style={{ padding: "12px 28px" }}
-              className={`group rounded-[6px] text-xs font-bold tracking-widest uppercase transition-all duration-200 cursor-pointer flex items-center gap-2 shadow-sm ${
+              className={`group rounded-[6px] text-xs font-bold tracking-widest uppercase transition-all duration-200 cursor-pointer flex items-center gap-2 shadow-sm whitespace-nowrap shrink-0 ${
                 isDarkMode
                   ? "bg-[#B6A47E] text-[#0A0A0A] hover:bg-[#a3926d]"
                   : "bg-[#0A0A0A] text-white hover:bg-[#222222]"
               }`}
             >
               <Plus className="w-4 h-4 transition-transform duration-300 group-hover:rotate-90" />
-              <span>TAMBAH VOUCHER</span>
+              <span>VOUCHER BARU</span>
             </button>
           </div>
 
-          {/* TABLE CONTROL BAR: SEARCH, FILTER & ROW LIMIT */}
+          {/* TABLE CONTROL BAR: SEARCH, FILTER & ROW LIMIT (2-Row on Tablet/Mobile, Side-by-side on Desktop) */}
           <div
             style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "16px",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: "24px",
               padding: "16px 20px",
               borderRadius: "8px",
-              backgroundColor: isDarkMode ? "#18181C" : "#FFFFFF",
-              border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #E5E7EB",
+              marginBottom: "24px",
             }}
+            className={`border shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 ${
+              isDarkMode
+                ? "bg-[#18181C] border-white/10"
+                : "bg-white border-[#E5E7EB]"
+            }`}
           >
-            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "12px", flex: 1, minWidth: "280px" }}>
+            {/* ROW 1 (Mobile/Tablet) / LEFT (Desktop): Search Bar & Filter Dropdown (Side-by-side) */}
+            <div className="flex flex-nowrap items-center gap-2.5 sm:gap-3 flex-1 min-w-0 w-full lg:w-auto">
               {/* Search Bar */}
-              <div style={{ position: "relative", flex: 1, minWidth: "220px" }}>
+              <div className="relative flex-1 min-w-[140px] sm:w-64 lg:w-72 shrink">
                 <Search
                   style={{
                     position: "absolute",
@@ -524,7 +524,7 @@ export default function AdminVouchersPage() {
               </div>
 
               {/* Status Filter Dropdown */}
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <div className="flex items-center gap-2 shrink-0">
                 <Filter style={{ width: "14px", height: "14px", color: "#B6A47E" }} />
                 <select
                   value={statusFilter}
@@ -550,8 +550,8 @@ export default function AdminVouchersPage() {
               </div>
             </div>
 
-            {/* Row Limit Select */}
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            {/* ROW 2 (Mobile/Tablet) / RIGHT (Desktop): Row Limit Select */}
+            <div className="flex items-center gap-2.5 shrink-0">
               <span style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: isDarkMode ? "#8A8A8A" : "#6B7280" }}>
                 TAMPILKAN:
               </span>

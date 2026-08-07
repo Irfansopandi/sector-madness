@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Swal from "sweetalert2";
 import { adminApiLogout } from "@/utils/api";
+import { getInitialSidebarCollapsed, setSidebarCollapsedCache } from "@/utils/sidebarCache";
 
 interface AdminSidebarProps {
   activeTab?: string;
@@ -19,36 +20,37 @@ export default function AdminSidebar({ activeTab, isDarkMode }: AdminSidebarProp
   const activeItemRef = useRef<HTMLAnchorElement>(null);
   const [pendingHref, setPendingHref] = useState<string | null>(null);
   const [isOpenMobile, setIsOpenMobile] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("sector_madness_sidebar_collapsed");
-      return saved === "true";
-    }
-    return false;
-  });
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [hoveredTooltip, setHoveredTooltip] = useState<{ label: string; top: number } | null>(null);
-  const [internalDarkMode, setInternalDarkMode] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("sector_madness_admin_theme");
-      return saved === null ? true : saved === "dark";
-    }
-    return true;
-  });
+  const [hoveredFlyout, setHoveredFlyout] = useState<{
+    id: string;
+    label: string;
+    top: number;
+    children: { id: string; label: string; href: string }[];
+  } | null>(null);
+  const flyoutTimeoutRef = useRef<any>(null);
+  const [userToggledLaporan, setUserToggledLaporan] = useState<boolean | null>(null);
+  const isLaporanRoute =
+    (pathname ? pathname.startsWith("/admin/laporan") : false) ||
+    (pendingHref ? pendingHref.startsWith("/admin/laporan") : false) ||
+    (activeTab ? activeTab.startsWith("laporan") : false);
+  const isLaporanOpen = userToggledLaporan !== null ? userToggledLaporan : isLaporanRoute;
+  const [internalDarkMode, setInternalDarkMode] = useState<boolean>(true);
 
   useEffect(() => {
-    const savedCollapsed = localStorage.getItem("sector_madness_sidebar_collapsed");
-    if (savedCollapsed !== null) {
-      setIsCollapsed(savedCollapsed === "true");
-    }
-    const saved = localStorage.getItem("sector_madness_admin_theme");
-    if (saved !== null) {
-      setInternalDarkMode(saved === "dark");
+    setIsCollapsed(getInitialSidebarCollapsed());
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("sector_madness_admin_theme");
+      if (saved !== null) {
+        setInternalDarkMode(saved === "dark");
+      }
     }
   }, []);
 
-  // Reset pending state when pathname changes
+  // Reset pending state & close mobile drawer when pathname changes
   useEffect(() => {
     setPendingHref(null);
+    setIsOpenMobile(false);
   }, [pathname]);
 
   // Synchronous ref callback for 0-frame scroll restoration
@@ -140,6 +142,29 @@ export default function AdminSidebar({ activeTab, isDarkMode }: AdminSidebarProp
   };
 
   useEffect(() => {
+    const loadUserData = () => {
+      if (typeof window !== "undefined") {
+        try {
+          const userData = localStorage.getItem("sector_madness_user");
+          if (userData) {
+            const parsed = JSON.parse(userData);
+            const name =
+              parsed.name ||
+              [parsed.firstName, parsed.lastName].filter(Boolean).join(" ") ||
+              (parsed.email ? parsed.email.split("@")[0] : "Admin SectorMadness");
+            const initial = name ? name.trim().charAt(0).toUpperCase() : "A";
+            const role =
+              parsed.role === "admin" || parsed.isAdmin
+                ? "Administrator"
+                : parsed.role || "Administrator";
+            setAdminUser({ name, role, initial });
+          }
+        } catch {
+          // ignore
+        }
+      }
+    };
+
     if (typeof window !== "undefined") {
       document.title = "Sector Madness - Admin Panel";
       try {
@@ -147,23 +172,11 @@ export default function AdminSidebar({ activeTab, isDarkMode }: AdminSidebarProp
         if (savedCollapsed !== null) {
           setIsCollapsed(savedCollapsed === "true");
         }
-        const userData = localStorage.getItem("sector_madness_user");
-        if (userData) {
-          const parsed = JSON.parse(userData);
-          const name =
-            parsed.name ||
-            [parsed.firstName, parsed.lastName].filter(Boolean).join(" ") ||
-            (parsed.email ? parsed.email.split("@")[0] : "Admin SectorMadness");
-          const initial = name ? name.charAt(0).toUpperCase() : "A";
-          const role =
-            parsed.role === "admin" || parsed.isAdmin
-              ? "Administrator"
-              : parsed.role || "Administrator";
-          setAdminUser({ name, role, initial });
-        }
       } catch {
         // ignore
       }
+      loadUserData();
+      window.addEventListener("sector_auth_change", loadUserData);
     }
 
     const handleThemeEvent = () => {
@@ -173,14 +186,21 @@ export default function AdminSidebar({ activeTab, isDarkMode }: AdminSidebarProp
       }
     };
 
-    const handleCollapseToggle = () => {
-      setIsCollapsed((prev) => {
-        const next = !prev;
-        if (typeof window !== "undefined") {
-          localStorage.setItem("sector_madness_sidebar_collapsed", String(next));
-        }
-        return next;
-      });
+    const handleCollapseToggle = (e?: Event) => {
+      const customEv = e as CustomEvent<{ collapsed?: boolean }> | undefined;
+      if (typeof window !== "undefined" && window.innerWidth < 768) {
+        setIsOpenMobile((prev) => !prev);
+        return;
+      }
+      if (customEv && customEv.detail && typeof customEv.detail.collapsed === "boolean") {
+        setSidebarCollapsedCache(customEv.detail.collapsed);
+        setIsCollapsed(customEv.detail.collapsed);
+      } else if (typeof window !== "undefined") {
+        const saved = localStorage.getItem("sector_madness_sidebar_collapsed");
+        const val = saved === "true";
+        setSidebarCollapsedCache(val);
+        setIsCollapsed(val);
+      }
     };
 
     window.addEventListener("sector_theme_change", handleThemeEvent);
@@ -188,6 +208,7 @@ export default function AdminSidebar({ activeTab, isDarkMode }: AdminSidebarProp
     return () => {
       window.removeEventListener("sector_theme_change", handleThemeEvent);
       window.removeEventListener("sector_sidebar_collapse_toggle", handleCollapseToggle);
+      window.removeEventListener("sector_auth_change", loadUserData);
     };
   }, []);
 
@@ -263,6 +284,33 @@ export default function AdminSidebar({ activeTab, isDarkMode }: AdminSidebarProp
               <path d="M15 12h.01" />
             </svg>
           ),
+        },
+        {
+          id: "laporan",
+          label: "Laporan",
+          href: "/admin/laporan/penjualan",
+          isDropdown: true,
+          icon: (
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+              <polyline points="10 9 9 9 8 9" />
+            </svg>
+          ),
+          children: [
+            {
+              id: "laporan-penjualan",
+              label: "Penjualan",
+              href: "/admin/laporan/penjualan",
+            },
+            {
+              id: "laporan-customer",
+              label: "Customer",
+              href: "/admin/laporan/customer",
+            },
+          ],
         },
       ],
     },
@@ -344,6 +392,17 @@ export default function AdminSidebar({ activeTab, isDarkMode }: AdminSidebarProp
             </svg>
           ),
         },
+        {
+          id: "profile",
+          label: "Profile Admin",
+          href: "/admin/profile",
+          icon: (
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          ),
+        },
       ],
     },
     {
@@ -368,10 +427,20 @@ export default function AdminSidebar({ activeTab, isDarkMode }: AdminSidebarProp
 
   return (
     <>
+      {/* Mobile Backdrop Overlay */}
+      {isOpenMobile && (
+        <div
+          onClick={() => setIsOpenMobile(false)}
+          className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-xs transition-opacity"
+        />
+      )}
+
       <aside
-        className={`w-full ${
-          isCollapsed ? "lg:w-20" : "lg:w-72"
-        } flex flex-col justify-between h-screen sticky top-0 shrink-0 font-[family-name:var(--font-body)] transition-all duration-300 ease-in-out z-40 ${
+        className={`fixed inset-y-0 left-0 z-50 md:sticky md:top-0 md:z-40 h-screen shrink-0 font-[family-name:var(--font-body)] transition-all duration-300 ease-in-out flex flex-col justify-between ${
+          isOpenMobile ? "translate-x-0 w-72 shadow-2xl" : "-translate-x-full md:translate-x-0"
+        } ${
+          isCollapsed ? "md:w-20" : "md:w-72"
+        } ${
           activeDarkMode
             ? "bg-[#0F0F11] text-white border-r border-[#242428]"
             : "bg-[#F0F1F4] text-[#0A0A0A] border-r border-[#DCDDE1]"
@@ -442,6 +511,142 @@ export default function AdminSidebar({ activeTab, isDarkMode }: AdminSidebarProp
 
                 <div className="flex flex-col gap-1.5">
                   {group.items.map((item) => {
+                    if ((item as any).isDropdown) {
+                      const isChildActive = (href: string) =>
+                        pendingHref === href || (!pendingHref && (pathname === href || pathname?.startsWith(href)));
+                      const isParentActive = ((item as any).children || []).some((child: any) => isChildActive(child.href));
+
+                      if (isCollapsed) {
+                        return (
+                          <div
+                            key={item.id}
+                            className="flex justify-center w-full my-1.5"
+                            onMouseEnter={(e) => {
+                              if (!isParentActive) {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                setHoveredTooltip({
+                                  label: item.label,
+                                  top: rect.top + rect.height / 2,
+                                });
+                              }
+                            }}
+                            onMouseLeave={() => setHoveredTooltip(null)}
+                          >
+                            <Link
+                              ref={isParentActive ? activeItemRef : undefined}
+                              href={item.href}
+                              prefetch={true}
+                              onClick={() => setPendingHref(item.href)}
+                              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors duration-150 cursor-pointer shrink-0 ${
+                                isParentActive
+                                  ? activeDarkMode
+                                    ? "bg-white/[0.12] text-[#B6A47E] font-bold shadow-sm"
+                                    : "bg-white text-[#0A0A0A] font-bold shadow-sm border border-[#DCDDE1]"
+                                  : activeDarkMode
+                                  ? "text-[#8A8A8A] hover:bg-white/[0.08] hover:text-[#F5F5F5]"
+                                  : "text-[#555555] hover:bg-white/80 hover:text-[#0A0A0A]"
+                              }`}
+                            >
+                              <span
+                                className={`shrink-0 ${
+                                  isParentActive
+                                    ? "text-[#B6A47E]"
+                                    : activeDarkMode
+                                    ? "text-[#777777]"
+                                    : "text-[#666666]"
+                                }`}
+                              >
+                                {item.icon}
+                              </span>
+                            </Link>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div key={item.id} className="flex flex-col">
+                          <button
+                            type="button"
+                            onClick={() => setUserToggledLaporan((prev) => (prev !== null ? !prev : !isLaporanOpen))}
+                            className={`flex items-center justify-between min-h-[40px] py-6 pr-6 text-[14px] tracking-wide transition-colors duration-150 cursor-pointer font-semibold border-l-[3.5px] rounded-r-md ${
+                              isParentActive
+                                ? activeDarkMode
+                                  ? "border-transparent text-[#F5F5F5] hover:bg-white/[0.05]"
+                                  : "border-transparent text-[#0A0A0A] hover:bg-white/60"
+                                : activeDarkMode
+                                ? "border-transparent text-[#8A8A8A] hover:bg-white/[0.05] hover:text-[#D0D0D0]"
+                                : "border-transparent text-[#555555] hover:bg-white/60 hover:text-[#0A0A0A]"
+                            }`}
+                            style={{
+                              paddingLeft: "22px",
+                              marginRight: "12px",
+                            }}
+                          >
+                            <div className="flex items-center gap-3.5 min-w-0">
+                              <span
+                                className={`shrink-0 ${
+                                  isParentActive
+                                    ? "text-[#B6A47E]"
+                                    : activeDarkMode
+                                    ? "text-[#666666]"
+                                    : "text-[#777777]"
+                                }`}
+                              >
+                                {item.icon}
+                              </span>
+                              <span className="truncate">{item.label}</span>
+                            </div>
+                            <svg
+                              className={`w-4 h-4 transition-transform duration-200 shrink-0 ml-2 mr-6 ${
+                                isLaporanOpen ? "rotate-180 text-[#B6A47E]" : activeDarkMode ? "text-gray-500" : "text-gray-400"
+                              }`}
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+
+                          {isLaporanOpen && (
+                            <div className="flex flex-col gap-2.5 mt-3 mb-2">
+                              {((item as any).children || []).map((child: any) => {
+                                const isSubActive = isChildActive(child.href);
+                                return (
+                                  <Link
+                                    key={child.id}
+                                    ref={isSubActive ? activeItemRef : undefined}
+                                    href={child.href}
+                                    prefetch={true}
+                                    onClick={() => {
+                                      setPendingHref(child.href);
+                                      setUserToggledLaporan(true);
+                                    }}
+                                    className={`flex items-center gap-3.5 py-2.5 pr-4 text-[13.5px] tracking-wide transition-colors duration-150 cursor-pointer font-medium border-l-[3.5px] rounded-r-md ${
+                                      isSubActive
+                                        ? activeDarkMode
+                                          ? "bg-white/[0.08] text-[#B6A47E] font-bold border-[#B6A47E] shadow-sm"
+                                          : "bg-white text-[#0A0A0A] font-bold border-[#B6A47E] shadow-xs"
+                                        : activeDarkMode
+                                        ? "border-transparent text-[#8A8A8A] hover:bg-white/[0.05] hover:text-[#D0D0D0] hover:border-white/40"
+                                        : "border-transparent text-[#555555] hover:bg-white/60 hover:text-[#0A0A0A] hover:border-[#CBCED6]"
+                                    }`}
+                                    style={{
+                                      paddingLeft: "22px",
+                                      marginRight: "12px",
+                                    }}
+                                  >
+                                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isSubActive ? "bg-[#B6A47E]" : activeDarkMode ? "bg-gray-500" : "bg-gray-400"}`} />
+                                    <span className="truncate">{child.label}</span>
+                                  </Link>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
+
                     const isActive =
                       pendingHref === item.href ||
                       (!pendingHref &&
@@ -648,6 +853,8 @@ export default function AdminSidebar({ activeTab, isDarkMode }: AdminSidebarProp
           <span>{hoveredTooltip.label}</span>
         </div>
       )}
+
+
 
       {/* Fullscreen Loading Overlay on Logout */}
       {isLoggingOut &&
