@@ -484,7 +484,45 @@ class CheckoutController extends Controller
             $voucherCode = $voucher->code;
         }
 
-        $shippingCost = (int)$request->shipping_price;
+        // --- SERVER-SIDE SHIPPING RATE RECALCULATION & VALIDATION ---
+        // DO NOT trust $request->shipping_price from frontend!
+        $shippingRequest = new \Illuminate\Http\Request();
+        $shippingRequest->replace([
+            'city' => $shippingAddressData['city'] ?? null,
+            'province' => $shippingAddressData['province'] ?? null,
+            'district' => $shippingAddressData['district'] ?? null,
+            'destination_postcode' => $shippingAddressData['postal_code'] ?? null,
+            'weight' => 1500, // Matching the default in ShippingController
+            'couriers' => strtolower($request->courier_code),
+        ]);
+
+        $shippingController = app(\App\Http\Controllers\Api\ShippingController::class);
+        $ratesResponse = $shippingController->rates($shippingRequest);
+        $ratesData = $ratesResponse->getData(true);
+
+        $validShippingCost = null;
+        if (isset($ratesData['status']) && $ratesData['status'] === true && !empty($ratesData['data'])) {
+            foreach ($ratesData['data'] as $rate) {
+                if (
+                    strtoupper($rate['courier_code']) === strtoupper($request->courier_code) &&
+                    strtoupper($rate['service_code']) === strtoupper($request->service_code)
+                ) {
+                    $validShippingCost = (int) $rate['shipping_price'];
+                    break;
+                }
+            }
+        }
+
+        if ($validShippingCost === null) {
+            return response()->json([
+                'status' => false, 
+                'message' => 'Invalid or unavailable shipping service selected. Please refresh the shipping options.'
+            ], 422);
+        }
+
+        // Use the validated server-side calculated shipping cost!
+        $shippingCost = $validShippingCost;
+
         if ($shippingCost > 0) {
             $itemDetailsForMidtrans[] = [
                 'id'       => 'SHIPPING-FEE',
