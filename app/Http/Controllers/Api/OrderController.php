@@ -261,10 +261,18 @@ class OrderController extends Controller
     public function cancel(Request $request, $order_number)
     {
         $user = $this->getUser($request);
+        if (!$user) {
+            return response()->json(['status' => false, 'message' => 'Authentication required'], 401);
+        }
+
         $order = Order::where('order_number', $order_number)->first();
 
         if (!$order) {
             return response()->json(['status' => false, 'message' => 'Order not found'], 404);
+        }
+
+        if ($order->user_id !== $user->id) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized access to this order'], 403);
         }
 
         if (in_array(strtolower($order->status), ['delivered', 'completed', 'cancelled', 'dibatalkan'])) {
@@ -403,10 +411,19 @@ class OrderController extends Controller
      */
     public function confirmReceived(Request $request, $order_number)
     {
+        $user = $this->getUser($request);
+        if (!$user) {
+            return response()->json(['status' => false, 'message' => 'Authentication required'], 401);
+        }
+
         $order = Order::where('order_number', $order_number)->first();
 
         if (!$order) {
             return response()->json(['status' => false, 'message' => 'Order not found'], 404);
+        }
+
+        if ($order->user_id !== $user->id) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized access to this order'], 403);
         }
 
         $order->update(['status' => 'completed']);
