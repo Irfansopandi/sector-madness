@@ -17,12 +17,6 @@ class OrderController extends Controller
     private function getUser(Request $request)
     {
         $user = $request->user('sanctum') ?: $request->user();
-        if (!$user) {
-            $memberEmail = $request->header('X-Member-Email');
-            if ($memberEmail && (app()->environment('local') || app()->environment('testing'))) {
-                $user = User::where('email', $memberEmail)->first();
-            }
-        }
         if (!$user && !app()->environment('testing')) {
             return null;
         }

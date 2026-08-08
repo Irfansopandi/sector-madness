@@ -72,60 +72,55 @@ Route::post('/webhook/midtrans', [PaymentController::class, 'webhook']);
 
 /*
 |--------------------------------------------------------------------------
-| Customer Profile, Cart, Checkout, Address Book & Orders API
-|--------------------------------------------------------------------------
-*/
-// Customer Profile
-Route::get('/user', [AuthController::class, 'profile'])->middleware('auth:sanctum');
-Route::get('/user/profile-info', [AuthController::class, 'profile']);
-Route::put('/user/profile', [AuthController::class, 'updateProfile']);
-
-// Shipping Address Book (CRUD)
-Route::get('/shipping-address', [ShippingAddressController::class, 'index']);
-Route::post('/shipping-address', [ShippingAddressController::class, 'store']);
-Route::put('/shipping-address/{id}', [ShippingAddressController::class, 'update']);
-Route::delete('/shipping-address/{id}', [ShippingAddressController::class, 'destroy']);
-
-// Shopping Bag / Cart API
-Route::get('/cart', [CartController::class, 'index']);
-Route::post('/cart', [CartController::class, 'store']);
-Route::post('/cart/items', [CartController::class, 'store']);
-Route::put('/cart/{id}', [CartController::class, 'update']);
-Route::put('/cart/items/{id}', [CartController::class, 'update']);
-Route::delete('/cart/{id}', [CartController::class, 'destroy']);
-Route::delete('/cart/items/{id}', [CartController::class, 'destroy']);
-Route::delete('/cart', [CartController::class, 'clear']);
-
-// Wishlist API
-Route::get('/wishlist', [WishlistController::class, 'index']);
-Route::post('/wishlist', [WishlistController::class, 'store']);
-Route::delete('/wishlist/{product_id}', [WishlistController::class, 'destroy']);
-Route::get('/wishlist/check/{product_id}', [WishlistController::class, 'check']);
-
-// Checkout, Voucher & Payment Methods API
-Route::get('/checkout/summary', [CheckoutController::class, 'summary']);
-Route::post('/checkout/summary', [CheckoutController::class, 'summary']);
-Route::get('/checkout/status/{order_number}', [CheckoutController::class, 'checkPaymentStatus']);
-Route::post('/voucher/check', [CheckoutController::class, 'checkVoucher'])->middleware('throttle:15,1');
-Route::get('/payment-methods', [CheckoutController::class, 'paymentMethods']);
-Route::post('/payment/create', [CheckoutController::class, 'createPayment']);
-Route::post('/checkout', [CheckoutController::class, 'createPayment']);
-
-// Orders History & Detail API
-Route::get('/orders', [OrderController::class, 'index']);
-Route::get('/orders/{order_number}', [OrderController::class, 'show']);
-Route::post('/orders/{order_number}/cancel', [OrderController::class, 'cancel']);
-Route::post('/orders/{order_number}/confirm-received', [OrderController::class, 'confirmReceived']);
-
-
-/*
-|--------------------------------------------------------------------------
-| Strict Authenticated Logout Routes
+| Strict Authenticated Routes
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth:sanctum')->group(function () {
+    // Customer Profile
+    Route::get('/user', [AuthController::class, 'profile']);
+    Route::get('/user/profile-info', [AuthController::class, 'profile']);
+    Route::put('/user/profile', [AuthController::class, 'updateProfile']);
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    // Shipping Address Book (CRUD)
+    Route::get('/shipping-address', [ShippingAddressController::class, 'index']);
+    Route::post('/shipping-address', [ShippingAddressController::class, 'store']);
+    Route::put('/shipping-address/{id}', [ShippingAddressController::class, 'update']);
+    Route::delete('/shipping-address/{id}', [ShippingAddressController::class, 'destroy']);
+
+    // Shopping Bag / Cart API
+    Route::get('/cart', [CartController::class, 'index']);
+    Route::post('/cart', [CartController::class, 'store']);
+    Route::post('/cart/items', [CartController::class, 'store']);
+    Route::put('/cart/{id}', [CartController::class, 'update']);
+    Route::put('/cart/items/{id}', [CartController::class, 'update']);
+    Route::delete('/cart/{id}', [CartController::class, 'destroy']);
+    Route::delete('/cart/items/{id}', [CartController::class, 'destroy']);
+    Route::delete('/cart', [CartController::class, 'clear']);
+
+    // Wishlist API
+    Route::get('/wishlist', [WishlistController::class, 'index']);
+    Route::post('/wishlist', [WishlistController::class, 'store']);
+    Route::delete('/wishlist/{product_id}', [WishlistController::class, 'destroy']);
+    Route::get('/wishlist/check/{product_id}', [WishlistController::class, 'check']);
+
+    // Checkout, Voucher API
+    Route::get('/checkout/summary', [CheckoutController::class, 'summary']);
+    Route::post('/checkout/summary', [CheckoutController::class, 'summary']);
+    Route::post('/voucher/check', [CheckoutController::class, 'checkVoucher'])->middleware('throttle:15,1');
+    Route::post('/payment/create', [CheckoutController::class, 'createPayment']);
+    Route::post('/checkout', [CheckoutController::class, 'createPayment']);
+
+    // Orders History & Detail API
+    Route::get('/orders', [OrderController::class, 'index']);
+    Route::get('/orders/{order_number}', [OrderController::class, 'show']);
+    Route::post('/orders/{order_number}/cancel', [OrderController::class, 'cancel']);
+    Route::post('/orders/{order_number}/confirm-received', [OrderController::class, 'confirmReceived']);
 });
+
+// Checkout status and payment methods (Public / No User check)
+Route::get('/checkout/status/{order_number}', [CheckoutController::class, 'checkPaymentStatus']);
+Route::get('/payment-methods', [CheckoutController::class, 'paymentMethods']);
 
 /*
 |--------------------------------------------------------------------------

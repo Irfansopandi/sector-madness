@@ -203,12 +203,6 @@ class AuthController extends Controller
     public function profile(Request $request)
     {
         $user = $request->user('sanctum') ?: $request->user();
-        if (!$user) {
-            $memberEmail = $request->header('X-Member-Email');
-            if ($memberEmail) {
-                $user = User::where('email', $memberEmail)->first();
-            }
-        }
 
         if (!$user) {
             return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
@@ -236,12 +230,6 @@ class AuthController extends Controller
     public function updateProfile(Request $request)
     {
         $user = $request->user('sanctum') ?: $request->user();
-        if (!$user) {
-            $memberEmail = $request->header('X-Member-Email');
-            if ($memberEmail) {
-                $user = User::where('email', $memberEmail)->first();
-            }
-        }
 
         if (!$user) {
             return response()->json(['status' => false, 'message' => 'Unauthorized or User not found'], 401);

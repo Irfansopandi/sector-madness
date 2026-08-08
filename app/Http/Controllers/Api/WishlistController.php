@@ -16,12 +16,6 @@ class WishlistController extends Controller
     private function getUser(Request $request)
     {
         $user = $request->user('sanctum') ?: $request->user();
-        if (!$user) {
-            $memberEmail = $request->header('X-Member-Email');
-            if ($memberEmail) {
-                $user = User::where('email', $memberEmail)->first();
-            }
-        }
         if (!$user && !app()->environment('testing')) {
             return null;
         }
