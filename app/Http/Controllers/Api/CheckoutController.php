@@ -144,7 +144,10 @@ class CheckoutController extends Controller
         }
 
         $user = $this->getUser($request);
-        $cart = Cart::where('user_id', $user ? $user->id : 1)->first();
+        if (!$user) {
+            return response()->json(['status' => false, 'message' => 'Unauthenticated.'], 401);
+        }
+        $cart = Cart::where('user_id', $user->id)->first();
 
         $subtotal = 0;
         if ($cart) {
@@ -180,7 +183,7 @@ class CheckoutController extends Controller
             ], 422);
         }
 
-        if ($subtotal > 0 && $subtotal < (float)$voucher->minimum_purchase) {
+        if ($subtotal < (float)$voucher->minimum_purchase) {
             return response()->json([
                 'status'  => false,
                 'message' => "Minimum purchase of Rp " . number_format($voucher->minimum_purchase, 0, ',', '.') . " is required for this voucher.",
@@ -219,7 +222,10 @@ class CheckoutController extends Controller
     public function summary(Request $request)
     {
         $user = $this->getUser($request);
-        $cart = Cart::where('user_id', $user ? $user->id : 1)->first();
+        if (!$user) {
+            return response()->json(['status' => false, 'message' => 'Unauthenticated.'], 401);
+        }
+        $cart = Cart::where('user_id', $user->id)->first();
 
         $cartItems = $cart ? $cart->items()->with('product')->get() : collect([]);
 
