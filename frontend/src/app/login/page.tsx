@@ -259,7 +259,7 @@ export default function LoginPage() {
                       setUserEmail(e.target.value);
                       clearError("email");
                     }}
-                    placeholder="name@example.com"
+                    placeholder="Enter your email"
                     style={{ fontSize: "15px", padding: "18px 20px", fontFamily: "'Inter', -apple-system, sans-serif" }}
                     className={`w-full text-[#0A0A0A] font-medium border focus:outline-none transition-all duration-200 rounded-none ${
                       errors.email ? "bg-[#FFF5F5] border-[#D92323] focus:border-[#D92323]" : "bg-[#F3F6F9] border-[#E0E6ED] focus:border-[#0A0A0A] focus:bg-[#FFFFFF]"
@@ -280,7 +280,7 @@ export default function LoginPage() {
                         setPassword(e.target.value);
                         clearError("password");
                       }}
-                      placeholder="••••••••"
+                      placeholder="Enter your password"
                       style={{ fontSize: "15px", padding: "18px 20px" }}
                       className={`w-full text-[#0A0A0A] pr-12 font-medium border focus:outline-none transition-all duration-200 rounded-none font-mono ${
                         errors.password ? "bg-[#FFF5F5] border-[#D92323] focus:border-[#D92323]" : "bg-[#F3F6F9] border-[#E0E6ED] focus:border-[#0A0A0A] focus:bg-[#FFFFFF]"

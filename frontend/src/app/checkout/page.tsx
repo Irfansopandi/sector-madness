@@ -55,111 +55,6 @@ const DEFAULT_SHIPPING_OPTIONS: ShippingRate[] = [
   },
 ];
 
-/**
- * DYNAMIC INDONESIAN SHIPPING TARIFF ENGINE
- * Automatically calculates accurate shipping costs for JNE and J&T Express
- * based on destination district, city, province, and postal code from Sector Madness Fulfillment Center (Jabodetabek).
- */
-function calculateDynamicShipping(district: string = "", city: string = "", province: string = "", postalCode: string = ""): { jne: number; jnt: number; jneEst: string; jntEst: string } {
-  const combined = `${district} ${city} ${province} ${postalCode}`.toLowerCase().trim();
-
-  // 1. Jabodetabek (Jakarta, Bogor, Depok, Tangerang, Bekasi, Cikarang, Bintaro, BSD) -> Very Close / Instant zone
-  if (
-    combined.includes("jakarta") || combined.includes("dki") ||
-    combined.includes("tangerang") || combined.includes("tangsel") || combined.includes("bsd") || combined.includes("bintaro") || combined.includes("serpong") || combined.includes("karawaci") ||
-    combined.includes("bekasi") || combined.includes("cikarang") || combined.includes("tambun") || combined.includes("cibitung") || combined.includes("cibaru") ||
-    combined.includes("bogor") || combined.includes("depok") || combined.includes("sentul") || combined.includes("cibinong") || combined.includes("margonda") ||
-    (postalCode.startsWith("10") || postalCode.startsWith("11") || postalCode.startsWith("12") || postalCode.startsWith("13") || postalCode.startsWith("14") || postalCode.startsWith("15") || postalCode.startsWith("16") || postalCode.startsWith("17"))
-  ) {
-    return { jne: 10000, jnt: 12000, jneEst: "1 - 2 Days", jntEst: "1 Day (Priority)" };
-  }
-
-  // 2. Karawang, Cikampek, Purwakarta, Subang, Bandung, Cimahi, Sumedang (Jawa Barat Ring 1)
-  if (
-    combined.includes("karawang") || combined.includes("tempuran") || combined.includes("rengasdengklok") || combined.includes("klari") || combined.includes("telukjambe") || combined.includes("cikampek") || combined.includes("cilamaya") ||
-    combined.includes("purwakarta") || combined.includes("subang") || combined.includes("ciater") ||
-    combined.includes("bandung") || combined.includes("dago") || combined.includes("pasteur") || combined.includes("lembang") || combined.includes("cimahi") || combined.includes("sumedang") || combined.includes("jatinangor") ||
-    postalCode.startsWith("40") || postalCode.startsWith("41") || postalCode.startsWith("453")
-  ) {
-    return { jne: 15000, jnt: 18000, jneEst: "1 - 2 Days", jntEst: "1 Day (Express)" };
-  }
-
-  // 3. Banten non-Tangerang (Serang, Cilegon, Pandeglang, Lebak, Rangkasbitung)
-  if (combined.includes("banten") || combined.includes("serang") || combined.includes("cilegon") || combined.includes("pandeglang") || combined.includes("lebak") || postalCode.startsWith("42")) {
-    return { jne: 14000, jnt: 16000, jneEst: "1 - 2 Days", jntEst: "1 Day" };
-  }
-
-  // 4. Jawa Barat Ring 2 (Cirebon, Indramayu, Majalengka, Kuningan, Sukabumi, Cianjur, Garut, Tasikmalaya, Ciamis, Pangandaran)
-  if (
-    combined.includes("jawa barat") || combined.includes("jabar") || combined.includes("cirebon") || combined.includes("indramayu") || combined.includes("majalengka") || combined.includes("kuningan") ||
-    combined.includes("sukabumi") || combined.includes("cianjur") || combined.includes("garut") || combined.includes("tasikmalaya") || combined.includes("ciamis") || combined.includes("pangandaran") ||
-    postalCode.startsWith("43") || postalCode.startsWith("44") || postalCode.startsWith("45") || postalCode.startsWith("46")
-  ) {
-    return { jne: 18000, jnt: 20000, jneEst: "2 - 3 Days", jntEst: "1 - 2 Days" };
-  }
-
-  // 5. Jawa Tengah & D.I. Yogyakarta (Semarang, Solo, Jogja, Sleman, Bantul, Magelang, Pekalongan, Kudus, Cilacap, dll)
-  if (
-    combined.includes("jawa tengah") || combined.includes("jateng") || combined.includes("yogyakarta") || combined.includes("jogja") || combined.includes("sleman") || combined.includes("bantul") || combined.includes("diy") ||
-    combined.includes("semarang") || combined.includes("surakarta") || combined.includes("solo") || combined.includes("magelang") || combined.includes("pekalongan") || combined.includes("tegal") || combined.includes("banyumas") || combined.includes("purwokerto") || combined.includes("klaten") || combined.includes("boyolali") || combined.includes("kudus") || combined.includes("jepara") || combined.includes("pati") ||
-    postalCode.startsWith("50") || postalCode.startsWith("51") || postalCode.startsWith("52") || postalCode.startsWith("53") || postalCode.startsWith("54") || postalCode.startsWith("55") || postalCode.startsWith("56") || postalCode.startsWith("57") || postalCode.startsWith("58") || postalCode.startsWith("59")
-  ) {
-    return { jne: 20000, jnt: 22000, jneEst: "2 - 3 Days", jntEst: "1 - 2 Days" };
-  }
-
-  // 6. Jawa Timur (Surabaya, Malang, Sidoarjo, Gresik, Mojokerto, Madiun, Kediri, Jember, Banyuwangi, Madura)
-  if (
-    combined.includes("jawa timur") || combined.includes("jatim") || combined.includes("surabaya") || combined.includes("malang") || combined.includes("sidoarjo") || combined.includes("gresik") || combined.includes("mojokerto") || combined.includes("kediri") || combined.includes("madiun") || combined.includes("banyuwangi") || combined.includes("jember") || combined.includes("blitar") || combined.includes("madura") ||
-    postalCode.startsWith("60") || postalCode.startsWith("61") || postalCode.startsWith("62") || postalCode.startsWith("63") || postalCode.startsWith("64") || postalCode.startsWith("65") || postalCode.startsWith("66") || postalCode.startsWith("67") || postalCode.startsWith("68") || postalCode.startsWith("69")
-  ) {
-    return { jne: 24000, jnt: 26000, jneEst: "2 - 3 Days", jntEst: "1 - 2 Days" };
-  }
-
-  // 7. Bali & Nusa Tenggara (Denpasar, Badung, Seminyak, Canggu, Ubud, Kuta, Mataram, Lombok, Kupang)
-  if (
-    combined.includes("bali") || combined.includes("denpasar") || combined.includes("badung") || combined.includes("seminyak") || combined.includes("canggu") || combined.includes("kuta") || combined.includes("ubud") || combined.includes("sanur") || combined.includes("nusa dua") ||
-    combined.includes("ntb") || combined.includes("ntt") || combined.includes("lombok") || combined.includes("mataram") || combined.includes("kupang") || combined.includes("labuan bajo") ||
-    postalCode.startsWith("80") || postalCode.startsWith("81") || postalCode.startsWith("82") || postalCode.startsWith("83") || postalCode.startsWith("84") || postalCode.startsWith("85")
-  ) {
-    return { jne: 32000, jnt: 35000, jneEst: "3 - 4 Days", jntEst: "2 - 3 Days" };
-  }
-
-  // 8. Sumatera (Medan, Palembang, Pekanbaru, Padang, Batam, Lampung, Jambi, Aceh)
-  if (
-    combined.includes("sumatera") || combined.includes("sumatra") || combined.includes("medan") || combined.includes("palembang") || combined.includes("pekanbaru") || combined.includes("padang") || combined.includes("batam") || combined.includes("lampung") || combined.includes("bandari") || combined.includes("jambi") || combined.includes("aceh") || combined.includes("bengkulu") || combined.includes("riau") ||
-    postalCode.startsWith("20") || postalCode.startsWith("21") || postalCode.startsWith("22") || postalCode.startsWith("23") || postalCode.startsWith("24") || postalCode.startsWith("25") || postalCode.startsWith("26") || postalCode.startsWith("27") || postalCode.startsWith("28") || postalCode.startsWith("29") || postalCode.startsWith("30") || postalCode.startsWith("31") || postalCode.startsWith("32") || postalCode.startsWith("33") || postalCode.startsWith("34") || postalCode.startsWith("35") || postalCode.startsWith("36") || postalCode.startsWith("37") || postalCode.startsWith("38") || postalCode.startsWith("39")
-  ) {
-    return { jne: 38000, jnt: 40000, jneEst: "3 - 5 Days", jntEst: "2 - 4 Days" };
-  }
-
-  // 9. Kalimantan (Banjarmasin, Samarinda, Balikpapan, Pontianak, Palangkaraya, IKN)
-  if (
-    combined.includes("kalimantan") || combined.includes("kalsel") || combined.includes("kaltim") || combined.includes("kalbar") || combined.includes("kalteng") || combined.includes("banjarmasin") || combined.includes("samarinda") || combined.includes("balikpapan") || combined.includes("pontianak") || combined.includes("ikn") || combined.includes("bontang") ||
-    postalCode.startsWith("70") || postalCode.startsWith("71") || postalCode.startsWith("72") || postalCode.startsWith("73") || postalCode.startsWith("74") || postalCode.startsWith("75") || postalCode.startsWith("76") || postalCode.startsWith("77") || postalCode.startsWith("78") || postalCode.startsWith("79")
-  ) {
-    return { jne: 45000, jnt: 48000, jneEst: "3 - 5 Days", jntEst: "2 - 4 Days" };
-  }
-
-  // 10. Sulawesi (Makassar, Manado, Palu, Kendari, Gorontalo)
-  if (
-    combined.includes("sulawesi") || combined.includes("makassar") || combined.includes("manado") || combined.includes("palu") || combined.includes("kendari") || combined.includes("gorontalo") || combined.includes("mamuju") ||
-    postalCode.startsWith("90") || postalCode.startsWith("91") || postalCode.startsWith("92") || postalCode.startsWith("93") || postalCode.startsWith("94") || postalCode.startsWith("95") || postalCode.startsWith("96")
-  ) {
-    return { jne: 52000, jnt: 55000, jneEst: "4 - 6 Days", jntEst: "3 - 5 Days" };
-  }
-
-  // 11. Maluku & Papua (Ambon, Jayapura, Sorong, Timika, Merauke)
-  if (
-    combined.includes("maluku") || combined.includes("papua") || combined.includes("ambon") || combined.includes("ternate") || combined.includes("jayapura") || combined.includes("sorong") || combined.includes("timika") || combined.includes("merauke") ||
-    postalCode.startsWith("97") || postalCode.startsWith("98") || postalCode.startsWith("99")
-  ) {
-    return { jne: 85000, jnt: 90000, jneEst: "5 - 7 Days", jntEst: "4 - 6 Days" };
-  }
-
-  // Default fallback rate (Standard Indonesian inter-city shipping)
-  return { jne: 20000, jnt: 22000, jneEst: "2 - 3 Days", jntEst: "1 - 2 Days" };
-}
-
 // Comprehensive nationwide Indonesian location & real-time postal code directory (150+ districts & regions)
 import { INDONESIA_LOCATION_DIRECTORY, getRealtimePostalCode, getRealtimeProvince } from '@/utils/location';
 
@@ -517,34 +412,9 @@ function CheckoutContent() {
     queryFn: () => getShippingRates({ destination_area_id: selectedAreaId, destination_postcode: postalCode, couriers: "jne,jnt", city, province: stateProvince, district: addressLine2 } as any),
   });
 
-  // Calculate real-time dynamic tariffs based on current shipping address
-  const dynamicPricing = useMemo(() => {
-    return calculateDynamicShipping(addressLine2, city, stateProvince, postalCode);
-  }, [addressLine2, city, stateProvince, postalCode]);
-
   const displayShippingOptions = useMemo<ShippingRate[]>(() => {
-    // Dynamic address-responsive pricing for JNE & J&T
-    return [
-      {
-        courier_code: "jne",
-        courier_name: "JNE EXPRESS",
-        service_code: "REG",
-        service_name: "REGULER LOGISTICS (INTERNATIONAL / DOMESTIC)",
-        shipping_price: dynamicPricing.jne,
-        estimated_delivery: dynamicPricing.jneEst,
-        description: "Standard tracked express delivery via Biteship Integrated Network",
-      },
-      {
-        courier_code: "jnt",
-        courier_name: "J&T EXPRESS",
-        service_code: "EZ",
-        service_name: "REGULAR & VIP EXPRESS LOGISTICS",
-        shipping_price: dynamicPricing.jnt,
-        estimated_delivery: dynamicPricing.jntEst,
-        description: "Priority expedited dispatch via Biteship Live Network",
-      },
-    ];
-  }, [dynamicPricing]);
+    return apiRates || [];
+  }, [apiRates]);
 
   const [selectedRate, setSelectedRate] = useState<ShippingRate>(DEFAULT_SHIPPING_OPTIONS[0]);
 
@@ -693,8 +563,8 @@ function CheckoutContent() {
         courier_name: selectedRate.courier_name || "JNE",
         service_code: selectedRate.service_code || "REG",
         service_name: selectedRate.service_name || "Regular Express",
-        shipping_price: selectedRate.shipping_price || 38000,
-        estimated_delivery: selectedRate.estimated_delivery || "1-2 Days",
+        shipping_price: selectedRate.shipping_price,
+        estimated_delivery: selectedRate.estimated_delivery,
         payment_method: selectedPaymentMethod,
       });
 
@@ -802,7 +672,7 @@ function CheckoutContent() {
                       data-error={!!formErrors.fullName}
                       value={fullName}
                       onChange={(e) => { setFullName(e.target.value); clearError("fullName"); }}
-                      placeholder="Enter full name"
+                      placeholder="Enter your name"
                       required
                       style={{ padding: "18px 22px" }}
                       className={`w-full ${formErrors.fullName ? "bg-[#220B0B] border-[#FF3333] text-white focus:border-[#FF5555]" : "bg-[#141414] border-[#2B2B2B] text-white focus:border-white"} border text-sm placeholder:text-[#555555] outline-none transition-colors rounded-none font-sans font-medium`}
@@ -822,7 +692,7 @@ function CheckoutContent() {
                         data-error={!!formErrors.phone}
                         value={phone}
                         onChange={(e) => { setPhone(e.target.value.replace(/[^0-9+]/g, "")); clearError("phone"); }}
-                        placeholder="081234567890"
+                        placeholder="Enter your phone number"
                         required
                         style={{ padding: "18px 22px" }}
                         className={`w-full ${formErrors.phone ? "bg-[#220B0B] border-[#FF3333] text-white focus:border-[#FF5555]" : "bg-[#141414] border-[#2B2B2B] text-white focus:border-white"} border text-sm placeholder:text-[#555555] outline-none transition-colors rounded-none font-sans font-medium`}
@@ -838,7 +708,7 @@ function CheckoutContent() {
                         data-error={!!formErrors.email}
                         value={email}
                         onChange={(e) => { setEmail(e.target.value); clearError("email"); }}
-                        placeholder="name@email.com"
+                        placeholder="Enter your email"
                         required
                         style={{ padding: "18px 22px" }}
                         className={`w-full ${formErrors.email ? "bg-[#220B0B] border-[#FF3333] text-white focus:border-[#FF5555]" : "bg-[#141414] border-[#2B2B2B] text-white focus:border-white"} border text-sm placeholder:text-[#555555] outline-none transition-colors rounded-none font-sans font-medium`}
@@ -1078,7 +948,7 @@ function CheckoutContent() {
                       data-error={!!formErrors.address}
                       value={address}
                       onChange={(e) => { setAddress(e.target.value); clearError("address"); }}
-                      placeholder="Street address, unit number, housing complex, etc."
+                      placeholder="Enter your address"
                       rows={4}
                       required
                       style={{ padding: "20px 22px", minHeight: "135px" }}
@@ -1113,7 +983,7 @@ function CheckoutContent() {
                         onBlur={() => setTimeout(() => {
                           if (activeDropdownField === "district") setShowLocationDropdown(false);
                         }, 300)}
-                        placeholder="Type district (e.g. Senopati, Menteng, Dago...)"
+                        placeholder="Enter your district"
                         style={{ padding: "18px 22px" }}
                         className={`w-full ${formErrors.addressLine2 ? "bg-[#220B0B] border-[#FF3333] text-white focus:border-[#FF5555]" : "bg-[#141414] border-[#2B2B2B] text-white focus:border-white"} border text-sm placeholder:text-[#555555] outline-none transition-colors rounded-none font-bold`}
                       />
@@ -1161,7 +1031,7 @@ function CheckoutContent() {
                         data-error={!!formErrors.stateProvince}
                         value={stateProvince}
                         onChange={(e) => { setStateProvince(e.target.value); clearError("stateProvince"); }}
-                        placeholder="DKI Jakarta"
+                        placeholder="Enter your province"
                         required
                         style={{ padding: "18px 22px" }}
                         className={`w-full ${formErrors.stateProvince ? "bg-[#220B0B] border-[#FF3333] text-white focus:border-[#FF5555]" : "bg-[#141414] border-[#2B2B2B] text-white focus:border-white"} border text-sm placeholder:text-[#555555] outline-none transition-colors rounded-none font-bold`}
@@ -1196,7 +1066,7 @@ function CheckoutContent() {
                         onBlur={() => setTimeout(() => {
                           if (activeDropdownField === "city") setShowLocationDropdown(false);
                         }, 300)}
-                        placeholder="Type city (e.g. Jakarta Selatan, Bandung, Surabaya...)"
+                        placeholder="Enter your city"
                         required
                         style={{ padding: "18px 22px" }}
                         className={`w-full ${formErrors.city ? "bg-[#220B0B] border-[#FF3333] text-white focus:border-[#FF5555]" : "bg-[#141414] border-[#2B2B2B] text-white focus:border-white"} border text-sm placeholder:text-[#555555] outline-none transition-colors rounded-none font-bold`}
@@ -1251,7 +1121,7 @@ function CheckoutContent() {
                         data-error={!!formErrors.postalCode}
                         value={postalCode}
                         onChange={(e) => { setPostalCode(e.target.value.replace(/[^0-9]/g, "")); clearError("postalCode"); }}
-                        placeholder="12110"
+                        placeholder="Enter your postal code"
                         required
                         style={{ padding: "18px 22px" }}
                         className={`w-full ${formErrors.postalCode ? "bg-[#220B0B] border-[#FF3333] text-white focus:border-[#FF5555]" : "bg-[#141414] border-[#2B2B2B] text-white focus:border-white"} border text-sm font-bold focus:border-white outline-none transition-colors rounded-none tracking-widest text-center`}
@@ -1398,7 +1268,7 @@ function CheckoutContent() {
                         type="text"
                         value={promoInput}
                         onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
-                        placeholder="ENTER VOUCHER CODE (e.g. SECTOR20)"
+                        placeholder="Enter voucher code"
                         disabled={!!appliedPromo}
                         style={{ padding: "16px 18px" }}
                         className="w-full bg-[#121212] border border-[#2B2B2B] text-xs text-white uppercase tracking-wider placeholder:text-[#555555] focus:border-[#B6A47E] outline-none transition-colors font-extrabold disabled:opacity-50 disabled:bg-[#101010] rounded-lg"

@@ -13,22 +13,7 @@ class ReportController extends Controller
     /**
      * Helper to verify Admin authorization
      */
-    private function checkAdmin(Request $request)
-    {
-        $user = $request->user('sanctum') ?: $request->user();
-        if ($user instanceof \App\Models\Admin || (isset($user->is_admin) && $user->is_admin)) {
-            return true;
-        }
-        $authHeader = $request->header('Authorization');
-        if ($authHeader && str_contains($authHeader, 'Bearer')) {
-            $token = trim(str_replace('Bearer ', '', $authHeader));
-            $pat = \Laravel\Sanctum\PersonalAccessToken::findToken($token);
-            if ($pat && ($pat->tokenable instanceof \App\Models\Admin || (isset($pat->tokenable->is_admin) && $pat->tokenable->is_admin))) {
-                return true;
-            }
-        }
-        return false;
-    }
+    // checkAdmin handled by middleware
 
     /**
      * Laporan Penjualan (Sales Report)
@@ -36,13 +21,6 @@ class ReportController extends Controller
      */
     public function sales(Request $request)
     {
-        if (!$this->checkAdmin($request)) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Unauthorized admin access'
-            ], 403);
-        }
-
         $startDateInput = $request->query('start_date');
         $endDateInput = $request->query('end_date');
 
@@ -184,13 +162,6 @@ class ReportController extends Controller
      */
     public function customers(Request $request)
     {
-        if (!$this->checkAdmin($request)) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Unauthorized admin access'
-            ], 403);
-        }
-
         $startDateInput = $request->query('start_date');
         $endDateInput = $request->query('end_date');
 

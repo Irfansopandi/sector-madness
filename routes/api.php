@@ -34,75 +34,28 @@ Route::post('/register', [AuthController::class, 'register'])->middleware('throt
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
 Route::post('/admin/login', [AuthController::class, 'adminLogin'])->middleware('throttle:10,1');
 
-// Hero Banners API (Public & Admin Management)
-Route::get('/hero-banners', [HeroBannerController::class, 'index']);
-Route::get('/admin/hero-banners', [HeroBannerController::class, 'adminIndex']);
-Route::post('/admin/hero-banners', [HeroBannerController::class, 'store']);
-Route::put('/admin/hero-banners/{id}', [HeroBannerController::class, 'update']);
-Route::delete('/admin/hero-banners/{id}', [HeroBannerController::class, 'destroy']);
-
-// Admin Image Upload
-Route::post('/admin/upload', [UploadController::class, 'uploadImage']);
-
 Route::post('/forgot-password/send-otp', [ForgotPasswordController::class, 'sendOtp'])->middleware('throttle:5,1');
 Route::post('/forgot-password/verify-otp', [ForgotPasswordController::class, 'verifyOtp'])->middleware('throttle:5,1');
 Route::post('/forgot-password/reset', [ForgotPasswordController::class, 'resetPassword'])->middleware('throttle:5,1');
 
-// Categories API (Public & Admin Management)
+/*
+|--------------------------------------------------------------------------
+| Public API Routes
+|--------------------------------------------------------------------------
+*/
+Route::get('/hero-banners', [HeroBannerController::class, 'index']);
 Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/categories/{slug}', [CategoryController::class, 'show']);
-Route::post('/admin/categories', [CategoryController::class, 'store']);
-Route::put('/admin/categories/{id}', [CategoryController::class, 'update']);
-Route::delete('/admin/categories/{id}', [CategoryController::class, 'destroy']);
-
-// Collections / Focus On API (Public & Admin Management)
 Route::get('/collections', [CollectionController::class, 'index']);
-Route::post('/admin/collections', [CollectionController::class, 'store']);
-Route::put('/admin/collections/{id}', [CollectionController::class, 'update']);
-Route::delete('/admin/collections/{id}', [CollectionController::class, 'destroy']);
-
-// Sort Options API (Public & Admin Management)
 Route::get('/sort-options', [SortOptionController::class, 'index']);
-Route::post('/admin/sort-options', [SortOptionController::class, 'store']);
-Route::put('/admin/sort-options/{id}', [SortOptionController::class, 'update']);
-Route::delete('/admin/sort-options/{id}', [SortOptionController::class, 'destroy']);
-
-// FAQ API (Public & Admin Management)
 Route::get('/faqs', [FaqController::class, 'index']);
-Route::get('/admin/faqs', [FaqController::class, 'adminIndex']);
-Route::post('/admin/faqs', [FaqController::class, 'store']);
-Route::put('/admin/faqs/{id}', [FaqController::class, 'update']);
-Route::delete('/admin/faqs/{id}', [FaqController::class, 'destroy']);
-
-// Size Guide API (Public & Admin Management)
 Route::get('/size-guides', [SizeGuideController::class, 'index']);
-Route::get('/admin/size-guides', [SizeGuideController::class, 'adminIndex']);
-Route::post('/admin/size-guides', [SizeGuideController::class, 'store']);
-Route::put('/admin/size-guides/{id}', [SizeGuideController::class, 'update']);
-Route::delete('/admin/size-guides/{id}', [SizeGuideController::class, 'destroy']);
-
-// Journal API (Public & Admin Management)
 Route::get('/journals', [JournalController::class, 'index']);
 Route::get('/journals/{slug}', [JournalController::class, 'show']);
-Route::post('/admin/journals', [JournalController::class, 'store']);
-Route::put('/admin/journals/{id}', [JournalController::class, 'update']);
-Route::delete('/admin/journals/{id}', [JournalController::class, 'destroy']);
-
-// Contact Settings API (Public & Admin Management)
 Route::get('/contact-settings', [ContactSettingController::class, 'index']);
-Route::get('/admin/contact-settings', [ContactSettingController::class, 'adminIndex']);
-Route::post('/admin/contact-settings', [ContactSettingController::class, 'store']);
-Route::put('/admin/contact-settings/{id}', [ContactSettingController::class, 'update']);
-Route::delete('/admin/contact-settings/{id}', [ContactSettingController::class, 'destroy']);
-
-// Products API (Public & Admin Management)
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{slug}', [ProductController::class, 'show']);
 Route::get('/products/{slug}/variants', [ProductController::class, 'variants']);
-Route::get('/admin/products', [ProductController::class, 'index']);
-Route::post('/admin/products', [ProductController::class, 'store']);
-Route::put('/admin/products/{id}', [ProductController::class, 'update']);
-Route::delete('/admin/products/{id}', [ProductController::class, 'destroy']);
 
 // Biteship Area, Rates, Tracking & Warehouse Database Info
 Route::get('/warehouse', [ShippingController::class, 'getWarehouseInfo']);
@@ -120,12 +73,10 @@ Route::post('/webhook/midtrans', [PaymentController::class, 'webhook']);
 /*
 |--------------------------------------------------------------------------
 | Customer Profile, Cart, Checkout, Address Book & Orders API
-| Dirancang mendukung autentikasi Sanctum serta seamless dev/testing fallback
 |--------------------------------------------------------------------------
 */
 // Customer Profile
 Route::get('/user', [AuthController::class, 'profile'])->middleware('auth:sanctum');
-// Also provide fallback without middleware if sanctum fails in local development
 Route::get('/user/profile-info', [AuthController::class, 'profile']);
 Route::put('/user/profile', [AuthController::class, 'updateProfile']);
 
@@ -166,34 +117,6 @@ Route::get('/orders/{order_number}', [OrderController::class, 'show']);
 Route::post('/orders/{order_number}/cancel', [OrderController::class, 'cancel']);
 Route::post('/orders/{order_number}/confirm-received', [OrderController::class, 'confirmReceived']);
 
-// Admin Order, Dashboard Charts & Shipment Tracking Control API
-Route::get('/admin/orders', [OrderController::class, 'adminOrders']);
-Route::get('/admin/dashboard-charts', [OrderController::class, 'adminDashboardCharts']);
-Route::put('/admin/orders/{order_number}/shipment', [OrderController::class, 'adminUpdateShipment']);
-
-// Admin Customer Management API
-Route::get('/admin/customers', [CustomerController::class, 'adminIndex']);
-Route::post('/admin/customers', [CustomerController::class, 'adminStore']);
-Route::get('/admin/customers/{id}', [CustomerController::class, 'adminShow']);
-Route::put('/admin/customers/{id}', [CustomerController::class, 'adminUpdate']);
-Route::put('/admin/customers/{id}/status', [CustomerController::class, 'adminToggleStatus']);
-Route::delete('/admin/customers/{id}', [CustomerController::class, 'adminDestroy']);
-
-// Admin Voucher Management API
-Route::get('/admin/vouchers', [VoucherController::class, 'adminIndex']);
-Route::post('/admin/vouchers', [VoucherController::class, 'adminStore']);
-Route::get('/admin/vouchers/{id}', [VoucherController::class, 'adminShow']);
-Route::put('/admin/vouchers/{id}', [VoucherController::class, 'adminUpdate']);
-Route::put('/admin/vouchers/{id}/status', [VoucherController::class, 'adminToggleStatus']);
-Route::delete('/admin/vouchers/{id}', [VoucherController::class, 'adminDestroy']);
-
-// Admin Reports API (Penjualan & Customer)
-Route::get('/admin/reports/sales', [ReportController::class, 'sales']);
-Route::get('/admin/reports/customers', [ReportController::class, 'customers']);
-
-// Admin Profile Management API
-Route::get('/admin/profile', [AuthController::class, 'getAdminProfile']);
-Route::put('/admin/profile', [AuthController::class, 'updateAdminProfile']);
 
 /*
 |--------------------------------------------------------------------------
@@ -202,5 +125,96 @@ Route::put('/admin/profile', [AuthController::class, 'updateAdminProfile']);
 */
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN PROTECTED API ROUTES
+|--------------------------------------------------------------------------
+*/
+Route::middleware([\App\Http\Middleware\AdminMiddleware::class])->group(function () {
+    // Admin Logout
     Route::post('/admin/logout', [AuthController::class, 'adminLogout']);
+
+    // Admin Image Upload
+    Route::post('/admin/upload', [UploadController::class, 'uploadImage']);
+
+    // Hero Banners
+    Route::get('/admin/hero-banners', [HeroBannerController::class, 'adminIndex']);
+    Route::post('/admin/hero-banners', [HeroBannerController::class, 'store']);
+    Route::put('/admin/hero-banners/{id}', [HeroBannerController::class, 'update']);
+    Route::delete('/admin/hero-banners/{id}', [HeroBannerController::class, 'destroy']);
+
+    // Categories
+    Route::post('/admin/categories', [CategoryController::class, 'store']);
+    Route::put('/admin/categories/{id}', [CategoryController::class, 'update']);
+    Route::delete('/admin/categories/{id}', [CategoryController::class, 'destroy']);
+
+    // Collections
+    Route::post('/admin/collections', [CollectionController::class, 'store']);
+    Route::put('/admin/collections/{id}', [CollectionController::class, 'update']);
+    Route::delete('/admin/collections/{id}', [CollectionController::class, 'destroy']);
+
+    // Sort Options
+    Route::post('/admin/sort-options', [SortOptionController::class, 'store']);
+    Route::put('/admin/sort-options/{id}', [SortOptionController::class, 'update']);
+    Route::delete('/admin/sort-options/{id}', [SortOptionController::class, 'destroy']);
+
+    // FAQs
+    Route::get('/admin/faqs', [FaqController::class, 'adminIndex']);
+    Route::post('/admin/faqs', [FaqController::class, 'store']);
+    Route::put('/admin/faqs/{id}', [FaqController::class, 'update']);
+    Route::delete('/admin/faqs/{id}', [FaqController::class, 'destroy']);
+
+    // Size Guides
+    Route::get('/admin/size-guides', [SizeGuideController::class, 'adminIndex']);
+    Route::post('/admin/size-guides', [SizeGuideController::class, 'store']);
+    Route::put('/admin/size-guides/{id}', [SizeGuideController::class, 'update']);
+    Route::delete('/admin/size-guides/{id}', [SizeGuideController::class, 'destroy']);
+
+    // Journals
+    Route::post('/admin/journals', [JournalController::class, 'store']);
+    Route::put('/admin/journals/{id}', [JournalController::class, 'update']);
+    Route::delete('/admin/journals/{id}', [JournalController::class, 'destroy']);
+
+    // Contact Settings
+    Route::get('/admin/contact-settings', [ContactSettingController::class, 'adminIndex']);
+    Route::post('/admin/contact-settings', [ContactSettingController::class, 'store']);
+    Route::put('/admin/contact-settings/{id}', [ContactSettingController::class, 'update']);
+    Route::delete('/admin/contact-settings/{id}', [ContactSettingController::class, 'destroy']);
+
+    // Products
+    Route::get('/admin/products', [ProductController::class, 'index']);
+    Route::post('/admin/products', [ProductController::class, 'store']);
+    Route::put('/admin/products/{id}', [ProductController::class, 'update']);
+    Route::delete('/admin/products/{id}', [ProductController::class, 'destroy']);
+
+    // Orders & Shipment
+    Route::get('/admin/orders', [OrderController::class, 'adminOrders']);
+    Route::get('/admin/dashboard-charts', [OrderController::class, 'adminDashboardCharts']);
+    Route::put('/admin/orders/{order_number}/shipment', [OrderController::class, 'adminUpdateShipment']);
+
+    // Customers
+    Route::get('/admin/customers', [CustomerController::class, 'adminIndex']);
+    Route::post('/admin/customers', [CustomerController::class, 'adminStore']);
+    Route::get('/admin/customers/{id}', [CustomerController::class, 'adminShow']);
+    Route::put('/admin/customers/{id}', [CustomerController::class, 'adminUpdate']);
+    Route::put('/admin/customers/{id}/status', [CustomerController::class, 'adminToggleStatus']);
+    Route::delete('/admin/customers/{id}', [CustomerController::class, 'adminDestroy']);
+
+    // Vouchers
+    Route::get('/admin/vouchers', [VoucherController::class, 'adminIndex']);
+    Route::post('/admin/vouchers', [VoucherController::class, 'adminStore']);
+    Route::get('/admin/vouchers/{id}', [VoucherController::class, 'adminShow']);
+    Route::put('/admin/vouchers/{id}', [VoucherController::class, 'adminUpdate']);
+    Route::put('/admin/vouchers/{id}/status', [VoucherController::class, 'adminToggleStatus']);
+    Route::delete('/admin/vouchers/{id}', [VoucherController::class, 'adminDestroy']);
+
+    // Reports
+    Route::get('/admin/reports/sales', [ReportController::class, 'sales']);
+    Route::get('/admin/reports/customers', [ReportController::class, 'customers']);
+
+    // Profile
+    Route::get('/admin/profile', [AuthController::class, 'getAdminProfile']);
+    Route::put('/admin/profile', [AuthController::class, 'updateAdminProfile']);
 });

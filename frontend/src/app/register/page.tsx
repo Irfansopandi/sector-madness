@@ -292,7 +292,7 @@ export default function RegisterPage() {
                       setFullName(e.target.value);
                       clearError("fullName");
                     }}
-                    placeholder="Enter full name"
+                    placeholder="Enter your name"
                     style={{ fontSize: "15px", padding: "16px 18px", fontFamily: "'Inter', -apple-system, sans-serif" }}
                     className={`w-full text-[#0A0A0A] font-medium border outline-none transition-all duration-200 rounded-none ${
                       errors.fullName ? "bg-[#FFF5F5] border-[#D92323] focus:border-[#D92323]" : "bg-[#F3F6F9] border-[#E0E6ED] focus:border-[#0A0A0A] focus:bg-[#FFFFFF]"
@@ -312,7 +312,7 @@ export default function RegisterPage() {
                       setRegEmail(e.target.value);
                       clearError("email");
                     }}
-                    placeholder="name@example.com"
+                    placeholder="Enter your email"
                     style={{ fontSize: "15px", padding: "16px 18px", fontFamily: "'Inter', -apple-system, sans-serif" }}
                     className={`w-full text-[#0A0A0A] font-medium border outline-none transition-all duration-200 rounded-none ${
                       errors.email ? "bg-[#FFF5F5] border-[#D92323] focus:border-[#D92323]" : "bg-[#F3F6F9] border-[#E0E6ED] focus:border-[#0A0A0A] focus:bg-[#FFFFFF]"
@@ -361,7 +361,7 @@ export default function RegisterPage() {
                           setPhoneNumber(e.target.value.replace(/[^0-9]/g, ""));
                           clearError("phone");
                         }}
-                        placeholder="81234567890"
+                        placeholder="Enter your phone number"
                         style={{ fontSize: "15px", padding: "16px 18px", fontFamily: "'Inter', -apple-system, sans-serif" }}
                         className={`w-full text-[#0A0A0A] font-medium border outline-none transition-all duration-200 rounded-none font-mono ${
                           errors.phone ? "bg-[#FFF5F5] border-[#D92323] focus:border-[#D92323]" : "bg-[#F3F6F9] border-[#E0E6ED] focus:border-[#0A0A0A] focus:bg-[#FFFFFF]"
@@ -397,7 +397,7 @@ export default function RegisterPage() {
                         setRegPassword(e.target.value);
                         clearError("password");
                       }}
-                      placeholder="At least 8 characters"
+                      placeholder="Enter your password"
                       style={{ fontSize: "15px", padding: "16px 18px" }}
                       className={`w-full text-[#0A0A0A] pr-12 font-medium border outline-none transition-all duration-200 rounded-none font-mono ${
                         errors.password ? "bg-[#FFF5F5] border-[#D92323] focus:border-[#D92323]" : "bg-[#F3F6F9] border-[#E0E6ED] focus:border-[#0A0A0A] focus:bg-[#FFFFFF]"
@@ -446,7 +446,7 @@ export default function RegisterPage() {
                         setConfirmPassword(e.target.value);
                         clearError("confirmPassword");
                       }}
-                      placeholder="Re-enter your password"
+                      placeholder="Enter your password again"
                       style={{ fontSize: "15px", padding: "16px 18px" }}
                       className={`w-full text-[#0A0A0A] pr-12 font-medium border outline-none transition-all duration-200 rounded-none font-mono ${
                         errors.confirmPassword ? "bg-[#FFF5F5] border-[#D92323] focus:border-[#D92323]" : "bg-[#F3F6F9] border-[#E0E6ED] focus:border-[#0A0A0A] focus:bg-[#FFFFFF]"

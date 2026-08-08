@@ -250,7 +250,7 @@ export default function ProfilePage() {
             pattern="[0-9]*"
             value={profileForm.phone}
             onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value.replace(/[^0-9]/g, "") })}
-            placeholder="081234567890"
+            placeholder="Enter your phone number"
             style={{ padding: "18px 22px", fontSize: "14px" }}
             className="w-full bg-[#0A0A0A] border border-white/[0.12] text-[#F5F5F5] font-semibold outline-none focus:border-[#B6A47E] transition-colors font-mono rounded-none"
           />
@@ -305,7 +305,7 @@ export default function ProfilePage() {
                 type={showNewPassword ? "text" : "password"}
                 value={profileForm.newPassword}
                 onChange={(e) => setProfileForm({ ...profileForm, newPassword: e.target.value })}
-                placeholder="••••••••"
+                placeholder="Enter your current password"
                 style={{ padding: "18px 56px 18px 22px", fontSize: "14px" }}
                 className="w-full bg-[#0A0A0A] border border-white/[0.12] text-[#F5F5F5] outline-none focus:border-[#B6A47E] transition-colors font-mono rounded-none"
               />
@@ -344,7 +344,7 @@ export default function ProfilePage() {
                 type={showConfirmPassword ? "text" : "password"}
                 value={profileForm.confirmNewPassword}
                 onChange={(e) => setProfileForm({ ...profileForm, confirmNewPassword: e.target.value })}
-                placeholder="••••••••"
+                placeholder="Enter your new password"
                 style={{ padding: "18px 56px 18px 22px", fontSize: "14px" }}
                 className="w-full bg-[#0A0A0A] border border-white/[0.12] text-[#F5F5F5] outline-none focus:border-[#B6A47E] transition-colors font-mono rounded-none"
               />

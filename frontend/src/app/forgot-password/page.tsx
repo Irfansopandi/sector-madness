@@ -278,7 +278,7 @@ export default function ForgotPasswordPage() {
                           type="email"
                           value={email}
                           onChange={(e) => { setEmail(e.target.value); clearError("email"); }}
-                          placeholder="name@example.com"
+                          placeholder="Enter your email"
                           style={{ fontSize: "15px", padding: "18px 20px" }}
                           className={`w-full font-medium border focus:outline-none transition-all duration-200 rounded-none ${
                             errors.email ? "bg-[#FFF5F5] border-[#D92323] focus:border-[#D92323]" : "bg-[#F3F6F9] border-[#E0E6ED] focus:border-[#0A0A0A] focus:bg-[#FFFFFF]"
@@ -406,7 +406,7 @@ export default function ForgotPasswordPage() {
                             type={showPassword ? "text" : "password"}
                             value={password}
                             onChange={(e) => { setPassword(e.target.value); clearError("password"); }}
-                            placeholder="Enter new password"
+                            placeholder="Enter your new password"
                             style={{ fontSize: "15px", padding: "18px 20px" }}
                             className={`w-full font-mono pr-12 border focus:outline-none transition-all duration-200 rounded-none ${
                               errors.password ? "bg-[#FFF5F5] border-[#D92323] focus:border-[#D92323]" : "bg-[#F3F6F9] border-[#E0E6ED] focus:border-[#0A0A0A] focus:bg-[#FFFFFF]"
@@ -440,7 +440,7 @@ export default function ForgotPasswordPage() {
                             type={showConfirmPassword ? "text" : "password"}
                             value={confirmPassword}
                             onChange={(e) => { setConfirmPassword(e.target.value); clearError("confirmPassword"); }}
-                            placeholder="Re-enter new password"
+                            placeholder="Enter your new password again"
                             style={{ fontSize: "15px", padding: "18px 20px" }}
                             className={`w-full font-mono pr-12 border focus:outline-none transition-all duration-200 rounded-none ${
                               errors.confirmPassword ? "bg-[#FFF5F5] border-[#D92323] focus:border-[#D92323]" : "bg-[#F3F6F9] border-[#E0E6ED] focus:border-[#0A0A0A] focus:bg-[#FFFFFF]"

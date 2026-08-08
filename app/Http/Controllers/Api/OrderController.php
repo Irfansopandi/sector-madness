@@ -9,22 +9,7 @@ use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
-    private function checkAdmin(Request $request)
-    {
-        $user = $request->user('sanctum') ?: $request->user();
-        if ($user instanceof \App\Models\Admin || (isset($user->is_admin) && $user->is_admin)) {
-            return true;
-        }
-        $authHeader = $request->header('Authorization');
-        if ($authHeader && str_contains($authHeader, 'Bearer')) {
-            $token = trim(str_replace('Bearer ', '', $authHeader));
-            $pat = \Laravel\Sanctum\PersonalAccessToken::findToken($token);
-            if ($pat && ($pat->tokenable instanceof \App\Models\Admin || (isset($pat->tokenable->is_admin) && $pat->tokenable->is_admin))) {
-                return true;
-            }
-        }
-        return false;
-    }
+    // checkAdmin handled by middleware
 
     /**
      * Dapatkan user aktif atau fallback ke customer demo.
@@ -314,9 +299,6 @@ class OrderController extends Controller
      */
     public function adminOrders(Request $request)
     {
-        if (!$this->checkAdmin($request)) {
-            return response()->json(['status' => false, 'message' => 'Unauthorized admin access'], 403);
-        }
         $orders = Order::with(['user', 'items', 'payment', 'shipment'])->latest()->get();
 
         $formatted = $orders->map(function ($order) {
@@ -369,9 +351,6 @@ class OrderController extends Controller
      */
     public function adminUpdateShipment(Request $request, $order_number)
     {
-        if (!$this->checkAdmin($request)) {
-            return response()->json(['status' => false, 'message' => 'Unauthorized admin access'], 403);
-        }
         $order = Order::where('order_number', $order_number)->first();
         if (!$order) {
             return response()->json(['status' => false, 'message' => 'Order not found'], 404);
@@ -449,9 +428,6 @@ class OrderController extends Controller
      */
     public function adminDashboardCharts(Request $request)
     {
-        if (!$this->checkAdmin($request)) {
-            return response()->json(['status' => false, 'message' => 'Unauthorized admin access'], 403);
-        }
         $period = strtolower((string)$request->query('period', 'month'));
         if (!in_array($period, ['week', 'month', '3months', 'year'])) {
             $period = 'month';

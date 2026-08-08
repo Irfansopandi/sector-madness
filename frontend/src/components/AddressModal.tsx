@@ -339,7 +339,7 @@ export default function AddressModal({ isOpen, onClose, onSuccess, editingAddres
                     id="input-label"
                     type="text"
                     required
-                    placeholder="e.g., Home, Office"
+                    placeholder="Enter label for this address"
                     value={addressForm.label}
                     onChange={(e) => handleChange("label", e.target.value)}
                     style={{ padding: "18px 24px" }}
@@ -354,7 +354,7 @@ export default function AddressModal({ isOpen, onClose, onSuccess, editingAddres
                       id="input-receiver_name"
                       type="text"
                       required
-                      placeholder="e.g., John Doe"
+                      placeholder="Enter your name"
                       value={addressForm.receiver_name}
                       onChange={(e) => handleChange("receiver_name", e.target.value)}
                       style={{ padding: "18px 24px" }}
@@ -369,7 +369,7 @@ export default function AddressModal({ isOpen, onClose, onSuccess, editingAddres
                       type="tel"
                       inputMode="numeric"
                       required
-                      placeholder="e.g., 081234567890"
+                      placeholder="Enter your phone number"
                       value={addressForm.phone_number}
                       onChange={(e) => handleChange("phone_number", e.target.value.replace(/[^0-9]/g, ""))}
                       style={{ padding: "18px 24px" }}
@@ -393,7 +393,7 @@ export default function AddressModal({ isOpen, onClose, onSuccess, editingAddres
                       required
                       value={addressForm.province}
                       onChange={(e) => handleChange("province", e.target.value)}
-                      placeholder="e.g., West Java"
+                      placeholder="Enter your province"
                       style={{ padding: "18px 24px" }}
                       className={`w-full font-mono text-sm focus:outline-none focus:ring-1 rounded-sm transition-all placeholder:text-[#444444] ${formErrors.province ? "bg-[#220B0B] border border-[#FF3333] text-white focus:border-[#FF5555] focus:ring-[#FF5555]/50" : "bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] focus:border-[#B6A47E] focus:ring-[#B6A47E]/50"}`}
                     />
@@ -417,7 +417,7 @@ export default function AddressModal({ isOpen, onClose, onSuccess, editingAddres
                       onBlur={() => setTimeout(() => {
                         if (activeDropdownField === "city") setShowLocationDropdown(false);
                       }, 300)}
-                      placeholder="e.g., Bandung"
+                      placeholder="Enter your city"
                       style={{ padding: "18px 24px" }}
                       className={`w-full font-mono text-sm focus:outline-none focus:ring-1 rounded-sm transition-all placeholder:text-[#444444] ${formErrors.city ? "bg-[#220B0B] border border-[#FF3333] text-white focus:border-[#FF5555] focus:ring-[#FF5555]/50" : "bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] focus:border-[#B6A47E] focus:ring-[#B6A47E]/50"}`}
                     />
@@ -475,7 +475,7 @@ export default function AddressModal({ isOpen, onClose, onSuccess, editingAddres
                       onBlur={() => setTimeout(() => {
                         if (activeDropdownField === "district") setShowLocationDropdown(false);
                       }, 300)}
-                      placeholder="e.g., Coblong"
+                      placeholder="Enter your district"
                       style={{ padding: "18px 24px" }}
                       className={`w-full font-mono text-sm focus:outline-none focus:ring-1 rounded-sm transition-all placeholder:text-[#444444] ${formErrors.district ? "bg-[#220B0B] border border-[#FF3333] text-white focus:border-[#FF5555] focus:ring-[#FF5555]/50" : "bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] focus:border-[#B6A47E] focus:ring-[#B6A47E]/50"}`}
                     />
@@ -520,7 +520,7 @@ export default function AddressModal({ isOpen, onClose, onSuccess, editingAddres
                       required
                       value={addressForm.postal_code}
                       onChange={(e) => handleChange("postal_code", e.target.value)}
-                      placeholder="e.g., 40132"
+                      placeholder="Enter your postal code"
                       style={{ padding: "18px 24px" }}
                       className={`w-full font-mono text-sm focus:outline-none focus:ring-1 rounded-sm transition-all placeholder:text-[#444444] ${formErrors.postal_code ? "bg-[#220B0B] border border-[#FF3333] text-white focus:border-[#FF5555] focus:ring-[#FF5555]/50" : "bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] focus:border-[#B6A47E] focus:ring-[#B6A47E]/50"}`}
                     />
@@ -535,7 +535,7 @@ export default function AddressModal({ isOpen, onClose, onSuccess, editingAddres
                     required
                     value={addressForm.street_address}
                     onChange={(e) => handleChange("street_address", e.target.value)}
-                    placeholder="Street name, building, house number"
+                    placeholder="Enter your address"
                     style={{ padding: "18px 24px" }}
                     className={`w-full font-mono text-sm focus:outline-none focus:ring-1 rounded-sm transition-all placeholder:text-[#444444] ${formErrors.street_address ? "bg-[#220B0B] border border-[#FF3333] text-white focus:border-[#FF5555] focus:ring-[#FF5555]/50" : "bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] focus:border-[#B6A47E] focus:ring-[#B6A47E]/50"}`}
                   />

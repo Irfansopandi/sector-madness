@@ -741,7 +741,7 @@ export default function OrdersPage() {
                         type="text"
                         value={bankName}
                         onChange={(e) => setBankName(e.target.value)}
-                        placeholder="e.g., BCA / Mandiri / OVO / PayPal"
+                        placeholder="Enter your bank or e-wallet name"
                         style={{ padding: "18px 24px" }}
                         className="w-full bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] font-mono text-sm focus:outline-none focus:border-[#B6A47E] focus:ring-1 focus:ring-[#B6A47E]/50 rounded-sm placeholder:text-[#444444] transition-all"
                       />
@@ -752,7 +752,7 @@ export default function OrdersPage() {
                         type="number"
                         value={accountNumber}
                         onChange={(e) => setAccountNumber(e.target.value)}
-                        placeholder="e.g., 1234567890"
+                        placeholder="Enter your account number"
                         style={{ padding: "18px 24px" }}
                         className="w-full bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] font-mono text-sm focus:outline-none focus:border-[#B6A47E] focus:ring-1 focus:ring-[#B6A47E]/50 rounded-sm placeholder:text-[#444444] transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
@@ -764,7 +764,7 @@ export default function OrdersPage() {
                       type="text"
                       value={accountName}
                       onChange={(e) => setAccountName(e.target.value)}
-                      placeholder="Full name as shown on bank / e-wallet account"
+                      placeholder="Enter your full name as on account"
                       style={{ padding: "18px 24px" }}
                       className="w-full bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] font-mono text-sm focus:outline-none focus:border-[#B6A47E] focus:ring-1 focus:ring-[#B6A47E]/50 rounded-sm placeholder:text-[#444444] transition-all"
                     />
@@ -780,7 +780,7 @@ export default function OrdersPage() {
                     rows={3}
                     value={cancelNotes}
                     onChange={(e) => setCancelNotes(e.target.value)}
-                    placeholder="Please explain your detailed cancellation reasons here..."
+                    placeholder="Enter your cancellation reason"
                     style={{ padding: "18px 24px", marginTop: "16px" }}
                     className="w-full bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] font-mono text-sm focus:outline-none focus:border-red-500/80 focus:ring-1 focus:ring-red-500/50 rounded-sm placeholder:text-[#444444] transition-all"
                   />
