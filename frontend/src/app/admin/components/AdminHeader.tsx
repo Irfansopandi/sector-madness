@@ -37,10 +37,17 @@ export default function AdminHeader({
   onToggleSidebar,
 }: AdminHeaderProps) {
   const [currentDate, setCurrentDate] = useState<string>(getFormattedClock);
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("sector_madness_sidebar_collapsed") === "true";
+    }
+    return false;
+  });
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       document.title = "Sector Madness - Admin Panel";
+      setIsCollapsed(localStorage.getItem("sector_madness_sidebar_collapsed") === "true");
     }
 
     const updateClock = () => {
@@ -49,18 +56,32 @@ export default function AdminHeader({
 
     updateClock();
     const interval = setInterval(updateClock, 1000);
-    return () => clearInterval(interval);
+
+    const handleCollapseToggle = (e: any) => {
+      if (e?.detail?.collapsed !== undefined) {
+        setIsCollapsed(e.detail.collapsed);
+      }
+    };
+    window.addEventListener("sector_sidebar_collapse_toggle", handleCollapseToggle);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("sector_sidebar_collapse_toggle", handleCollapseToggle);
+    };
   }, []);
 
   return (
-    <header
-      style={{ paddingLeft: "24px", paddingRight: "24px" }}
-      className={`sticky top-0 z-30 w-full h-[80px] flex items-center justify-between transition-colors duration-200 ${
-        isDarkMode
-          ? "bg-[#121214] border-b border-[#242428] text-[#F5F5F5]"
-          : "bg-white border-b border-[#E5E5E5] text-[#0A0A0A] shadow-xs"
-      }`}
-    >
+    <>
+      <header
+        style={{ paddingLeft: "24px", paddingRight: "24px" }}
+        className={`fixed top-0 right-0 z-30 h-[80px] flex items-center justify-between transition-all duration-300 ${
+          isCollapsed ? "left-0 md:left-20" : "left-0 md:left-72"
+        } ${
+          isDarkMode
+            ? "bg-[#121214] border-b border-[#242428] text-[#F5F5F5]"
+            : "bg-white border-b border-[#E5E5E5] text-[#0A0A0A] shadow-xs"
+        }`}
+      >
       {/* Left side: Hamburger Button + Title */}
       <div className="flex items-center gap-3.5 min-w-0 pr-4">
         <button
@@ -148,6 +169,9 @@ export default function AdminHeader({
           <User className="w-4.5 h-4.5 stroke-[2.2]" />
         </Link>
       </div>
-    </header>
+      </header>
+      {/* Header Placeholder div to reserve 80px space in normal document flow */}
+      <div className="w-full h-[80px] shrink-0" aria-hidden="true" />
+    </>
   );
 }

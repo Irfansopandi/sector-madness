@@ -128,7 +128,7 @@ export default function Hero() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 1.2 }}
-            className="group relative inline-flex items-center justify-center overflow-hidden bg-[#F5F5F5] text-[#0A0A0A] px-14 md:px-20 lg:px-24 py-4.5 md:py-5 min-w-[280px] md:min-w-[360px] text-[11px] md:text-[12px] tracking-[0.3em] uppercase font-bold transition-all duration-500 hover:bg-[#B6A47E] hover:text-[#0A0A0A] shadow-[0_0_30px_rgba(245,245,245,0.15)] hover:shadow-[0_0_40px_rgba(182,164,126,0.3)] cursor-pointer"
+            className="group relative inline-flex items-center justify-center overflow-hidden bg-[#F5F5F5] text-[#0A0A0A] px-10 md:px-20 lg:px-24 py-4 md:py-5 min-w-[200px] sm:min-w-[260px] md:min-w-[360px] text-[9px] md:text-[12px] tracking-[0.25em] md:tracking-[0.3em] uppercase font-bold transition-all duration-500 hover:bg-[#B6A47E] hover:text-[#0A0A0A] shadow-[0_0_30px_rgba(245,245,245,0.15)] hover:shadow-[0_0_40px_rgba(182,164,126,0.3)] cursor-pointer"
           >
             <span className="relative z-10 flex items-center justify-center gap-4 w-full text-center">
               <span>EXPLORE COLLECTION</span>

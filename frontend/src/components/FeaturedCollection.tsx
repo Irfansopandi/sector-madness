@@ -67,6 +67,47 @@ export default function FeaturedCollection() {
     }
   }, [featuredProducts.length]);
 
+  const [isDesktop, setIsDesktop] = useState(false);
+  const [centeredIndex, setCenteredIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth >= 1024);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Calculate centered card index during scroll on mobile/tablet
+  const updateCenteredCard = useCallback(() => {
+    if (!scrollRef.current || displayProducts.length === 0) return;
+    const container = scrollRef.current;
+    const children = container.children;
+    const containerCenter = container.scrollLeft + container.clientWidth / 2;
+
+    let minDistance = Infinity;
+    let closestIndex = 0;
+
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i] as HTMLElement;
+      if (!child) continue;
+      const childCenter = child.offsetLeft + child.offsetWidth / 2;
+      const distance = Math.abs(childCenter - containerCenter);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestIndex = i;
+      }
+    }
+
+    setCenteredIndex(closestIndex);
+  }, [displayProducts.length]);
+
+  const handleScrollCombined = useCallback(() => {
+    normalizeScroll();
+    updateCenteredCard();
+  }, [normalizeScroll, updateCenteredCard]);
+
   // Set initial scroll position to the middle set (Set 2)
   useEffect(() => {
     if (scrollRef.current && featuredProducts.length > 0 && !hasInitializedScrollRef.current) {
@@ -80,10 +121,11 @@ export default function FeaturedCollection() {
           const setWidth = itemN.offsetLeft - item0.offsetLeft;
           container.scrollLeft = setWidth;
           hasInitializedScrollRef.current = true;
+          updateCenteredCard();
         }
       }
     }
-  }, [featuredProducts.length]);
+  }, [featuredProducts.length, updateCenteredCard]);
 
   // Continuous Smooth Auto-Scroll
   useEffect(() => {
@@ -93,13 +135,14 @@ export default function FeaturedCollection() {
       if (!isPaused && !isDraggingRef.current && scrollRef.current) {
         scrollRef.current.scrollLeft += 0.8;
         normalizeScroll();
+        updateCenteredCard();
       }
       animationFrameId = requestAnimationFrame(autoScrollStep);
     };
 
     animationFrameId = requestAnimationFrame(autoScrollStep);
     return () => cancelAnimationFrame(animationFrameId);
-  }, [isPaused, normalizeScroll]);
+  }, [isPaused, normalizeScroll, updateCenteredCard]);
 
   // Mouse Drag Handlers for Desktop
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -117,6 +160,7 @@ export default function FeaturedCollection() {
     const walk = (x - startXRef.current) * 1.5;
     scrollRef.current.scrollLeft = scrollLeftStartRef.current - walk;
     normalizeScroll();
+    updateCenteredCard();
   };
 
   const handleMouseUpOrLeave = () => {
@@ -126,9 +170,14 @@ export default function FeaturedCollection() {
 
   return (
     <section id="collection" className="relative w-full bg-[#0A0A0A] pt-[220px] md:pt-[280px] lg:pt-[350px] pb-4">
-      {/* Top Header Row - Aligned 60px with Navbar & Footer */}
+      {/* Top Header Row — Aligned with STORIES section on mobile/tablet, 60px on desktop */}
       <div
-        style={{ marginBottom: "60px", paddingLeft: "60px", paddingRight: "60px", marginTop: "30px"}}
+        style={{
+          marginBottom: "60px",
+          paddingLeft: isDesktop ? "60px" : "clamp(32px, 6vw, 80px)",
+          paddingRight: isDesktop ? "60px" : "clamp(32px, 6vw, 80px)",
+          marginTop: "30px",
+        }}
         className="w-full flex items-center justify-between"
       >
         <div>
@@ -146,11 +195,11 @@ export default function FeaturedCollection() {
 
       {/* 100% Full Screen Viewport Width Carousel Wrapper */}
       <div className="relative w-full">
-        {/* Parent Track Wrapper with Symmetrical 60px Left & Right Inset */}
-        <div style={{ paddingLeft: "60px", paddingRight: "60px" }} className="w-full">
+        {/* Parent Track Wrapper - Full Screen Width */}
+        <div className="w-full">
           <div
             ref={scrollRef}
-            onScroll={normalizeScroll}
+            onScroll={handleScrollCombined}
             onMouseLeave={handleMouseUpOrLeave}
             onTouchStart={() => setIsPaused(true)}
             onTouchEnd={() => setIsPaused(false)}
@@ -181,6 +230,7 @@ export default function FeaturedCollection() {
                   limited={product.limited}
                   index={index % (featuredProducts.length || 1)}
                   hideDetailsOnIdle={true}
+                  isActive={!isDesktop && centeredIndex === index}
                   onHoverImageStart={() => setIsPaused(true)}
                   onHoverImageEnd={() => setIsPaused(false)}
                 />

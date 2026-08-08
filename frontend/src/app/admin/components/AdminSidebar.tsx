@@ -436,7 +436,7 @@ export default function AdminSidebar({ activeTab, isDarkMode }: AdminSidebarProp
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 md:sticky md:top-0 md:z-40 h-screen shrink-0 font-[family-name:var(--font-body)] transition-all duration-300 ease-in-out flex flex-col justify-between ${
+        className={`fixed inset-y-0 left-0 z-50 md:z-40 h-screen shrink-0 font-[family-name:var(--font-body)] transition-all duration-300 ease-in-out flex flex-col justify-between ${
           isOpenMobile ? "translate-x-0 w-72 shadow-2xl" : "-translate-x-full md:translate-x-0"
         } ${
           isCollapsed ? "md:w-20" : "md:w-72"
@@ -820,6 +820,14 @@ export default function AdminSidebar({ activeTab, isDarkMode }: AdminSidebarProp
           </div>
         </div>
       </aside>
+
+      {/* Invisible Desktop Placeholder to reserve exact sidebar width in flexbox layout */}
+      <div
+        className={`hidden md:block shrink-0 transition-all duration-300 ${
+          isCollapsed ? "w-20" : "w-72"
+        }`}
+        aria-hidden="true"
+      />
       {/* Global Fixed Floating Text Label with Arrow for Collapsed Sidebar */}
       {isCollapsed && hoveredTooltip && (
         <div

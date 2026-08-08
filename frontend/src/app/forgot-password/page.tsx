@@ -206,7 +206,7 @@ export default function ForgotPasswordPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[calc(100vh-100px)] border-b border-[#E5E5E5]">
           
           {/* ── IMAGE COLUMN ── */}
-          <div className="lg:col-span-6 relative bg-[#0A0A0A] overflow-hidden min-h-[400px] lg:min-h-full flex flex-col justify-end lg:order-1 border-r border-[#E5E5E5]">
+          <div className="hidden lg:flex lg:col-span-6 relative bg-[#0A0A0A] overflow-hidden lg:min-h-full flex-col justify-end lg:order-1 border-r border-[#E5E5E5]">
             <Image
               src="/images/login/forgot.webp" // using a different aesthetic image if available, fallback handled in CSS if missing, but standard Next.js Image needs existing path. Using campaign-1 just to be safe if campaign-2 doesn't exist, wait, they have /images/campaign/campaign-1.png and /images/hero/hero-2.png
               alt="SECTOR MADNESS // RESET ARCHIVE"
@@ -242,7 +242,20 @@ export default function ForgotPasswordPage() {
           </div>
 
           {/* ── FORM COLUMN ── */}
-          <div className="lg:col-span-6 w-full lg:order-2 flex flex-col items-center justify-center p-8 md:p-16 lg:p-24 bg-[#FFFFFF]">
+          <div
+            style={{
+              paddingLeft: "clamp(40px, 9vw, 150px)",
+              paddingRight: "clamp(40px, 9vw, 150px)",
+              paddingTop: "80px",
+              paddingBottom: "120px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "#FFFFFF",
+            }}
+            className="lg:col-span-6 w-full lg:order-2"
+          >
             <div className="w-full max-w-[480px]">
               
               <AnimatePresence mode="wait">
@@ -373,9 +386,9 @@ export default function ForgotPasswordPage() {
                       CREATE NEW PASSWORD
                     </h1>
                     {successMessage && !isLoading ? (
-                       <div style={{ marginBottom: "36px" }} className="bg-[#0A0A0A] text-[#FFFFFF] p-5 flex items-center gap-4 border-l-4 border-[#B6A47E]">
-                         <CheckCircle2 size={24} className="text-[#B6A47E]" /> 
-                         <span style={{ fontSize: "12.5px", letterSpacing: "0.1em", lineHeight: "1.5" }} className="font-mono uppercase">{successMessage}</span>
+                       <div style={{ marginBottom: "36px" }} className="bg-[#0A0A0A] text-[#FFFFFF] p-3 md:p-5 flex items-center gap-2 md:gap-4 border-l-4 border-[#B6A47E] overflow-hidden">
+                         <CheckCircle2 className="text-[#B6A47E] w-4 h-4 md:w-6 md:h-6 shrink-0" /> 
+                         <span className="text-[8.5px] min-[390px]:text-[9.5px] sm:text-[11px] md:text-[12.5px] tracking-normal md:tracking-[0.1em] leading-[1.5] font-mono uppercase whitespace-nowrap truncate">{successMessage}</span>
                        </div>
                     ) : (
                       <p style={{ fontSize: "13.5px", lineHeight: "1.7", marginBottom: "36px", color: "#666666" }}>

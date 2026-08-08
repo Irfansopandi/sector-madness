@@ -106,13 +106,13 @@ function CheckoutSuccessContent() {
         PAYMENT VERIFIED & CONFIRMED
       </div>
 
-      <h1 className="text-3xl lg:text-5xl font-black uppercase tracking-[0.12em] text-white mb-4 text-center">
+      <h1 className="text-2xl sm:text-3xl lg:text-5xl font-black uppercase tracking-[0.1em] text-white mb-5 sm:mb-4 text-center px-2">
         PAYMENT CONFIRMED
       </h1>
 
       <p
-        style={{ textAlign: "center", marginLeft: "auto", marginRight: "auto", width: "100%" }}
-        className="text-sm font-mono text-[#8A8A8A] uppercase tracking-wider max-w-2xl text-center leading-relaxed mb-12"
+        style={{ textAlign: "center", marginLeft: "auto", marginRight: "auto", width: "100%", lineHeight: "1.8" }}
+        className="text-[11px] sm:text-sm font-mono text-[#8A8A8A] uppercase tracking-wider max-w-2xl text-center mb-12 px-6 sm:px-0"
       >
         Thank you for your purchase. We have received your payment and your order is now being processed for shipping.
       </p>
@@ -198,11 +198,11 @@ function CheckoutSuccessContent() {
                   <div
                     key={item.id || idx}
                     style={{ padding: "16px 20px" }}
-                    className="bg-[#090909] border border-[#1E1E1E] flex items-center justify-between gap-6 font-mono text-xs"
+                    className="bg-[#090909] border border-[#1E1E1E] flex items-center justify-between gap-4 sm:gap-6 font-mono text-xs"
                   >
-                    <div className="flex items-center gap-5 min-w-0">
+                    <div className="flex items-start sm:items-center gap-4 sm:gap-5 min-w-0 w-full sm:w-auto">
                       {/* Product Image Thumbnail */}
-                      <div className="w-14 h-16 bg-[#141414] border border-[#262626] shrink-0 relative overflow-hidden flex items-center justify-center">
+                      <div className="w-14 h-16 bg-[#141414] border border-[#262626] shrink-0 relative overflow-hidden flex items-center justify-center mt-0.5 sm:mt-0">
                         {item.product_image ? (
                           <img
                             src={getImageUrl(item.product_image)}
@@ -214,23 +214,42 @@ function CheckoutSuccessContent() {
                         )}
                       </div>
 
-                      <div className="min-w-0 space-y-1">
-                        <h5 className="font-bold text-white uppercase tracking-wide truncate text-xs">
+                      <div className="min-w-0 space-y-1.5 sm:space-y-1 flex-1">
+                        <h5 className="font-bold text-white uppercase tracking-wide truncate text-[11px] sm:text-xs leading-snug">
                           {item.product_name}
                         </h5>
-                        <p className="text-[11px] text-[#777777] uppercase tracking-wider pt-0.5">
+                        <div className="text-[10px] sm:text-[11px] text-[#777777] uppercase tracking-wider flex flex-wrap items-center gap-x-2 gap-y-1">
                           {item.size && !["default","none","n/a","null",""].includes(item.size.trim().toLowerCase()) && (
-                            <>SIZE: <strong className="text-[#CCCCCC]">{item.size}</strong> &nbsp;|&nbsp;</>
+                            <span className="whitespace-nowrap">SIZE: <strong className="text-[#CCCCCC]">{item.size}</strong></span>
                           )}
                           {item.color && !["default","none","n/a","null",""].includes(item.color.trim().toLowerCase()) && (
-                            <>COLOR: <strong className="text-[#CCCCCC]">{item.color}</strong> &nbsp;|&nbsp;</>
+                            <span className="flex items-center gap-2 whitespace-nowrap">
+                              <span className="text-[#333] hidden sm:inline">|</span>
+                              <span>COLOR: <strong className="text-[#CCCCCC]">{item.color}</strong></span>
+                            </span>
                           )}
-                          QTY: <strong className="text-[#CCCCCC]">{item.quantity || 1}</strong>
-                        </p>
+                          <span className="flex items-center gap-2 whitespace-nowrap">
+                            <span className="text-[#333] hidden sm:inline">|</span>
+                            <span>QTY: <strong className="text-[#CCCCCC]">{item.quantity || 1}</strong></span>
+                          </span>
+                        </div>
+                        
+                        {/* Mobile Price Display */}
+                        <div className="sm:hidden block pt-1.5">
+                          <span className="font-bold text-white tracking-wider block text-[13px]">
+                            Rp {(item.subtotal || (item.price || 0) * (item.quantity || 1)).toLocaleString("id-ID")}
+                          </span>
+                          {item.quantity && item.quantity > 1 && (
+                            <span className="text-[9px] text-[#777777] block mt-0.5">
+                              Rp {(item.price || 0).toLocaleString("id-ID")} / item
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
 
-                    <div className="text-right shrink-0 space-y-0.5">
+                    {/* Desktop Price Display */}
+                    <div className="hidden sm:block text-right shrink-0 space-y-0.5">
                       <span className="font-bold text-white tracking-wider block text-sm">
                         Rp {(item.subtotal || (item.price || 0) * (item.quantity || 1)).toLocaleString("id-ID")}
                       </span>

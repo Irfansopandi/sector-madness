@@ -166,21 +166,21 @@ export default function CustomPaymentModal({
   return (
     <div className="fixed inset-0 z-[99999] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 sm:p-8 overflow-y-auto animate-fadeIn">
       {/* Main Luxury Modal Container */}
-      <div className="w-full max-w-4xl bg-[#0A0A0A] border border-[#252525] text-white font-mono shadow-[0_0_60px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col max-h-[94vh]">
+      <div className="w-full max-w-4xl bg-[#0A0A0A] border border-[#252525] text-white font-mono shadow-[0_0_60px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col max-h-[98vh] sm:max-h-[94vh]">
         
         {/* Top Protocol Bar */}
-        <div className="bg-[#111111] border-b border-[#222222] px-8 sm:px-10 py-5 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-4">
-            <span className="w-2.5 h-2.5 rounded-full bg-white animate-pulse shadow-[0_0_12px_rgba(255,255,255,0.8)]" />
-            <span className="text-[11px] sm:text-xs text-white font-bold tracking-[0.25em] uppercase">
-              SECTOR MADNESS // CORE PAY GATEWAY
+        <div className="bg-[#111111] border-b border-[#222222] px-6 sm:px-10 py-5 flex items-center justify-between shrink-0 gap-3">
+          <div className="flex items-center gap-3 sm:gap-4 overflow-hidden">
+            <span className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-white animate-pulse shadow-[0_0_12px_rgba(255,255,255,0.8)] shrink-0" />
+            <span className="text-[9px] sm:text-xs text-white font-bold tracking-wider sm:tracking-[0.25em] uppercase truncate">
+              SECTOR MADNESS <span className="hidden sm:inline">// CORE PAY GATEWAY</span>
             </span>
           </div>
           <button
             onClick={onClose}
-            className="text-[11px] text-[#888] hover:text-white transition-colors font-extrabold tracking-[0.2em] uppercase px-3 py-1.5 bg-[#1A1A1A] hover:bg-[#252525] border border-[#333]"
+            className="text-[9px] sm:text-[11px] text-[#888] hover:text-white transition-colors font-extrabold tracking-wider sm:tracking-[0.2em] uppercase px-4 py-2 sm:px-3 sm:py-1.5 bg-[#1A1A1A] hover:bg-[#252525] border border-[#333] shrink-0"
           >
-            [ X ] CLOSE
+            [ X ] <span className="hidden sm:inline">CLOSE</span>
           </button>
         </div>
 
@@ -222,17 +222,6 @@ export default function CustomPaymentModal({
                   {formatIDR(grossAmount)}
                 </div>
               </div>
-              <button
-                onClick={() => handleCopy(grossAmount.toString(), "Amount")}
-                className={`border font-extrabold text-[11px] uppercase tracking-[0.2em] transition-all duration-200 shrink-0 ${
-                  copiedType === "Amount"
-                    ? "bg-white text-black border-white"
-                    : "bg-[#1A1A1A] text-[#CCC] border-[#383838] hover:border-white hover:text-white"
-                }`}
-                style={{ padding: "16px 28px" }}
-              >
-                {copiedType === "Amount" ? "✓ COPIED AMOUNT" : "COPY AMOUNT"}
-              </button>
             </div>
 
             {/* ─── SECTION 3: VA or QRIS ─── */}
@@ -264,7 +253,10 @@ export default function CustomPaymentModal({
                         VIRTUAL ACCOUNT NUMBER :
                       </span>
                       <div className="flex flex-col sm:flex-row items-stretch sm:items-center" style={{ gap: "16px" }}>
-                        <div className="flex-1 bg-[#050505] border border-[#333] font-black text-white tracking-[0.2em] select-all text-center sm:text-left shadow-inner text-lg sm:text-2xl" style={{ padding: "20px 28px" }}>
+                        <div 
+                          className="flex-1 bg-[#050505] border border-[#333] font-black text-white tracking-[0.1em] sm:tracking-[0.2em] select-all text-center sm:text-left shadow-inner text-base sm:text-2xl break-all" 
+                          style={{ padding: "16px 16px" }}
+                        >
                           {paymentInfo.vaNumber}
                         </div>
                         <button
@@ -442,19 +434,11 @@ export default function CustomPaymentModal({
         </div>
 
         {/* Action Footer */}
-        <div className="bg-[#111111] border-t border-[#222222] flex flex-col sm:flex-row items-center justify-between shrink-0" style={{ padding: "24px clamp(24px, 4vw, 40px)", gap: "16px" }}>
-          <button
-            onClick={onClose}
-            className="w-full sm:w-auto bg-transparent border border-[#333333] hover:border-white text-[#999] hover:text-white text-[11px] font-bold uppercase tracking-[0.25em] transition-colors text-center"
-            style={{ padding: "16px 28px" }}
-          >
-            PAY LATER / CHANGE METHOD
-          </button>
-
+        <div className="bg-[#111111] border-t border-[#222222] p-6 sm:p-8 shrink-0">
           <button
             onClick={handleConfirmPayment}
             disabled={isVerifying}
-            className={`w-full sm:flex-1 text-[13px] sm:text-sm font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center shadow-2xl ${
+            className={`w-full text-[13px] sm:text-sm font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center shadow-2xl ${
               isVerifying
                 ? "bg-[#1A1A1A] text-[#666666] cursor-not-allowed border border-[#333333]"
                 : "bg-white text-black hover:bg-[#EAEAEA] active:scale-[0.99] border border-white"

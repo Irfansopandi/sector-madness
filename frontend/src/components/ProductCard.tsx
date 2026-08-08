@@ -23,6 +23,7 @@ interface ProductCardProps {
   hideDetailsOnIdle?: boolean;
   onHoverImageStart?: () => void;
   onHoverImageEnd?: () => void;
+  isActive?: boolean;
 }
 
 export default function ProductCard({
@@ -41,6 +42,7 @@ export default function ProductCard({
   hideDetailsOnIdle = false,
   onHoverImageStart,
   onHoverImageEnd,
+  isActive = false,
 }: ProductCardProps) {
   const [isExpired, setIsExpired] = useState(() => {
     if (discountExpiresAt) {
@@ -78,7 +80,11 @@ export default function ProductCard({
             alt={name}
             fill
             draggable={false}
-            className="object-cover select-none pointer-events-none transition-all duration-500 ease-out brightness-[0.45] grayscale-[30%] group-hover:brightness-100 group-hover:grayscale-0 group-hover:scale-[1.03]"
+            className={`object-cover select-none pointer-events-none transition-all duration-500 ease-out ${
+              isActive
+                ? "brightness-100 grayscale-0 scale-[1.03]"
+                : "brightness-[0.45] grayscale-[30%] group-hover:brightness-100 group-hover:grayscale-0 group-hover:scale-[1.03]"
+            }`}
             sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
             quality={85}
           />
@@ -107,7 +113,9 @@ export default function ProductCard({
           )}
 
           {/* VIEW PRODUCT label - inside image at bottom-4 left-4 */}
-          <div className="absolute bottom-4 left-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div className={`absolute bottom-4 left-4 z-10 transition-opacity duration-300 ${
+            isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+          }`}>
             <span className="text-[9px] tracking-[0.2em] uppercase text-[#F5F5F5] font-[family-name:var(--font-body)] font-medium">
               VIEW PRODUCT
             </span>
@@ -118,7 +126,15 @@ export default function ProductCard({
         </div>
 
         {/* Info */}
-        <div className={`mt-3.5 px-4 space-y-1 transition-all duration-300 ${hideDetailsOnIdle ? "opacity-0 group-hover:opacity-100 transform translate-y-1 group-hover:translate-y-0" : ""}`}>
+        <div
+          className={`mt-3.5 px-4 space-y-1 transition-all duration-300 ${
+            hideDetailsOnIdle
+              ? isActive
+                ? "opacity-100 transform translate-y-0"
+                : "opacity-0 group-hover:opacity-100 transform translate-y-1 group-hover:translate-y-0"
+              : ""
+          }`}
+        >
           <span className="text-[10px] tracking-[0.2em] uppercase text-[#8A8A8A] font-[family-name:var(--font-body)] block">
             {collectionCode}
           </span>

@@ -24,6 +24,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
   const [mounted, setMounted] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isMobileShopOpen, setIsMobileShopOpen] = useState(false);
   const [isShopHovered, setIsShopHovered] = useState(false);
   const [hoveredProductIndex, setHoveredProductIndex] = useState(0);
   const [navHidden, setNavHidden] = useState(false);
@@ -32,6 +33,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
   const lastScrollY = useRef(0);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -42,6 +44,14 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
   );
 
   const hasToken = !!currentToken;
+
+  // Detect desktop breakpoint to conditionally apply mobile/tablet margins
+  useEffect(() => {
+    const checkDesktop = () => setIsDesktop(window.innerWidth >= 1024);
+    checkDesktop();
+    window.addEventListener("resize", checkDesktop);
+    return () => window.removeEventListener("resize", checkDesktop);
+  }, []);
 
   const { data: cartData, refetch: refetchCart } = useQuery({
     queryKey: ["cart", currentToken ?? "guest"],
@@ -274,7 +284,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
   return (
     <>
       <div
-        className={`fixed top-0 left-0 right-0 z-50 pointer-events-auto transition-transform duration-300 ease-out ${
+        className={`fixed top-0 left-0 right-0 z-50 pointer-events-auto transition-transform duration-300 ease-out overflow-x-hidden ${
           navHidden && !isShopHovered && !mobileOpen ? "-translate-y-full" : "translate-y-0"
         }`}
         onMouseLeave={() => setIsShopHovered(false)}
@@ -291,9 +301,37 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
             : "bg-transparent text-[#F5F5F5] border-transparent"
         }`}
       >
-        <div className="max-w-[1480px] mx-auto px-8 md:px-14 lg:px-20">
-          <div className="relative flex justify-between items-center h-[88px] md:h-[116px]">
-            {/* Bagian Kiri (Menu Navigasi) */}
+        {/* Container: mobile pakai inline style padding agar pasti bekerja, desktop pakai lg:px-20 */}
+        <div className="max-w-[1480px] mx-auto lg:px-20">
+          <div
+            className="relative flex justify-between items-center h-[76px] sm:h-[92px] lg:h-[116px]"
+            style={{ paddingLeft: 0, paddingRight: 0 }}
+          >
+            {/* Mobile/Tablet: Hamburger Button di Kiri - inline margin untuk jarak pasti dari tepi layar */}
+            <button
+              className="lg:hidden cursor-pointer relative z-30 p-2 flex flex-col justify-center items-center gap-[4.5px]"
+              style={{ marginLeft: isDesktop ? 0 : "clamp(20px, 6vw, 48px)" }}
+              onClick={() => setMobileOpen(true)}
+              aria-label="Menu"
+            >
+              <span
+                className={`block w-5 h-[1.5px] transition-all duration-300 ${
+                  isLightMode || isShopHovered ? "bg-[#0A0A0A]" : "bg-[#F5F5F5]"
+                }`}
+              />
+              <span
+                className={`block w-5 h-[1.5px] transition-all duration-300 ${
+                  isLightMode || isShopHovered ? "bg-[#0A0A0A]" : "bg-[#F5F5F5]"
+                }`}
+              />
+              <span
+                className={`block w-5 h-[1.5px] transition-all duration-300 ${
+                  isLightMode || isShopHovered ? "bg-[#0A0A0A]" : "bg-[#F5F5F5]"
+                }`}
+              />
+            </button>
+
+            {/* Desktop: Bagian Kiri Navigasi Utama (100% Identik Asli dengan paddingLeft 50px) */}
             <div className="hidden lg:flex items-center gap-8 justify-start z-10" style={{ paddingLeft: "50px" }}>
               {navLinks.map((link) => {
                 const isActive = activeLink === link.label;
@@ -326,8 +364,8 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
               })}
             </div>
 
-            {/* Bagian Tengah (Logo) */}
-            <div className="absolute left-1/2 top-1/2 pointer-events-none" style={{ transform: "translate(calc(-50% + 25px), -50%)" }}>
+            {/* Bagian Tengah (Logo - Diperbesar untuk Mobile & Tablet) */}
+            <div className="absolute left-1/2 top-1/2 -translate-y-1/2 -translate-x-[calc(50%-8px)] md:-translate-x-[calc(50%-14px)] pointer-events-none z-20 flex items-center justify-center">
               <Link
                 href="/"
                 className="relative z-50 cursor-pointer flex items-center justify-center pointer-events-auto"
@@ -336,9 +374,9 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                 <Image
                   src="/images/logo.png"
                   alt="SECTOR MADNESS"
-                  width={420}
-                  height={120}
-                  className={`h-[60px] md:h-[85px] lg:h-[110px] w-auto object-contain transition-all duration-300 ${
+                  width={597}
+                  height={418}
+                  className={`h-[62px] sm:h-[80px] md:h-[96px] lg:h-[110px] w-auto object-contain transition-all duration-300 ${
                     isLightMode || isShopHovered ? "brightness-0" : ""
                   }`}
                   priority
@@ -346,18 +384,21 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
               </Link>
             </div>
 
-            {/* Bagian Kanan (Menu Aksi) */}
-            <div className="flex items-center gap-8 justify-end z-10" style={{ paddingLeft: "50px" }}>
+            {/* Bagian Kanan (Desktop: paddingLeft 50px, Mobile/Tablet: inline margin dari tepi layar) */}
+            <div
+              className="flex items-center gap-4 sm:gap-6 lg:gap-8 justify-end z-10 lg:pl-[50px]"
+              style={{ marginRight: isDesktop ? 0 : "clamp(20px, 6vw, 48px)" }}
+            >
               {/* Search Icon */}
               <button
                 onClick={() => { setIsSearchOpen(true); setSearchQuery(""); }}
-                className="hidden md:block cursor-pointer group"
+                className="cursor-pointer group p-1 flex items-center justify-center"
                 aria-label="Search"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
+                  width="21"
+                  height="21"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -375,10 +416,10 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                 </svg>
               </button>
 
-              {/* Login / Account Link */}
+              {/* Login / Account Link (Hanya Tampil di Desktop >= lg) */}
               <Link
                 href={isLoggedIn ? (isAdmin ? "/admin" : "/dashboard") : "/login"}
-                className="hidden md:block cursor-pointer group"
+                className="hidden lg:block cursor-pointer group"
                 aria-label={isLoggedIn ? (isAdmin ? "Admin Panel" : "Account") : "Login"}
               >
                 <span
@@ -395,14 +436,14 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
               {/* Cart Icon */}
               <Link
                 href="/bag"
-                className="cursor-pointer group relative flex items-center"
+                className="cursor-pointer group relative flex items-center p-3"
                 aria-label="Shopping Bag"
               >
                 <div className="relative">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    width="22"
-                    height="22"
+                    width="21"
+                    height="21"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -434,30 +475,12 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                   </AnimatePresence>
                 </div>
               </Link>
-
-              {/* Mobile Menu Button */}
-              <button
-                className="lg:hidden cursor-pointer relative z-50 w-6 h-6 flex flex-col justify-center items-center gap-[5px]"
-                onClick={() => setMobileOpen(!mobileOpen)}
-                aria-label="Menu"
-              >
-                <span
-                  className={`block w-5 h-[1px] transition-all duration-300 ${
-                    isLightMode || isShopHovered ? "bg-[#0A0A0A]" : "bg-[#F5F5F5]"
-                  } ${mobileOpen ? "rotate-45 translate-y-[3px]" : ""}`}
-                />
-                <span
-                  className={`block w-5 h-[1px] transition-all duration-300 ${
-                    isLightMode || isShopHovered ? "bg-[#0A0A0A]" : "bg-[#F5F5F5]"
-                  } ${mobileOpen ? "-rotate-45 -translate-y-[3px]" : ""}`}
-                />
-              </button>
             </div>
           </div>
         </div>
       </motion.nav>
 
-      {/* Hover Dropdown Mega Menu (James Boogie Style) */}
+      {/* Hover Dropdown Mega Menu (James Boogie Style Desktop) */}
       <AnimatePresence>
         {isShopHovered && (
           <motion.div
@@ -555,65 +578,230 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Mobile Menu Overlay */}
-      <AnimatePresence>
-        {mobileOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4 }}
-            className="fixed inset-0 z-40 bg-[#0A0A0A] flex flex-col items-center justify-center lg:hidden pointer-events-auto"
-          >
-            <nav className="flex flex-col items-center gap-8">
-              {navLinks.map((link, i) => (
-                <motion.div
-                  key={link.label}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 + i * 0.08, duration: 0.5 }}
-                >
-                  <Link
-                    href={link.href}
-                    onClick={() => setMobileOpen(false)}
-                    className="text-[13px] tracking-[0.3em] uppercase text-[#F5F5F5] hover:text-[#B6A47E] transition-colors duration-300 cursor-pointer font-medium"
-                  >
-                    {link.label}
-                  </Link>
-                </motion.div>
-              ))}
-              <div className="w-8 h-[1px] bg-[#222222] my-4" />
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5, duration: 0.5 }}
-                className="flex items-center gap-8"
-              >
-                <span
-                  onClick={() => { setMobileOpen(false); setIsSearchOpen(true); setSearchQuery(""); }}
-                  className="text-[11px] tracking-[0.2em] uppercase text-[#8A8A8A] cursor-pointer hover:text-[#F5F5F5] transition-colors duration-300"
-                >
-                  Search
-                </span>
-                <Link
-                  href={isLoggedIn ? (isAdmin ? "/admin" : "/dashboard") : "/login"}
-                  onClick={() => setMobileOpen(false)}
-                  className="text-[11px] tracking-[0.2em] uppercase text-[#8A8A8A] cursor-pointer hover:text-[#F5F5F5] transition-colors duration-300"
-                >
-                  {isLoggedIn ? (isAdmin ? "Admin Panel" : "Account") : "Login"}
-                </Link>
-              </motion.div>
-            </nav>
-          </motion.div>
-        )}
-      </AnimatePresence>
       </div>
 
       {/* ── RENDER OVERLAYS TO DOCUMENT.BODY VIA PORTAL TO PREVENT CSS TRANSFORM CLIPPING ── */}
       {mounted &&
         createPortal(
           <AnimatePresence>
+            {/* ── MOBILE MENU OVERLAY (IMAGE 3 REFERENCE STYLE) ── */}
+            {mobileOpen && (
+              <motion.div
+                key="mobile-menu-overlay"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.25, ease: "easeOut" }}
+                style={{
+                  position: "fixed",
+                  top: 0,
+                  left: 0,
+                  width: "100vw",
+                  height: "100vh",
+                  zIndex: 99998,
+                  backgroundColor: "#FFFFFF",
+                  color: "#0A0A0A",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                }}
+                className="pointer-events-auto lg:hidden"
+              >
+                {/* Header Row: Close (X) on left, Logo in center — mirror exact navbar header */}
+                <div className="w-full border-b border-[#E5E5E5]">
+                  <div className="max-w-[1480px] mx-auto">
+                    <div
+                      className="relative flex justify-between items-center h-[76px] sm:h-[92px] md:h-[116px]"
+                    >
+                      {/* Left: Close X Button — same margin as hamburger in navbar */}
+                      <button
+                        onClick={() => setMobileOpen(false)}
+                        className="cursor-pointer p-2 text-[#0A0A0A] hover:opacity-60 transition-opacity z-20 flex items-center justify-center"
+                        style={{ marginLeft: isDesktop ? 0 : "clamp(20px, 6vw, 48px)" }}
+                        aria-label="Close menu"
+                      >
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </button>
+
+                      {/* Center: Logo — same size as navbar logo */}
+                      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto z-10 flex items-center justify-center">
+                        <Link href="/" onClick={() => setMobileOpen(false)}>
+                          <Image
+                            src="/images/logo.png"
+                            alt="SECTOR MADNESS"
+                            width={597}
+                            height={418}
+                            className="h-[62px] sm:h-[80px] md:h-[96px] w-auto object-contain brightness-0"
+                            priority
+                          />
+                        </Link>
+                      </div>
+
+                      {/* Right: Spacer to balance Close button */}
+                      <div style={{ marginRight: isDesktop ? 0 : "clamp(20px, 6vw, 48px)", width: "38px" }} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Main Body Content */}
+                <div
+                  className="flex-1 flex flex-col max-w-[1480px] w-full mx-auto overflow-y-auto"
+                  style={{
+                    paddingLeft: "clamp(28px, 8vw, 72px)",
+                    paddingRight: "clamp(28px, 8vw, 72px)",
+                    paddingTop: "28px",
+                    paddingBottom: "clamp(28px, 5vh, 44px)",
+                  }}
+                >
+                  {/* Top: Primary Nav Links with Interactive SHOP Dropdown */}
+                  <div className="flex flex-col">
+                    {navLinks.map((link) => {
+                      if (link.hasDropdown) {
+                        return (
+                          <div key={link.label} className="border-b border-[#F0F0F0]">
+                            <button
+                              type="button"
+                              onClick={() => setIsMobileShopOpen((prev) => !prev)}
+                              className="w-full flex items-center justify-between group cursor-pointer text-left"
+                              style={{ paddingTop: '18px', paddingBottom: '18px' }}
+                            >
+                              <span className="text-[13px] sm:text-[15px] tracking-[0.15em] uppercase font-semibold text-[#0A0A0A] group-hover:text-[#666666] transition-colors">
+                                {link.label}
+                              </span>
+                              <svg
+                                width="13"
+                                height="13"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className={`text-[#0A0A0A] flex-shrink-0 transition-transform duration-300 ${
+                                  isMobileShopOpen ? "rotate-90" : ""
+                                }`}
+                              >
+                                <polyline points="9 18 15 12 9 6" />
+                              </svg>
+                            </button>
+
+                            {/* Dropdown Content */}
+                            <AnimatePresence>
+                              {isMobileShopOpen && (
+                                <motion.div
+                                  initial={{ opacity: 0, height: 0 }}
+                                  animate={{ opacity: 1, height: "auto" }}
+                                  exit={{ opacity: 0, height: 0 }}
+                                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                                  className="overflow-hidden bg-[#FAFAFA]"
+                                >
+                                  <div className="py-5 px-1 border-t border-[#F0F0F0] grid grid-cols-2 gap-4">
+                                    {/* Left Column: PRODUCTS */}
+                                    <div className="flex flex-col">
+                                      <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-[#888888] mb-4">
+                                        PRODUCTS
+                                      </p>
+                                      <div className="flex flex-col gap-2.5">
+                                        {dynamicCategories.map((cat) => (
+                                          <Link
+                                            key={cat.label}
+                                            href={`/shop?category=${encodeURIComponent(cat.filter)}`}
+                                            onClick={() => {
+                                              setMobileOpen(false);
+                                              setIsMobileShopOpen(false);
+                                            }}
+                                            className="text-[11px] sm:text-[12px] tracking-[0.12em] uppercase font-medium text-[#333333] hover:text-[#0A0A0A] transition-colors py-0.5 block leading-snug"
+                                          >
+                                            {cat.label}
+                                          </Link>
+                                        ))}
+                                      </div>
+                                    </div>
+
+                                    {/* Right Column: FOCUS ON */}
+                                    {dynamicFocusOn.length > 0 && (
+                                      <div className="flex flex-col border-l border-[#F0F0F0] pl-3 sm:pl-4">
+                                        <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-[#888888] mb-4">
+                                          FOCUS ON
+                                        </p>
+                                        <div className="flex flex-col gap-2.5">
+                                          {dynamicFocusOn.map((item) => (
+                                            <Link
+                                              key={item.label}
+                                              href={`/shop?category=${encodeURIComponent(item.filter)}`}
+                                              onClick={() => {
+                                                setMobileOpen(false);
+                                                setIsMobileShopOpen(false);
+                                              }}
+                                              className="text-[11px] sm:text-[12px] tracking-[0.12em] uppercase font-medium text-[#333333] hover:text-[#0A0A0A] transition-colors py-0.5 block leading-snug"
+                                            >
+                                              {item.label}
+                                            </Link>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <Link
+                          key={link.label}
+                          href={link.href}
+                          onClick={() => setMobileOpen(false)}
+                          className="flex items-center justify-between group border-b border-[#F0F0F0]"
+                          style={{ paddingTop: '18px', paddingBottom: '18px' }}
+                        >
+                          <span className="text-[13px] sm:text-[15px] tracking-[0.15em] uppercase font-semibold text-[#0A0A0A] group-hover:text-[#666666] transition-colors">
+                            {link.label}
+                          </span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+
+                  {/* Spacer — large empty middle area like reference image */}
+                  <div className="flex-1" />
+
+                  {/* Bottom section: Account/Customer Support above Instagram */}
+                  <div>
+                    {/* Separator + secondary links */}
+                    <div
+                      className="border-t border-[#E0E0E0] flex flex-col"
+                      style={{ paddingTop: '24px', paddingBottom: '32px', gap: '24px' }}
+                    >
+                      <Link
+                        href={isLoggedIn ? (isAdmin ? "/admin" : "/dashboard") : "/login"}
+                        onClick={() => setMobileOpen(false)}
+                        className="text-[11px] sm:text-[12px] tracking-[0.18em] uppercase text-[#0A0A0A] font-medium hover:opacity-60 transition-opacity w-fit"
+                      >
+                        {isLoggedIn ? (isAdmin ? "ADMIN PANEL" : "ACCOUNT") : "LOG IN"}
+                      </Link>
+                      <Link
+                        href="/contact"
+                        onClick={() => setMobileOpen(false)}
+                        className="text-[11px] sm:text-[12px] tracking-[0.18em] uppercase text-[#0A0A0A] font-medium hover:opacity-60 transition-opacity w-fit"
+                      >
+                        CUSTOMER SUPPORT
+                      </Link>
+                    </div>
+
+                    {/* Footer bottom line — no icon */}
+                    <div className="border-t border-[#E0E0E0]" />
+                  </div>
+                </div>
+
+              </motion.div>
+            )}
+
             {/* ── STONE ISLAND STYLE FULLSCREEN SEARCH OVERLAY ── */}
             {isSearchOpen && (
               <motion.div
@@ -638,15 +826,27 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                 }}
                 className="pointer-events-auto"
               >
-                {/* Top Header: Centered Logo & Close Button (100% identical structural size and positioning as main Navbar) */}
+                {/* Top Header — mirror exact navbar header (same height, logo size, and margins) */}
                 <div className="w-full border-b border-[#E5E5E5]/40">
-                  <div className="max-w-[1480px] mx-auto px-8 md:px-14 lg:px-20">
-                    <div className="relative flex justify-between items-center h-[88px] md:h-[116px]">
-                      {/* Bagian Kiri (Placeholder senada dengan navbar utama) */}
-                      <div className="hidden lg:flex items-center gap-8 justify-start z-10" style={{ paddingLeft: "50px" }}></div>
+                  <div className="max-w-[1480px] mx-auto">
+                    <div className="relative flex justify-between items-center h-[76px] sm:h-[92px] lg:h-[116px]">
+                      {/* Left: Close Button on Mobile / Placeholder on Desktop */}
+                      <div className="flex items-center justify-start z-10 lg:pl-[50px]">
+                        <button
+                          onClick={() => setIsSearchOpen(false)}
+                          style={{ marginLeft: isDesktop ? 0 : "clamp(20px, 6vw, 48px)" }}
+                          className="cursor-pointer hover:opacity-60 transition-opacity flex items-center justify-center text-[#0A0A0A] lg:hidden"
+                          aria-label="Close search"
+                        >
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                          </svg>
+                        </button>
+                      </div>
 
-                      {/* Bagian Tengah (Logo Presisi 100% Sama PERSIS seperti Navbar) */}
-                      <div className="absolute left-1/2 top-1/2 pointer-events-none" style={{ transform: "translate(calc(-50% + 25px), -50%)" }}>
+                      {/* Center Logo — exact same as navbar */}
+                      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-20 flex items-center justify-center">
                         <Link
                           href="/"
                           onClick={() => setIsSearchOpen(false)}
@@ -655,36 +855,45 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                           <Image
                             src="/images/logo.png"
                             alt="SECTOR MADNESS"
-                            width={420}
-                            height={120}
-                            className="h-[60px] md:h-[85px] lg:h-[110px] w-auto object-contain brightness-0 transition-all duration-300"
+                            width={597}
+                            height={418}
+                            className="h-[62px] sm:h-[80px] md:h-[96px] lg:h-[110px] w-auto object-contain brightness-0 transition-all duration-300"
                             priority
                           />
                         </Link>
                       </div>
 
-                      {/* Bagian Kanan (Tombol Close) */}
-                      <div className="flex items-center gap-8 justify-end z-10" style={{ paddingLeft: "50px" }}>
+                      {/* Right: Close button on Desktop / Spacer on Mobile */}
+                      <div className="flex items-center gap-4 justify-end z-10 lg:pr-[50px]">
                         <button
                           onClick={() => setIsSearchOpen(false)}
                           style={{ fontSize: "12px", letterSpacing: "0.2em", fontWeight: 700 }}
-                          className="cursor-pointer hover:opacity-60 transition-opacity flex items-center gap-2 text-[#0A0A0A] uppercase"
+                          className="hidden lg:flex cursor-pointer hover:opacity-60 transition-opacity items-center gap-2 text-[#0A0A0A] uppercase"
                           aria-label="Close search"
                         >
-                          <span className="hidden sm:inline">CLOSE</span>
+                          <span>CLOSE</span>
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <line x1="18" y1="6" x2="6" y2="18" />
                             <line x1="6" y1="6" x2="18" y2="18" />
                           </svg>
                         </button>
+                        <div style={{ marginRight: isDesktop ? 0 : "clamp(20px, 6vw, 48px)", width: "20px" }} className="lg:hidden" />
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Main Search Body */}
-                <div className="w-full flex-1 flex flex-col max-w-[1480px] mx-auto px-8 md:px-14 lg:px-20">
-                  <div style={{ paddingLeft: "60px", paddingRight: "60px", paddingTop: "32px", paddingBottom: "64px" }} className="w-full flex-1 flex flex-col">
+                <div className="w-full flex-1 flex flex-col max-w-[1480px] mx-auto">
+                  <div
+                    style={{
+                      paddingLeft: isDesktop ? "60px" : "clamp(28px, 8vw, 72px)",
+                      paddingRight: isDesktop ? "60px" : "clamp(28px, 8vw, 72px)",
+                      paddingTop: "32px",
+                      paddingBottom: "64px",
+                    }}
+                    className="w-full flex-1 flex flex-col"
+                  >
                     {/* Search Input Box with generous breathing space beneath */}
                     <div style={{ marginBottom: "60px" }}>
                       <p style={{ fontSize: "12px", letterSpacing: "0.2em", fontWeight: 700, marginBottom: "12px" }} className="uppercase text-[#0A0A0A]">
@@ -823,8 +1032,15 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
 
                 {/* Bottom Footer Bar */}
                 <div className="w-full border-t border-[#E5E5E5] bg-[#FFFFFF]">
-                  <div className="max-w-[1480px] mx-auto px-8 md:px-14 lg:px-20 py-6">
-                    <div style={{ paddingLeft: "60px", paddingRight: "60px" }} className="flex flex-wrap items-center justify-start gap-12">
+                  <div className="max-w-[1480px] mx-auto py-5">
+                    <div
+                      className="flex flex-nowrap items-center justify-start overflow-x-auto"
+                      style={{
+                        paddingLeft: isDesktop ? "60px" : "clamp(28px, 8vw, 72px)",
+                        paddingRight: isDesktop ? "60px" : "clamp(28px, 8vw, 72px)",
+                        gap: isDesktop ? "48px" : "clamp(16px, 4vw, 36px)",
+                      }}
+                    >
                       {[
                         { name: "SHOP", href: "/shop" },
                         { name: "SIZE GUIDE", href: "/size-guide" },
@@ -836,8 +1052,13 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                           key={item.name}
                           href={item.href}
                           onClick={() => setIsSearchOpen(false)}
-                          style={{ fontSize: "12px", letterSpacing: "0.18em", fontWeight: 700 }}
-                          className="uppercase text-[#0A0A0A] hover:opacity-60 transition-opacity cursor-pointer"
+                          style={{
+                            fontSize: isDesktop ? "12px" : "10px",
+                            letterSpacing: "0.15em",
+                            fontWeight: 700,
+                            whiteSpace: "nowrap",
+                          }}
+                          className="uppercase text-[#0A0A0A] hover:opacity-60 transition-opacity cursor-pointer flex-shrink-0"
                         >
                           {item.name}
                         </Link>

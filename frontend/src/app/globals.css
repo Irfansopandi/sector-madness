@@ -41,6 +41,7 @@ html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  max-width: 100vw;
 }
 
 body {
@@ -49,7 +50,7 @@ body {
   font-family: var(--font-body);
   font-weight: 300;
   line-height: 1.6;
-  overflow-x: hidden;
+  max-width: 100%;
 }
 
 ::selection {
@@ -72,14 +73,63 @@ h1, h2, h3, h4 {
    LUXURY EDITORIAL SPACING SYSTEM
    ============================================= */
 
+:root {
+  --container-padding: clamp(1.5rem, 5vw, 4.5rem);
+}
+
 /* Container centering & responsive horizontal padding */
 .site-container {
   width: 100%;
   max-width: 1280px;
   margin-left: auto !important;
   margin-right: auto !important;
-  padding-left: clamp(1.5rem, 5vw, 4.5rem);
-  padding-right: clamp(1.5rem, 5vw, 4.5rem);
+  padding-left: var(--container-padding);
+  padding-right: var(--container-padding);
+}
+
+@media (max-width: 1023px) {
+  .full-bleed-mobile {
+    margin-left: calc(var(--container-padding) * -1) !important;
+    margin-right: calc(var(--container-padding) * -1) !important;
+    width: calc(100% + (var(--container-padding) * 2)) !important;
+  }
+  
+  .full-bleed-brand {
+    margin-left: calc(-1 * clamp(32px, 6vw, 80px)) !important;
+    width: calc(100% + clamp(64px, 12vw, 160px)) !important;
+  }
+}
+
+/* Mobile & Tablet Checkout Spacing (Bypassing Tailwind JIT cache) */
+.mobile-container-padding {
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+}
+.mobile-box-padding {
+  padding: 40px 24px !important;
+}
+
+@media (min-width: 640px) {
+  .mobile-container-padding {
+    padding-left: 40px !important;
+    padding-right: 40px !important;
+  }
+  .mobile-box-padding {
+    padding: 48px 40px !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .desktop-checkout-padding {
+    padding: 72px 80px 88px 80px !important;
+  }
+  .desktop-summary-padding {
+    padding: 60px 56px 64px 56px !important;
+  }
+  .desktop-container-padding {
+    padding-left: 80px !important;
+    padding-right: 80px !important;
+  }
 }
 
 /* Standard Major Section Padding */

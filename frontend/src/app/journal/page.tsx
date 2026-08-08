@@ -74,7 +74,7 @@ export default function JournalPage() {
             </div>
 
             <div className="max-w-md pb-2">
-              <p style={{ fontSize: "15px", lineHeight: "1.75", fontWeight: 300 }} className="text-[#999999]">
+              <p className="text-[#999999] text-[12.5px] md:text-[14px] lg:text-[15px] leading-[1.85] lg:leading-[1.75] font-light">
                 Documenting the creative world of <strong className="text-white font-normal">SECTOR MADNESS</strong> through stories, campaigns, materials, craftsmanship, and brand philosophy.
               </p>
             </div>

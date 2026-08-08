@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -180,7 +180,50 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [activeImage, setActiveImage] = useState(0);
+  const galleryTrackRef = useRef<HTMLDivElement>(null);
   const [openAccordion, setOpenAccordion] = useState<string | null>("description");
+
+  const scrollToImage = (index: number) => {
+    if (!product.gallery || product.gallery.length === 0) return;
+    const nextIdx = Math.max(0, Math.min(index, product.gallery.length - 1));
+    setActiveImage(nextIdx);
+    if (galleryTrackRef.current) {
+      const container = galleryTrackRef.current;
+      const targetSlide = container.children[nextIdx] as HTMLElement;
+      if (targetSlide) {
+        container.scrollTo({
+          left: targetSlide.offsetLeft,
+          behavior: "smooth",
+        });
+      }
+    }
+  };
+
+  const nextImage = () => {
+    if (!product.gallery || product.gallery.length <= 1) return;
+    if (activeImage < product.gallery.length - 1) {
+      scrollToImage(activeImage + 1);
+    }
+  };
+
+  const prevImage = () => {
+    if (!product.gallery || product.gallery.length <= 1) return;
+    if (activeImage > 0) {
+      scrollToImage(activeImage - 1);
+    }
+  };
+
+  const handleGalleryScroll = () => {
+    if (!galleryTrackRef.current) return;
+    const container = galleryTrackRef.current;
+    const slideWidth = container.clientWidth;
+    if (slideWidth > 0) {
+      const currentIdx = Math.round(container.scrollLeft / slideWidth);
+      if (currentIdx >= 0 && product.gallery && currentIdx < product.gallery.length && currentIdx !== activeImage) {
+        setActiveImage(currentIdx);
+      }
+    }
+  };
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [showWishlistToast, setShowWishlistToast] = useState(false);
@@ -358,14 +401,6 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
     return Math.max(0, Math.floor(totalProductStock / numSizes));
   };
 
-  const nextImage = () => {
-    setActiveImage((prev) => (prev + 1) % product.gallery.length);
-  };
-
-  const prevImage = () => {
-    setActiveImage((prev) => (prev - 1 + product.gallery.length) % product.gallery.length);
-  };
-
   const toggleAccordion = (section: string) => {
     setOpenAccordion((prev) => (prev === section ? null : section));
   };
@@ -375,110 +410,127 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
       <Navbar />
 
       {/* Main Product Content */}
-      <Container className="pb-16 md:pb-24" style={{ paddingTop: "140px" }}>
+      <Container className="pb-8 md:pb-12" style={{ paddingTop: "140px" }}>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 xl:gap-20 items-start">
-          {/* Left Column: Gallery Slider */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8 }}
-            className="lg:col-span-7"
-          >
-            {/* Main Image Box */}
-            <div className="relative aspect-[3/4] bg-[#161616] overflow-hidden mb-4 group">
-              <Image
-                src={product.gallery[activeImage]}
-                alt={product.name}
-                fill
-                className="object-cover transition-all duration-500"
-                priority
-                sizes="(max-width: 1024px) 100vw, 58vw"
-                quality={90}
-              />
+          {/* Left Column: Single Bounded Horizontal Photo Gallery Track (All Viewports) */}
+          <div className="lg:col-span-7 w-full">
+            <div className="relative w-full group overflow-hidden full-bleed-mobile">
+              {/* Navigation Arrows (Rendered only if gallery has > 1 image) */}
+              {product.gallery.length > 1 && (
+                <>
+                  {activeImage > 0 && (
+                    <button
+                      onClick={prevImage}
+                      aria-label="Previous Image"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 hover:bg-black/80 backdrop-blur-sm text-white flex items-center justify-center transition-all duration-300 opacity-0 group-hover:opacity-100 cursor-pointer z-30"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <path d="M15 18l-6-6 6-6" />
+                      </svg>
+                    </button>
+                  )}
 
-              {/* Left Arrow (<) */}
-              <button
-                onClick={prevImage}
-                aria-label="Previous Image"
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 hover:bg-black/80 backdrop-blur-sm text-white flex items-center justify-center transition-all duration-300 opacity-70 group-hover:opacity-100 cursor-pointer z-10"
+                  {activeImage < product.gallery.length - 1 && (
+                    <button
+                      onClick={nextImage}
+                      aria-label="Next Image"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 hover:bg-black/80 backdrop-blur-sm text-white flex items-center justify-center transition-all duration-300 opacity-0 group-hover:opacity-100 cursor-pointer z-30"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <path d="M9 18l6-6-6-6" />
+                      </svg>
+                    </button>
+                  )}
+                </>
+              )}
+
+              {/* Horizontal Gallery Track */}
+              <div
+                ref={galleryTrackRef}
+                onScroll={handleGalleryScroll}
+                className="relative aspect-[3/4] w-full bg-[#161616] overflow-x-auto overflow-y-hidden snap-x snap-mandatory scrollbar-none flex flex-nowrap rounded-none border border-[#222222]/40"
+                style={{ scrollBehavior: "smooth", WebkitOverflowScrolling: "touch" }}
               >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M15 18l-6-6 6-6" />
-                </svg>
-              </button>
-
-              {/* Right Arrow (>) */}
-              <button
-                onClick={nextImage}
-                aria-label="Next Image"
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 hover:bg-black/80 backdrop-blur-sm text-white flex items-center justify-center transition-all duration-300 opacity-70 group-hover:opacity-100 cursor-pointer z-10"
-              >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M9 18l6-6-6-6" />
-                </svg>
-              </button>
-
-              {/* Bottom Indicators */}
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
-                {product.gallery.map((_, i) => (
-                  <button
+                {product.gallery.map((img: string, i: number) => (
+                  <div
                     key={i}
-                    onClick={() => setActiveImage(i)}
-                    className={`h-0.5 transition-all duration-300 cursor-pointer ${
-                      activeImage === i
-                        ? "w-8 bg-[#F5F5F5]"
-                        : "w-4 bg-[#F5F5F5]/40 hover:bg-[#F5F5F5]/70"
-                    }`}
-                  />
+                    className="relative aspect-[3/4] w-full min-w-full flex-shrink-0 snap-start bg-[#161616]"
+                  >
+                    <Image
+                      src={img}
+                      alt={`${product.name} view ${i + 1}`}
+                      fill
+                      className="object-cover"
+                      priority={i === 0}
+                      sizes="(max-width: 1024px) 100vw, 58vw"
+                      quality={90}
+                    />
+                  </div>
                 ))}
               </div>
+
+              {/* Bottom Dot Indicators (Moved outside scrolling track) */}
+              {product.gallery.length > 1 && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-30 pointer-events-none">
+                  {product.gallery.map((_, i) => (
+                    <span
+                      key={i}
+                      className={`h-0.5 transition-all duration-300 ${
+                        activeImage === i ? "w-8 bg-[#F5F5F5]" : "w-4 bg-[#F5F5F5]/40"
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
 
-            {/* Thumbnails below main image */}
-            <div className="flex gap-4">
-              {product.gallery.map((img, i) => (
-                <button
-                  key={i}
-                  onClick={() => setActiveImage(i)}
-                  className={`relative aspect-square w-16 md:w-20 overflow-hidden cursor-pointer transition-opacity duration-300 ${
-                    activeImage === i
-                      ? "opacity-100 border border-[#F5F5F5]/30"
-                      : "opacity-50 hover:opacity-80 border border-transparent"
-                  }`}
-                >
-                  <Image
-                    src={img}
-                    alt={`${product.name} view ${i + 1}`}
-                    fill
-                    className="object-cover"
-                    sizes="80px"
-                  />
-                </button>
-              ))}
-            </div>
-          </motion.div>
+              {/* Thumbnails below gallery track with expanded spacing */}
+              {product.gallery.length > 1 && (
+                <div className="flex items-center gap-4 mt-16 md:mt-20 lg:mt-12 mb-16 md:mb-24 lg:mb-64 overflow-x-auto scrollbar-none pb-4">
+                  {product.gallery.map((img: string, i: number) => (
+                    <button
+                      key={i}
+                      onClick={() => scrollToImage(i)}
+                      className={`relative aspect-square w-16 md:w-20 shrink-0 cursor-pointer transition-all duration-300 rounded-sm ${
+                        activeImage === i
+                          ? "opacity-100 border border-[#F5F5F5] p-1"
+                          : "opacity-45 hover:opacity-85 border border-transparent p-1"
+                      }`}
+                    >
+                      <div className="relative w-full h-full overflow-hidden">
+                        <Image
+                          src={img}
+                          alt={`${product.name} thumbnail ${i + 1}`}
+                          fill
+                          className="object-cover"
+                          sizes="80px"
+                        />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
 
-          {/* Right Column: Refined Spacious Luxury Detail Layout */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="lg:col-span-5 lg:sticky lg:top-28 self-start"
-          >
+              {/* Product Story Section — Spacious High-Fashion Termination Boundary */}
+              <AnimatedSection className="mt-16 md:mt-24 lg:mt-12 border-t border-[#222222] pt-12 md:pt-16 pb-6 md:pb-10 flex flex-col justify-center">
+                <div className="max-w-2xl my-auto">
+                  <span className="text-[10px] sm:text-[11px] tracking-[0.3em] uppercase text-[#8A8A8A] font-[family-name:var(--font-body)] block mb-6 md:mb-8">
+                    The Story
+                  </span>
+                  <p className="font-[family-name:var(--font-display)] text-[15px] md:text-[18px] lg:text-[20px] font-light text-[#F5F5F5]/90 leading-[1.8] tracking-[-0.01em]">
+                    {product.story}
+                  </p>
+                </div>
+              </AnimatedSection>
+            </div>
+
+          {/* Right Column: Unified Product Detail Sticky Container */}
+          <div className="lg:col-span-5 lg:sticky lg:top-28 self-start z-20">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+            >
             <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
               {/* Breadcrumb / Back Link */}
               <div>
@@ -751,17 +803,17 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
               </div>
 
               {/* Accordions / Information Collapsibles */}
-              <div className="border-t border-[#222222] divide-y divide-[#222222]">
+              <div className="mt-10 md:mt-12 border-y border-[#2A2A2A] divide-y divide-[#2A2A2A]">
                 {/* Accordion 1: Description */}
                 <div>
                   <button
                     onClick={() => toggleAccordion("description")}
-                    className="w-full py-8 flex items-center justify-between text-left cursor-pointer group"
+                    className="w-full py-6 md:py-7 flex items-center justify-between text-left cursor-pointer group"
                   >
-                    <span className="text-xs tracking-[0.25em] uppercase text-[#F5F5F5] font-[family-name:var(--font-body)] font-bold">
+                    <span className="text-[13px] md:text-[14px] lg:text-[15px] tracking-[0.15em] uppercase text-[#F5F5F5] font-[family-name:var(--font-body)] font-medium">
                       DESCRIPTION
                     </span>
-                    <span className="text-[#8A8A8A] group-hover:text-[#F5F5F5] text-base font-bold">
+                    <span className="text-[#8A8A8A] group-hover:text-[#F5F5F5] text-xl font-light">
                       {openAccordion === "description" ? "−" : "+"}
                     </span>
                   </button>
@@ -772,7 +824,7 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.3 }}
-                        className="overflow-hidden pb-8"
+                        className="overflow-hidden pb-6 md:pb-8 lg:pb-10"
                       >
                         <p className="text-sm text-[#999999] font-[family-name:var(--font-body)] font-light leading-[2]">
                           {product.description}
@@ -786,12 +838,12 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
                 <div>
                   <button
                     onClick={() => toggleAccordion("material")}
-                    className="w-full py-8 flex items-center justify-between text-left cursor-pointer group"
+                    className="w-full py-6 md:py-7 flex items-center justify-between text-left cursor-pointer group"
                   >
-                    <span className="text-xs tracking-[0.25em] uppercase text-[#F5F5F5] font-[family-name:var(--font-body)] font-bold">
+                    <span className="text-[13px] md:text-[14px] lg:text-[15px] tracking-[0.15em] uppercase text-[#F5F5F5] font-[family-name:var(--font-body)] font-medium">
                       MATERIAL & COMPOSITION
                     </span>
-                    <span className="text-[#8A8A8A] group-hover:text-[#F5F5F5] text-base font-bold">
+                    <span className="text-[#8A8A8A] group-hover:text-[#F5F5F5] text-xl font-light">
                       {openAccordion === "material" ? "−" : "+"}
                     </span>
                   </button>
@@ -802,7 +854,7 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.3 }}
-                        className="overflow-hidden pb-8 space-y-3"
+                        className="overflow-hidden pb-6 md:pb-8 lg:pb-10 space-y-3"
                       >
                         <p className="text-sm text-[#999999] font-[family-name:var(--font-body)] font-light leading-[1.9] whitespace-pre-line">
                           {product.material}
@@ -819,12 +871,12 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
                 <div>
                   <button
                     onClick={() => toggleAccordion("details")}
-                    className="w-full py-8 flex items-center justify-between text-left cursor-pointer group"
+                    className="w-full py-6 md:py-7 flex items-center justify-between text-left cursor-pointer group"
                   >
-                    <span className="text-xs tracking-[0.25em] uppercase text-[#F5F5F5] font-[family-name:var(--font-body)] font-bold">
+                    <span className="text-[13px] md:text-[14px] lg:text-[15px] tracking-[0.15em] uppercase text-[#F5F5F5] font-[family-name:var(--font-body)] font-medium">
                       DETAILS & SPECIFICATIONS
                     </span>
-                    <span className="text-[#8A8A8A] group-hover:text-[#F5F5F5] text-base font-bold">
+                    <span className="text-[#8A8A8A] group-hover:text-[#F5F5F5] text-xl font-light">
                       {openAccordion === "details" ? "−" : "+"}
                     </span>
                   </button>
@@ -835,7 +887,7 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.3 }}
-                        className="overflow-hidden pb-8"
+                        className="overflow-hidden pb-6 md:pb-8 lg:pb-10"
                       >
                         <ul className="space-y-4">
                           {product.details.map((detail, i) => (
@@ -857,12 +909,12 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
                 <div>
                   <button
                     onClick={() => toggleAccordion("size_guide")}
-                    className="w-full py-8 flex items-center justify-between text-left cursor-pointer group"
+                    className="w-full py-6 md:py-7 flex items-center justify-between text-left cursor-pointer group"
                   >
-                    <span className="text-xs tracking-[0.25em] uppercase text-[#F5F5F5] font-[family-name:var(--font-body)] font-bold">
+                    <span className="text-[13px] md:text-[14px] lg:text-[15px] tracking-[0.15em] uppercase text-[#F5F5F5] font-[family-name:var(--font-body)] font-medium">
                       SIZE GUIDE
                     </span>
-                    <span className="text-[#8A8A8A] group-hover:text-[#F5F5F5] text-base font-bold">
+                    <span className="text-[#8A8A8A] group-hover:text-[#F5F5F5] text-xl font-light">
                       {openAccordion === "size_guide" ? "−" : "+"}
                     </span>
                   </button>
@@ -922,12 +974,12 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
                 <div>
                   <button
                     onClick={() => toggleAccordion("shipping")}
-                    className="w-full py-8 flex items-center justify-between text-left cursor-pointer group"
+                    className="w-full py-6 md:py-7 flex items-center justify-between text-left cursor-pointer group"
                   >
-                    <span className="text-xs tracking-[0.25em] uppercase text-[#F5F5F5] font-[family-name:var(--font-body)] font-bold">
+                    <span className="text-[13px] md:text-[14px] lg:text-[15px] tracking-[0.15em] uppercase text-[#F5F5F5] font-[family-name:var(--font-body)] font-medium">
                       SHIPPING & CANCEL
                     </span>
-                    <span className="text-[#8A8A8A] group-hover:text-[#F5F5F5] text-base font-bold">
+                    <span className="text-[#8A8A8A] group-hover:text-[#F5F5F5] text-xl font-light">
                       {openAccordion === "shipping" ? "−" : "+"}
                     </span>
                   </button>
@@ -950,18 +1002,7 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
             </div>
           </motion.div>
         </div>
-
-        {/* Product Story Section */}
-        <AnimatedSection className="mt-28 md:mt-40 lg:mt-48 border-t border-[#222222] pt-16 md:pt-24 lg:pt-28 pb-28 md:pb-40 lg:pb-52">
-          <div className="max-w-2xl">
-            <span className="text-[10px] tracking-[0.3em] uppercase text-[#8A8A8A] font-[family-name:var(--font-body)] block mb-6">
-              The Story
-            </span>
-            <p className="font-[family-name:var(--font-display)] text-[15px] md:text-[18px] lg:text-[20px] font-light text-[#F5F5F5]/90 leading-[1.8] tracking-[-0.01em]">
-              {product.story}
-            </p>
-          </div>
-        </AnimatedSection>
+      </div>
       </Container>
 
       <AuthRequiredModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />

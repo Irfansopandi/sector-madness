@@ -235,6 +235,11 @@ function CheckoutContent() {
   const [policyModal, setPolicyModal] = useState<"terms" | "privacy" | null>(null);
 
   /* ====================================================
+     1.5 MOBILE WIZARD STATE
+  ==================================================== */
+  const [mobileStep, setMobileStep] = useState<1 | 2>(1);
+
+  /* ====================================================
      2. FORM STATES (EXACT REFERENCE FORM FIELDS)
   ==================================================== */
   const [useSavedAddress, setUseSavedAddress] = useState(false);
@@ -247,6 +252,7 @@ function CheckoutContent() {
   const [email, setEmail] = useState("");
 
   const [country, setCountry] = useState("Indonesia");
+  const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
   const [address, setAddress] = useState("");
   const [addressLine2, setAddressLine2] = useState("");
   const [stateProvince, setStateProvince] = useState("");
@@ -562,6 +568,7 @@ function CheckoutContent() {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("bca_va");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
+  const [isSuccessLoading, setIsSuccessLoading] = useState(false);
 
   const handleCategorySwitch = (cat: "bank" | "ewallet") => {
     setPaymentCategory(cat);
@@ -714,6 +721,8 @@ function CheckoutContent() {
     }
   };
 
+  const isStep1Valid = fullName.trim() !== "" && phone.trim() !== "" && email.trim() !== "" && address.trim() !== "" && city.trim() !== "" && postalCode.trim() !== "" && selectedRate !== null;
+
   return (
     <main
       style={{ fontFamily: "'Inter', -apple-system, sans-serif" }}
@@ -728,8 +737,8 @@ function CheckoutContent() {
 
       {/* FULL-WIDTH HEADER SECTION WITH EDGE-TO-EDGE BORDER LINE (SHOPPING BAG SPACING PARITY) */}
       <div style={{ paddingTop: "140px" }} className="w-full border-b border-[#262626] pb-8 bg-[#0A0A0A]">
-        <div className="max-w-[1480px] mx-auto px-8 md:px-16 lg:px-24">
-          <div style={{ paddingLeft: "80px", paddingRight: "80px" }} className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div className="max-w-[1480px] mx-auto">
+          <div className="mobile-container-padding desktop-container-padding flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
               <span className="text-[11px] font-mono tracking-[0.25em] text-[#8A8A8A] uppercase block mb-2 font-bold">
                 ATELIER CONCIERGE // SECURE PROTOCOL
@@ -738,31 +747,38 @@ function CheckoutContent() {
                 SECURE CHECKOUT
               </h1>
             </div>
-            <Link
-              href="/bag"
-              className="font-mono text-xs text-[#A0A0A0] uppercase tracking-[0.18em] hover:text-white transition-colors flex items-center gap-2 font-bold pb-1"
-            >
-              <span>←</span> RETURN TO SHOPPING BAG
-            </Link>
+            <div className="flex flex-col gap-2">
+              {mobileStep === 2 && (
+                <button
+                  type="button"
+                  onClick={() => setMobileStep(1)}
+                  className="lg:hidden font-mono text-[11px] text-[#A0A0A0] uppercase tracking-[0.18em] hover:text-white transition-colors flex items-center gap-2 font-bold pb-1"
+                >
+                  <span>←</span> RETURN TO CONTACT INFO
+                </button>
+              )}
+              <Link
+                href="/bag"
+                className={`font-mono text-[11px] lg:text-xs text-[#A0A0A0] uppercase tracking-[0.18em] hover:text-white transition-colors items-center gap-2 font-bold pb-1 ${mobileStep === 2 ? 'hidden lg:flex' : 'flex'}`}
+              >
+                <span>←</span> RETURN TO SHOPPING BAG
+              </Link>
+            </div>
           </div>
         </div>
       </div>
 
       {/* MAIN CHECKOUT CONTAINER - CENTERED ALIGNMENT & EXPANDED PADDING */}
-      <div className="flex-1 w-full max-w-[1480px] mx-auto px-8 md:px-16 lg:px-24 py-16 pb-44 bg-[#0A0A0A]">
-        <div style={{ paddingLeft: "80px", paddingRight: "80px" }}>
+      <div className="flex-1 w-full max-w-[1480px] mx-auto py-8 lg:py-16 pb-24 lg:pb-44 bg-[#0A0A0A]">
+        <div className="mobile-container-padding desktop-container-padding">
           
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 xl:gap-20 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 xl:gap-20 items-start">
             
-            {/* ── LEFT COLUMN: CHECKOUT FORM BOX (MASSIVELY EXPANDED LUXURY PADDING: 72px Top, 80px Sides, 88px Bottom) ── */}
+            {/* ── LEFT COLUMN: CHECKOUT FORM BOX ── */}
             <div 
-              className="lg:col-span-7 bg-[#090909] text-white shadow-2xl"
+              className={`lg:col-span-7 bg-[#090909] text-white shadow-2xl flex-col gap-10 lg:gap-[72px] mobile-box-padding desktop-checkout-padding ${mobileStep === 1 ? 'flex' : 'hidden lg:flex'}`}
               style={{ 
-                padding: "72px 80px 88px 80px", 
                 border: "1px solid #202020",
-                display: "flex",
-                flexDirection: "column",
-                gap: "72px"
               }}
             >
 
@@ -1006,23 +1022,50 @@ function CheckoutContent() {
                       COUNTRY <span className="text-[#FF4444]">*</span>
                     </label>
                     <div className="relative">
-                      <select
-                        value={country}
-                        onChange={(e) => setCountry(e.target.value)}
+                      {/* Custom Select Box */}
+                      <div
+                        onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
                         style={{ padding: "18px 22px" }}
-                        className="w-full bg-[#141414] border border-[#2B2B2B] text-sm text-white focus:border-white outline-none appearance-none cursor-pointer rounded-none pr-12 font-bold"
+                        className="w-full bg-[#141414] border border-[#2B2B2B] text-[13px] sm:text-sm text-white focus:border-white outline-none cursor-pointer pr-12 font-bold flex items-center justify-between transition-colors hover:border-[#444444]"
                       >
-                        <option value="Indonesia">Indonesia</option>
-                        <option value="Malaysia">Malaysia</option>
-                        <option value="Singapore">Singapore</option>
-                        <option value="Japan">Japan</option>
-                        <option value="United States">United States</option>
-                        <option value="United Kingdom">United Kingdom</option>
-                        <option value="Worldwide / Other">Worldwide / Other</option>
-                      </select>
-                      <span className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-white font-bold text-sm">
-                        ▼
-                      </span>
+                        <span>{country}</span>
+                        <span className="text-white font-bold text-sm pointer-events-none transition-transform duration-200" style={{ transform: isCountryDropdownOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
+                          ▼
+                        </span>
+                      </div>
+
+                      {/* Dropdown Options */}
+                      {isCountryDropdownOpen && (
+                        <>
+                          {/* Invisible Overlay to catch outside clicks */}
+                          <div 
+                            className="fixed inset-0 z-40" 
+                            onClick={() => setIsCountryDropdownOpen(false)} 
+                          />
+                          <div className="absolute top-full left-0 w-full mt-2 bg-[#141414] border border-[#2B2B2B] z-50 shadow-2xl max-h-[300px] overflow-y-auto py-3">
+                            {["Indonesia", "Malaysia", "Singapore", "Japan", "United States", "United Kingdom", "Worldwide / Other"].map((c, idx, arr) => (
+                              <div
+                                key={c}
+                                onClick={() => {
+                                  setCountry(c);
+                                  setIsCountryDropdownOpen(false);
+                                }}
+                                style={{ 
+                                  padding: "12px 22px",
+                                  marginBottom: idx < arr.length - 1 ? "4px" : "0"
+                                }}
+                                className={`cursor-pointer text-[13px] sm:text-sm font-bold transition-colors ${
+                                  country === c 
+                                    ? "bg-[#252525] text-white" 
+                                    : "text-[#A0A0A0] hover:bg-[#1C1C1C] hover:text-white"
+                                }`}
+                              >
+                                {c}
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -1237,32 +1280,32 @@ function CheckoutContent() {
                         key={`${rate.courier_code}-${rate.service_code}-${index}`}
                         onClick={() => setSelectedRate(rate)}
                         style={{ padding: "26px 28px" }}
-                        className={`border transition-all cursor-pointer flex items-center justify-between ${
+                        className={`border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-0 ${
                           isSelected
                             ? "bg-[#1C1C1C] border-white shadow-[0_0_20px_rgba(255,255,255,0.08)]"
                             : "bg-[#121212] border-[#252525] hover:border-[#444444]"
                         }`}
                       >
-                        <div className="flex items-center gap-6">
+                        <div className="flex items-start sm:items-center gap-4 sm:gap-6">
                           {/* Custom Radio Icon */}
-                          <div className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 ${
+                          <div className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 mt-0.5 sm:mt-0 ${
                             isSelected ? "border-white bg-black" : "border-[#555555] bg-[#161616]"
                           }`}>
                             {isSelected && <div className="w-3 h-3 rounded-full bg-white" />}
                           </div>
 
-                          <div className="space-y-1.5">
-                            <span className="text-sm font-extrabold text-white uppercase tracking-wide block">
+                          <div className="space-y-1.5 flex-1 pr-2 sm:pr-0">
+                            <span className="text-[13px] sm:text-sm font-extrabold text-white uppercase tracking-wide block leading-snug">
                               {rate.courier_name} — {rate.service_name}
                             </span>
-                            <span className="text-xs text-[#888888] uppercase tracking-wider block pt-1">
+                            <span className="text-[10px] sm:text-xs text-[#888888] uppercase tracking-wider block pt-1 leading-relaxed">
                               EST. DELIVERY: <strong className="text-[#DDDDDD]">{rate.estimated_delivery}</strong> | {rate.description || "Tracked shipment"}
                             </span>
                           </div>
                         </div>
 
-                        <div className="text-right shrink-0 pl-6">
-                          <span className="text-base font-black text-white tracking-wider">
+                        <div className="text-right sm:pl-6 shrink-0 mt-2 sm:mt-0">
+                          <span className="text-[15px] sm:text-base font-black text-white tracking-wider">
                             Rp {rate.shipping_price.toLocaleString("id-ID")}
                           </span>
                         </div>
@@ -1272,14 +1315,28 @@ function CheckoutContent() {
                 </div>
               </section>
 
+              {/* MOBILE ONLY NEXT BUTTON */}
+              <div className="lg:hidden mt-8">
+                <button
+                  type="button"
+                  disabled={!isStep1Valid}
+                  onClick={() => {
+                    setMobileStep(2);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="w-full bg-[#FFFFFF] text-[#0A0A0A] uppercase tracking-[0.2em] font-extrabold text-sm py-5 hover:bg-[#B6A47E] hover:text-white transition-colors disabled:opacity-50 disabled:bg-[#333] disabled:text-[#888] disabled:cursor-not-allowed"
+                >
+                  CONTINUE TO PAYMENT
+                </button>
+              </div>
+
             </div>
 
             {/* ── RIGHT COLUMN: ORDER SUMMARY & INTEGRATED PAYMENT METHOD (Exact Shopping Bag Parity) ── */}
-            <div className="lg:col-span-5 sticky top-32">
+            <div className={`lg:col-span-5 sticky top-32 ${mobileStep === 2 ? 'block' : 'hidden lg:block'}`}>
               <div 
-                className="bg-[#090909] text-white shadow-2xl" 
+                className="bg-[#090909] text-white shadow-2xl mobile-box-padding desktop-summary-padding" 
                 style={{ 
-                  padding: "60px 56px 64px 56px", 
                   border: "1px solid #202020",
                   display: "flex",
                   flexDirection: "column"
@@ -1735,6 +1792,7 @@ function CheckoutContent() {
         }}
         onPaymentConfirmed={async () => {
           setCustomModalOpen(false);
+          setIsSuccessLoading(true);
           await clearCart();
           queryClient.invalidateQueries({ queryKey: ["cart"] });
           queryClient.invalidateQueries({ queryKey: ["orders"] });
@@ -1765,6 +1823,15 @@ function CheckoutContent() {
           }
         }}
       />
+
+      {isSuccessLoading && (
+        <div className="fixed inset-0 z-[999999] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center">
+          <div className="w-10 h-10 border-4 border-[#333] border-t-white rounded-full animate-spin mb-6" />
+          <p className="text-white font-mono text-[11px] sm:text-xs uppercase tracking-[0.2em] animate-pulse text-center px-4">
+            CONFIRMING TRANSACTION & PREPARING RECEIPT...
+          </p>
+        </div>
+      )}
 
       <Footer />
     </main>

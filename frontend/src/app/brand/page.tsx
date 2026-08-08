@@ -56,7 +56,7 @@ export default function BrandPage() {
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
-            className="relative w-full aspect-[21/9] min-h-[380px] md:min-h-[480px] bg-[#141414] overflow-hidden border border-[#222222]"
+            className="relative w-full full-bleed-brand aspect-square min-h-[300px] lg:aspect-[21/9] lg:min-h-[480px] bg-white lg:bg-[#141414] overflow-hidden border-y lg:border border-[#222222]"
           >
             <Image
               src="/images/story/judul.webp"
@@ -64,7 +64,7 @@ export default function BrandPage() {
               fill
               priority
               sizes="100vw"
-              className="object-cover object-center"
+              className="object-contain lg:object-cover object-center p-4 lg:p-0"
             />
           </motion.div>
         </div>
@@ -88,37 +88,34 @@ export default function BrandPage() {
               
               <p
                 style={{
-                  fontSize: "clamp(1.4rem, 2.8vw, 2.5rem)",
+                  fontSize: "clamp(1.2rem, 2.8vw, 2.5rem)",
                   lineHeight: "1.35",
                   fontWeight: 500,
                   letterSpacing: "-0.01em",
                 }}
-                className="text-[#FFFFFF] mb-6"
+                className="text-[#FFFFFF] mb-6 tracking-tight"
               >
                 Sector Madness was born from experience, memories, and a passion for creating something meaningful.
               </p>
               
-              <p
-                style={{ fontSize: "17.5px", lineHeight: "1.85", fontWeight: 300 }}
-                className="text-[#A3A3A3] max-w-2xl text-justify md:text-left"
-              >
-                The name Sector was inspired by Sector Tiga, a place that holds a special meaning in the founder&apos;s journey. Madness represents the courage to think differently, explore without limits, and create with purpose.
-              </p>
-
-              <p
-                style={{ fontSize: "17.5px", lineHeight: "1.85", fontWeight: 300 }}
-                className="text-[#A3A3A3] max-w-2xl text-justify md:text-left"
-              >
-                We believe quality clothing should never rely solely on a name or a trend. Every product should deliver comfort, durability, and craftsmanship that can be appreciated every day. Inspired by streetwear culture and everyday life, each collection is thoughtfully developed with careful attention to materials, construction, and finishing details, creating garments made to stand the test of time.
-              </p>
-
-              <div className="py-5 my-4 border-l-2 border-[#B6A47E] pl-6 bg-[#111111]/40 max-w-2xl">
-                <p
-                  style={{ fontSize: "18.5px", lineHeight: "1.65", fontWeight: 400 }}
-                  className="text-[#F5F5F5] italic"
-                >
-                  &ldquo;To us, clothing is more than what you wear. It is an expression of character and a part of every story you create.&rdquo;
+              <div className="space-y-6 lg:space-y-8 max-w-2xl text-justify md:text-left">
+                <p className="text-[15px] lg:text-[17.5px] leading-[1.7] lg:leading-[1.85] font-light text-[#A3A3A3]">
+                  The name Sector was inspired by Sector Tiga, a place that holds a special meaning in the founder&apos;s journey. Madness represents the courage to think differently, explore without limits, and create with purpose.
                 </p>
+
+                <p className="text-[15px] lg:text-[17.5px] leading-[1.7] lg:leading-[1.85] font-light text-[#A3A3A3]">
+                  We believe quality clothing should never rely solely on a name or a trend. Every product should deliver comfort, durability, and craftsmanship that can be appreciated every day.
+                </p>
+
+                <p className="text-[15px] lg:text-[17.5px] leading-[1.7] lg:leading-[1.85] font-light text-[#A3A3A3]">
+                  Inspired by streetwear culture and everyday life, each collection is thoughtfully developed with careful attention to materials, construction, and finishing details, creating garments made to stand the test of time.
+                </p>
+
+                <div className="py-4 lg:py-5 my-4 border-l-2 border-[#B6A47E] pl-5 lg:pl-6 bg-[#111111]/40">
+                  <p className="text-[15px] lg:text-[18.5px] leading-[1.6] lg:leading-[1.65] text-[#F5F5F5] italic text-left">
+                    &ldquo;To us, clothing is more than what you wear. It is an expression of character and a part of every story you create.&rdquo;
+                  </p>
+                </div>
               </div>
             </motion.div>
 

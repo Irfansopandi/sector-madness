@@ -69,31 +69,28 @@ export default function BrandStory() {
           {/* Right Column: Impactful Editorial Copy */}
           <div style={{ paddingTop: "36px" }} className="lg:col-span-6 flex flex-col justify-between h-full space-y-10 pb-2">
             <AnimatedSection delay={0.2}>
-              <div className="space-y-8 max-w-2xl">
+              <div className="space-y-6 lg:space-y-8 max-w-2xl">
                 <p
-                  style={{ fontSize: "clamp(1.5rem, 2.8vw, 2.25rem)", lineHeight: "1.35", fontWeight: 500 }}
+                  style={{ fontSize: "clamp(1.2rem, 2.8vw, 2.25rem)", lineHeight: "1.35", fontWeight: 500 }}
                   className="text-[#FFFFFF] tracking-tight"
                 >
                   Sector Madness was born from experience, memories, and a passion for creating something meaningful.
                 </p>
 
-                <p style={{ fontSize: "18.5px", lineHeight: "1.85", fontWeight: 300 }} className="text-[#A3A3A3]">
+                <p className="text-[15px] lg:text-[18.5px] leading-[1.7] lg:leading-[1.85] font-light text-[#A3A3A3]">
                   The name Sector was inspired by Sector Tiga, a place that holds a special meaning in the founder&apos;s journey. Madness represents the courage to think differently, explore without limits, and create with purpose.
                 </p>
 
-                <p style={{ fontSize: "18.5px", lineHeight: "1.85", fontWeight: 300 }} className="text-[#A3A3A3]">
+                <p className="text-[15px] lg:text-[18.5px] leading-[1.7] lg:leading-[1.85] font-light text-[#A3A3A3]">
                   We believe quality clothing should never rely solely on a name or a trend. Every product should deliver comfort, durability, and craftsmanship that can be appreciated every day.
                 </p>
 
-                <p style={{ fontSize: "18.5px", lineHeight: "1.85", fontWeight: 300 }} className="text-[#A3A3A3]">
+                <p className="text-[15px] lg:text-[18.5px] leading-[1.7] lg:leading-[1.85] font-light text-[#A3A3A3]">
                   Inspired by streetwear culture and everyday life, each collection is thoughtfully developed with careful attention to materials, construction, and finishing details, creating garments made to stand the test of time.
                 </p>
 
-                <div className="py-5 my-3 border-l-2 border-[#B6A47E] pl-6 bg-[#111111]/40">
-                  <p
-                    style={{ fontSize: "19.5px", lineHeight: "1.65", fontWeight: 400 }}
-                    className="text-[#F5F5F5] italic"
-                  >
+                <div className="py-4 lg:py-5 my-3 border-l-2 border-[#B6A47E] pl-5 lg:pl-6 bg-[#111111]/40">
+                  <p className="text-[15px] lg:text-[19.5px] leading-[1.6] lg:leading-[1.65] text-[#F5F5F5] italic">
                     &ldquo;To us, clothing is more than what you wear. It is an expression of character and a part of every story you create.&rdquo;
                   </p>
                 </div>
@@ -103,10 +100,18 @@ export default function BrandStory() {
             <AnimatedSection delay={0.3} className="pt-8 border-t border-[#222222]/70">
               <Link
                 href="/brand"
-                style={{ fontSize: "12px", letterSpacing: "0.25em", fontWeight: 700, padding: "18px 40px" }}
-                className="inline-block bg-[#FFFFFF] text-[#0A0A0A] uppercase hover:bg-[#B6A47E] hover:text-[#FFFFFF] transition-all duration-300 rounded-none cursor-pointer"
+                className="inline-flex items-center justify-center bg-[#FFFFFF] text-[#0A0A0A] uppercase hover:bg-[#B6A47E] hover:text-[#FFFFFF] transition-all duration-300 rounded-none cursor-pointer whitespace-nowrap font-bold text-center"
+                style={{
+                  fontSize: "clamp(9px, 1.2vw, 12px)",
+                  letterSpacing: "0.22em",
+                  paddingTop: "22px",
+                  paddingBottom: "22px",
+                  paddingLeft: "clamp(24px, 4vw, 48px)",
+                  paddingRight: "clamp(24px, 4vw, 48px)",
+                  lineHeight: "1.2",
+                }}
               >
-                EXPLORE FULL BRAND PHILOSOPHY →
+                <span>EXPLORE FULL BRAND PHILOSOPHY →</span>
               </Link>
             </AnimatedSection>
           </div>

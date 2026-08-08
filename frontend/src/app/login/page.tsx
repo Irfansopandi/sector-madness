@@ -182,7 +182,7 @@ export default function LoginPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[calc(100vh-100px)] border-b border-[#E5E5E5]">
           
           {/* ── EDITORIAL CAMPAIGN PHOTOGRAPH COLUMN ── */}
-          <div className="lg:col-span-6 relative bg-[#0A0A0A] overflow-hidden min-h-[580px] lg:min-h-full flex flex-col justify-end lg:order-1 border-r border-[#E5E5E5]">
+          <div className="hidden lg:flex lg:col-span-6 relative bg-[#0A0A0A] overflow-hidden min-h-[580px] lg:min-h-full flex-col justify-end lg:order-1 border-r border-[#E5E5E5]">
             <Image
               src="/images/login/login.webp"
               alt="SECTOR MADNESS // TECHNICAL GARMENT"
