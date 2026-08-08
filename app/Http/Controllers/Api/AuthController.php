@@ -240,6 +240,7 @@ class AuthController extends Controller
             'email' => 'nullable|email|max:255|unique:users,email,' . $user->id,
             'phone' => 'nullable|string|max:30',
             'birth_date' => 'nullable|string|max:50',
+            'current_password' => 'required_with:password|string',
             'password' => 'nullable|string|min:8',
         ]);
 
@@ -254,6 +255,15 @@ class AuthController extends Controller
             'birth_date' => $request->birth_date ?? $user->birth_date,
         ]);
         if (!empty($request->password)) {
+            if (!Hash::check($request->current_password, $user->password)) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Validation Error',
+                    'errors' => [
+                        'current_password' => ['The provided current password does not match our records.']
+                    ]
+                ], 422);
+            }
             $updateData['password'] = Hash::make($request->password);
         }
         $user->update($updateData);
