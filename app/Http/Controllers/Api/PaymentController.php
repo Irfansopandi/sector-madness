@@ -125,6 +125,9 @@ class PaymentController extends Controller
         $orderNumber = $notif['order_id'] ?? null;
         $transactionStatus = $notif['transaction_status'] ?? null;
         $fraudStatus = $notif['fraud_status'] ?? null;
+        $signatureKey = $notif['signature_key'] ?? null;
+        $grossAmount = $notif['gross_amount'] ?? null;
+        $statusCode = $notif['status_code'] ?? null;
 
         if (!$orderNumber) {
             return response()->json(['status' => false, 'message' => 'Missing order_id'], 400);
@@ -135,6 +138,33 @@ class PaymentController extends Controller
             return response()->json(['status' => false, 'message' => 'Order not found'], 404);
         }
 
+        // --- 1. SIGNATURE VALIDATION ---
+        if (!$signatureKey || !$statusCode || !$grossAmount) {
+            return response()->json(['status' => false, 'message' => 'Missing signature components'], 403);
+        }
+
+        $serverKey = env('MIDTRANS_SERVER_KEY');
+        $expectedSignature = hash('sha512', $orderNumber . $statusCode . $grossAmount . $serverKey);
+        
+        if (!hash_equals($expectedSignature, $signatureKey)) {
+            return response()->json(['status' => false, 'message' => 'Invalid signature'], 403);
+        }
+
+        // --- 2. GROSS AMOUNT VALIDATION ---
+        // Ensure gross_amount from Midtrans matches order's actual total_amount
+        $midtransAmount = (float)$grossAmount;
+        $orderAmount = (float)$order->total_amount;
+        
+        if (abs($midtransAmount - $orderAmount) > 0.01) {
+            return response()->json(['status' => false, 'message' => 'Gross amount mismatch'], 400);
+        }
+
+        // --- 3. IDEMPOTENCY CHECK ---
+        if ($order->status === 'paid' && in_array($transactionStatus, ['settlement', 'capture'])) {
+            return response()->json(['status' => true, 'message' => 'Notification already processed'], 200);
+        }
+
+        // --- 4. STATUS MAPPING & UPDATE ---
         $status = 'unpaid';
         if ($transactionStatus == 'capture') {
             if ($fraudStatus == 'challenge') {
