@@ -253,15 +253,15 @@ export default function PrivacyPolicyPage() {
             transition={{ duration: 0.7, ease: "easeOut" }}
             className="flex flex-col items-start max-w-5xl"
           >
-            <div className="flex items-center gap-4 mb-4">
+            <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-4">
               <span
                 style={{ fontSize: "11px", letterSpacing: "0.28em" }}
-                className="font-semibold uppercase text-[#8A8A8A] block"
+                className="font-semibold uppercase text-[#8A8A8A] block leading-snug"
               >
                 DATA GOVERNANCE &amp; PRIVACY PROTOCOL
               </span>
-              <span className="text-[#333333] text-xs">//</span>
-              <span className="text-xs font-mono text-[#B6A47E]">
+              <span className="hidden md:inline-block text-[#333333] text-xs">//</span>
+              <span className="text-xs font-mono text-[#B6A47E] whitespace-nowrap mt-1 md:mt-0">
                 Last updated: August 2, 2026
               </span>
             </div>

@@ -21,6 +21,8 @@ import { useToast } from "@/components/Toast";
 
 export default function OrdersPage() {
   const [ordersList, setOrdersList] = useState<OrderListItem[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
   const [selectedOrderDetail, setSelectedOrderDetail] = useState<OrderDetailData | null>(null);
   const [isConfirmingReceived, setIsConfirmingReceived] = useState(false);
   const [showConfirmReceivedModal, setShowConfirmReceivedModal] = useState(false);
@@ -36,6 +38,7 @@ export default function OrdersPage() {
   const [showConfirmCancel, setShowConfirmCancel] = useState(false);
   const [cancelSuccessModalOpen, setCancelSuccessModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("Change shipping address");
+  const [isCancelReasonDropdownOpen, setIsCancelReasonDropdownOpen] = useState(false);
   const [bankName, setBankName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [accountName, setAccountName] = useState("");
@@ -270,9 +273,42 @@ export default function OrdersPage() {
 
   return (
     <div className="bg-[#141414] border border-white/[0.08] p-6 sm:p-8 space-y-6 shadow-2xl">
-      <div style={{ paddingTop: "20px", paddingBottom: "20px", paddingLeft: "16px", paddingRight: "16px" }} className="border-b border-white/[0.08]">
-        <h2 className="text-xl md:text-2xl font-black uppercase tracking-wider text-[#F5F5F5]">ORDERS</h2>
-        <p className="text-xs text-[#8A8A8A] mt-1 font-mono">Manage and track the status of your fashion orders</p>
+      <div style={{ paddingTop: "20px", paddingBottom: "20px", paddingLeft: "16px", paddingRight: "16px" }} className="border-b border-white/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl md:text-2xl font-black uppercase tracking-wider text-[#F5F5F5]">ORDERS</h2>
+          <p className="text-xs text-[#8A8A8A] mt-1 font-mono">Manage and track the status of your fashion orders</p>
+        </div>
+        
+        {ordersList.length > 0 && (
+          <div className="flex items-center gap-3">
+            <span style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#8A8A8A" }}>
+              SHOW:
+            </span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              style={{
+                padding: "9px 14px",
+                fontSize: "12px",
+                fontWeight: 700,
+                borderRadius: "6px",
+                outline: "none",
+                cursor: "pointer",
+                backgroundColor: "#121214",
+                border: "1px solid rgba(255, 255, 255, 0.12)",
+                color: "#FFFFFF",
+              }}
+            >
+              <option value={5} className="bg-[#121214]">5 ROWS</option>
+              <option value={10} className="bg-[#121214]">10 ROWS</option>
+              <option value={20} className="bg-[#121214]">20 ROWS</option>
+              <option value={50} className="bg-[#121214]">50 ROWS</option>
+            </select>
+          </div>
+        )}
       </div>
 
       {ordersList.length === 0 ? (
@@ -294,20 +330,21 @@ export default function OrdersPage() {
           </Link>
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse font-mono text-xs min-w-[650px]">
-            <thead>
-              <tr className="border-b border-white/[0.1] text-[#8A8A8A] uppercase tracking-widest text-[11px] whitespace-nowrap">
-                <th style={headerStyle} className="font-bold whitespace-nowrap">ORDER NO. & DATE</th>
-                <th style={headerStyle} className="font-bold whitespace-nowrap">ITEMS</th>
-                <th style={headerStyle} className="font-bold whitespace-nowrap">TOTAL</th>
-                <th style={headerStyle} className="font-bold whitespace-nowrap">PAYMENT</th>
-                <th style={headerStyle} className="font-bold whitespace-nowrap">STATUS</th>
-                <th style={headerStyle} className="font-bold text-right whitespace-nowrap">ACTION</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/[0.06]">
-              {ordersList.map((order) => {
+        <div className="space-y-4 pt-2">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse font-mono text-xs min-w-[650px]">
+              <thead>
+                <tr className="border-b border-white/[0.1] text-[#8A8A8A] uppercase tracking-widest text-[11px] whitespace-nowrap">
+                  <th style={headerStyle} className="font-bold whitespace-nowrap">ORDER NO. & DATE</th>
+                  <th style={headerStyle} className="font-bold whitespace-nowrap">ITEMS</th>
+                  <th style={headerStyle} className="font-bold whitespace-nowrap">TOTAL</th>
+                  <th style={headerStyle} className="font-bold whitespace-nowrap">PAYMENT</th>
+                  <th style={headerStyle} className="font-bold whitespace-nowrap">STATUS</th>
+                  <th style={headerStyle} className="font-bold text-right whitespace-nowrap">ACTION</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/[0.06]">
+                {ordersList.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((order) => {
                 const rawItems = (order as any).items || (order as any).products || (order as any).order_items;
                 const count = order.items_count || (rawItems ? rawItems.length : 1);
                 const itemName = `${count} Item(s) in order`;
@@ -374,10 +411,76 @@ export default function OrdersPage() {
               })}
             </tbody>
           </table>
-        </div>
-      )}
+          {ordersList.length > itemsPerPage && (
+            <div
+              style={{ padding: "16px 24px" }}
+              className="w-full flex flex-col md:flex-row md:items-center md:justify-between gap-3 border border-white/[0.08] bg-[#0F0F0F] mt-4 font-mono text-xs"
+            >
+              {/* Info text - left */}
+              <span className="text-[#8A8A8A]">
+                Showing{" "}
+                <span className="font-bold text-[#B6A47E]">{Math.min(currentPage * itemsPerPage, ordersList.length)}</span>
+                {" "}of{" "}
+                <span className="text-[#B6A47E] font-extrabold">{ordersList.length}</span>
+                {" "}data (Page {currentPage} of {Math.ceil(ordersList.length / itemsPerPage)})
+              </span>
 
-      {/* ── MODAL 1: ORDER DETAIL MODAL (Spacious Luxury Invoice Layout) ── */}
+              {/* Navigation - right */}
+              <div className="flex flex-wrap items-center gap-2">
+                {/* PREVIOUS */}
+                <button
+                  type="button"
+                  disabled={currentPage <= 1}
+                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                  style={{ padding: "8px 16px" }}
+                  className={`rounded-[5px] text-[11px] font-bold uppercase tracking-wider transition-all border ${
+                    currentPage <= 1
+                      ? "opacity-40 cursor-not-allowed border-transparent text-[#8A8A8A]"
+                      : "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-[#B6A47E] cursor-pointer"
+                  }`}
+                >
+                  PREVIOUS
+                </button>
+
+                {/* Page number boxes */}
+                {Array.from({ length: Math.ceil(ordersList.length / itemsPerPage) }, (_, i) => i + 1).map((pg) => (
+                  <button
+                    key={pg}
+                    type="button"
+                    onClick={() => setCurrentPage(pg)}
+                    style={{ width: "32px", height: "32px" }}
+                    className={`rounded-[5px] text-[11px] font-bold font-mono transition-all border cursor-pointer flex items-center justify-center ${
+                      pg === currentPage
+                        ? "bg-[#B6A47E] border-[#B6A47E] text-black font-extrabold"
+                        : "bg-white/5 border-white/10 text-white hover:bg-white/10"
+                    }`}
+                  >
+                    {pg}
+                  </button>
+                ))}
+
+                {/* NEXT */}
+                <button
+                  type="button"
+                  disabled={currentPage >= Math.ceil(ordersList.length / itemsPerPage)}
+                  onClick={() => setCurrentPage((prev) => Math.min(Math.ceil(ordersList.length / itemsPerPage), prev + 1))}
+                  style={{ padding: "8px 16px" }}
+                  className={`rounded-[5px] text-[11px] font-bold uppercase tracking-wider transition-all border ${
+                    currentPage >= Math.ceil(ordersList.length / itemsPerPage)
+                      ? "opacity-40 cursor-not-allowed border-transparent text-[#8A8A8A]"
+                      : "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-[#B6A47E] cursor-pointer"
+                  }`}
+                >
+                  NEXT
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    )}
+
+    {/* ── MODAL 1: ORDER DETAIL MODAL (Spacious Luxury Invoice Layout) ── */}
       <AnimatePresence>
         {selectedOrderDetail && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-md">
@@ -711,22 +814,51 @@ export default function OrdersPage() {
                     1. CANCELLATION REASON:
                   </label>
                   <div className="relative" style={{ marginTop: "16px" }}>
-                    <select
-                      value={cancelReason}
-                      onChange={(e) => setCancelReason(e.target.value)}
+                    <div
+                      onClick={() => setIsCancelReasonDropdownOpen(!isCancelReasonDropdownOpen)}
                       style={{ padding: "18px 24px" }}
-                      className="w-full bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] font-mono text-sm uppercase focus:outline-none focus:border-red-500/80 focus:ring-1 focus:ring-red-500/50 rounded-sm cursor-pointer appearance-none transition-all"
+                      className="w-full bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] font-mono text-sm uppercase hover:border-red-500/50 cursor-pointer rounded-sm flex items-center justify-between transition-all"
                     >
-                    <option value="Change shipping address">Change shipping address</option>
-                    <option value="Change or add order items">Change or add order items</option>
-                    <option value="Incorrect payment method selected">Incorrect payment method selected</option>
-                    <option value="Financial constraint / Cancel purchase">Financial constraint / Cancel purchase</option>
-                    <option value="Other reasons (explain below)">Other reasons (explain below)</option>
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#8A8A8A]">
-                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                      <span className="truncate pr-4">{cancelReason}</span>
+                      <span className="pointer-events-none text-[#8A8A8A] text-[10px] transition-transform duration-200" style={{ transform: isCancelReasonDropdownOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
+                        ▼
+                      </span>
+                    </div>
+
+                    {isCancelReasonDropdownOpen && (
+                      <>
+                        <div 
+                          className="fixed inset-0 z-40" 
+                          onClick={() => setIsCancelReasonDropdownOpen(false)} 
+                        />
+                        <div className="absolute top-full left-0 w-full mt-2 bg-[#0A0A0A] border border-white/20 z-50 rounded-sm shadow-2xl max-h-[250px] overflow-y-auto py-2">
+                          {[
+                            "Change shipping address",
+                            "Change or add order items",
+                            "Incorrect payment method selected",
+                            "Financial constraint / Cancel purchase",
+                            "Other reasons (explain below)"
+                          ].map((reason) => (
+                            <div
+                              key={reason}
+                              onClick={() => {
+                                setCancelReason(reason);
+                                setIsCancelReasonDropdownOpen(false);
+                              }}
+                              style={{ padding: "14px 24px" }}
+                              className={`cursor-pointer font-mono text-sm uppercase transition-colors ${
+                                cancelReason === reason 
+                                  ? "bg-[#1C1C1C] text-[#F5F5F5] font-bold" 
+                                  : "text-[#8A8A8A] hover:bg-[#141414] hover:text-[#F5F5F5]"
+                              }`}
+                            >
+                              {reason}
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </div>
-                </div>
               </div>
 
                 {/* REFUND ACCOUNT DETAILS */}

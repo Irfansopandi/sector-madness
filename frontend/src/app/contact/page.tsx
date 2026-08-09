@@ -267,12 +267,30 @@ export default function ContactPage() {
                 subtitle={warehouseAddressLines[1] || "Karawang Barat, Indonesia"}
               />
               <div className="flex items-center justify-between text-[11px] text-[#666666] font-mono tracking-wider pt-1">
-                <span>LAT: {mapLat}° S, LNG: {mapLng}° E</span>
+                {/* MOBILE & TABLET LAYOUT */}
+                <div className="lg:hidden flex flex-col w-full gap-1">
+                  <div className="flex items-center justify-between w-full">
+                    <span>LAT: {mapLat}° S</span>
+                    <a
+                      href={`https://www.google.com/maps?q=${mapLat},${mapLng}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#B6A47E] hover:underline font-bold flex items-center gap-1 uppercase tracking-wider whitespace-nowrap"
+                    >
+                      <span>Open in Google Maps</span>
+
+                    </a>
+                  </div>
+                  <span>LNG: {mapLng}° E</span>
+                </div>
+
+                {/* DESKTOP LAYOUT */}
+                <span className="hidden lg:inline">LAT: {mapLat}° S, LNG: {mapLng}° E</span>
                 <a
                   href={`https://www.google.com/maps?q=${mapLat},${mapLng}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[#B6A47E] hover:underline font-bold flex items-center gap-1 uppercase tracking-wider"
+                  className="hidden lg:flex text-[#B6A47E] hover:underline font-bold items-center gap-1 uppercase tracking-wider whitespace-nowrap"
                 >
                   <span>Open in Google Maps</span>
                   <span>↗</span>

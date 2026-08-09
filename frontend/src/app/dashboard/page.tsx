@@ -41,12 +41,7 @@ export default function DashboardOverviewPage() {
 }
 
 function DashboardOverviewContent() {
-  const [greeting, setGreeting] = useState<string>(() => {
-    if (typeof window !== "undefined") {
-      return getDynamicGreeting();
-    }
-    return "Good Morning";
-  });
+  const [greeting, setGreeting] = useState<string>("GOOD MORNING");
 
   useEffect(() => {
     setGreeting(getDynamicGreeting());
@@ -58,33 +53,9 @@ function DashboardOverviewContent() {
     return () => clearInterval(interval);
   }, []);
 
-  const [userEmail, setUserEmail] = useState(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const userData = localStorage.getItem("sector_madness_user");
-        if (userData) return JSON.parse(userData).email || "";
-      } catch {}
-    }
-    return "";
-  });
+  const [userEmail, setUserEmail] = useState("");
 
-  const [userName, setUserName] = useState(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const userData = localStorage.getItem("sector_madness_user");
-        if (userData) {
-          const parsed = JSON.parse(userData);
-          return (
-            [parsed.firstName, parsed.lastName].filter(Boolean).join(" ") ||
-            parsed.name ||
-            parsed.email?.split("@")[0] ||
-            "Member"
-          );
-        }
-      } catch {}
-    }
-    return "MEMBER";
-  });
+  const [userName, setUserName] = useState("");
 
   const [ordersList, setOrdersList] = useState<OrderListItem[]>([]);
   const [selectedOrderDetail, setSelectedOrderDetail] = useState<OrderDetailData | null>(null);
@@ -105,6 +76,7 @@ function DashboardOverviewContent() {
   const [showConfirmCancel, setShowConfirmCancel] = useState(false);
   const [cancelSuccessModalOpen, setCancelSuccessModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("Change shipping address");
+  const [isCancelReasonDropdownOpen, setIsCancelReasonDropdownOpen] = useState(false);
   const [bankName, setBankName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [accountName, setAccountName] = useState("");
@@ -270,7 +242,7 @@ function DashboardOverviewContent() {
           [parsed.firstName, parsed.lastName].filter(Boolean).join(" ") ||
           parsed.name ||
           parsed.email?.split("@")[0] ||
-          "Member";
+          "";
         setUserName(resolved);
       }
       const cachedOrders = localStorage.getItem("sector_madness_active_orders");
@@ -286,6 +258,17 @@ function DashboardOverviewContent() {
         if (data) {
           if (data.name) setUserName(data.name);
           if (data.email) setUserEmail(data.email);
+          try {
+            const userData = localStorage.getItem("sector_madness_user");
+            if (userData) {
+              const parsed = JSON.parse(userData);
+              parsed.name = data.name || parsed.name;
+              parsed.email = data.email || parsed.email;
+              parsed.firstName = data.name ? data.name.split(" ")[0] : parsed.firstName;
+              parsed.lastName = data.name ? data.name.split(" ").slice(1).join(" ") : parsed.lastName;
+              localStorage.setItem("sector_madness_user", JSON.stringify(parsed));
+            }
+          } catch {}
         }
       })
       .catch(() => {});
@@ -433,7 +416,7 @@ function DashboardOverviewContent() {
           {userName}
         </h2>
         <p suppressHydrationWarning className="text-xs font-mono text-[#8A8A8A] mt-2.5 tracking-wider">
-          {userEmail || "member@sectormadness.com"}
+          {userEmail}
         </p>
       </div>
 
@@ -631,7 +614,7 @@ function DashboardOverviewContent() {
           ORDER STATUS
         </span>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-10 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-8 md:gap-10 text-xs">
           <div className="space-y-3 flex flex-col text-left">
             <span className={`inline-flex items-center gap-2 text-xs font-mono font-bold tracking-widest uppercase ${hasPendingOrder ? "text-amber-400" : "text-[#8A8A8A]"}`}>
               <span className={`w-2 h-2 rounded-full ${hasPendingOrder ? "bg-amber-400 animate-pulse" : "bg-[#666666]"}`} />
@@ -1008,22 +991,51 @@ function DashboardOverviewContent() {
                     1. CANCELLATION REASON:
                   </label>
                   <div className="relative" style={{ marginTop: "16px" }}>
-                    <select
-                      value={cancelReason}
-                      onChange={(e) => setCancelReason(e.target.value)}
+                    <div
+                      onClick={() => setIsCancelReasonDropdownOpen(!isCancelReasonDropdownOpen)}
                       style={{ padding: "18px 24px" }}
-                      className="w-full bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] font-mono text-sm uppercase focus:outline-none focus:border-red-500/80 focus:ring-1 focus:ring-red-500/50 rounded-sm cursor-pointer appearance-none transition-all"
+                      className="w-full bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] font-mono text-sm uppercase hover:border-red-500/50 cursor-pointer rounded-sm flex items-center justify-between transition-all"
                     >
-                    <option value="Change shipping address">Change shipping address</option>
-                    <option value="Change or add order items">Change or add order items</option>
-                    <option value="Incorrect payment method selected">Incorrect payment method selected</option>
-                    <option value="Financial constraint / Cancel purchase">Financial constraint / Cancel purchase</option>
-                    <option value="Other reasons (explain below)">Other reasons (explain below)</option>
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#8A8A8A]">
-                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                      <span className="truncate pr-4">{cancelReason}</span>
+                      <span className="pointer-events-none text-[#8A8A8A] text-[10px] transition-transform duration-200" style={{ transform: isCancelReasonDropdownOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
+                        ▼
+                      </span>
+                    </div>
+
+                    {isCancelReasonDropdownOpen && (
+                      <>
+                        <div 
+                          className="fixed inset-0 z-40" 
+                          onClick={() => setIsCancelReasonDropdownOpen(false)} 
+                        />
+                        <div className="absolute top-full left-0 w-full mt-2 bg-[#0A0A0A] border border-white/20 z-50 rounded-sm shadow-2xl max-h-[250px] overflow-y-auto py-2">
+                          {[
+                            "Change shipping address",
+                            "Change or add order items",
+                            "Incorrect payment method selected",
+                            "Financial constraint / Cancel purchase",
+                            "Other reasons (explain below)"
+                          ].map((reason) => (
+                            <div
+                              key={reason}
+                              onClick={() => {
+                                setCancelReason(reason);
+                                setIsCancelReasonDropdownOpen(false);
+                              }}
+                              style={{ padding: "14px 24px" }}
+                              className={`cursor-pointer font-mono text-sm uppercase transition-colors ${
+                                cancelReason === reason 
+                                  ? "bg-[#1C1C1C] text-[#F5F5F5] font-bold" 
+                                  : "text-[#8A8A8A] hover:bg-[#141414] hover:text-[#F5F5F5]"
+                              }`}
+                            >
+                              {reason}
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </div>
-                </div>
               </div>
 
                 {/* REFUND ACCOUNT DETAILS */}

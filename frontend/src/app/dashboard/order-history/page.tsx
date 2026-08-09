@@ -16,6 +16,8 @@ import {
 export default function OrderHistoryPage() {
   const [ordersList, setOrdersList] = useState<OrderListItem[]>([]);
   const [selectedOrderDetail, setSelectedOrderDetail] = useState<OrderDetailData | null>(null);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(5);
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
   useEffect(() => {
     getOrders()
@@ -101,9 +103,43 @@ export default function OrderHistoryPage() {
 
   return (
     <div className="bg-[#141414] border border-white/[0.08] p-6 sm:p-8 space-y-6 shadow-2xl">
-      <div style={{ paddingTop: "20px", paddingBottom: "20px", paddingLeft: "16px", paddingRight: "16px" }} className="border-b border-white/[0.08]">
-        <h2 className="text-xl md:text-2xl font-black uppercase tracking-wider text-[#F5F5F5]">ORDER HISTORY</h2>
-        <p className="text-xs text-[#8A8A8A] mt-1 font-mono">Archive of your completed and received fashion orders</p>
+      {/* Header with SHOW dropdown */}
+      <div style={{ paddingTop: "20px", paddingBottom: "20px", paddingLeft: "16px", paddingRight: "16px" }} className="border-b border-white/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl md:text-2xl font-black uppercase tracking-wider text-[#F5F5F5]">ORDER HISTORY</h2>
+          <p className="text-xs text-[#8A8A8A] mt-1 font-mono">Archive of your completed and received fashion orders</p>
+        </div>
+
+        {ordersList.length > 0 && (
+          <div className="flex items-center gap-3">
+            <span style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#8A8A8A" }}>
+              SHOW:
+            </span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              style={{
+                padding: "9px 14px",
+                fontSize: "12px",
+                fontWeight: 700,
+                borderRadius: "6px",
+                outline: "none",
+                cursor: "pointer",
+                backgroundColor: "#121214",
+                border: "1px solid rgba(255, 255, 255, 0.12)",
+                color: "#FFFFFF",
+              }}
+            >
+              <option value={5} className="bg-[#121214]">5 ROWS</option>
+              <option value={10} className="bg-[#121214]">10 ROWS</option>
+              <option value={20} className="bg-[#121214]">20 ROWS</option>
+              <option value={50} className="bg-[#121214]">50 ROWS</option>
+            </select>
+          </div>
+        )}
       </div>
 
       {ordersList.length === 0 ? (
@@ -137,7 +173,7 @@ export default function OrderHistoryPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.06]">
-              {ordersList.map((order) => {
+              {ordersList.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((order) => {
                 const rawItems = (order as any).items || (order as any).products || (order as any).order_items;
                 const count = order.items_count || (rawItems ? rawItems.length : 1);
                 const itemName = `${count} Item(s) in order`;
@@ -203,6 +239,71 @@ export default function OrderHistoryPage() {
               })}
             </tbody>
           </table>
+
+          {/* Pagination Bar */}
+          {ordersList.length > itemsPerPage && (
+            <div
+              style={{ padding: "16px 24px" }}
+              className="w-full flex flex-col md:flex-row md:items-center md:justify-between gap-3 border border-white/[0.08] bg-[#0F0F0F] mt-4 font-mono text-xs"
+            >
+              <span className="text-[#8A8A8A]">
+                Showing{" "}
+                <span className="font-bold text-[#B6A47E]">{Math.min(currentPage * itemsPerPage, ordersList.length)}</span>
+                {" "}of{" "}
+                <span className="text-[#B6A47E] font-extrabold">{ordersList.length}</span>
+                {" "}data (Page {currentPage} of {Math.ceil(ordersList.length / itemsPerPage)})
+              </span>
+
+              <div className="flex flex-wrap items-center gap-2">
+                {/* PREVIOUS */}
+                <button
+                  type="button"
+                  disabled={currentPage <= 1}
+                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                  style={{ padding: "8px 16px" }}
+                  className={`rounded-[5px] text-[11px] font-bold uppercase tracking-wider transition-all border ${
+                    currentPage <= 1
+                      ? "opacity-40 cursor-not-allowed border-transparent text-[#8A8A8A]"
+                      : "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-[#B6A47E] cursor-pointer"
+                  }`}
+                >
+                  PREVIOUS
+                </button>
+
+                {/* Page number boxes */}
+                {Array.from({ length: Math.ceil(ordersList.length / itemsPerPage) }, (_, i) => i + 1).map((pg) => (
+                  <button
+                    key={pg}
+                    type="button"
+                    onClick={() => setCurrentPage(pg)}
+                    style={{ width: "32px", height: "32px" }}
+                    className={`rounded-[5px] text-[11px] font-bold font-mono transition-all border cursor-pointer flex items-center justify-center ${
+                      pg === currentPage
+                        ? "bg-[#B6A47E] border-[#B6A47E] text-black font-extrabold"
+                        : "bg-white/5 border-white/10 text-white hover:bg-white/10"
+                    }`}
+                  >
+                    {pg}
+                  </button>
+                ))}
+
+                {/* NEXT */}
+                <button
+                  type="button"
+                  disabled={currentPage >= Math.ceil(ordersList.length / itemsPerPage)}
+                  onClick={() => setCurrentPage((prev) => Math.min(Math.ceil(ordersList.length / itemsPerPage), prev + 1))}
+                  style={{ padding: "8px 16px" }}
+                  className={`rounded-[5px] text-[11px] font-bold uppercase tracking-wider transition-all border ${
+                    currentPage >= Math.ceil(ordersList.length / itemsPerPage)
+                      ? "opacity-40 cursor-not-allowed border-transparent text-[#8A8A8A]"
+                      : "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-[#B6A47E] cursor-pointer"
+                  }`}
+                >
+                  NEXT
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

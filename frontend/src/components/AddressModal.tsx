@@ -273,12 +273,41 @@ export default function AddressModal({ isOpen, onClose, onSuccess, editingAddres
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-md">
+          <style dangerouslySetInnerHTML={{ __html: `
+            @media (max-width: 1023px) {
+              .address-modal-container {
+                padding: 24px 20px !important;
+                gap: 20px !important;
+              }
+              .address-modal-form {
+                padding: 0 4px !important;
+                gap: 24px !important;
+              }
+              .address-form-grid {
+                gap: 16px !important;
+              }
+              .address-search-item {
+                padding: 12px 14px !important;
+              }
+              .address-search-item-title {
+                font-size: 11px !important;
+              }
+              .address-search-item-badge {
+                padding: 2px 6px !important;
+                font-size: 9px !important;
+                margin-left: 8px !important;
+              }
+              .address-search-item-desc {
+                font-size: 9px !important;
+              }
+            }
+          `}} />
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             style={{ padding: "60px", gap: "32px" }}
-            className="bg-[#141414] border border-white/[0.15] text-[#F5F5F5] w-full max-w-3xl flex flex-col shadow-2xl relative text-left rounded-sm max-h-[90vh] overflow-y-auto font-sans"
+            className="address-modal-container bg-[#141414] border border-white/[0.15] text-[#F5F5F5] w-full max-w-3xl flex flex-col shadow-2xl relative text-left rounded-sm max-h-[90vh] overflow-y-auto font-sans"
           >
             <button
               onClick={() => { onClose(); setLocationError(null); }}
@@ -311,7 +340,7 @@ export default function AddressModal({ isOpen, onClose, onSuccess, editingAddres
               </div>
             )}
 
-            <form onSubmit={handleSaveAddressSubmit} noValidate style={{ padding: "0 24px", display: "flex", flexDirection: "column", gap: "40px" }}>
+            <form onSubmit={handleSaveAddressSubmit} noValidate style={{ padding: "0 24px", display: "flex", flexDirection: "column", gap: "40px" }} className="address-modal-form">
               
               <div>
                 <button
@@ -347,7 +376,7 @@ export default function AddressModal({ isOpen, onClose, onSuccess, editingAddres
                   />
                   {formErrors.label && <span className="text-[#FF3333] text-[10px] font-mono mt-1 block font-bold">{formErrors.label}</span>}
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8" style={{ marginTop: "24px" }}>
+                <div className="address-form-grid grid grid-cols-1 sm:grid-cols-2 gap-8" style={{ marginTop: "24px" }}>
                   <div className="space-y-2">
                     <span className="text-[11px] font-mono text-[#8A8A8A] block uppercase tracking-wider">RECEIVER NAME *</span>
                     <input
@@ -384,7 +413,7 @@ export default function AddressModal({ isOpen, onClose, onSuccess, editingAddres
                 <label className="text-xs font-mono text-[#8A8A8A] uppercase tracking-widest block font-bold">
                   2. DETAILED ADDRESS:
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8" style={{ marginTop: "16px" }}>
+                <div className="address-form-grid grid grid-cols-1 sm:grid-cols-2 gap-8" style={{ marginTop: "16px" }}>
                   <div className="space-y-2">
                     <span className="text-[11px] font-mono text-[#8A8A8A] block uppercase tracking-wider">PROVINCE *</span>
                     <input
@@ -425,28 +454,28 @@ export default function AddressModal({ isOpen, onClose, onSuccess, editingAddres
                     
                     {/* City Autocomplete Dropdown */}
                     {showLocationDropdown && activeDropdownField === "city" && (
-                      <div className="absolute left-0 right-0 top-full mt-2 bg-[#141414] border border-[#444444] z-[200] max-h-80 overflow-y-auto shadow-[0_25px_60px_rgba(0,0,0,0.95)]">
-                        <div className="p-3 bg-[#181818] border-b border-[#2E2E2E] flex items-center justify-between text-[10px] text-[#AAAAAA] font-mono uppercase tracking-[0.15em] font-bold">
-                          <span>SELECT REGION FOR REALTIME POSTAL CODE</span>
+                      <div style={{ width: "100%", maxWidth: "100%" }} className="absolute left-0 right-0 top-full mt-2 bg-[#141414] border border-[#444444] z-[200] max-h-80 overflow-y-auto overflow-x-hidden shadow-[0_25px_60px_rgba(0,0,0,0.95)]">
+                        <div className="p-3 bg-[#181818] border-b border-[#2E2E2E] text-[10px] text-[#AAAAAA] font-mono uppercase tracking-[0.15em] font-bold text-center">
+                          <span className="block break-words">SELECT REGION FOR REALTIME POSTAL CODE</span>
                         </div>
                         {filteredLocations.map((loc, idx) => (
                           <div
                             key={`city-sugg-${loc.district}-${idx}`}
                             onMouseDown={() => selectLocation(loc)}
                             style={{ padding: "16px 20px" }}
-                            className="border-b border-[#2A2A2A] hover:bg-[#252525] cursor-pointer transition-all font-mono group"
+                            className="address-search-item border-b border-[#2A2A2A] hover:bg-[#252525] cursor-pointer transition-all font-mono group"
                           >
-                            <div className="flex items-center justify-between">
-                              <span className="text-[#FFFFFF] group-hover:text-white font-extrabold text-sm uppercase tracking-wide transition-colors">
+                            <div className="flex items-start justify-between gap-2">
+                              <span className="address-search-item-title text-[#FFFFFF] group-hover:text-white font-extrabold text-sm uppercase tracking-wide transition-colors min-w-0 break-words flex-1">
                                 {loc.city}
                               </span>
-                              <span className="bg-[#1C1C1C] text-[#DDDDDD] border border-[#3A3A3A] px-2.5 py-1 text-xs font-bold tracking-widest ml-3 shrink-0 whitespace-nowrap">
+                              <span className="address-search-item-badge bg-[#1C1C1C] text-[#DDDDDD] border border-[#3A3A3A] px-2.5 py-1 text-xs font-bold tracking-widest shrink-0 whitespace-nowrap">
                                 POS: {loc.postal_code}
                               </span>
                             </div>
-                            <div className="text-[#888888] text-xs pt-1.5 uppercase tracking-wider flex items-center gap-2">
-                              <span>District: <strong className="text-[#DDDDDD]">{loc.district}</strong></span>
-                              <span>•</span>
+                            <div className="address-search-item-desc text-[#888888] text-xs pt-1.5 uppercase tracking-wider flex items-center gap-1.5 flex-wrap">
+                              <span>City: <strong className="text-[#DDDDDD]">{loc.district}</strong></span>
+                              <span className="hidden sm:inline">•</span>
                               <span>Prov: <strong className="text-[#AAAAAA]">{loc.province}</strong></span>
                             </div>
                           </div>
@@ -483,28 +512,28 @@ export default function AddressModal({ isOpen, onClose, onSuccess, editingAddres
 
                     {/* District Autocomplete Dropdown */}
                     {showLocationDropdown && activeDropdownField === "district" && (
-                      <div className="absolute left-0 right-0 top-full mt-2 bg-[#141414] border border-[#444444] z-[200] max-h-80 overflow-y-auto shadow-[0_25px_60px_rgba(0,0,0,0.95)]">
-                        <div className="p-3 bg-[#181818] border-b border-[#2E2E2E] flex items-center justify-between text-[10px] text-[#AAAAAA] font-mono uppercase tracking-[0.15em] font-bold">
-                          <span>SELECT REGION FOR REALTIME POSTAL CODE</span>
+                      <div style={{ width: "100%", maxWidth: "100%" }} className="absolute left-0 right-0 top-full mt-2 bg-[#141414] border border-[#444444] z-[200] max-h-80 overflow-y-auto overflow-x-hidden shadow-[0_25px_60px_rgba(0,0,0,0.95)]">
+                        <div className="p-3 bg-[#181818] border-b border-[#2E2E2E] text-[10px] text-[#AAAAAA] font-mono uppercase tracking-[0.15em] font-bold text-center">
+                          <span className="block break-words">SELECT REGION FOR REALTIME POSTAL CODE</span>
                         </div>
                         {filteredLocations.map((loc, idx) => (
                           <div
                             key={`district-sugg-${loc.district}-${idx}`}
                             onMouseDown={() => selectLocation(loc)}
                             style={{ padding: "16px 20px" }}
-                            className="border-b border-[#2A2A2A] hover:bg-[#252525] cursor-pointer transition-all font-mono group"
+                            className="address-search-item border-b border-[#2A2A2A] hover:bg-[#252525] cursor-pointer transition-all font-mono group"
                           >
-                            <div className="flex items-center justify-between">
-                              <span className="text-[#FFFFFF] group-hover:text-white font-extrabold text-sm uppercase tracking-wide transition-colors">
-                                {loc.district} {loc.subdistrict ? <span className="text-[#B6A47E] font-normal text-xs normal-case ml-1">(Desa: {loc.subdistrict})</span> : ""}
+                            <div className="flex items-start justify-between gap-2">
+                              <span className="address-search-item-title text-[#FFFFFF] group-hover:text-white font-extrabold text-sm uppercase tracking-wide transition-colors min-w-0 break-words flex-1">
+                                {loc.district} {loc.subdistrict ? <span className="text-[#B6A47E] font-normal text-xs normal-case ml-1 inline-block">(Desa: {loc.subdistrict})</span> : ""}
                               </span>
-                              <span className="bg-[#1C1C1C] text-[#DDDDDD] border border-[#3A3A3A] px-2.5 py-1 text-xs font-bold tracking-widest ml-3 shrink-0 whitespace-nowrap">
+                              <span className="address-search-item-badge bg-[#1C1C1C] text-[#DDDDDD] border border-[#3A3A3A] px-2.5 py-1 text-xs font-bold tracking-widest shrink-0 whitespace-nowrap">
                                 POS: {loc.postal_code}
                               </span>
                             </div>
-                            <div className="text-[#888888] text-xs pt-1.5 uppercase tracking-wider flex items-center gap-2">
+                            <div className="address-search-item-desc text-[#888888] text-xs pt-1.5 uppercase tracking-wider flex items-center gap-1.5 flex-wrap">
                               <span>City: <strong className="text-[#DDDDDD]">{loc.city}</strong></span>
-                              <span>•</span>
+                              <span className="hidden sm:inline">•</span>
                               <span>Prov: <strong className="text-[#AAAAAA]">{loc.province}</strong></span>
                             </div>
                           </div>

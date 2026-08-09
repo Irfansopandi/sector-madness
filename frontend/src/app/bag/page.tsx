@@ -27,6 +27,29 @@ export default function ShoppingBagPage() {
   const [editingQty, setEditingQty] = useState<Record<string | number, string>>({});
   const [mounted, setMounted] = useState(false);
 
+  // Auto-scroll animation for mobile/tablet recommended products
+  useEffect(() => {
+    if (!mounted) return;
+    const style = document.createElement('style');
+    style.innerHTML = `
+      @keyframes bagMarquee {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
+      }
+      .animate-bag-marquee {
+        animation: bagMarquee 20s linear infinite;
+        will-change: transform;
+      }
+      .animate-bag-marquee:hover {
+        animation-play-state: paused;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, [mounted]);
+
   useEffect(() => {
     setMounted(true);
     if (typeof window !== "undefined") {
@@ -268,7 +291,8 @@ export default function ShoppingBagPage() {
                   <div className="h-px flex-1 bg-[#262626]" />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-5 gap-y-12">
+                {/* Desktop View (Static Grid, lg and up) */}
+                <div className="hidden lg:grid lg:grid-cols-3 gap-x-5 gap-y-12">
                   {(realProducts && realProducts.length > 0 ? realProducts : []).slice(0, 3).map((product: any, idx: number) => {
                     const productImg = getImageUrl(product.image);
                     const collectionCode = product.collection_code || product.collection || "SECTOR 001";
@@ -277,7 +301,7 @@ export default function ShoppingBagPage() {
 
                     return (
                       <motion.div
-                        key={product.id}
+                        key={`desktop-${product.id}`}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.4, delay: 0.15 * idx }}
@@ -325,6 +349,77 @@ export default function ShoppingBagPage() {
                       </motion.div>
                     );
                   })}
+                </div>
+
+                {/* Mobile & Tablet View (Infinite Marquee Auto-Scroll) */}
+                <div className="lg:hidden w-full relative overflow-hidden -mx-8 px-8 md:-mx-14 md:px-14">
+                  {/* Fade Edges for smoother visual */}
+                  <div className="absolute left-0 top-0 bottom-0 w-8 md:w-14 bg-gradient-to-r from-[#0A0A0A] to-transparent z-10 pointer-events-none" />
+                  <div className="absolute right-0 top-0 bottom-0 w-8 md:w-14 bg-gradient-to-l from-[#0A0A0A] to-transparent z-10 pointer-events-none" />
+                  
+                  <div className="flex w-max animate-bag-marquee hover:cursor-pointer">
+                    {/* Set 1 */}
+                    <div className="flex gap-x-4 md:gap-x-6 pr-4 md:pr-6">
+                      {(realProducts && realProducts.length > 0 ? realProducts : []).slice(0, 3).map((product: any, idx: number) => {
+                        const productImg = getImageUrl(product.image);
+                        const collectionCode = product.collection_code || product.collection || "SECTOR 001";
+                        const materialWeight = [product.material, product.weight].filter(Boolean).join(" · ") || "Technical Blend";
+                        const priceVal = typeof product.price === 'number' ? (product.price < 1000 ? product.price * 1000 : product.price) : 285000;
+
+                        return (
+                          <div key={`mobile-1-${idx}-${product.id}`} className="flex-none w-[160px] sm:w-[200px] md:w-[240px]">
+                            <Link href={`/product/${product.slug}`} className="group block">
+                              <div className="relative aspect-[3/4] overflow-hidden bg-[#161616] mb-3 md:mb-4">
+                                <Image src={productImg} alt={product.name} fill className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]" />
+                                {product.limited && (
+                                  <div className="absolute top-3 left-3 md:top-4 md:left-4">
+                                    <span className="text-[8px] md:text-[9px] tracking-[0.2em] uppercase text-[#B6A47E]">Limited</span>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="space-y-1 md:space-y-1.5">
+                                <span className="text-[8px] md:text-[9px] tracking-[0.25em] uppercase text-[#8A8A8A] block">{collectionCode}</span>
+                                <h3 className="text-[12px] md:text-[13px] text-[#E0E0E0] font-light tracking-wide truncate">{product.name}</h3>
+                                <p className="text-[10px] md:text-[11px] text-[#666666] font-light truncate">{materialWeight}</p>
+                                <p className="text-[11px] md:text-[12px] text-[#CCCCCC] font-light pt-0.5">Rp {priceVal.toLocaleString("id-ID")}</p>
+                              </div>
+                            </Link>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    
+                    {/* Set 2 */}
+                    <div className="flex gap-x-4 md:gap-x-6 pr-4 md:pr-6" aria-hidden="true">
+                      {(realProducts && realProducts.length > 0 ? realProducts : []).slice(0, 3).map((product: any, idx: number) => {
+                        const productImg = getImageUrl(product.image);
+                        const collectionCode = product.collection_code || product.collection || "SECTOR 001";
+                        const materialWeight = [product.material, product.weight].filter(Boolean).join(" · ") || "Technical Blend";
+                        const priceVal = typeof product.price === 'number' ? (product.price < 1000 ? product.price * 1000 : product.price) : 285000;
+
+                        return (
+                          <div key={`mobile-2-${idx}-${product.id}`} className="flex-none w-[160px] sm:w-[200px] md:w-[240px]">
+                            <Link href={`/product/${product.slug}`} className="group block" tabIndex={-1}>
+                              <div className="relative aspect-[3/4] overflow-hidden bg-[#161616] mb-3 md:mb-4">
+                                <Image src={productImg} alt={product.name} fill className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]" />
+                                {product.limited && (
+                                  <div className="absolute top-3 left-3 md:top-4 md:left-4">
+                                    <span className="text-[8px] md:text-[9px] tracking-[0.2em] uppercase text-[#B6A47E]">Limited</span>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="space-y-1 md:space-y-1.5">
+                                <span className="text-[8px] md:text-[9px] tracking-[0.25em] uppercase text-[#8A8A8A] block">{collectionCode}</span>
+                                <h3 className="text-[12px] md:text-[13px] text-[#E0E0E0] font-light tracking-wide truncate">{product.name}</h3>
+                                <p className="text-[10px] md:text-[11px] text-[#666666] font-light truncate">{materialWeight}</p>
+                                <p className="text-[11px] md:text-[12px] text-[#CCCCCC] font-light pt-0.5">Rp {priceVal.toLocaleString("id-ID")}</p>
+                              </div>
+                            </Link>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

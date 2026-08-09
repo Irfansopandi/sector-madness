@@ -79,6 +79,13 @@ export default function WishlistPage() {
 
   return (
     <div className="bg-[#141414] border border-white/[0.08] p-8 md:p-10 lg:p-12 space-y-8 shadow-2xl">
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media (max-width: 639px) {
+          .wishlist-details-col {
+            padding-left: 12px !important;
+          }
+        }
+      `}} />
       {/* Header */}
       <div style={{ paddingTop: "24px", paddingBottom: "24px", paddingLeft: "28px", paddingRight: "28px" }} className="border-b border-white/[0.08] flex items-center justify-between">
         <div>
@@ -144,6 +151,8 @@ export default function WishlistPage() {
                 return null;
               })();
 
+              const isSoldOut = resolvedStock !== null && resolvedStock !== undefined ? resolvedStock <= 0 : !prod.in_stock;
+
               return (
                 <motion.div
                   key={prod.id}
@@ -174,7 +183,7 @@ export default function WishlistPage() {
                     </Link>
 
                     {/* Details & Controls Column */}
-                    <div className="flex-1 min-w-0 flex flex-col justify-between self-stretch w-full">
+                    <div className="wishlist-details-col flex-1 min-w-0 flex flex-col justify-between self-stretch w-full">
                       {/* Top: Info & Price */}
                       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                         <div className="space-y-2">
@@ -186,7 +195,7 @@ export default function WishlistPage() {
                               <CountdownTimer expiresAt={discountExpiresAt} compact />
                             )}
                             {!prod.in_stock && (
-                              <span className="text-[10px] font-mono tracking-[0.2em] uppercase bg-[#881111] text-white px-2 py-0.5 font-bold">
+                              <span className="text-[10px] font-mono tracking-[0.2em] uppercase text-[#FF6666]">
                                 OUT OF STOCK
                               </span>
                             )}
@@ -208,19 +217,17 @@ export default function WishlistPage() {
                               SIZE: <strong className="text-[#EDEDED] font-normal">{prod.size || "—"}</strong>
                             </span>
                             <span className="text-[#333333]">|</span>
-                            <span className="text-[#B6A47E] font-medium bg-[#141414] px-2 py-0.5 border border-[#262626]">
-                              {resolvedStock !== null && resolvedStock !== undefined ? (
-                                resolvedStock > 0 ? (
+                            {isSoldOut ? (
+                              <strong className="text-[#FF6666] font-bold">SOLD OUT</strong>
+                            ) : (
+                              <span className="text-[#B6A47E] font-medium bg-[#141414] px-2 py-0.5 border border-[#262626]">
+                                {resolvedStock !== null && resolvedStock !== undefined ? (
                                   <strong className="text-white font-bold">{resolvedStock} UNITS IN STOCK</strong>
                                 ) : (
-                                  <strong className="text-[#FF6666] font-bold">SOLD OUT</strong>
-                                )
-                              ) : prod.in_stock ? (
-                                <strong className="text-white font-bold">AVAILABLE IN STOCK</strong>
-                              ) : (
-                                <strong className="text-[#FF6666] font-bold">SOLD OUT</strong>
-                              )}
-                            </span>
+                                  <strong className="text-white font-bold">AVAILABLE IN STOCK</strong>
+                                )}
+                              </span>
+                            )}
                           </div>
                         </div>
 
@@ -241,22 +248,24 @@ export default function WishlistPage() {
                       </div>
 
                       {/* Bottom: Add to Bag & Remove */}
-                      <div className="flex items-center justify-between mt-8 pt-2">
+                      <div className={`flex items-center mt-8 pt-2 ${isSoldOut ? 'justify-end' : 'justify-between'}`}>
                         {/* Add to Bag — styled inline like Shopping Bag (no button element) */}
-                        <span
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => handleMoveWishlistItemToBag(prod)}
-                          onKeyDown={(e) => e.key === "Enter" && handleMoveWishlistItemToBag(prod)}
-                          className="inline-flex items-center gap-2 px-4 py-2 text-[#B6A47E] font-mono text-[11px] font-bold uppercase tracking-widest hover:text-white transition-all duration-300 cursor-pointer select-none"
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-                            <line x1="3" y1="6" x2="21" y2="6" />
-                            <path d="M16 10a4 4 0 0 1-8 0" />
-                          </svg>
-                          ADD TO BAG
-                        </span>
+                        {!isSoldOut && (
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => handleMoveWishlistItemToBag(prod)}
+                            onKeyDown={(e) => e.key === "Enter" && handleMoveWishlistItemToBag(prod)}
+                            className="inline-flex items-center gap-2 px-4 py-2 text-[#B6A47E] font-mono text-[11px] font-bold uppercase tracking-widest hover:text-white transition-all duration-300 cursor-pointer select-none"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                              <line x1="3" y1="6" x2="21" y2="6" />
+                              <path d="M16 10a4 4 0 0 1-8 0" />
+                            </svg>
+                            ADD TO BAG
+                          </span>
+                        )}
 
                         {/* Trash Icon — with right breathing room */}
                         <button

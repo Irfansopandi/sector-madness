@@ -116,17 +116,33 @@ function ShopContent() {
     ? apiSortOptions.map(s => s.name.toUpperCase())
     : ["SELECTED"];
 
-  // Filter products logic — based strictly on DB Category relationship
+  // Filter products logic — based on DB Category and Focus On Collections
   const filteredProducts = productsList.filter((p) => {
     const cat = activeCategory.toUpperCase();
     if (cat === "ALL" || cat === "ALL PRODUCTS" || cat === "SHOP") return true;
     if (cat === "NEW ARRIVALS") return p.collectionCode === "SECTOR 002" || Number(p.id) >= 5;
 
+    // 1. Check strict category match
     if (p.category) {
       const pCatName = (p.category.name || "").toUpperCase();
       const pCatSlug = (p.category.slug || "").toUpperCase();
-      return pCatName === cat || pCatSlug === cat;
+      if (pCatName === cat || pCatSlug === cat) return true;
     }
+    
+    // 2. Check Focus On / Collection Match
+    const coll = (p.collection || "").toUpperCase();
+    const collCode = (p.collectionCode || "").toUpperCase();
+    const name = (p.name || "").toUpperCase();
+    
+    if (coll === cat || collCode === cat || coll.includes(cat) || collCode.includes(cat)) {
+      return true;
+    }
+    
+    // 3. Fallback to name match for any custom dynamic focus items
+    if (name.includes(cat)) {
+      return true;
+    }
+
     return false;
   });
 

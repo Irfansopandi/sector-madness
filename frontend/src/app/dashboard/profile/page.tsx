@@ -26,7 +26,7 @@ export default function ProfilePage() {
         if (!fullName && (parsed.firstName || parsed.lastName)) {
           fullName = [parsed.firstName, parsed.lastName].filter(Boolean).join(" ");
         }
-        if (!fullName) fullName = parsed.email?.split("@")[0] || "Member";
+        if (!fullName) fullName = parsed.email?.split("@")[0] || "";
 
         let cleanPhone = String(parsed.phone || "").replace(/[^0-9]/g, "");
         if (cleanPhone.startsWith("620")) cleanPhone = "0" + cleanPhone.slice(3);
@@ -74,7 +74,7 @@ export default function ProfilePage() {
   const handleSaveProfileInfo = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
-    const combinedName = profileForm.name.trim() || "Member";
+    const combinedName = profileForm.name.trim();
 
     try {
       await updateCustomerProfile({
@@ -161,14 +161,29 @@ export default function ProfilePage() {
       className="bg-[#141414] border border-white/[0.08] shadow-2xl w-full max-w-[920px]"
     >
       <style dangerouslySetInnerHTML={{ __html: `
-        input[type="date"]::-webkit-calendar-picker-indicator {
-          position: absolute;
-          right: 12px;
-          width: 36px;
-          height: 36px;
-          opacity: 0 !important;
-          cursor: pointer !important;
-          z-index: 10;
+        @media (max-width: 1023px) {
+          .bg-\\[\\#141414\\].max-w-\\[920px\\] {
+            padding: 24px 20px !important;
+            margin-bottom: 24px !important;
+          }
+          form[style*="gap: 32px"], form[style*="gap: 28px"] {
+            gap: 24px !important;
+          }
+          form[style*="marginTop: 48px"] {
+            margin-top: 32px !important;
+          }
+          input, button[type="submit"] {
+            padding: 14px 16px !important;
+            font-size: 13px !important;
+          }
+          div[style*="paddingBottom: 28px"] {
+            padding-bottom: 20px !important;
+            margin-bottom: 24px !important;
+          }
+          div[style*="paddingTop: 40px"] {
+            padding-top: 24px !important;
+            gap: 24px !important;
+          }
         }
       `}} />
 
@@ -260,23 +275,13 @@ export default function ProfilePage() {
           <label style={{ marginBottom: "12px", letterSpacing: "0.18em" }} className="text-xs font-mono text-[#8A8A8A] uppercase block font-bold">
             DATE OF BIRTH <span className="text-[#666666] font-normal">(OPTIONAL)</span>
           </label>
-          <div className="relative flex items-center">
-            <input
-              type="date"
-              value={profileForm.dob}
-              onChange={(e) => setProfileForm({ ...profileForm, dob: e.target.value })}
-              style={{ colorScheme: "dark", padding: "18px 56px 18px 22px", fontSize: "14px", fontFamily: "'Inter', -apple-system, sans-serif" }}
-              className="w-full bg-[#0A0A0A] border border-white/[0.12] text-[#F5F5F5] font-semibold outline-none focus:border-[#B6A47E] transition-colors rounded-none cursor-pointer"
-            />
-            <div className="absolute right-5 pointer-events-none flex items-center justify-center text-white z-0">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
-              </svg>
-            </div>
-          </div>
+          <input
+            type="date"
+            value={profileForm.dob || ""}
+            onChange={(e) => setProfileForm({ ...profileForm, dob: e.target.value })}
+            style={{ padding: "18px 22px", fontSize: "14px" }}
+            className="w-full bg-[#0A0A0A] border border-white/[0.12] text-[#F5F5F5] font-semibold outline-none focus:border-[#B6A47E] transition-colors rounded-none [color-scheme:dark]"
+          />
         </div>
 
         <div style={{ paddingTop: "8px" }}>

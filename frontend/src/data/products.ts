@@ -25,6 +25,7 @@ export interface Product {
   details: string[];
   story: string;
   limited: boolean;
+  category?: any;
 }
 
 export function getVariantStock(slug: string, colorName: string | null, sizeName: string | null): number {

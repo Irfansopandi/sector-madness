@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -11,23 +11,42 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://brand.test";
 
 function getImageUrl(imagePath: string): string {
   if (!imagePath) return "";
-  // Jika sudah full URL (http/https), langsung pakai
   if (imagePath.startsWith("http")) return imagePath;
-  // Hanya path /storage/... (upload Laravel) yang di-prefix backend URL
   if (imagePath.startsWith("/storage/")) return `${BACKEND_URL}${imagePath}`;
-  // Path lokal (/images/...) tetap apa adanya → di-serve dari Next.js public folder
   return imagePath;
 }
+
+const CACHE_KEY = "sm_hero_first_image";
 
 export default function Hero() {
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  // Cached image URL — only set on client via useEffect to avoid hydration mismatch
+  const [cachedFirstImageUrl, setCachedFirstImageUrl] = useState<string | null>(null);
+
+  // Load cache from localStorage after mount (client-only, safe for SSR)
+  useEffect(() => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) setCachedFirstImageUrl(cached);
+    } catch {}
+  }, []);
+
   const { data: heroBanners = [] } = useQuery({
     queryKey: ["hero-banners"],
     queryFn: getHeroBanners,
+    staleTime: 60_000,
   });
 
   const activeBanners: HeroBanner[] = heroBanners;
+
+  // Save first banner URL to localStorage once API responds
+  useEffect(() => {
+    if (activeBanners.length > 0) {
+      const firstUrl = getImageUrl(activeBanners[0].image_path);
+      try { localStorage.setItem(CACHE_KEY, firstUrl); } catch {}
+    }
+  }, [activeBanners]);
 
   const transition = useCallback(() => {
     if (activeBanners.length === 0) return;
@@ -44,19 +63,85 @@ export default function Hero() {
     ? activeBanners[currentIndex % activeBanners.length]
     : null;
 
+  // Track when the first image started showing (for seamless scale handoff)
+  const firstImageStartTime = useRef<number | null>(null);
+
+  // Track whether API has just loaded the first slide for the first time
+  const hasShownFirstBanner = useRef(false);
+
+  // For the first banner coming from the API (not a slide transition),
+  // skip opacity animation so image + zoom appear instantly together.
+  const skipOpacityAnim = !hasShownFirstBanner.current && currentIndex === 0;
+
+  useEffect(() => {
+    if (currentBanner && !hasShownFirstBanner.current) {
+      hasShownFirstBanner.current = true;
+    }
+  }, [currentBanner]);
+
+  // Calculate the current Ken Burns scale based on how long the first image has been visible
+  // This allows the API image to continue the zoom from where the cached image left off
+  const getSeamlessInitialScale = () => {
+    if (!firstImageStartTime.current) return 1.05;
+    const elapsed = (Date.now() - firstImageStartTime.current) / 1000;
+    // Ken Burns: scale 1.05 → 1.15 over 7s, cubic-bezier [0.25, 0.1, 0.25, 1]
+    // Approximate with linear for simplicity (difference is negligible at this scale)
+    const progress = Math.min(elapsed / 7, 1);
+    return 1.05 + progress * 0.10;
+  };
+
   return (
     <section className="relative h-screen w-full overflow-hidden bg-[#0A0A0A]">
-      {/* Background Images with Continuous Smooth Ken Burns Crossfade */}
+
+      {/* Cached first image — shown instantly on refresh BEFORE API responds */}
+      {/* Uses motion.div with same Ken Burns so zoom is already running when API image takes over */}
+      {!currentBanner && cachedFirstImageUrl && (
+        <motion.div
+          className="absolute inset-0 z-[1]"
+          initial={{ scale: 1.05 }}
+          animate={{ scale: 1.15 }}
+          transition={{ scale: { duration: 7, ease: [0.25, 0.1, 0.25, 1] } }}
+          onAnimationStart={() => {
+            if (!firstImageStartTime.current) {
+              firstImageStartTime.current = Date.now();
+            }
+          }}
+        >
+          <Image
+            src={cachedFirstImageUrl}
+            alt="SECTOR MADNESS Campaign"
+            fill
+            className="object-cover"
+            priority
+            sizes="100vw"
+            quality={90}
+          />
+        </motion.div>
+      )}
+
+      {/* Background Images — Ken Burns + Crossfade */}
       <AnimatePresence mode="sync">
         {currentBanner && (
           <motion.div
             key={currentBanner.id || currentBanner.image_path || currentIndex}
-            initial={{ opacity: 0, scale: 1.05 }}
+            initial={{
+              opacity: skipOpacityAnim ? 1 : 0,
+              // Continue from wherever the cached image's zoom was
+              scale: skipOpacityAnim ? getSeamlessInitialScale() : 1.05,
+            }}
             animate={{ opacity: 1, scale: 1.15 }}
             exit={{ opacity: 0, scale: 1.20 }}
             transition={{
-              opacity: { duration: 1.8, ease: "easeInOut" },
-              scale: { duration: 7, ease: [0.25, 0.1, 0.25, 1] },
+              opacity: skipOpacityAnim
+                ? { duration: 0 }
+                : { duration: 1.8, ease: "easeInOut" },
+              scale: skipOpacityAnim
+                ? {
+                    // Remaining duration = 7s minus elapsed
+                    duration: Math.max(0.1, 7 - (firstImageStartTime.current ? (Date.now() - firstImageStartTime.current) / 1000 : 0)),
+                    ease: [0.25, 0.1, 0.25, 1],
+                  }
+                : { duration: 7, ease: [0.25, 0.1, 0.25, 1] },
             }}
             className="absolute inset-0 z-[1]"
           >
@@ -77,7 +162,7 @@ export default function Hero() {
       <div className="absolute inset-0 bg-black/50 z-[3]" />
       <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-transparent to-transparent z-[3]" />
 
-      {/* Hero Content wrapped in Container */}
+      {/* Hero Content */}
       <div className="relative z-[4] h-full flex flex-col items-center justify-center">
         <Container className="flex flex-col items-center text-center">
           {/* Brand Mark */}
@@ -92,7 +177,7 @@ export default function Hero() {
             </span>
           </motion.div>
 
-          {/* Brand Name - Vertical Gap Collapse Entrance */}
+          {/* Brand Name */}
           <h1 className="font-[family-name:var(--font-display)] text-[clamp(2.5rem,8vw,7rem)] tracking-[-0.02em] text-[#F5F5F5] font-normal leading-[0.95] mb-10 md:mb-12 flex flex-col items-center text-center">
             <motion.span
               initial={{ opacity: 0, y: -45 }}
@@ -122,7 +207,7 @@ export default function Hero() {
             We trust quality
           </motion.p>
 
-          {/* CTA - High End Luxury Streetwear Wide Button */}
+          {/* CTA Button */}
           <motion.a
             href="#collection"
             initial={{ opacity: 0, y: 10 }}

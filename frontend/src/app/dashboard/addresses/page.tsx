@@ -104,6 +104,13 @@ export default function AddressBookPage() {
 
   return (
     <div className="bg-[#141414] border border-white/[0.08] p-8 md:p-10 lg:p-12 space-y-8 shadow-2xl">
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media (max-width: 1023px) {
+          .add-address-btn {
+            white-space: nowrap !important;
+          }
+        }
+      `}} />
       {/* Header — Without white background button and without bottom line border */}
       <div style={{ paddingTop: "24px", paddingBottom: "24px", paddingLeft: "28px", paddingRight: "28px" }} className="flex items-center justify-between">
         <div>
@@ -112,7 +119,7 @@ export default function AddressBookPage() {
         </div>
         <button
           onClick={handleOpenAddAddress}
-          className="group flex items-center gap-2 text-[#8A8A8A] hover:text-[#F5F5F5] font-mono text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
+          className="add-address-btn group flex items-center gap-2 text-[#8A8A8A] hover:text-[#F5F5F5] font-mono text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
         >
           <Plus className="w-4 h-4 transition-transform duration-300 group-hover:rotate-90 text-[#8A8A8A] group-hover:text-[#F5F5F5]" />
           <span>ADD ADDRESS</span>

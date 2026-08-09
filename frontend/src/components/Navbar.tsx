@@ -246,32 +246,37 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
       if (match) return match;
     }
 
-    // 2. Check Specific Focus On Item Mappings
-    if (cat === "ZESTY") return activeProducts[1 % activeProducts.length];
-    if (cat === "PRISTINE") return activeProducts[2 % activeProducts.length];
-    if (cat === "LOFTY") return activeProducts[3 % activeProducts.length];
-    if (cat === "FANCY") return activeProducts[4 % activeProducts.length];
-    if (cat === "FROLIC") return activeProducts[5 % activeProducts.length];
-    if (cat === "SECTOR MADNESS" || cat === "SECTOR MADNESS | ORIGIN") return activeProducts[0];
-
-    // 3. Search match for custom Focus On / Collections / Admin tags
+    // 2. Exact match for custom Focus On / Collections from Admin (Highest Priority)
     const search = cat.toLowerCase();
+    const exactMatch = activeProducts.find((p) => {
+      const coll = (p.collection || "").toLowerCase();
+      const collCode = (p.collection_code || "").toLowerCase();
+      return coll === search || collCode === search || coll.includes(search) || collCode.includes(search);
+    });
+    
+    if (exactMatch) return exactMatch;
+
+    // 3. Search match for names and descriptions
     const searchMatch = activeProducts.find((p) => {
       const name = (p.name || "").toLowerCase();
       const desc = (p.description || "").toLowerCase();
-      const coll = (p.collection || "").toLowerCase();
-      const collCode = (p.collection_code || "").toLowerCase();
       const catName = (p.category?.name || "").toLowerCase();
       return (
         name.includes(search) ||
-        coll.includes(search) ||
-        collCode.includes(search) ||
         desc.includes(search) ||
         catName.includes(search)
       );
     });
 
     if (searchMatch) return searchMatch;
+
+    // 4. Fallback Deterministic Specific Focus On Item Mappings
+    if (cat === "ZESTY") return activeProducts[1 % activeProducts.length];
+    if (cat === "PRISTINE") return activeProducts[2 % activeProducts.length];
+    if (cat === "LOFTY") return activeProducts[3 % activeProducts.length];
+    if (cat === "FANCY") return activeProducts[4 % activeProducts.length];
+    if (cat === "FROLIC") return activeProducts[5 % activeProducts.length];
+    if (cat === "SECTOR MADNESS" || cat === "SECTOR MADNESS | ORIGIN") return activeProducts[0];
 
     // 4. Deterministic Index Fallback for any custom item
     let hash = 0;

@@ -166,6 +166,7 @@ export default function ProductPage({
     stock: apiProduct.stock ?? 25,
     size_guide: (apiProduct as any).size_guide || [],
     variants: (apiProduct as any).variants || [],
+    category: apiProduct.category,
   } : null;
 
   if (!targetProduct) {
@@ -559,7 +560,7 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
               {/* Category & Title Block */}
               <div>
                 <span className="text-[11px] tracking-[0.3em] uppercase text-[#8A8A8A] font-[family-name:var(--font-body)] font-light block mb-2">
-                  {product.collectionCode} &nbsp;—&nbsp; {product.collection}
+                  {product.category?.name || "Uncategorized"} &nbsp;—&nbsp; {product.collection}
                 </span>
                 <h1 className="font-[family-name:var(--font-display)] text-[clamp(2.2rem,4vw,3.2rem)] text-[#F5F5F5] leading-[1.1] tracking-[-0.01em]">
                   {product.name}
