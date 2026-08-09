@@ -320,7 +320,28 @@ export default function AdminProductsPage() {
       closeModal();
     },
     onError: (err: any) => {
-      showErrorAlert(err.response?.data?.message || "Gagal menambahkan produk.");
+      if (err.response?.status === 422 && err.response?.data?.errors) {
+        const laravelErrs = err.response.data.errors;
+        const newErrs: Record<string, string> = {};
+        Object.keys(laravelErrs).forEach(key => {
+          newErrs[key] = laravelErrs[key][0];
+        });
+        setErrors(newErrs);
+        const firstErrorKey = Object.keys(newErrs)[0];
+        if (firstErrorKey) {
+          setTimeout(() => {
+            const targetElement = document.getElementById(`field-${firstErrorKey}`) || document.getElementById("field-image");
+            if (targetElement) {
+              targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+          }, 50);
+        }
+      } else {
+        setErrors({ image: err.response?.data?.message || "Gagal menambahkan produk. Periksa kembali form." });
+        setTimeout(() => {
+          document.getElementById("field-image")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 50);
+      }
     },
     onSettled: () => {
       setIsUploading(false);
@@ -336,7 +357,28 @@ export default function AdminProductsPage() {
       closeModal();
     },
     onError: (err: any) => {
-      showErrorAlert(err.response?.data?.message || "Gagal memperbarui produk.");
+      if (err.response?.status === 422 && err.response?.data?.errors) {
+        const laravelErrs = err.response.data.errors;
+        const newErrs: Record<string, string> = {};
+        Object.keys(laravelErrs).forEach(key => {
+          newErrs[key] = laravelErrs[key][0];
+        });
+        setErrors(newErrs);
+        const firstErrorKey = Object.keys(newErrs)[0];
+        if (firstErrorKey) {
+          setTimeout(() => {
+            const targetElement = document.getElementById(`field-${firstErrorKey}`) || document.getElementById("field-image");
+            if (targetElement) {
+              targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+          }, 50);
+        }
+      } else {
+        setErrors({ image: err.response?.data?.message || "Gagal memperbarui produk. Periksa kembali form." });
+        setTimeout(() => {
+          document.getElementById("field-image")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 50);
+      }
     },
     onSettled: () => {
       setIsUploading(false);
@@ -626,13 +668,7 @@ export default function AdminProductsPage() {
     setFormMaterial("");
     setFormWeight("");
     setFormDetails("");
-    setSizeGuideRows([
-      { size: "S", chest: "90 - 95", waist: "75 - 80" },
-      { size: "M", chest: "96 - 101", waist: "81 - 86" },
-      { size: "L", chest: "102 - 107", waist: "87 - 92" },
-      { size: "XL", chest: "108 - 113", waist: "93 - 98" },
-      { size: "XXL", chest: "114 - 119", waist: "99 - 104" },
-    ]);
+    setSizeGuideRows([]);
     setFormStory("");
     setFormDescription("");
     setFormImagePath("");
@@ -814,8 +850,11 @@ export default function AdminProductsPage() {
       } else if (modalMode === "edit" && selectedProduct) {
         updateProductMut.mutate({ id: Number(selectedProduct.id), data: payload });
       }
-    } catch {
-      showErrorAlert("Gagal mengunggah foto produk.");
+    } catch (error: any) {
+      setErrors({ image: error?.response?.data?.message || error?.message || "Gagal mengunggah foto produk. Pastikan file valid dan ukuran tidak terlalu besar." });
+      setTimeout(() => {
+        document.getElementById("field-image")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 50);
     } finally {
       setIsUploading(false);
     }
@@ -2546,7 +2585,7 @@ export default function AdminProductsPage() {
                       ))}
                     </tbody>
                   </table>
-                  <div style={{ padding: "10px 14px", borderTop: isDarkMode ? "1px solid rgba(255,255,255,0.1)" : "1px solid #E5E7EB" }}>
+                  <div style={{ padding: "10px 14px", borderTop: isDarkMode ? "1px solid rgba(255,255,255,0.1)" : "1px solid #E5E7EB", display: "flex", gap: "10px", flexWrap: "wrap" }}>
                     <button
                       type="button"
                       onClick={addSizeGuideRow}
@@ -2568,6 +2607,33 @@ export default function AdminProductsPage() {
                       <Plus style={{ width: "14px", height: "14px" }} />
                       <span>TAMBAH BARIS UKURAN</span>
                     </button>
+                    {sizeGuideRows.length === 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setSizeGuideRows([
+                          { size: "S", chest: "90 - 95", waist: "75 - 80" },
+                          { size: "M", chest: "96 - 101", waist: "81 - 86" },
+                          { size: "L", chest: "102 - 107", waist: "87 - 92" },
+                          { size: "XL", chest: "108 - 113", waist: "93 - 98" },
+                          { size: "XXL", chest: "114 - 119", waist: "99 - 104" },
+                        ])}
+                        style={{
+                          padding: "6px 14px",
+                          fontSize: "11px",
+                          fontWeight: 700,
+                          letterSpacing: "0.08em",
+                          borderRadius: "6px",
+                          cursor: "pointer",
+                          backgroundColor: "rgba(255, 255, 255, 0.05)",
+                          color: isDarkMode ? "#D1D5DB" : "#4B5563",
+                          border: isDarkMode ? "1px solid rgba(255,255,255,0.2)" : "1px solid #D1D5DB",
+                          display: "inline-flex",
+                          alignItems: "center",
+                        }}
+                      >
+                        <span>ISI OTOMATIS STANDAR</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

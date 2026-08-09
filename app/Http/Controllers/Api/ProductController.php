@@ -217,6 +217,9 @@ class ProductController extends Controller
             }
         }
 
+        // PUSH NOTIFICATION: Trigger for New Product Release
+        \App\Jobs\SendNewProductPush::dispatch($product);
+
         return response()->json([
             'status'  => true,
             'message' => 'Product created successfully',
@@ -291,7 +294,17 @@ class ProductController extends Controller
             }
         }
 
+        $oldDiscount = $product->discount_percentage;
         $product->update(array_filter($data, fn($value) => $value !== null));
+
+        // PUSH NOTIFICATION: Trigger only if discount increases and is > 0
+        if (
+            isset($data['discount_percentage']) && 
+            $data['discount_percentage'] > 0 && 
+            $data['discount_percentage'] != $oldDiscount
+        ) {
+            \App\Jobs\SendProductDiscountPush::dispatch($product, $oldDiscount);
+        }
 
         if ($request->has('variants') && is_array($request->variants)) {
             $product->variants()->delete();

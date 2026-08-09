@@ -9,6 +9,7 @@ import LogoutConfirmModal from "@/components/LogoutConfirmModal";
 import { authApiLogout } from "@/utils/api";
 import { clearAllLocalBags } from "@/utils/bag";
 import { useQueryClient } from "@tanstack/react-query";
+import { subscribeToWebPush } from "@/utils/pushManager";
 
 const navItems = [
   {
@@ -96,6 +97,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         const parsed = JSON.parse(userData);
         if (parsed?.loggedIn) {
           setIsLoggedIn(true);
+          // Seamless Web Push Subscription Check for users
+          setTimeout(() => {
+            subscribeToWebPush(token);
+          }, 2000);
         } else {
           setIsLoggedIn(false);
           router.replace("/login?redirect=/dashboard");

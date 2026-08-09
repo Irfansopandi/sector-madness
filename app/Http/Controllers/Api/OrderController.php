@@ -392,6 +392,19 @@ class OrderController extends Controller
             $order->payment->update(['payment_status' => 'cancelled']);
         }
 
+        // PUSH NOTIFICATION & EMAIL: Tracking / Resi Update
+        if ($trackingNumber !== null) {
+            \App\Jobs\SendOrderTrackingPush::dispatch($order, 'tracking');
+            if ($order->user && $order->user->email) {
+                \Illuminate\Support\Facades\Mail::to($order->user->email)->queue(new \App\Mail\OrderTrackingMail($order, 'tracking'));
+            }
+        } elseif ($newStatus) {
+            \App\Jobs\SendOrderTrackingPush::dispatch($order, 'status');
+            if ($order->user && $order->user->email) {
+                \Illuminate\Support\Facades\Mail::to($order->user->email)->queue(new \App\Mail\OrderTrackingMail($order, 'status'));
+            }
+        }
+
         return response()->json([
             'status'  => true,
             'message' => 'Shipment tracking information updated successfully',

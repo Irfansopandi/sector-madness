@@ -30,6 +30,8 @@ const getFormattedClock = () => {
   return `${dateStr} • ${timeStr}`;
 };
 
+import { subscribeToWebPush } from "@/utils/pushManager";
+
 export default function AdminHeader({
   title,
   isDarkMode = true,
@@ -48,6 +50,13 @@ export default function AdminHeader({
     if (typeof window !== "undefined") {
       document.title = "Sector Madness - Admin Panel";
       setIsCollapsed(localStorage.getItem("sector_madness_sidebar_collapsed") === "true");
+      
+      const adminToken = localStorage.getItem("sector_madness_admin_token");
+      if (adminToken) {
+        setTimeout(() => {
+          subscribeToWebPush(adminToken);
+        }, 2000);
+      }
     }
 
     const updateClock = () => {

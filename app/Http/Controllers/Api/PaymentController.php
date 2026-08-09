@@ -192,6 +192,21 @@ class PaymentController extends Controller
 
         if ($status === 'paid') {
             $order->update(['status' => 'paid']);
+
+            // Admin Notifications
+            try {
+                $admins = \App\Models\Admin::all();
+                $title = '💳 Payment Confirmed';
+                $message = "Payment untuk Order #{$order->order_number} berhasil.";
+
+                // 1. Internal DB Notification (Bell)
+                \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\AdminOrderNotification($title, $message, $order->order_number));
+
+                // 2. External Web Push
+                \App\Jobs\SendAdminPushNotification::dispatch($title, $message, '/admin/orders/' . $order->order_number);
+            } catch (\Exception $e) {
+                Log::error('Admin Notification Failed on Webhook: ' . $e->getMessage());
+            }
         } elseif ($status === 'failed') {
             $order->update(['status' => 'cancelled']);
         }

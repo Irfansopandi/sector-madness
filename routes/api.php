@@ -82,6 +82,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/user/profile', [AuthController::class, 'updateProfile']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
+    // Push Subscription
+    Route::post('/push/subscribe', [\App\Http\Controllers\Api\PushSubscriptionController::class, 'subscribe']);
+    Route::post('/push/unsubscribe', [\App\Http\Controllers\Api\PushSubscriptionController::class, 'unsubscribe']);
+
     // Shipping Address Book (CRUD)
     Route::get('/shipping-address', [ShippingAddressController::class, 'index']);
     Route::post('/shipping-address', [ShippingAddressController::class, 'store']);

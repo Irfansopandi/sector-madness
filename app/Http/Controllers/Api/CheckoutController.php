@@ -590,6 +590,21 @@ class CheckoutController extends Controller
             return $order;
         });
 
+        // --- ADMIN NEW ORDER NOTIFICATION ---
+        try {
+            $admins = \App\Models\Admin::all();
+            $title = '🛒 New Order Received';
+            $message = "Order baru #{$order->order_number} telah dibuat senilai Rp " . number_format($order->total_amount, 0, ',', '.');
+
+            // 1. Internal DB Notification
+            \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\AdminOrderNotification($title, $message, $order->order_number));
+
+            // 2. External Web Push
+            \App\Jobs\SendAdminPushNotification::dispatch($title, $message, '/admin/orders/' . $order->order_number);
+        } catch (\Exception $e) {
+            Log::error('Admin Notification Failed on Checkout: ' . $e->getMessage());
+        }
+
         // 7. Call Midtrans Core API (v2/charge)
         $serverKey = env('MIDTRANS_SERVER_KEY');
         $isProduction = env('MIDTRANS_IS_PRODUCTION', false);

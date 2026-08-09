@@ -57,6 +57,15 @@ export default function OrdersPage() {
 
   useEffect(() => {
     fetchOrders();
+    
+    // Check if we need to auto-open an order modal
+    const search = window.location.search;
+    const params = new URLSearchParams(search);
+    const viewOrder = params.get("view_order");
+    if (viewOrder) {
+      // Auto-open modal for this order
+      handleViewOrderDetails(viewOrder);
+    }
   }, []);
 
   const handleViewOrderDetails = async (orderNumber: string) => {

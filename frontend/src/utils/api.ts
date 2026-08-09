@@ -1239,7 +1239,7 @@ export const uploadAdminImage = async (file: File, folder: string = "uploads"): 
   formData.append("image", file);
   formData.append("folder", folder);
 
-  const res = await axios.post(`${API_URL}/admin/upload`, formData, {
+  const res = await api.post(`/admin/upload`, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
       Accept: "application/json",

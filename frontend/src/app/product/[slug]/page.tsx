@@ -906,70 +906,62 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
                   </AnimatePresence>
                 </div>
 
-                {/* Accordion: Size Guide */}
-                <div>
-                  <button
-                    onClick={() => toggleAccordion("size_guide")}
-                    className="w-full py-6 md:py-7 flex items-center justify-between text-left cursor-pointer group"
-                  >
-                    <span className="text-[13px] md:text-[14px] lg:text-[15px] tracking-[0.15em] uppercase text-[#F5F5F5] font-[family-name:var(--font-body)] font-medium">
-                      SIZE GUIDE
-                    </span>
-                    <span className="text-[#8A8A8A] group-hover:text-[#F5F5F5] text-xl font-light">
-                      {openAccordion === "size_guide" ? "−" : "+"}
-                    </span>
-                  </button>
-                  <AnimatePresence>
-                    {openAccordion === "size_guide" && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="overflow-hidden pb-6 space-y-3 text-[12px] text-[#8A8A8A] font-[family-name:var(--font-body)] font-light leading-[1.8]"
-                      >
-                        {(() => {
-                          const guideData = (product as any).size_guide && (product as any).size_guide.length > 0
-                            ? (product as any).size_guide
-                            : [
-                                { size: "S", chest: "90 - 95", waist: "75 - 80" },
-                                { size: "M", chest: "96 - 101", waist: "81 - 86" },
-                                { size: "L", chest: "102 - 107", waist: "87 - 92" },
-                                { size: "XL", chest: "108 - 113", waist: "93 - 98" },
-                                { size: "XXL", chest: "114 - 119", waist: "99 - 104" }
-                              ];
-
-                          return (
-                            <table className="w-full text-center border-collapse border border-[#222222] text-[11px] font-mono tracking-wider mt-2">
-                              <thead>
-                                <tr className="border-b border-[#222222] bg-[#111111]">
-                                  <th className="py-2 px-3 text-white font-bold uppercase text-center notranslate" translate="no">SIZE</th>
-                                  <th className="py-2 px-3 text-white font-bold uppercase text-center">CHEST (CM)</th>
-                                  <th className="py-2 px-3 text-white font-bold uppercase text-center">WAIST (CM)</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-[#222222]">
-                                {guideData.map((row: any) => (
-                                  <tr key={row.size}>
-                                    <td className="py-2.5 px-3 font-bold text-white bg-[#141414] text-center notranslate" translate="no">
-                                      {row.size}
-                                    </td>
-                                    <td className="py-2.5 px-3 text-[#999999] text-center">
-                                      {row.chest}
-                                    </td>
-                                    <td className="py-2.5 px-3 text-[#999999] text-center">
-                                      {row.waist}
-                                    </td>
+                {((product as any).size_guide && (product as any).size_guide.length > 0) && (
+                  <div>
+                    <button
+                      onClick={() => toggleAccordion("size_guide")}
+                      className="w-full py-6 md:py-7 flex items-center justify-between text-left cursor-pointer group"
+                    >
+                      <span className="text-[13px] md:text-[14px] lg:text-[15px] tracking-[0.15em] uppercase text-[#F5F5F5] font-[family-name:var(--font-body)] font-medium">
+                        SIZE GUIDE
+                      </span>
+                      <span className="text-[#8A8A8A] group-hover:text-[#F5F5F5] text-xl font-light">
+                        {openAccordion === "size_guide" ? "-" : "+"}
+                      </span>
+                    </button>
+                    <AnimatePresence>
+                      {openAccordion === "size_guide" && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="overflow-hidden pb-6 space-y-3 text-[12px] text-[#8A8A8A] font-[family-name:var(--font-body)] font-light leading-[1.8]"
+                        >
+                          {(() => {
+                            const guideData = (product as any).size_guide;
+                            return (
+                              <table className="w-full text-center border-collapse border border-[#222222] text-[11px] font-mono tracking-wider mt-2">
+                                <thead>
+                                  <tr className="border-b border-[#222222] bg-[#111111]">
+                                    <th className="py-2 px-3 text-white font-bold uppercase text-center notranslate" translate="no">SIZE</th>
+                                    <th className="py-2 px-3 text-white font-bold uppercase text-center">CHEST (CM)</th>
+                                    <th className="py-2 px-3 text-white font-bold uppercase text-center">WAIST (CM)</th>
                                   </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          );
-                        })()}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+                                </thead>
+                                <tbody className="divide-y divide-[#222222]">
+                                  {guideData.map((row: any) => (
+                                    <tr key={row.size}>
+                                      <td className="py-2.5 px-3 font-bold text-white bg-[#141414] text-center notranslate" translate="no">
+                                        {row.size}
+                                      </td>
+                                      <td className="py-2.5 px-3 text-[#999999] text-center">
+                                        {row.chest}
+                                      </td>
+                                      <td className="py-2.5 px-3 text-[#999999] text-center">
+                                        {row.waist}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            );
+                          })()}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
 
                 {/* Accordion 4: Shipping & Returns */}
                 <div>
