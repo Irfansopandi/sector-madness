@@ -139,8 +139,18 @@ export default function AdminOrdersPage() {
     }
   };
 
+  useEffect(() => {
+    const search = window.location.search;
+    const params = new URLSearchParams(search);
+    const viewOrder = params.get("view_order");
+    if (viewOrder) {
+      handleOpenDetailModal(viewOrder);
+    }
+  }, []);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [sortBy, setSortBy] = useState("NEWEST");
   const [activeTab, setActiveTab] = useState<"ALL" | "PROCESSING" | "DELIVERED" | "CANCELLED">("ALL");
 
   const tabRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
@@ -150,7 +160,7 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, activeTab, statusFilter, rowLimit]);
+  }, [searchQuery, activeTab, statusFilter, rowLimit, sortBy]);
 
   const showSuccessAlert = (msg: string) => {
     Swal.fire({
@@ -351,6 +361,12 @@ export default function AdminOrdersPage() {
         (mappedStatus === "CANCEL PENDING" || mappedStatus === "CANCEL_PENDING" || mappedStatus === "CANCEL_REQUESTED"));
 
     return matchesSearch && matchesTab && matchesStatus;
+  }).sort((a, b) => {
+    const timeA = new Date(a.created_at || a.order_date || 0).getTime();
+    const timeB = new Date(b.created_at || b.order_date || 0).getTime();
+    if (sortBy === "NEWEST") return timeB - timeA;
+    if (sortBy === "OLDEST") return timeA - timeB;
+    return 0;
   });
 
   const currentTotal = filteredOrders.length;
@@ -530,7 +546,7 @@ export default function AdminOrdersPage() {
             {/* ROW 1 (Mobile/Tablet) / LEFT (Desktop): Search Bar & Filter Dropdown (Side-by-side) */}
             <div className="flex flex-nowrap items-center gap-2.5 sm:gap-3 flex-1 min-w-0 w-full lg:w-auto">
               {/* Search Bar */}
-              <div className="relative flex-1 min-w-[140px] sm:w-64 lg:w-72 shrink">
+              <div className="relative flex-1 min-w-[120px] sm:w-48 lg:w-56 shrink">
                 <Search
                   style={{
                     position: "absolute",
@@ -546,7 +562,7 @@ export default function AdminOrdersPage() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Cari No. Order, Nama Customer, Email..."
+                  placeholder="Cari No. Order, Nama..."
                   style={{
                     width: "100%",
                     paddingLeft: "38px",
@@ -564,9 +580,11 @@ export default function AdminOrdersPage() {
                 />
               </div>
 
-              {/* Status Filter Dropdown */}
+              {/* Filters (Status & Sort) */}
               <div className="flex items-center gap-2 shrink-0">
                 <Filter style={{ width: "14px", height: "14px", color: "#B6A47E" }} />
+                
+                {/* Status Dropdown */}
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
@@ -589,6 +607,27 @@ export default function AdminOrdersPage() {
                   <option value="DELIVERED">DELIVERED</option>
                   <option value="CANCEL PENDING">CANCEL PENDING</option>
                   <option value="CANCELLED">CANCELLED</option>
+                </select>
+
+                {/* Sort Dropdown */}
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  style={{
+                    padding: "9px 14px",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    borderRadius: "6px",
+                    outline: "none",
+                    textTransform: "uppercase",
+                    cursor: "pointer",
+                    backgroundColor: isDarkMode ? "#121214" : "#F9FAFB",
+                    border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid #D1D5DB",
+                    color: isDarkMode ? "#FFFFFF" : "#0A0A0A",
+                  }}
+                >
+                  <option value="NEWEST">TERBARU</option>
+                  <option value="OLDEST">TERLAMA</option>
                 </select>
               </div>
             </div>

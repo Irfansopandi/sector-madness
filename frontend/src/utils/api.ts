@@ -2,13 +2,17 @@ import axios from "axios";
 import { products } from "@/data/products";
 
 // Base API Configuration
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://brand.test/api";
+const isServer = typeof window === "undefined";
+export const API_URL = isServer
+  ? "http://127.0.0.1/api"
+  : process.env.NEXT_PUBLIC_API_URL || "http://brand.test/api";
 
 const api = axios.create({
   baseURL: API_URL,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
+    ...(isServer ? { Host: "brand.test" } : {}),
   },
   timeout: 30000,
 });
@@ -1131,6 +1135,7 @@ export interface AdminOrder {
   status?: string;
   payment_status: string;
   shipping_status: string;
+  payment?: { payment_status?: string; [key: string]: any } | null;
   courier?: string;
   tracking_number?: string;
   cancel_reason?: string;
@@ -1268,9 +1273,9 @@ export interface AdminProduct {
   size_guide?: any;
   story?: string;
   price: number;
-  original_price?: number;
-  discount_percentage?: number;
-  discount_expires_at?: string;
+  original_price?: number | null;
+  discount_percentage?: number | null;
+  discount_expires_at?: string | null;
   is_flash_sale?: boolean;
   limited?: boolean;
   image: string;

@@ -18,27 +18,41 @@ class PushSubscriptionController extends Controller
             'keys.auth' => 'required|string|max:255',
         ]);
 
-        $user = $request->user();
-        if (!$user) {
+        $token = $request->bearerToken();
+        $accessToken = \Laravel\Sanctum\PersonalAccessToken::findToken($token);
+        
+        if (!$accessToken) {
             return response()->json(['status' => false, 'message' => 'Unauthenticated.'], 401);
         }
 
-        $isAdmin = $user instanceof Admin;
-        $isUser = $user instanceof User;
+        $isAdmin = $accessToken->tokenable_type === 'App\Models\Admin';
+        $isUser = $accessToken->tokenable_type === 'App\Models\User';
+        $userId = $accessToken->tokenable_id;
 
         if (!$isAdmin && !$isUser) {
             return response()->json(['status' => false, 'message' => 'Invalid user type.'], 403);
         }
 
-        $subscription = PushSubscription::updateOrCreate(
-            ['endpoint' => $request->endpoint],
-            [
-                'user_id' => $isUser && !$isAdmin ? $user->id : null,
-                'admin_id' => $isAdmin ? $user->id : null,
+        $subscription = PushSubscription::where('endpoint', $request->endpoint)->first();
+        
+        if ($subscription) {
+            if ($isUser && !$isAdmin) {
+                $subscription->user_id = $userId;
+            } elseif ($isAdmin) {
+                $subscription->admin_id = $userId;
+            }
+            $subscription->public_key = $request->input('keys.p256dh');
+            $subscription->auth_token = $request->input('keys.auth');
+            $subscription->save();
+        } else {
+            PushSubscription::create([
+                'endpoint' => $request->endpoint,
+                'user_id' => $isUser && !$isAdmin ? $userId : null,
+                'admin_id' => $isAdmin ? $userId : null,
                 'public_key' => $request->input('keys.p256dh'),
                 'auth_token' => $request->input('keys.auth'),
-            ]
-        );
+            ]);
+        }
 
         return response()->json(['status' => true, 'message' => 'Subscribed successfully.']);
     }

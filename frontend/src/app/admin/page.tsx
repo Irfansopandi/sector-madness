@@ -288,16 +288,20 @@ export default function AdminDashboardPage() {
     retry: false,
   });
 
-  // Calculate real-time metrics dynamically from active database state
-  const totalRevenue = orders.reduce((sum, ord) => sum + (ord.total || 0), 0);
+  // Calculate real-time metrics dynamically from active database state (Only paid & non-cancelled orders)
+  const validOrders = orders.filter((ord) => {
+    const st = (ord.shipping_status || ord.status || "").toUpperCase();
+    const paySt = (ord.payment?.payment_status || "").toUpperCase();
+    const isCancelled = st === "CANCELLED" || st === "CANCELED" || st === "DIBATALKAN" || st === "FAILED" || paySt === "CANCELLED" || paySt === "FAILED";
+    const isPaid = paySt === "PAID" || paySt === "SETTLED" || paySt === "SUCCESS" || st === "PROCESSING" || st === "SHIPPED" || st === "DELIVERING" || st === "DELIVERED" || st === "COMPLETED" || st === "SELESAI" || st === "RECEIVED" || st === "IN PROCESSING";
+    
+    return !isCancelled && isPaid;
+  });
+
+  const totalRevenue = validOrders.reduce((sum, ord) => sum + (ord.total || 0), 0);
   const formattedRevenue = `Rp ${totalRevenue.toLocaleString("id-ID")}`;
 
-  const totalItemsSold = orders
-    .filter((ord) => {
-      const st = (ord.shipping_status || "").toUpperCase();
-      return st !== "CANCELLED" && st !== "CANCELED" && st !== "DIBATALKAN";
-    })
-    .reduce((sum, ord) => {
+  const totalItemsSold = validOrders.reduce((sum, ord) => {
       const items: any[] = (ord as any).items || (ord as any).products || [];
       if (items.length > 0) {
         return sum + items.reduce((iSum: number, item: any) => iSum + (Number(item.quantity) || 1), 0);
@@ -457,7 +461,7 @@ export default function AdminDashboardPage() {
               />
               <AdminStatCard
                 label="TOTAL ORDERS"
-                value={orders.length > 0 ? orders.length : 12}
+                value={validOrders.length > 0 ? validOrders.length : 0}
                 subtext="Customer orders placed"
                 icon={<ShoppingBag />}
                 accentColor="#0A0A0A"

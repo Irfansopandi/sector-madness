@@ -31,9 +31,15 @@ class OrderTrackingMail extends Mailable implements ShouldQueue
      */
     public function envelope(): Envelope
     {
-        $subject = $this->messageType === 'tracking' 
-            ? '📦 Resi Pengiriman Pesanan #' . $this->order->order_number
-            : '📝 Status Pesanan Diperbarui #' . $this->order->order_number;
+        if ($this->messageType === 'tracking') {
+            $subject = '📦 Resi Pengiriman Pesanan #' . $this->order->order_number;
+        } elseif ($this->messageType === 'cancel_approved') {
+            $subject = '✅ Pembatalan Pesanan Disetujui #' . $this->order->order_number;
+        } elseif ($this->messageType === 'cancel_rejected') {
+            $subject = '❌ Pembatalan Pesanan Ditolak #' . $this->order->order_number;
+        } else {
+            $subject = '📝 Status Pesanan Diperbarui #' . $this->order->order_number;
+        }
 
         return new Envelope(
             subject: $subject,

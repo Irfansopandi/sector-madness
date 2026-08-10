@@ -194,6 +194,10 @@ class ProductController extends Controller
             }
             if ($data['original_price'] > $data['price']) {
                 $data['discount_percentage'] = round((($data['original_price'] - $data['price']) / $data['original_price']) * 100);
+            } else {
+                $data['original_price'] = null;
+                $data['discount_percentage'] = null;
+                $data['discount_expires_at'] = null;
             }
         }
 
@@ -291,11 +295,31 @@ class ProductController extends Controller
             }
             if ($data['original_price'] > $data['price']) {
                 $data['discount_percentage'] = round((($data['original_price'] - $data['price']) / $data['original_price']) * 100);
+            } else {
+                $data['original_price'] = null;
+                $data['discount_percentage'] = null;
+                $data['discount_expires_at'] = null;
             }
+        } else if ($request->exists('original_price') && $request->input('original_price') === null) {
+            $data['original_price'] = null;
+            $data['discount_percentage'] = null;
+            $data['discount_expires_at'] = null;
         }
 
         $oldDiscount = $product->discount_percentage;
-        $product->update(array_filter($data, fn($value) => $value !== null));
+        
+        $updateData = array_filter($data, function($value, $key) use ($request) {
+            if ($value !== null) return true;
+            if (in_array($key, ['original_price', 'discount_percentage', 'discount_expires_at'])) {
+                if ($request->exists('original_price') && $request->input('original_price') === null) {
+                    return true;
+                }
+                return $request->exists($key);
+            }
+            return false;
+        }, ARRAY_FILTER_USE_BOTH);
+
+        $product->update($updateData);
 
         // PUSH NOTIFICATION: Trigger only if discount increases and is > 0
         if (

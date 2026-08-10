@@ -590,21 +590,7 @@ class CheckoutController extends Controller
             return $order;
         });
 
-        // --- ADMIN NEW ORDER NOTIFICATION ---
-        try {
-            $admins = \App\Models\Admin::all();
-            $title = '🛒 New Order Received';
-            $message = "Order baru #{$order->order_number} telah dibuat senilai Rp " . number_format($order->total_amount, 0, ',', '.');
-
-            // 1. Internal DB Notification
-            \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\AdminOrderNotification($title, $message, $order->order_number));
-
-            // 2. External Web Push
-            \App\Jobs\SendAdminPushNotification::dispatch($title, $message, '/admin/orders/' . $order->order_number);
-        } catch (\Exception $e) {
-            Log::error('Admin Notification Failed on Checkout: ' . $e->getMessage());
-        }
-
+        // Admin notification moved to PaymentController (only when paid)
         // 7. Call Midtrans Core API (v2/charge)
         $serverKey = env('MIDTRANS_SERVER_KEY');
         $isProduction = env('MIDTRANS_IS_PRODUCTION', false);
@@ -781,33 +767,49 @@ class CheckoutController extends Controller
                 $transactionStatus = $statusData['transaction_status'] ?? 'pending';
 
                 if (in_array($transactionStatus, ['settlement', 'capture'])) {
+                    // Cek apakah order belum diproses untuk menghindari aksi ganda (stok kurang 2x, notif 2x)
+                    $isFirstTime = in_array($order->status, ['pending', 'unpaid']);
+                    
                     // Payment is successful! Update database
                     $order->update(['status' => 'processing']);
                     if ($order->payment) {
                         $order->payment->update(['payment_status' => 'paid']);
                     }
 
-                    // Kurangi stok produk & variant SETELAH pembayaran dikonfirmasi
-                    foreach ($order->items as $item) {
-                        $product = \App\Models\Product::find($item->product_id);
-                        if ($product) {
-                            $product->decrement('stock', $item->quantity);
+                    if ($isFirstTime) {
+                        // Kurangi stok produk & variant SETELAH pembayaran dikonfirmasi
+                        foreach ($order->items as $item) {
+                            $product = \App\Models\Product::find($item->product_id);
+                            if ($product) {
+                                $product->decrement('stock', $item->quantity);
 
-                            // Decrement variant stock
-                            $variant = \App\Models\ProductVariant::where('product_id', $product->id)
-                                ->where('color', $item->color ?: 'Default')
-                                ->where('size', $item->size ?: 'M')
-                                ->first();
-                            if ($variant) {
-                                $variant->decrement('stock', $item->quantity);
+                                // Decrement variant stock
+                                $variant = \App\Models\ProductVariant::where('product_id', $product->id)
+                                    ->where('color', $item->color ?: 'Default')
+                                    ->where('size', $item->size ?: 'M')
+                                    ->first();
+                                if ($variant) {
+                                    $variant->decrement('stock', $item->quantity);
+                                }
                             }
                         }
-                    }
-                    
-                    // Clear user cart upon successful payment
-                    $cart = Cart::where('user_id', $order->user_id)->first();
-                    if ($cart) {
-                        $cart->items()->delete();
+                        
+                        // Clear user cart upon successful payment
+                        $cart = \App\Models\Cart::where('user_id', $order->user_id)->first();
+                        if ($cart) {
+                            $cart->items()->delete();
+                        }
+
+                        // Send Admin Notification for new Paid Order
+                        try {
+                            $admins = \App\Models\Admin::all();
+                            $title = '🛒 New Paid Order Received';
+                            $message = "Order baru #{$order->order_number} telah dibayar senilai Rp " . number_format($order->total_amount, 0, ',', '.');
+                            \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\AdminOrderNotification($title, $message, $order->order_number));
+                            \App\Jobs\SendAdminPushNotification::dispatch($title, $message, '/admin/orders?view_order=' . $order->order_number);
+                        } catch (\Exception $e) {
+                            \Illuminate\Support\Facades\Log::error('Admin Notification Failed on checkPaymentStatus: ' . $e->getMessage());
+                        }
                     }
 
                     // Otomatis buat pengiriman & resi lacak Biteship

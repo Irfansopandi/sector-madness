@@ -47,8 +47,22 @@
             <p class="desc" style="font-size: 14px; line-height: 1.6; color: #555555; margin: 0 0 32px; text-align: center;">
                 Anda bisa melacak pesanan Anda melalui website kurir terkait<br>atau langsung melalui dashboard akun Anda.
             </p>
+            @elseif($messageType === 'cancel_approved')
+                Ajuan pembatalan untuk pesanan Anda telah <strong style="color: #0A0A0A;">disetujui</strong> oleh tim kami.<br>
+                Pesanan ini resmi dibatalkan dan dana (jika ada) akan dikembalikan sesuai prosedur.
+            </p>
+            @elseif($messageType === 'cancel_rejected')
+                Ajuan pembatalan untuk pesanan Anda <strong style="color: #0A0A0A;">ditolak</strong>.<br>
+                Pesanan Anda akan tetap diproses dan dikirimkan ke alamat Anda.
+            </p>
             @else
                 Status pesanan Anda telah diperbarui menjadi: <strong style="color: #0A0A0A;">{{ ucfirst($order->status) }}</strong>.
+            </p>
+            @endif
+            
+            @if(in_array(strtolower($order->status), ['shipped', 'delivery', 'delivering', 'delivered']))
+            <p class="desc" style="font-size: 14px; line-height: 1.6; color: #0A0A0A; margin: 0 0 32px; text-align: center; font-style: italic;">
+                Saat paket sudah sampai, pastikan kondisinya aman dan sesuai sebelum melakukan konfirmasi <strong>'Pesanan Diterima'</strong> di detail pesanan ya.
             </p>
             @endif
             

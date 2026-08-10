@@ -216,8 +216,12 @@ export default function AdminProductsPage() {
     const map = new Map<string, { name: string; image: string; qty: number; revenue: number; unitPrice: number }>();
     orders
       .filter((ord) => {
-        const st = (ord.shipping_status || "").toUpperCase();
-        return st !== "CANCELLED" && st !== "CANCELED" && st !== "DIBATALKAN";
+        const st = (ord.shipping_status || ord.status || "").toUpperCase();
+        const paySt = (ord.payment?.payment_status || "").toUpperCase();
+        const isCancelled = st === "CANCELLED" || st === "CANCELED" || st === "DIBATALKAN" || st === "FAILED" || paySt === "CANCELLED" || paySt === "FAILED";
+        const isPaid = paySt === "PAID" || paySt === "SETTLED" || paySt === "SUCCESS" || st === "PROCESSING" || st === "SHIPPED" || st === "DELIVERING" || st === "DELIVERED" || st === "COMPLETED" || st === "SELESAI" || st === "RECEIVED" || st === "IN PROCESSING";
+        
+        return !isCancelled && isPaid;
       })
       .forEach((ord) => {
         const items: any[] = (ord as any).items || (ord as any).products || [];
@@ -816,8 +820,8 @@ export default function AdminProductsPage() {
       const payload: Partial<AdminProduct> = {
         name: formName.trim(),
         price: Number(formPrice),
-        original_price: formOriginalPrice ? Number(formOriginalPrice) : undefined,
-        discount_expires_at: formDiscountExpiresAt ? formDiscountExpiresAt : undefined,
+        original_price: formOriginalPrice ? Number(formOriginalPrice) : null,
+        discount_expires_at: formDiscountExpiresAt ? formDiscountExpiresAt : null,
         is_flash_sale: formIsFlashSale,
         limited: formLimited,
         stock: Number(formStock),

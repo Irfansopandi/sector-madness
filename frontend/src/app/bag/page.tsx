@@ -543,8 +543,8 @@ export default function ShoppingBagPage() {
                                   <span className="text-[#333333]">|</span>
                                 </>
                               )}
-                              <span className="text-[#B6A47E] font-medium bg-[#141414] px-2 py-0.5 border border-[#262626]">
-                                REMAINING STOCK: <strong className="text-white font-bold">{Math.max(0, item.stock - item.quantity)} UNITS</strong>
+                              <span className="text-[#B6A47E] font-medium">
+                                <strong className="text-white font-bold">{Math.max(0, item.stock - item.quantity)}</strong> UNITS IN STOCK
                               </span>
                             </div>
                           </div>

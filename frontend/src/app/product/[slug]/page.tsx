@@ -96,13 +96,13 @@ export default function ProductPage({
 }) {
   const { slug } = use(params);
   
-  const { data: apiProduct, isLoading, isError } = useQuery({
+  const { data: apiProduct, isPending, isError } = useQuery({
     queryKey: ["product", slug],
     queryFn: () => getProductBySlug(slug),
     enabled: !!slug,
   });
 
-  if (isLoading) {
+  if (isPending) {
     return (
       <main className="min-h-screen bg-[#0A0A0A] text-[#F5F5F5] flex flex-col justify-between">
         <Navbar mode="dark" />
@@ -593,12 +593,12 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
                         Rp {displaySellingPrice.toLocaleString("id-ID")}
                       </p>
                     </div>
-                    <span className={`text-[10px] sm:text-[11px] tracking-[0.2em] uppercase font-[family-name:var(--font-body)] font-medium px-3.5 py-1.5 border whitespace-nowrap shrink-0 ${
-                      (selectedSize && getDbSizeStock(selectedSize) <= 0) || totalProductStock <= 0
-                        ? "bg-[#2A0C0C] text-[#FF6666] border-[#552222]"
-                        : "bg-[#141414] text-[#B6A47E] border-[#2B2B2B]"
+                    <span className={`text-[10px] sm:text-[11px] tracking-[0.2em] uppercase font-[family-name:var(--font-body)] font-medium whitespace-nowrap shrink-0 ${
+                      totalProductStock <= 0
+                        ? "text-[#FF6666]"
+                        : "text-[#B6A47E]"
                     }`}>
-                      TOTAL PRODUCT STOCK: {selectedSize ? Math.max(0, getDbSizeStock(selectedSize)) : Math.max(0, totalProductStock)} UNITS
+                      PRODUCT STOCK: {Math.max(0, totalProductStock)}
                     </span>
                   </div>
                   {/* Dynamic Selected Variant Stock Indicator */}
@@ -613,10 +613,10 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
                           <>SIZE: <strong className="text-white font-extrabold">{selectedSize || "NOT SELECTED"}</strong></>
                         )}
                       </span>
-                      <span className={`font-black tracking-widest px-2.5 py-1 border whitespace-nowrap shrink-0 text-[9px] sm:text-xs ${
+                      <span className={`font-black tracking-widest whitespace-nowrap shrink-0 text-[9px] sm:text-xs ${
                         selectedSize && getDbSizeStock(selectedSize) <= 0
-                          ? "bg-[#331111] text-[#FF6666] border-[#662222]"
-                          : "bg-[#222222] text-white border-[#333333]"
+                          ? "text-[#FF6666]"
+                          : "text-white"
                       }`}>
                         {product.colors && product.colors.length > 0 && product.sizes && product.sizes.length > 0 ? (
                           selectedColor && selectedSize ? (

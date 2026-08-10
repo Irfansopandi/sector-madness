@@ -198,8 +198,14 @@ Route::middleware([\App\Http\Middleware\AdminMiddleware::class])->group(function
     Route::post('/admin/customers', [CustomerController::class, 'adminStore']);
     Route::get('/admin/customers/{id}', [CustomerController::class, 'adminShow']);
     Route::put('/admin/customers/{id}', [CustomerController::class, 'adminUpdate']);
-    Route::put('/admin/customers/{id}/status', [CustomerController::class, 'adminToggleStatus']);
     Route::delete('/admin/customers/{id}', [CustomerController::class, 'adminDestroy']);
+    Route::put('/admin/customers/{id}/status', [CustomerController::class, 'adminToggleStatus']);
+
+    // Notifications
+    Route::get('/admin/notifications', [\App\Http\Controllers\Api\NotificationController::class, 'getAdminNotifications']);
+    Route::get('/admin/notifications/all', [\App\Http\Controllers\Api\NotificationController::class, 'getAllAdminNotifications']);
+    Route::put('/admin/notifications/read-all', [\App\Http\Controllers\Api\NotificationController::class, 'markAllAsRead']);
+    Route::put('/admin/notifications/{id}/read', [\App\Http\Controllers\Api\NotificationController::class, 'markAsRead']);
 
     // Vouchers
     Route::get('/admin/vouchers', [VoucherController::class, 'adminIndex']);

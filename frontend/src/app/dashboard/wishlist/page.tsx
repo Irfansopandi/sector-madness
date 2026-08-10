@@ -220,9 +220,9 @@ export default function WishlistPage() {
                             {isSoldOut ? (
                               <strong className="text-[#FF6666] font-bold">SOLD OUT</strong>
                             ) : (
-                              <span className="text-[#B6A47E] font-medium bg-[#141414] px-2 py-0.5 border border-[#262626]">
+                              <span className="text-[#B6A47E] font-medium">
                                 {resolvedStock !== null && resolvedStock !== undefined ? (
-                                  <strong className="text-white font-bold">{resolvedStock} UNITS IN STOCK</strong>
+                                  <><strong className="text-white font-bold">{resolvedStock}</strong> UNITS IN STOCK</>
                                 ) : (
                                   <strong className="text-white font-bold">AVAILABLE IN STOCK</strong>
                                 )}

@@ -59,7 +59,7 @@ export default function BrandPage() {
             className="relative w-full full-bleed-brand aspect-square min-h-[300px] lg:aspect-[21/9] lg:min-h-[480px] bg-white lg:bg-[#141414] overflow-hidden border-y lg:border border-[#222222]"
           >
             <Image
-              src="/images/story/judul.webp"
+              src="/images/story/stories.webp"
               alt="SECTOR MADNESS Hero Banner"
               fill
               priority
@@ -330,7 +330,7 @@ export default function BrandPage() {
               className="lg:col-span-6 order-2 relative w-full aspect-[4/5] bg-[#141414] overflow-hidden border border-[#222222]"
             >
               <Image
-                src="/images/story/BRAND_VALUES.webp"
+                src="/images/story/deskrip.webp"
                 alt="Sector Madness Brand Values & Uniqueness"
                 fill
                 sizes="(max-width: 1024px) 100vw, 50vw"

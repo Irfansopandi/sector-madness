@@ -46,15 +46,18 @@ class WebPushService
             );
         }
 
+        \Illuminate\Support\Facades\Log::info('WebPushService queueing notification to ' . count($subscriptions) . ' endpoints.', $payload);
+
         foreach ($this->webPush->flush() as $report) {
             $endpoint = $report->getRequest()->getUri()->__toString();
 
             if (!$report->isSuccess()) {
-                Log::warning("Message failed to sent for subscription {$endpoint}: {$report->getReason()}");
-
+                \Illuminate\Support\Facades\Log::warning("WebPush Error {$endpoint}: {$report->getReason()}");
                 if ($report->isSubscriptionExpired()) {
                     PushSubscription::where('endpoint', $endpoint)->delete();
                 }
+            } else {
+                \Illuminate\Support\Facades\Log::info("WebPush Success {$endpoint}");
             }
         }
     }

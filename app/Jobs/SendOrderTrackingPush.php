@@ -40,9 +40,20 @@ class SendOrderTrackingPush implements ShouldQueue
             
             if ($this->messageType === 'tracking' && $this->order->shipment && $this->order->shipment->tracking_number) {
                 $body .= "sedang dikirim dengan nomor resi: {$this->order->shipment->tracking_number}.";
+            } elseif ($this->messageType === 'cancel_approved') {
+                $title = '✅ Pembatalan Disetujui';
+                $body = "Ajuan pembatalan pesanan kamu #{$this->order->order_number} telah disetujui oleh admin.";
+            } elseif ($this->messageType === 'cancel_rejected') {
+                $title = '❌ Pembatalan Ditolak';
+                $body = "Ajuan pembatalan pesanan kamu #{$this->order->order_number} ditolak. Pesanan akan tetap diproses.";
             } else {
                 $status = ucfirst($this->order->status);
                 $body .= "statusnya berubah menjadi: {$status}.";
+            }
+            
+            // Jika pesanan sedang dikirim atau sudah sampai (shipped/delivery/delivered)
+            if (in_array(strtolower($this->order->status), ['shipped', 'delivery', 'delivering', 'delivered'])) {
+                $body .= " Saat paket sudah sampai, pastikan kondisinya aman dan sesuai sebelum melakukan konfirmasi 'Pesanan Diterima' di detail pesanan ya.";
             }
 
             $payload = [

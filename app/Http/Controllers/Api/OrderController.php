@@ -51,6 +51,15 @@ class OrderController extends Controller
                 if ($ord->shipment) {
                     $ord->shipment->update(['status' => 'completed']);
                 }
+                
+                // Notify admin
+                $titleText = "Pesanan Selesai (Otomatis)";
+                $notificationText = "Pesanan #{$ord->order_number} telah diselesaikan otomatis (lewat batas 5 hari).";
+                $admins = \App\Models\Admin::all();
+                if ($admins->count() > 0) {
+                    \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\AdminOrderNotification($titleText, $notificationText, $ord->order_number));
+                    \App\Jobs\SendAdminPushNotification::dispatch($titleText, $notificationText, '/admin/orders?view_order=' . $ord->order_number);
+                }
             });
 
         $orders = Order::with(['items', 'payment', 'shipment'])
@@ -129,6 +138,16 @@ class OrderController extends Controller
             if ($order->shipment) {
                 $order->shipment->update(['status' => 'completed']);
             }
+            
+            // Notify admin
+            $titleText = "Pesanan Selesai (Otomatis)";
+            $notificationText = "Pesanan #{$order->order_number} telah diselesaikan otomatis (lewat batas 5 hari).";
+            $admins = \App\Models\Admin::all();
+            if ($admins->count() > 0) {
+                \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\AdminOrderNotification($titleText, $notificationText, $order->order_number));
+                \App\Jobs\SendAdminPushNotification::dispatch($titleText, $notificationText, '/admin/orders?view_order=' . $order->order_number);
+            }
+            
             $order->refresh();
         }
 
@@ -288,6 +307,25 @@ class OrderController extends Controller
             $order->payment->update(['payment_status' => 'cancelled']);
         }
 
+        try {
+            $notificationText = $isPaid 
+                ? "Pelanggan mengajukan pembatalan untuk order #{$order->order_number} (Butuh Verifikasi)" 
+                : "Order #{$order->order_number} telah dibatalkan oleh pelanggan";
+                
+            $titleText = $isPaid ? "Cancellation Request" : "Order Cancelled";
+
+            $admins = \App\Models\Admin::all();
+            if ($admins->count() > 0) {
+                // Internal DB Notification
+                \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\AdminOrderNotification($titleText, $notificationText, $order->order_number));
+                
+                // External Web Push Notification
+                \App\Jobs\SendAdminPushNotification::dispatch($titleText, $notificationText, '/admin/orders?view_order=' . $order->order_number);
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to send admin cancel notification: ' . $e->getMessage());
+        }
+
         return response()->json([
             'status'  => true,
             'message' => 'Order cancellation request submitted successfully',
@@ -362,6 +400,8 @@ class OrderController extends Controller
         $courier = $request->courier ?: $request->courier_company ?: 'JNE Express';
         $trackingNumber = $request->tracking_number;
 
+        $oldStatus = strtolower($order->status);
+
         if ($newStatus) {
             $order->update(['status' => strtolower($newStatus)]);
         }
@@ -389,11 +429,41 @@ class OrderController extends Controller
         $shipment->update($shipmentData);
 
         if (in_array(strtolower((string)$newStatus), ['cancelled', 'dibatalkan']) && $order->payment) {
+            // Restore stock if the order was previously paid (because stock was deducted when paid)
+            if (in_array(strtolower($order->payment->payment_status), ['paid', 'settled', 'success'])) {
+                foreach ($order->items as $item) {
+                    $product = \App\Models\Product::find($item->product_id);
+                    if ($product) {
+                        $product->increment('stock', $item->quantity);
+
+                        // Restore variant stock
+                        $variant = \App\Models\ProductVariant::where('product_id', $product->id)
+                            ->where('color', $item->color ?: 'Default')
+                            ->where('size', $item->size ?: 'M')
+                            ->first();
+                        if ($variant) {
+                            $variant->increment('stock', $item->quantity);
+                        }
+                    }
+                }
+            }
             $order->payment->update(['payment_status' => 'cancelled']);
         }
 
         // PUSH NOTIFICATION & EMAIL: Tracking / Resi Update
-        if ($trackingNumber !== null) {
+        if ($oldStatus === 'cancel pending') {
+            if (in_array(strtolower((string)$newStatus), ['cancelled', 'dibatalkan'])) {
+                \App\Jobs\SendOrderTrackingPush::dispatch($order, 'cancel_approved');
+                if ($order->user && $order->user->email) {
+                    \Illuminate\Support\Facades\Mail::to($order->user->email)->queue(new \App\Mail\OrderTrackingMail($order, 'cancel_approved'));
+                }
+            } elseif (in_array(strtolower((string)$newStatus), ['in processing', 'processing', 'paid', 'shipped', 'delivering', 'delivered'])) {
+                \App\Jobs\SendOrderTrackingPush::dispatch($order, 'cancel_rejected');
+                if ($order->user && $order->user->email) {
+                    \Illuminate\Support\Facades\Mail::to($order->user->email)->queue(new \App\Mail\OrderTrackingMail($order, 'cancel_rejected'));
+                }
+            }
+        } elseif ($trackingNumber !== null) {
             \App\Jobs\SendOrderTrackingPush::dispatch($order, 'tracking');
             if ($order->user && $order->user->email) {
                 \Illuminate\Support\Facades\Mail::to($order->user->email)->queue(new \App\Mail\OrderTrackingMail($order, 'tracking'));
@@ -437,6 +507,15 @@ class OrderController extends Controller
 
         if ($order->shipment) {
             $order->shipment->update(['status' => 'completed']);
+        }
+        
+        // Notify admin
+        $titleText = "Pesanan Diterima (Manual)";
+        $notificationText = "Pesanan #{$order->order_number} telah dikonfirmasi diterima oleh pelanggan.";
+        $admins = \App\Models\Admin::all();
+        if ($admins->count() > 0) {
+            \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\AdminOrderNotification($titleText, $notificationText, $order->order_number));
+            \App\Jobs\SendAdminPushNotification::dispatch($titleText, $notificationText, '/admin/orders?view_order=' . $order->order_number);
         }
 
         return response()->json([

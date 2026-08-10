@@ -37,7 +37,7 @@ class AdminOrderNotification extends Notification implements ShouldQueue
             'title' => $this->title,
             'message' => $this->message,
             'order_number' => $this->orderNumber,
-            'url' => '/admin/orders/' . $this->orderNumber,
+            'url' => '/admin/orders?view_order=' . $this->orderNumber,
         ];
     }
 }
