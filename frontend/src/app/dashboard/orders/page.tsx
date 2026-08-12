@@ -420,6 +420,7 @@ export default function OrdersPage() {
               })}
             </tbody>
           </table>
+          </div>
           {ordersList.length > itemsPerPage && (
             <div
               style={{ padding: "16px 24px" }}
@@ -486,8 +487,7 @@ export default function OrdersPage() {
             </div>
           )}
         </div>
-      </div>
-    )}
+      )}
 
     {/* ── MODAL 1: ORDER DETAIL MODAL (Spacious Luxury Invoice Layout) ── */}
       <AnimatePresence>

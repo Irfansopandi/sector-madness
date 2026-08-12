@@ -439,7 +439,7 @@ export default function ShippingPage() {
           </motion.div>
 
           {/* ICON STEPS WITH EQUALIZED BALANCED SPACING */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-6 md:gap-4 lg:gap-6 items-start pt-2">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-0 md:gap-4 lg:gap-6 items-start pt-2">
             {steps.map((step, idx) => (
               <motion.div
                 key={step.id}
@@ -447,8 +447,9 @@ export default function ShippingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: idx * 0.1 }}
-                className="flex flex-col pt-6 md:pt-0 border-t border-[#222222]/50 md:border-t-0"
+                className="flex flex-col border-t border-[#222222]/50 md:border-t-0"
               >
+                <div className="block md:hidden" style={{ height: "20px" }} />
                 <div>
                   {/* Top Header: Pure Icon & Centered Arrow */}
                   <div className="flex items-center justify-between mb-4 md:mb-5 pr-2 md:pr-4">
@@ -483,6 +484,7 @@ export default function ShippingPage() {
                     {step.title}
                   </h3>
                 </div>
+                <div className="block md:hidden" style={{ height: "20px" }} />
               </motion.div>
             ))}
           </div>

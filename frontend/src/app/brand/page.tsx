@@ -56,7 +56,7 @@ export default function BrandPage() {
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
-            className="relative w-full full-bleed-brand aspect-square min-h-[300px] lg:aspect-[21/9] lg:min-h-[480px] bg-white lg:bg-[#141414] overflow-hidden border-y lg:border border-[#222222]"
+            className="relative w-full full-bleed-brand aspect-[4/3] sm:aspect-[16/9] lg:aspect-[21/9] lg:min-h-[480px] bg-[#141414] overflow-hidden border-y lg:border border-[#222222]"
           >
             <Image
               src="/images/story/stories.webp"
@@ -64,7 +64,7 @@ export default function BrandPage() {
               fill
               priority
               sizes="100vw"
-              className="object-contain lg:object-cover object-center p-4 lg:p-0"
+              className="object-cover object-center"
             />
           </motion.div>
         </div>
@@ -354,13 +354,13 @@ export default function BrandPage() {
           >
             <p
               style={{
-                fontSize: "clamp(1.8rem, 3.6vw, 3.2rem)",
-                lineHeight: "1.3",
-                fontWeight: 800,
-                letterSpacing: "-0.03em",
+                fontSize: "clamp(1.2rem, 3.6vw, 3.2rem)",
+                lineHeight: "1.4",
+                fontWeight: 700,
+                letterSpacing: "-0.02em",
                 fontFamily: "'Inter', -apple-system, sans-serif",
               }}
-              className="text-[#FFFFFF] tracking-tight"
+              className="text-[#FFFFFF] tracking-tight px-2 md:px-0 md:font-extrabold md:leading-[1.3]"
             >
               &ldquo;Because quality is not just a standard, it is our commitment. Sector Madness. Built from Experience. Made for Every Story.&rdquo;
             </p>

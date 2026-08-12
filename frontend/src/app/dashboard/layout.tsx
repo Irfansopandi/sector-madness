@@ -177,21 +177,32 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             padding-left: 12px !important;
             padding-right: 12px !important;
             border-left: none !important;
-            border-bottom: 3px solid transparent !important;
-            gap: 8px !important;
+            border-bottom: 2px solid transparent !important;
+            gap: 0 !important;
             width: auto !important;
           }
+          
+          /* Hide icons on mobile */
+          .dashboard-link > span:first-child, .dashboard-logout > svg {
+            display: none !important;
+          }
+
+          /* Active state: underline only, no background box */
           .dashboard-link.active {
             border-bottom-color: #B6A47E !important;
-            background-color: rgba(255,255,255,0.08) !important;
+            background-color: transparent !important;
           }
+
+          /* Hover state (only for inactive links): text color only, no borders, no background */
+          .dashboard-link:not(.active):hover, .dashboard-logout:hover {
+            border-bottom-color: transparent !important;
+            background-color: transparent !important;
+          }
+
           .dashboard-logout {
             margin-top: 0 !important;
             border-top: none !important;
             margin-left: 8px !important;
-          }
-          .dashboard-logout:hover {
-            border-bottom-color: rgba(239, 68, 68, 0.5) !important;
           }
 
           /* MODAL OVERRIDES FOR MOBILE/TABLET */

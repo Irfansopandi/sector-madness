@@ -169,7 +169,7 @@ export default function FeaturedCollection() {
   };
 
   return (
-    <section id="collection" className="relative w-full bg-[#0A0A0A] pt-[220px] md:pt-[280px] lg:pt-[350px] pb-4">
+    <section id="collection" className="relative z-10 -mt-[1px] w-full bg-[#0A0A0A] pt-4 md:pt-12 lg:pt-24 pb-4">
       {/* Top Header Row — Aligned with STORIES section on mobile/tablet, 60px on desktop */}
       <div
         style={{

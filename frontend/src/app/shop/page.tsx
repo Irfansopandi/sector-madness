@@ -49,9 +49,9 @@ function ShopContent() {
     return (
       <main className="min-h-screen bg-[#0A0A0A] text-[#F5F5F5] flex flex-col justify-between">
         <Navbar mode="dark" />
-        <div className="flex-1 flex flex-col items-center justify-center py-32 gap-6">
+        <div className="flex-1 flex flex-col items-center justify-center min-h-[70vh] w-full mt-20">
           <div className="w-10 h-10 border-2 border-[#B6A47E] border-t-transparent rounded-full animate-spin" />
-          <p className="text-xs font-mono tracking-[0.3em] text-[#8A8A8A] uppercase animate-pulse mt-2">
+          <p className="text-xs font-mono tracking-[0.3em] text-[#8A8A8A] uppercase animate-pulse mt-6 text-center px-4">
             LOADING CATALOG PRODUCTS...
           </p>
         </div>
@@ -162,10 +162,10 @@ function ShopContent() {
 
       {/* Main Content Area */}
       <main className="flex-1" style={{ paddingTop: "120px", paddingBottom: "160px" }}>
-        {/* Main Aligned Container matching Navbar & Footer max-w-[1480px] & 60px padding */}
+        {/* Main Aligned Container matching Navbar & Footer max-w-[1480px] */}
         <div
-          style={{ paddingLeft: "60px", paddingRight: "60px" }}
-          className="max-w-[1480px] mx-auto px-8 md:px-14 lg:px-20 w-full"
+          className="max-w-[1480px] mx-auto w-full"
+          style={{ paddingLeft: "clamp(20px, 6vw, 60px)", paddingRight: "clamp(20px, 6vw, 60px)" }}
         >
           {/* Breadcrumb */}
           <nav className="flex items-center gap-2 mb-4">
@@ -210,7 +210,7 @@ function ShopContent() {
             </span>
 
             {/* Right: FILTERS text + Grid View Icons */}
-            <div className="flex items-center gap-5">
+            <div className="flex items-center gap-3 md:gap-5">
               <button
                 onClick={() => setShowFilters(true)}
                 className="text-[10px] md:text-[11px] tracking-[0.2em] uppercase text-[#555555] font-medium hover:text-[#0A0A0A] transition-colors cursor-pointer"
@@ -221,7 +221,7 @@ function ShopContent() {
               {/* Separator */}
               <span className="w-px h-4 bg-[#D0D0D0]" />
 
-              {/* 4-column grid icon (2 rows of 4 rects) */}
+              {/* 4-column grid icon (Desktop: 4x2, Mobile: 1x2) */}
               <button
                 onClick={() => setGridCols(4)}
                 className={`cursor-pointer transition-opacity ${
@@ -229,7 +229,7 @@ function ShopContent() {
                 }`}
                 aria-label="4 Column Grid"
               >
-                <svg width="18" height="16" viewBox="0 0 18 16" fill="currentColor">
+                <svg className="hidden sm:block" width="18" height="16" viewBox="0 0 18 16" fill="currentColor">
                   {/* Top row */}
                   <rect x="0" y="0" width="3.2" height="7" />
                   <rect x="4.9" y="0" width="3.2" height="7" />
@@ -241,9 +241,14 @@ function ShopContent() {
                   <rect x="9.8" y="9" width="3.2" height="7" />
                   <rect x="14.7" y="9" width="3.2" height="7" />
                 </svg>
+                {/* Mobile icon (1 column, 2 rows) */}
+                <svg className="block sm:hidden" width="12" height="16" viewBox="0 0 12 16" fill="currentColor">
+                  <rect x="2" y="0" width="8" height="7" />
+                  <rect x="2" y="9" width="8" height="7" />
+                </svg>
               </button>
 
-              {/* 6-column grid icon (2 rows of 6 rects) */}
+              {/* 6-column grid icon (Desktop: 6x2, Mobile: 2x2) */}
               <button
                 onClick={() => setGridCols(6)}
                 className={`cursor-pointer transition-opacity ${
@@ -251,7 +256,7 @@ function ShopContent() {
                 }`}
                 aria-label="6 Column Grid"
               >
-                <svg width="26" height="16" viewBox="0 0 26 16" fill="currentColor">
+                <svg className="hidden sm:block" width="26" height="16" viewBox="0 0 26 16" fill="currentColor">
                   {/* Top row */}
                   <rect x="0" y="0" width="3.2" height="7" />
                   <rect x="4.5" y="0" width="3.2" height="7" />
@@ -266,6 +271,13 @@ function ShopContent() {
                   <rect x="13.5" y="9" width="3.2" height="7" />
                   <rect x="18.0" y="9" width="3.2" height="7" />
                   <rect x="22.5" y="9" width="3.2" height="7" />
+                </svg>
+                {/* Mobile icon (2 columns, 2 rows) */}
+                <svg className="block sm:hidden" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <rect x="0" y="0" width="7" height="7" />
+                  <rect x="9" y="0" width="7" height="7" />
+                  <rect x="0" y="9" width="7" height="7" />
+                  <rect x="9" y="9" width="7" height="7" />
                 </svg>
               </button>
             </div>
@@ -300,28 +312,28 @@ function ShopContent() {
                   {/* Limited label */}
                   {/* Discount percentage badge */}
                   {product.discountPercentage && product.discountPercentage > 0 && (
-                    <div className="absolute top-3 left-3 bg-[#FF3B30] text-white text-[9px] font-bold tracking-[0.15em] uppercase px-2 py-1 z-10 shadow-sm">
+                    <div className={`absolute ${gridCols === 6 ? "top-2 left-2 scale-[0.65] origin-top-left md:top-3 md:left-3 md:scale-100" : "top-3 left-3"} bg-[#FF3B30] text-white text-[9px] px-2 py-1 font-bold tracking-[0.15em] uppercase z-10 shadow-sm`}>
                       -{product.discountPercentage}% OFF
                     </div>
                   )}
 
                   {/* Flash sale countdown badge */}
                   {product.discountExpiresAt && (
-                    <div className="absolute top-3 right-3 z-10">
+                    <div className={`absolute ${gridCols === 6 ? "top-2 right-2 scale-[0.65] origin-top-right md:top-3 md:right-3 md:scale-100" : "top-3 right-3"} z-10`}>
                       <CountdownTimer expiresAt={product.discountExpiresAt} compact />
                     </div>
                   )}
 
                   {product.limited && (!product.discountPercentage || product.discountPercentage === 0) && (
-                    <div className="absolute top-4 left-4 z-10">
+                    <div className={`absolute ${gridCols === 6 ? "top-2 left-2 scale-[0.65] origin-top-left md:top-4 md:left-4 md:scale-100" : "top-4 left-4"} z-10`}>
                       <span className="text-[9px] tracking-[0.2em] uppercase text-[#B6A47E] font-[family-name:var(--font-body)]">
                         Limited Release
                       </span>
                     </div>
                   )}
 
-                  {/* VIEW PRODUCT label - inside image at bottom-4 left-4 */}
-                  <div className="absolute bottom-4 left-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  {/* VIEW PRODUCT label - inside image */}
+                  <div className={`absolute ${gridCols === 6 ? "bottom-2 left-2 scale-[0.65] origin-bottom-left md:bottom-4 md:left-4 md:scale-100" : "bottom-4 left-4"} z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300`}>
                     <span className="text-[9px] tracking-[0.2em] uppercase text-[#F5F5F5] font-[family-name:var(--font-body)] font-medium">
                       VIEW PRODUCT
                     </span>
@@ -494,9 +506,9 @@ export default function ShopPage() {
       fallback={
         <main className="min-h-screen bg-[#0A0A0A] text-[#F5F5F5] flex flex-col justify-between">
           <Navbar mode="dark" />
-          <div className="flex-1 flex flex-col items-center justify-center py-32 gap-6">
+          <div className="flex-1 flex flex-col items-center justify-center min-h-[70vh] w-full mt-20">
             <div className="w-10 h-10 border-2 border-[#B6A47E] border-t-transparent rounded-full animate-spin" />
-            <p className="text-xs font-mono tracking-[0.3em] text-[#8A8A8A] uppercase animate-pulse mt-2">
+            <p className="text-xs font-mono tracking-[0.3em] text-[#8A8A8A] uppercase animate-pulse mt-6 text-center px-4">
               LOADING CATALOG PRODUCTS...
             </p>
           </div>

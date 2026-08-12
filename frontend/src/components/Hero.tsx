@@ -91,7 +91,7 @@ export default function Hero() {
   };
 
   return (
-    <section className="relative h-screen w-full overflow-hidden bg-[#0A0A0A]">
+    <section className="relative z-0 h-screen w-full overflow-hidden bg-[#0A0A0A]">
 
       {/* Cached first image — shown instantly on refresh BEFORE API responds */}
       {/* Uses motion.div with same Ken Burns so zoom is already running when API image takes over */}
@@ -159,8 +159,10 @@ export default function Hero() {
       </AnimatePresence>
 
       {/* Dark overlay */}
-      <div className="absolute inset-0 bg-black/50 z-[3]" />
-      <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-transparent to-transparent z-[3]" />
+      <div className="absolute inset-0 bg-black/40 z-[3]" />
+      <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/60 to-transparent z-[3]" />
+      {/* Solid block to completely prevent image bleeding at the bottom edge */}
+      <div className="absolute inset-x-0 bottom-0 h-4 bg-[#0A0A0A] z-[4]" />
 
       {/* Hero Content */}
       <div className="relative z-[4] h-full flex flex-col items-center justify-center">

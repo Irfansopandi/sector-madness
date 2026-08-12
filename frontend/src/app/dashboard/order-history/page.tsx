@@ -160,8 +160,9 @@ export default function OrderHistoryPage() {
           </Link>
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse font-mono text-xs min-w-[650px]">
+        <div className="space-y-4 pt-2">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse font-mono text-xs min-w-[650px]">
             <thead>
               <tr className="border-b border-white/[0.1] text-[#8A8A8A] uppercase tracking-widest text-[11px] whitespace-nowrap">
                 <th style={headerStyle} className="font-bold whitespace-nowrap">ORDER NO. & DATE</th>
@@ -239,72 +240,73 @@ export default function OrderHistoryPage() {
               })}
             </tbody>
           </table>
-
-          {/* Pagination Bar */}
-          {ordersList.length > itemsPerPage && (
-            <div
-              style={{ padding: "16px 24px" }}
-              className="w-full flex flex-col md:flex-row md:items-center md:justify-between gap-3 border border-white/[0.08] bg-[#0F0F0F] mt-4 font-mono text-xs"
-            >
-              <span className="text-[#8A8A8A]">
-                Showing{" "}
-                <span className="font-bold text-[#B6A47E]">{Math.min(currentPage * itemsPerPage, ordersList.length)}</span>
-                {" "}of{" "}
-                <span className="text-[#B6A47E] font-extrabold">{ordersList.length}</span>
-                {" "}data (Page {currentPage} of {Math.ceil(ordersList.length / itemsPerPage)})
-              </span>
-
-              <div className="flex flex-wrap items-center gap-2">
-                {/* PREVIOUS */}
-                <button
-                  type="button"
-                  disabled={currentPage <= 1}
-                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                  style={{ padding: "8px 16px" }}
-                  className={`rounded-[5px] text-[11px] font-bold uppercase tracking-wider transition-all border ${
-                    currentPage <= 1
-                      ? "opacity-40 cursor-not-allowed border-transparent text-[#8A8A8A]"
-                      : "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-[#B6A47E] cursor-pointer"
-                  }`}
-                >
-                  PREVIOUS
-                </button>
-
-                {/* Page number boxes */}
-                {Array.from({ length: Math.ceil(ordersList.length / itemsPerPage) }, (_, i) => i + 1).map((pg) => (
-                  <button
-                    key={pg}
-                    type="button"
-                    onClick={() => setCurrentPage(pg)}
-                    style={{ width: "32px", height: "32px" }}
-                    className={`rounded-[5px] text-[11px] font-bold font-mono transition-all border cursor-pointer flex items-center justify-center ${
-                      pg === currentPage
-                        ? "bg-[#B6A47E] border-[#B6A47E] text-black font-extrabold"
-                        : "bg-white/5 border-white/10 text-white hover:bg-white/10"
-                    }`}
-                  >
-                    {pg}
-                  </button>
-                ))}
-
-                {/* NEXT */}
-                <button
-                  type="button"
-                  disabled={currentPage >= Math.ceil(ordersList.length / itemsPerPage)}
-                  onClick={() => setCurrentPage((prev) => Math.min(Math.ceil(ordersList.length / itemsPerPage), prev + 1))}
-                  style={{ padding: "8px 16px" }}
-                  className={`rounded-[5px] text-[11px] font-bold uppercase tracking-wider transition-all border ${
-                    currentPage >= Math.ceil(ordersList.length / itemsPerPage)
-                      ? "opacity-40 cursor-not-allowed border-transparent text-[#8A8A8A]"
-                      : "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-[#B6A47E] cursor-pointer"
-                  }`}
-                >
-                  NEXT
-                </button>
-              </div>
-            </div>
-          )}
         </div>
+
+        {/* Pagination Bar */}
+        {ordersList.length > itemsPerPage && (
+          <div
+            style={{ padding: "16px 24px" }}
+            className="w-full flex flex-col md:flex-row md:items-center md:justify-between gap-3 border border-white/[0.08] bg-[#0F0F0F] mt-4 font-mono text-xs"
+          >
+            <span className="text-[#8A8A8A]">
+              Showing{" "}
+              <span className="font-bold text-[#B6A47E]">{Math.min(currentPage * itemsPerPage, ordersList.length)}</span>
+              {" "}of{" "}
+              <span className="text-[#B6A47E] font-extrabold">{ordersList.length}</span>
+              {" "}data (Page {currentPage} of {Math.ceil(ordersList.length / itemsPerPage)})
+            </span>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {/* PREVIOUS */}
+              <button
+                type="button"
+                disabled={currentPage <= 1}
+                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                style={{ padding: "8px 16px" }}
+                className={`rounded-[5px] text-[11px] font-bold uppercase tracking-wider transition-all border ${
+                  currentPage <= 1
+                    ? "opacity-40 cursor-not-allowed border-transparent text-[#8A8A8A]"
+                    : "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-[#B6A47E] cursor-pointer"
+                }`}
+              >
+                PREVIOUS
+              </button>
+
+              {/* Page number boxes */}
+              {Array.from({ length: Math.ceil(ordersList.length / itemsPerPage) }, (_, i) => i + 1).map((pg) => (
+                <button
+                  key={pg}
+                  type="button"
+                  onClick={() => setCurrentPage(pg)}
+                  style={{ width: "32px", height: "32px" }}
+                  className={`rounded-[5px] text-[11px] font-bold font-mono transition-all border cursor-pointer flex items-center justify-center ${
+                    pg === currentPage
+                      ? "bg-[#B6A47E] border-[#B6A47E] text-black font-extrabold"
+                      : "bg-white/5 border-white/10 text-white hover:bg-white/10"
+                  }`}
+                >
+                  {pg}
+                </button>
+              ))}
+
+              {/* NEXT */}
+              <button
+                type="button"
+                disabled={currentPage >= Math.ceil(ordersList.length / itemsPerPage)}
+                onClick={() => setCurrentPage((prev) => Math.min(Math.ceil(ordersList.length / itemsPerPage), prev + 1))}
+                style={{ padding: "8px 16px" }}
+                className={`rounded-[5px] text-[11px] font-bold uppercase tracking-wider transition-all border ${
+                  currentPage >= Math.ceil(ordersList.length / itemsPerPage)
+                    ? "opacity-40 cursor-not-allowed border-transparent text-[#8A8A8A]"
+                    : "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-[#B6A47E] cursor-pointer"
+                }`}
+              >
+                NEXT
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
       )}
 
       {/* ── MODAL 1: ORDER DETAIL MODAL (Spacious Luxury Invoice Layout) ── */}

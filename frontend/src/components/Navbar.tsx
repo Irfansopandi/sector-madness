@@ -370,7 +370,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
             </div>
 
             {/* Bagian Tengah (Logo - Diperbesar untuk Mobile & Tablet) */}
-            <div className="absolute left-1/2 top-1/2 -translate-y-1/2 -translate-x-[calc(50%-8px)] md:-translate-x-[calc(50%-14px)] pointer-events-none z-20 flex items-center justify-center">
+            <div className="absolute left-1/2 top-1/2 -translate-y-1/2 -translate-x-1/2 lg:-translate-x-[calc(50%-14px)] pointer-events-none z-20 flex items-center justify-center">
               <Link
                 href="/"
                 className="relative z-50 cursor-pointer flex items-center justify-center pointer-events-auto"
@@ -381,7 +381,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                   alt="SECTOR MADNESS"
                   width={597}
                   height={418}
-                  className={`h-[62px] sm:h-[80px] md:h-[96px] lg:h-[110px] w-auto object-contain transition-all duration-300 ${
+                  className={`h-[75px] sm:h-[90px] md:h-[100px] lg:h-[110px] w-auto object-contain transition-all duration-300 ${
                     isLightMode || isShopHovered ? "brightness-0" : ""
                   }`}
                   priority
@@ -639,7 +639,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                             alt="SECTOR MADNESS"
                             width={597}
                             height={418}
-                            className="h-[62px] sm:h-[80px] md:h-[96px] w-auto object-contain brightness-0"
+                            className="h-[75px] sm:h-[90px] md:h-[100px] lg:h-[110px] w-auto object-contain brightness-0"
                             priority
                           />
                         </Link>
@@ -819,7 +819,8 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                   position: "fixed",
                   top: 0,
                   left: 0,
-                  width: "100vw",
+                  right: 0,
+                  width: "100%",
                   height: "100vh",
                   zIndex: 99999,
                   backgroundColor: "#FFFFFF",
@@ -833,7 +834,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
               >
                 {/* Top Header — mirror exact navbar header (same height, logo size, and margins) */}
                 <div className="w-full border-b border-[#E5E5E5]/40">
-                  <div className="max-w-[1480px] mx-auto">
+                  <div className="max-w-[1480px] mx-auto lg:px-20">
                     <div className="relative flex justify-between items-center h-[76px] sm:h-[92px] lg:h-[116px]">
                       {/* Left: Close Button on Mobile / Placeholder on Desktop */}
                       <div className="flex items-center justify-start z-10 lg:pl-[50px]">
@@ -851,7 +852,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                       </div>
 
                       {/* Center Logo — exact same as navbar */}
-                      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-20 flex items-center justify-center">
+                      <div className="absolute left-1/2 top-1/2 -translate-y-1/2 -translate-x-1/2 lg:-translate-x-[calc(50%-14px)] pointer-events-none z-20 flex items-center justify-center">
                         <Link
                           href="/"
                           onClick={() => setIsSearchOpen(false)}
@@ -862,7 +863,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                             alt="SECTOR MADNESS"
                             width={597}
                             height={418}
-                            className="h-[62px] sm:h-[80px] md:h-[96px] lg:h-[110px] w-auto object-contain brightness-0 transition-all duration-300"
+                            className="h-[75px] sm:h-[90px] md:h-[100px] lg:h-[110px] w-auto object-contain brightness-0 transition-all duration-300"
                             priority
                           />
                         </Link>

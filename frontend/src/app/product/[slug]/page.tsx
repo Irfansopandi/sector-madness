@@ -106,7 +106,7 @@ export default function ProductPage({
     return (
       <main className="min-h-screen bg-[#0A0A0A] text-[#F5F5F5] flex flex-col justify-between">
         <Navbar mode="dark" />
-        <div className="flex-1 flex flex-col items-center justify-center py-32 gap-6">
+        <div className="flex-1 flex flex-col items-center justify-center min-h-[70vh] w-full mt-20">
           <div className="w-10 h-10 border-2 border-[#B6A47E] border-t-transparent rounded-full animate-spin" />
           <p className="text-xs font-mono tracking-[0.3em] text-[#8A8A8A] uppercase animate-pulse mt-2">
             LOADING PRODUCT DETAILS...
@@ -724,7 +724,7 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
                           <span className={`text-[13px] tracking-[0.18em] ${isSelected ? "font-black" : "font-semibold"}`}>
                             {sizeName}
                           </span>
-                          <span className={`text-[9px] font-mono tracking-widest uppercase ${
+                          <span className={`text-[9px] font-mono tracking-widest uppercase whitespace-nowrap ${
                             isOutOfStock
                               ? "text-[#555555]"
                               : isSelected

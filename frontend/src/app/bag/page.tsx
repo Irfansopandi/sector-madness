@@ -177,8 +177,8 @@ export default function ShoppingBagPage() {
 
       {/* FULL-WIDTH HEADER SECTION WITH EDGE-TO-EDGE BORDER LINE */}
       <div style={{ paddingTop: "140px" }} className="w-full border-b border-[#262626] pb-8">
-        <div className="max-w-[1480px] mx-auto px-8 md:px-14 lg:px-20">
-          <div style={{ paddingLeft: "60px", paddingRight: "60px" }} className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="max-w-[1480px] mx-auto w-full" style={{ paddingLeft: "clamp(20px, 6vw, 60px)", paddingRight: "clamp(20px, 6vw, 60px)" }}>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             {/* Left Column: Breadcrumb & Title */}
             <div>
               {/* Breadcrumb Navigation replacing SECTOR // ATELIER VAULT */}
@@ -210,8 +210,8 @@ export default function ShoppingBagPage() {
       </div>
 
       {/* CONTENT SECTION BELOW THE FULL-WIDTH LINE */}
-      <div className="flex-1 w-full max-w-[1480px] mx-auto px-8 md:px-14 lg:px-20 py-16 pb-36">
-        <div style={{ paddingLeft: "60px", paddingRight: "60px" }}>
+      <div className="flex-1 w-full max-w-[1480px] mx-auto py-16 pb-36" style={{ paddingLeft: "clamp(20px, 6vw, 60px)", paddingRight: "clamp(20px, 6vw, 60px)" }}>
+        <div className="w-full">
           {!mounted || isLoading ? (
             <div className="space-y-6 pt-2">
               <BagItemSkeleton />
@@ -663,8 +663,20 @@ export default function ShoppingBagPage() {
 
             {/* Right Column: Sticky Summary */}
             <div className="lg:col-span-4 sticky top-36">
+              <style dangerouslySetInnerHTML={{__html: `
+                @media (max-width: 1023px) {
+                  .os-box { padding: 24px !important; }
+                  .os-title { margin-bottom: 16px !important; font-size: 16px !important; }
+                  .os-divider { margin-bottom: 20px !important; }
+                  .os-line-items { gap: 16px !important; margin-bottom: 20px !important; }
+                  .os-total { margin-bottom: 24px !important; }
+                  .os-buttons { gap: 12px !important; margin-bottom: 24px !important; }
+                  .os-btn { padding: 14px 0 !important; }
+                }
+              `}} />
+
               <div 
-                className="bg-[#090909] text-white shadow-2xl" 
+                className="bg-[#090909] text-white shadow-2xl os-box" 
                 style={{ 
                   padding: '48px 40px', 
                   border: '1px solid #1D1D1D',
@@ -674,17 +686,17 @@ export default function ShoppingBagPage() {
               >
                 {/* Title */}
                 <h2 
-                  className="font-serif uppercase font-bold text-white text-lg tracking-[0.2em]" 
+                  className="font-serif uppercase font-bold text-white text-lg tracking-[0.2em] os-title" 
                   style={{ marginBottom: '24px', letterSpacing: '0.2em' }}
                 >
                   ORDER SUMMARY
                 </h2>
 
                 {/* Top Divider */}
-                <div style={{ height: '1px', backgroundColor: '#1C1C1C', width: '100%', marginBottom: '32px' }} />
+                <div className="os-divider" style={{ height: '1px', backgroundColor: '#1C1C1C', width: '100%', marginBottom: '32px' }} />
 
                 {/* Line Items */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '28px', marginBottom: '36px' }}>
+                <div className="os-line-items" style={{ display: 'flex', flexDirection: 'column', gap: '28px', marginBottom: '36px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                     <span className="font-mono uppercase text-[13px]" style={{ color: '#888888', letterSpacing: '0.15em' }}>
                       SUBTOTAL
@@ -705,10 +717,10 @@ export default function ShoppingBagPage() {
                 </div>
 
                 {/* Middle Divider */}
-                <div style={{ height: '1px', backgroundColor: '#1C1C1C', width: '100%', marginBottom: '28px' }} />
+                <div className="os-divider" style={{ height: '1px', backgroundColor: '#1C1C1C', width: '100%', marginBottom: '28px' }} />
 
                 {/* Total */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
+                <div className="os-total" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
                   <span className="font-mono text-base font-extrabold uppercase text-white" style={{ letterSpacing: '0.2em' }}>
                     TOTAL
                   </span>
@@ -727,10 +739,10 @@ export default function ShoppingBagPage() {
                 )}
 
                 {/* Buttons */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '40px' }}>
+                <div className="os-buttons" style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '40px' }}>
                   <Link
                     href={isCheckoutDisabled ? "#" : "/checkout"}
-                    className={`w-full font-mono text-[12px] font-bold uppercase transition-all duration-300 ${
+                    className={`os-btn w-full font-mono text-[12px] font-bold uppercase transition-all duration-300 ${
                       isCheckoutDisabled
                         ? "bg-[#1A1A1A] text-[#555555] pointer-events-none cursor-not-allowed"
                         : "bg-white text-[#0A0A0A] hover:bg-[#E0E0E0] cursor-pointer"
@@ -742,7 +754,7 @@ export default function ShoppingBagPage() {
 
                   <Link
                     href="/shop"
-                    className="w-full font-mono text-[12px] font-bold uppercase bg-[#0D0D0D] text-white transition-all duration-300 hover:border-white"
+                    className="os-btn w-full font-mono text-[12px] font-bold uppercase bg-[#0D0D0D] text-white transition-all duration-300 hover:border-white"
                     style={{ padding: '18px 0', textAlign: 'center', letterSpacing: '0.25em', display: 'block', border: '1px solid #2B2B2B' }}
                   >
                     CONTINUE SHOPPING

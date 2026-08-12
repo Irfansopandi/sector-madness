@@ -288,10 +288,10 @@ export default function JournalPage() {
                 </div>
 
                 {/* Editorial Article Body */}
-                <div style={{ paddingLeft: "clamp(32px, 5vw, 64px)", paddingRight: "clamp(32px, 5vw, 64px)" }} className="py-10 md:py-16 space-y-10">
+                <div style={{ paddingLeft: "clamp(32px, 5vw, 64px)", paddingRight: "clamp(32px, 5vw, 64px)" }} className="py-10 md:py-16">
                   
-                  <div className="space-y-4 border-b border-[#222222] pb-8">
-                    <div className="flex items-center gap-3 text-[12px] text-[#B6A47E] uppercase tracking-[0.2em] font-semibold">
+                  <div style={{ paddingBottom: "20px", marginBottom: "16px" }} className="border-b border-[#222222]">
+                    <div style={{ marginBottom: "16px" }} className="flex items-center gap-3 text-[10px] md:text-[12px] text-[#B6A47E] uppercase tracking-[0.2em] font-semibold whitespace-nowrap overflow-x-auto scrollbar-none">
                       <span>{selectedArticle.category}</span>
                       {selectedArticle.date && (
                         <>
@@ -303,13 +303,13 @@ export default function JournalPage() {
                     
                     <h2
                       style={{
-                        fontSize: "clamp(2.2rem, 4.5vw, 4rem)",
+                        fontSize: "clamp(1.2rem, 4vw, 4rem)",
                         lineHeight: "1.05",
                         fontWeight: 800,
                         letterSpacing: "-0.03em",
                         fontFamily: "'Inter', -apple-system, sans-serif",
                       }}
-                      className="text-[#FFFFFF]"
+                      className="text-[#FFFFFF] whitespace-nowrap"
                     >
                       {selectedArticle.title}
                     </h2>
@@ -330,8 +330,8 @@ export default function JournalPage() {
 
                   {/* Highlight Quote Box */}
                   {selectedArticle.quote && (
-                    <div style={{ marginTop: "20px", marginBottom: "20px" }} className="p-8 md:p-12 border-l-4 border-[#B6A47E] bg-[#141414]/60">
-                      <p style={{ fontSize: "20px", lineHeight: "1.65", fontWeight: 600 }} className="text-[#FFFFFF] italic">
+                    <div style={{ marginTop: "20px", marginBottom: "20px" }} className="p-5 md:p-12 border-l-4 border-[#B6A47E] bg-[#141414]/60">
+                      <p style={{ lineHeight: "1.65", fontWeight: 600 }} className="text-[15px] md:text-[20px] text-[#FFFFFF] italic">
                         &ldquo;{selectedArticle.quote}&rdquo;
                       </p>
                     </div>

@@ -65,8 +65,8 @@ export default function ContactPage() {
             className="flex flex-col items-start max-w-5xl"
           >
             <span
-              style={{ fontSize: "11px", letterSpacing: "0.28em" }}
-              className="font-semibold uppercase text-[#8A8A8A] block mb-3"
+              style={{ letterSpacing: "0.28em" }}
+              className="text-[8px] sm:text-[11px] font-semibold uppercase text-[#8A8A8A] block mb-3 whitespace-nowrap"
             >
               DIRECT CHANNELS &amp; FULFILLMENT PROTOCOL
             </span>
