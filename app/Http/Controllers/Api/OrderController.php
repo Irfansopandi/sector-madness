@@ -37,7 +37,7 @@ class OrderController extends Controller
             ], 200);
         }
         // Auto-complete delivered orders older than 5 days
-        Order::where('user_id', $user->id)
+        $autoCompletedOrders = Order::where('user_id', $user->id)
             ->where('updated_at', '<=', now()->subDays(5))
             ->where(function ($q) {
                 $q->whereIn('status', ['delivered', 'delivering', 'shipped'])
@@ -45,22 +45,37 @@ class OrderController extends Controller
                       $sq->whereIn('status', ['delivered', 'delivering', 'shipped']);
                   });
             })
-            ->get()
-            ->each(function ($ord) {
+            ->get();
+
+        if ($autoCompletedOrders->count() > 0) {
+            $admins = \App\Models\Admin::all();
+            
+            foreach ($autoCompletedOrders as $ord) {
                 $ord->update(['status' => 'completed']);
                 if ($ord->shipment) {
                     $ord->shipment->update(['status' => 'completed']);
                 }
                 
-                // Notify admin
-                $titleText = "Pesanan Selesai (Otomatis)";
-                $notificationText = "Pesanan #{$ord->order_number} telah diselesaikan otomatis (lewat batas 5 hari).";
-                $admins = \App\Models\Admin::all();
+                // Notifikasi internal per pesanan
                 if ($admins->count() > 0) {
+                    $titleText = "Pesanan Selesai (Otomatis)";
+                    $notificationText = "Pesanan #{$ord->order_number} telah diselesaikan otomatis (lewat batas 5 hari).";
                     \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\AdminOrderNotification($titleText, $notificationText, $ord->order_number));
-                    \App\Jobs\SendAdminPushNotification::dispatch($titleText, $notificationText, '/admin/orders?view_order=' . $ord->order_number);
                 }
-            });
+            }
+
+            // Push Notification gabungan
+            if ($admins->count() > 0) {
+                $titleText = "Pesanan Selesai (Otomatis)";
+                if ($autoCompletedOrders->count() > 1) {
+                    $notificationText = "{$autoCompletedOrders->count()} pesanan telah diselesaikan otomatis (lewat batas 5 hari).";
+                } else {
+                    $firstOrder = $autoCompletedOrders->first();
+                    $notificationText = "Pesanan #{$firstOrder->order_number} telah diselesaikan otomatis (lewat batas 5 hari).";
+                }
+                \App\Jobs\SendAdminPushNotification::dispatch($titleText, $notificationText, '/admin/orders?tab=completed');
+            }
+        }
 
         $orders = Order::with(['items', 'payment', 'shipment'])
             ->where('user_id', $user->id)
@@ -145,7 +160,7 @@ class OrderController extends Controller
             $admins = \App\Models\Admin::all();
             if ($admins->count() > 0) {
                 \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\AdminOrderNotification($titleText, $notificationText, $order->order_number));
-                \App\Jobs\SendAdminPushNotification::dispatch($titleText, $notificationText, '/admin/orders?view_order=' . $order->order_number);
+                \App\Jobs\SendAdminPushNotification::dispatch($titleText, $notificationText, '/admin/orders?tab=completed');
             }
             
             $order->refresh();

@@ -35,6 +35,9 @@ export default function FeaturedCollection() {
     isFlashSale: p.is_flash_sale,
     image: getImageUrl(p.image),
     limited: Boolean(p.limited),
+    outOfStock: p.variants && Array.isArray(p.variants)
+      ? p.variants.reduce((sum: number, v: any) => sum + (Number(v.stock) || 0), 0) === 0
+      : false,
   })) : [];
 
   const featuredProducts = productsList.slice(0, 10);
@@ -212,7 +215,7 @@ export default function FeaturedCollection() {
             {displayProducts.map((product, index) => (
               <div
                 key={`${product.id}-${index}`}
-                className="flex-none w-[270px] sm:w-[310px] md:w-[340px] lg:w-[360px]"
+                className="flex-none w-[170px] sm:w-[310px] md:w-[340px] lg:w-[360px]"
               >
                 <ProductCard
                   slug={product.slug}
@@ -228,6 +231,7 @@ export default function FeaturedCollection() {
                   isFlashSale={product.isFlashSale}
                   image={product.image}
                   limited={product.limited}
+                  outOfStock={product.outOfStock}
                   index={index % (featuredProducts.length || 1)}
                   hideDetailsOnIdle={true}
                   isActive={!isDesktop && centeredIndex === index}

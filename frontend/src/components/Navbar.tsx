@@ -555,11 +555,27 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                         fill
                         className="object-contain transition-transform duration-500 group-hover:scale-105"
                       />
-                      {featuredShopProduct.discount_percentage && featuredShopProduct.discount_percentage > 0 && (
-                        <div className="absolute top-2 left-2 bg-[#FF3B30] text-white text-[8px] font-bold tracking-[0.1em] uppercase px-1.5 py-0.5 z-10 shadow-sm">
-                          -{featuredShopProduct.discount_percentage}% OFF
-                        </div>
-                      )}
+                      {(() => {
+                        const isOutOfStock = featuredShopProduct.variants && Array.isArray(featuredShopProduct.variants)
+                          ? featuredShopProduct.variants.reduce((sum: number, v: any) => sum + (Number(v.stock) || 0), 0) === 0
+                          : false;
+                        return (
+                          <>
+                            {isOutOfStock && (
+                              <div className="absolute top-2 right-2 z-10">
+                                <span className="text-[8px] tracking-[0.1em] uppercase text-[#FF3B30] font-[family-name:var(--font-body)] font-bold">
+                                  Out of Stock
+                                </span>
+                              </div>
+                            )}
+                            {featuredShopProduct.discount_percentage && featuredShopProduct.discount_percentage > 0 && !isOutOfStock && (
+                              <div className="absolute top-2 left-2 bg-[#FF3B30] text-white text-[8px] font-bold tracking-[0.1em] uppercase px-1.5 py-0.5 z-10 shadow-sm">
+                                -{featuredShopProduct.discount_percentage}% OFF
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
                     <div className="text-center">
                       <p className="text-[11px] font-semibold tracking-[0.1em] uppercase text-[#0A0A0A] line-clamp-1">

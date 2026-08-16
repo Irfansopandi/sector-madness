@@ -146,6 +146,15 @@ export default function AdminOrdersPage() {
     if (viewOrder) {
       handleOpenDetailModal(viewOrder);
     }
+    const tabParam = params.get("tab");
+    if (tabParam) {
+      const upperTab = tabParam.toUpperCase();
+      if (upperTab === "PROCESSING" || upperTab === "DELIVERED" || upperTab === "CANCELLED" || upperTab === "ALL") {
+        setActiveTab(upperTab as any);
+      } else if (upperTab === "COMPLETED") {
+        setActiveTab("DELIVERED");
+      }
+    }
   }, []);
 
   const [searchQuery, setSearchQuery] = useState("");

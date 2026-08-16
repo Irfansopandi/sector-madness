@@ -48,6 +48,7 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
   
   // Inline Validation Errors State
   const [errors, setErrors] = useState<{
@@ -326,22 +327,49 @@ export default function RegisterPage() {
                     <label style={{ fontSize: "11px", letterSpacing: "0.18em", fontWeight: 700, marginBottom: "10px", fontFamily: "'Inter', -apple-system, sans-serif" }} className="block uppercase text-[#0A0A0A]">
                       COUNTRY / REGION <span className="text-[#D92323]">*</span>
                     </label>
-                    <select
-                      value={countryCode}
-                      onChange={(e) => {
-                        setCountryCode(e.target.value);
-                        const found = countryOptions.find((c) => c.code === e.target.value);
-                        if (found) setPhoneCountry(found.dial);
-                      }}
-                      style={{ fontSize: "14px", padding: "16px 18px", fontFamily: "'Inter', -apple-system, sans-serif" }}
-                      className="w-full bg-[#F3F6F9] text-[#0A0A0A] font-medium border border-[#E0E6ED] focus:border-[#0A0A0A] focus:bg-[#FFFFFF] outline-none transition-all duration-200 rounded-none cursor-pointer"
-                    >
-                      {countryOptions.map((c) => (
-                        <option key={c.code} value={c.code}>
-                          {c.name} ({c.dial})
-                        </option>
-                      ))}
-                    </select>
+                    <div className="relative">
+                      <div
+                        onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
+                        style={{ fontSize: "14px", padding: "16px 18px", fontFamily: "'Inter', -apple-system, sans-serif" }}
+                        className="w-full bg-[#F3F6F9] text-[#0A0A0A] font-medium border border-[#E0E6ED] outline-none cursor-pointer flex items-center justify-between transition-all duration-200 rounded-none hover:border-[#0A0A0A]"
+                      >
+                        <span className="truncate">
+                          {countryOptions.find(c => c.code === countryCode)?.name} ({countryOptions.find(c => c.code === countryCode)?.dial})
+                        </span>
+                        <span className="text-[#0A0A0A] font-bold text-sm pointer-events-none transition-transform duration-200 ml-2" style={{ transform: isCountryDropdownOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
+                          ▼
+                        </span>
+                      </div>
+
+                      {isCountryDropdownOpen && (
+                        <>
+                          <div 
+                            className="fixed inset-0 z-40" 
+                            onClick={() => setIsCountryDropdownOpen(false)} 
+                          />
+                          <div className="absolute top-full left-0 w-full mt-1 bg-[#FFFFFF] border border-[#E0E6ED] z-50 shadow-lg max-h-[250px] overflow-y-auto py-2">
+                            {countryOptions.map((c) => (
+                              <div
+                                key={c.code}
+                                onClick={() => {
+                                  setCountryCode(c.code);
+                                  setPhoneCountry(c.dial);
+                                  setIsCountryDropdownOpen(false);
+                                }}
+                                style={{ padding: "10px 18px" }}
+                                className={`cursor-pointer text-[14px] font-medium transition-colors ${
+                                  countryCode === c.code 
+                                    ? "bg-[#F3F6F9] text-[#0A0A0A]" 
+                                    : "text-[#555555] hover:bg-[#F9FAFB] hover:text-[#0A0A0A]"
+                                }`}
+                              >
+                                {c.name} ({c.dial})
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
 
                   <div>

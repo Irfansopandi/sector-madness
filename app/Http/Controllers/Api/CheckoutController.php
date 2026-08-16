@@ -806,7 +806,7 @@ class CheckoutController extends Controller
                             $title = '🛒 New Paid Order Received';
                             $message = "Order baru #{$order->order_number} telah dibayar senilai Rp " . number_format($order->total_amount, 0, ',', '.');
                             \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\AdminOrderNotification($title, $message, $order->order_number));
-                            \App\Jobs\SendAdminPushNotification::dispatch($title, $message, '/admin/orders?view_order=' . $order->order_number);
+                            \App\Jobs\SendAdminPushNotification::dispatch($title, $message, '/admin/orders?tab=processing');
                         } catch (\Exception $e) {
                             \Illuminate\Support\Facades\Log::error('Admin Notification Failed on checkPaymentStatus: ' . $e->getMessage());
                         }

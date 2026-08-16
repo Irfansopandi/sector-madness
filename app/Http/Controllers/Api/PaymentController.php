@@ -203,7 +203,7 @@ class PaymentController extends Controller
                 \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\AdminOrderNotification($title, $message, $order->order_number));
 
                 // 2. External Web Push
-                \App\Jobs\SendAdminPushNotification::dispatch($title, $message, '/admin/orders?view_order=' . $order->order_number);
+                \App\Jobs\SendAdminPushNotification::dispatch($title, $message, '/admin/orders?tab=processing');
             } catch (\Exception $e) {
                 Log::error('Admin Notification Failed on Webhook: ' . $e->getMessage());
             }

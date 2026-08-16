@@ -104,6 +104,9 @@ function ShopContent() {
     details: p.details || [],
     story: p.story || p.description,
     limited: Boolean(p.limited),
+    outOfStock: p.variants && Array.isArray(p.variants)
+      ? p.variants.reduce((sum: number, v: any) => sum + (Number(v.stock) || 0), 0) === 0
+      : false,
     category: p.category,
     categoryId: p.category_id,
   })) : [];
@@ -311,14 +314,23 @@ function ShopContent() {
 
                   {/* Limited label */}
                   {/* Discount percentage badge */}
-                  {product.discountPercentage && product.discountPercentage > 0 && (
+                  {product.discountPercentage && product.discountPercentage > 0 && !product.outOfStock && (
                     <div className={`absolute ${gridCols === 6 ? "top-2 left-2 scale-[0.65] origin-top-left md:top-3 md:left-3 md:scale-100" : "top-3 left-3"} bg-[#FF3B30] text-white text-[9px] px-2 py-1 font-bold tracking-[0.15em] uppercase z-10 shadow-sm`}>
                       -{product.discountPercentage}% OFF
                     </div>
                   )}
 
+                  {/* Out of Stock badge */}
+                  {product.outOfStock && (
+                    <div className={`absolute ${gridCols === 6 ? "top-2 right-2 scale-[0.65] origin-top-right md:top-4 md:right-4 md:scale-100" : "top-4 right-4"} z-10`}>
+                      <span className="text-[9px] tracking-[0.2em] uppercase text-[#FF3B30] font-[family-name:var(--font-body)] font-bold">
+                        Out of Stock
+                      </span>
+                    </div>
+                  )}
+
                   {/* Flash sale countdown badge */}
-                  {product.discountExpiresAt && (
+                  {product.discountExpiresAt && !product.outOfStock && (
                     <div className={`absolute ${gridCols === 6 ? "top-2 right-2 scale-[0.65] origin-top-right md:top-3 md:right-3 md:scale-100" : "top-3 right-3"} z-10`}>
                       <CountdownTimer expiresAt={product.discountExpiresAt} compact />
                     </div>
