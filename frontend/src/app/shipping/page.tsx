@@ -387,7 +387,7 @@ export default function ShippingPage() {
             className="relative min-h-[320px] sm:min-h-[400px] lg:min-h-[460px] w-full bg-[#161616] overflow-hidden"
           >
             <Image
-              src="/images/shiping/BRAND_VALUES.webp"
+              src="/images/shiping/landscapesm.webp"
               alt="SECTOR MADNESS Shipping Cost"
               fill
               className="object-cover transition-transform duration-700 ease-out hover:scale-[1.02]"
