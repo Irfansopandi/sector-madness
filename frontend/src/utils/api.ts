@@ -122,6 +122,7 @@ export interface WishlistItem {
   category: string;
   image: string;
   in_stock: boolean;
+  is_available?: boolean;
   stock_quantity?: number;
   size?: string;
   color?: string;

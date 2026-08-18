@@ -279,9 +279,9 @@ export default function AdminDashboardCharts({
                 </button>
               </div>
             ) : !hasSalesData ? (
-              <div className="text-center py-16 space-y-2">
-                <TrendingUp className={`w-8 h-8 mx-auto ${isDarkMode ? "text-[#444444]" : "text-[#9CA3AF]"}`} />
-                <p className={`text-xs font-mono ${isDarkMode ? "text-[#777777]" : "text-[#6B7280]"}`}>
+              <div className="w-full h-full flex flex-col items-center justify-center py-16 space-y-3">
+                <TrendingUp className={`w-8 h-8 ${isDarkMode ? "text-[#444444]" : "text-[#9CA3AF]"}`} />
+                <p className={`text-xs font-mono text-center ${isDarkMode ? "text-[#777777]" : "text-[#6B7280]"}`}>
                   Belum ada data penjualan pada periode ini.
                 </p>
               </div>
@@ -410,9 +410,9 @@ export default function AdminDashboardCharts({
                 </button>
               </div>
             ) : !hasTopProductsData ? (
-              <div className="text-center py-16 space-y-2">
-                <ShoppingBag className={`w-8 h-8 mx-auto ${isDarkMode ? "text-[#444444]" : "text-[#9CA3AF]"}`} />
-                <p className={`text-xs font-mono ${isDarkMode ? "text-[#777777]" : "text-[#6B7280]"}`}>
+              <div className="w-full h-full flex flex-col items-center justify-center py-16 space-y-3">
+                <ShoppingBag className={`w-8 h-8 ${isDarkMode ? "text-[#444444]" : "text-[#9CA3AF]"}`} />
+                <p className={`text-xs font-mono text-center ${isDarkMode ? "text-[#777777]" : "text-[#6B7280]"}`}>
                   Belum ada produk terjual pada periode ini.
                 </p>
               </div>

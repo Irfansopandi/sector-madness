@@ -562,7 +562,7 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
                 <span className="text-[11px] tracking-[0.3em] uppercase text-[#8A8A8A] font-[family-name:var(--font-body)] font-light block mb-2">
                   {product.category?.name || "Uncategorized"} &nbsp;—&nbsp; {product.collection}
                 </span>
-                <h1 className="font-[family-name:var(--font-display)] text-[clamp(2.2rem,4vw,3.2rem)] text-[#F5F5F5] leading-[1.1] tracking-[-0.01em]">
+                <h1 className="font-[family-name:var(--font-display)] text-[clamp(1.8rem,4vw,3.2rem)] text-[#F5F5F5] leading-[1.1] tracking-[-0.01em] truncate w-full block" title={product.name}>
                   {product.name}
                 </h1>
               </div>

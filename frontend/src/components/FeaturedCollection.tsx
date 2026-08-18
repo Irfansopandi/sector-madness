@@ -43,9 +43,11 @@ export default function FeaturedCollection() {
   const featuredProducts = productsList.slice(0, 10);
 
   // Triple duplicated list for seamless bidirectional infinite scrolling
-  const displayProducts = featuredProducts.length > 0
+  // Only duplicate if there are at least 4 products to avoid weird repetition
+  const shouldDuplicate = featuredProducts.length >= 4;
+  const displayProducts = shouldDuplicate
     ? [...featuredProducts, ...featuredProducts, ...featuredProducts]
-    : [];
+    : featuredProducts;
 
   // Normalize scroll position seamlessly in mid-range (0.5x to 1.5x setWidth) to eliminate any edge boundary pause/jeda
   const normalizeScroll = useCallback(() => {
@@ -111,31 +113,31 @@ export default function FeaturedCollection() {
     updateCenteredCard();
   }, [normalizeScroll, updateCenteredCard]);
 
-  // Set initial scroll position to the middle set (Set 2)
+  // Set initial scroll position to the middle set (Set 2) if duplicated
   useEffect(() => {
     if (scrollRef.current && featuredProducts.length > 0 && !hasInitializedScrollRef.current) {
       const container = scrollRef.current;
       const children = container.children;
       const N = featuredProducts.length;
-      if (children.length >= N * 2) {
+      if (shouldDuplicate && children.length >= N * 2) {
         const item0 = children[0] as HTMLElement;
         const itemN = children[N] as HTMLElement;
         if (item0 && itemN) {
           const setWidth = itemN.offsetLeft - item0.offsetLeft;
           container.scrollLeft = setWidth;
-          hasInitializedScrollRef.current = true;
-          updateCenteredCard();
         }
       }
+      hasInitializedScrollRef.current = true;
+      updateCenteredCard();
     }
-  }, [featuredProducts.length, updateCenteredCard]);
+  }, [featuredProducts.length, shouldDuplicate, updateCenteredCard]);
 
   // Continuous Smooth Auto-Scroll
   useEffect(() => {
     let animationFrameId: number;
 
     const autoScrollStep = () => {
-      if (!isPaused && !isDraggingRef.current && scrollRef.current) {
+      if (!isPaused && !isDraggingRef.current && scrollRef.current && shouldDuplicate) {
         scrollRef.current.scrollLeft += 0.8;
         normalizeScroll();
         updateCenteredCard();

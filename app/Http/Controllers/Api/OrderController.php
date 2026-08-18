@@ -255,7 +255,7 @@ class OrderController extends Controller
                         'id'            => $item->id,
                         'product_id'    => $item->product_id,
                         'product_name'  => $item->product_name,
-                        'product_image' => $item->product ? $item->product->image : '/collection1.png',
+                        'product_image' => $item->product_image,
                         'color'         => $item->color,
                         'size'          => $item->size,
                         'quantity'      => $item->quantity,
@@ -691,32 +691,40 @@ class OrderController extends Controller
 
         foreach ($orders as $order) {
             foreach ($order->items as $item) {
-                $pId = $item->product_id ?: $item->id;
-                $rawName = $item->product_name ?: 'Product #' . $pId;
+                $pId = $item->product_id; // DO NOT fallback to $item->id
+                $rawName = $item->product_name ?: 'Unknown Product';
                 $qty = (int)$item->quantity;
 
                 // Match catalog product
                 $matched = $catalogProducts->first(function($p) use ($pId, $rawName) {
-                    if ((string)$p->id === (string)$pId) return true;
+                    if ($pId) {
+                        return (string)$p->id === (string)$pId;
+                    }
                     $pName = strtolower(trim($p->name ?? ''));
                     $iName = strtolower(trim($rawName));
-                    return $pName && $iName && ($pName === $iName || str_contains($pName, $iName) || str_contains($iName, $pName));
+                    return $pName && $iName && $pName === $iName;
                 });
 
-                $displayName = $matched ? $matched->name : $rawName;
-                $rawP = (float)($matched ? $matched->price : $item->price);
+                // Skip deleted products (not in catalog)
+                if (!$matched) {
+                    continue;
+                }
+
+                $productIdKey = $matched->id;
+                $displayName = $matched->name;
+                $rawP = (float)($matched->price);
                 $unitPrice = $rawP < 1000 ? $rawP * 1000 : $rawP;
 
-                if (!isset($productsMap[$displayName])) {
-                    $productsMap[$displayName] = [
-                        'product_id' => $pId,
+                if (!isset($productsMap[$productIdKey])) {
+                    $productsMap[$productIdKey] = [
+                        'product_id' => $productIdKey,
                         'product_name' => $displayName,
                         'quantity_sold' => 0,
                         'revenue' => 0,
                     ];
                 }
-                $productsMap[$displayName]['quantity_sold'] += $qty;
-                $productsMap[$displayName]['revenue'] += ($unitPrice * $qty);
+                $productsMap[$productIdKey]['quantity_sold'] += $qty;
+                $productsMap[$productIdKey]['revenue'] += ($unitPrice * $qty);
             }
         }
 

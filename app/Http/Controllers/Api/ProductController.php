@@ -201,6 +201,7 @@ class ProductController extends Controller
             }
         }
 
+        $data['description'] = $data['description'] ?? '';
         $data['slug'] = \Illuminate\Support\Str::slug($request->name) . '-' . time();
 
         $product = Product::create($data);
@@ -368,6 +369,9 @@ class ProductController extends Controller
                 'message' => 'Product not found',
             ], 404);
         }
+
+        // Remove from shopping carts automatically when deleted by admin
+        \Illuminate\Support\Facades\DB::table('cart_items')->where('product_id', $product->id)->delete();
 
         $product->delete();
 

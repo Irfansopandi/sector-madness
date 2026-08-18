@@ -32,7 +32,9 @@ class WishlistController extends Controller
             return response()->json(['message' => 'Unauthenticated.'], 401);
         }
 
-        $wishlists = Wishlist::with('product.category')
+        $wishlists = Wishlist::with(['product' => function($q) {
+            $q->withTrashed();
+        }, 'product.category'])
             ->where('user_id', $user->id)
             ->get();
 
@@ -40,6 +42,8 @@ class WishlistController extends Controller
         $formatted = $wishlists->map(function ($item) {
             $product = $item->product;
             if (!$product) return null;
+
+            $is_available = !$product->trashed();
 
             if ($product->discount_expires_at && \Carbon\Carbon::parse($product->discount_expires_at)->isPast()) {
                 if ($product->original_price && $product->original_price > $product->price) {
@@ -78,6 +82,7 @@ class WishlistController extends Controller
                 'category'       => $product->category ? $product->category->name : ($product->collection_code ?? 'T-SHIRT'),
                 'image'          => $imageValue,
                 'in_stock'       => $stockQuantity > 0,
+                'is_available'   => $is_available,
                 'stock_quantity' => $stockQuantity,
                 'size'           => $item->size,
                 'color'          => $item->color,

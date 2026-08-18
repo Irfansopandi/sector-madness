@@ -217,7 +217,9 @@ export default function WishlistPage() {
                               SIZE: <strong className="text-[#EDEDED] font-normal">{prod.size || "—"}</strong>
                             </span>
                             <span className="text-[#333333]">|</span>
-                            {isSoldOut ? (
+                            {prod.is_available === false ? (
+                              <strong className="text-[#777777] font-bold">UNAVAILABLE</strong>
+                            ) : isSoldOut ? (
                               <strong className="text-[#FF6666] font-bold">SOLD OUT</strong>
                             ) : (
                               <span className="text-[#B6A47E] font-medium">
@@ -248,9 +250,13 @@ export default function WishlistPage() {
                       </div>
 
                       {/* Bottom: Add to Bag & Remove */}
-                      <div className={`flex items-center mt-8 pt-2 ${isSoldOut ? 'justify-end' : 'justify-between'}`}>
+                      <div className={`flex items-center mt-8 pt-2 ${(isSoldOut || prod.is_available === false) ? 'justify-between' : 'justify-between'}`}>
                         {/* Add to Bag — styled inline like Shopping Bag (no button element) */}
-                        {!isSoldOut && (
+                        {prod.is_available === false ? (
+                          <span className="inline-flex items-center gap-2 px-4 py-2 text-[#777777] font-mono text-[11px] font-bold uppercase tracking-widest select-none cursor-not-allowed">
+                            PRODUCT UNAVAILABLE
+                          </span>
+                        ) : !isSoldOut ? (
                           <span
                             role="button"
                             tabIndex={0}
@@ -265,6 +271,8 @@ export default function WishlistPage() {
                             </svg>
                             ADD TO BAG
                           </span>
+                        ) : (
+                          <div /> // Placeholder to keep Trash Icon on the right if sold out
                         )}
 
                         {/* Trash Icon — with right breathing room */}

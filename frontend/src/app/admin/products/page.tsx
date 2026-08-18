@@ -229,21 +229,27 @@ export default function AdminProductsPage() {
           const rawName: string = item.product_name || item.name || "Unknown Product";
           const qty: number = Number(item.quantity) || 1;
 
-          // Match with official catalog products first by ID or Name
+          // Match with official catalog products first by ID
           let matchedProd: any = null;
           if (products.length > 0) {
             matchedProd = products.find((p: any) => {
               const pId = String(p.id || "");
-              const iId = String(item.product_id || item.id || "");
-              if (iId && pId === iId) return true;
-
+              const iId = String(item.product_id || "");
+              if (iId && pId) {
+                return pId === iId;
+              }
+              // Fallback to exact name match ONLY if ID is missing
               const pName = (p.name || p.title || "").toLowerCase().trim();
               const iName = rawName.toLowerCase().trim();
-              return pName === iName || pName.includes(iName) || iName.includes(pName);
+              return pName === iName;
             });
           }
 
-          const displayName = matchedProd?.name || rawName;
+          // If product is not found in the current active catalog, skip it (it means it was deleted)
+          if (!matchedProd) return;
+
+          const productIdKey = String(matchedProd.id);
+          const displayName = matchedProd.name;
 
           // Image: Always prioritize live catalog image
           let image: string = "";
@@ -264,7 +270,7 @@ export default function AdminProductsPage() {
             unitPrice = normalizedP > 1000000 && qty > 1 ? Math.round(normalizedP / qty) : normalizedP;
           }
 
-          const existing = map.get(displayName);
+          const existing = map.get(productIdKey);
           if (existing) {
             existing.qty += qty;
             existing.revenue += unitPrice * qty;
@@ -272,7 +278,7 @@ export default function AdminProductsPage() {
               existing.image = image;
             }
           } else {
-            map.set(displayName, { name: displayName, image, qty, revenue: unitPrice * qty, unitPrice });
+            map.set(productIdKey, { name: displayName, image, qty, revenue: unitPrice * qty, unitPrice });
           }
         });
       });
@@ -841,7 +847,7 @@ export default function AdminProductsPage() {
             waist: r.waist.trim(),
           })),
         story: formStory.trim() || undefined,
-        description: formDescription.trim() || undefined,
+        description: formDescription,
         image: finalImagePath,
         gallery: uploadedGalleryPaths,
         sizes: selectedSizes,
