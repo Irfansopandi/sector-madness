@@ -8,9 +8,11 @@ interface WishlistToastProps {
   show: boolean;
   onClose: () => void;
   message?: string;
+  actionHref?: string;
+  actionText?: string;
 }
 
-export default function WishlistToast({ show, onClose, message = "ADDED TO WISHLIST" }: WishlistToastProps) {
+export default function WishlistToast({ show, onClose, message = "ADDED TO WISHLIST", actionHref = "/dashboard/wishlist", actionText = "VIEW WISHLIST" }: WishlistToastProps) {
   useEffect(() => {
     if (show) {
       const timer = setTimeout(() => {
@@ -28,7 +30,7 @@ export default function WishlistToast({ show, onClose, message = "ADDED TO WISHL
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 16 }}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="fixed bottom-8 right-8 z-[100000] w-[340px] bg-[#0A0A0A] border-l-4 border-l-[#FFFFFF] border border-[#262626] p-6 shadow-2xl pointer-events-auto"
+          className="fixed z-[100000] bg-[#0A0A0A] border-l-4 border-l-[#FFFFFF] border border-[#262626] p-6 shadow-2xl pointer-events-auto bottom-6 left-4 right-4 sm:left-auto sm:right-8 sm:bottom-8 sm:w-[340px]"
           style={{ fontFamily: "'Inter', -apple-system, sans-serif" }}
         >
           {/* Header */}
@@ -53,12 +55,12 @@ export default function WishlistToast({ show, onClose, message = "ADDED TO WISHL
 
           {/* Action */}
           <Link
-            href="/dashboard/wishlist"
+            href={actionHref}
             onClick={onClose}
             style={{ fontSize: "11px", letterSpacing: "0.22em", padding: "14px 0" }}
             className="block w-full bg-[#FFFFFF] text-[#0A0A0A] text-center font-bold uppercase hover:bg-[#B6A47E] hover:text-[#0A0A0A] transition-all duration-300 shadow-md cursor-pointer"
           >
-            VIEW WISHLIST
+            {actionText}
           </Link>
         </motion.div>
       )}

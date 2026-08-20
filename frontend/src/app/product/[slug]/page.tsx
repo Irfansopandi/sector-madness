@@ -558,11 +558,23 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
               </div>
 
               {/* Category & Title Block */}
-              <div>
+              <div className="w-full overflow-hidden">
                 <span className="text-[11px] tracking-[0.3em] uppercase text-[#8A8A8A] font-[family-name:var(--font-body)] font-light block mb-2">
                   {product.category?.name || "Uncategorized"} &nbsp;—&nbsp; {product.collection}
                 </span>
-                <h1 className="font-[family-name:var(--font-display)] text-[clamp(1.8rem,4vw,3.2rem)] text-[#F5F5F5] leading-[1.1] tracking-[-0.01em] truncate w-full block" title={product.name}>
+                <h1 
+                  className="font-[family-name:var(--font-display)] text-[#F5F5F5] leading-[1.1] tracking-[-0.01em] whitespace-nowrap overflow-hidden text-ellipsis block w-full"
+                  style={{
+                    fontSize: product.name.length > 30 
+                      ? 'clamp(1rem, 2vw, 1.6rem)' 
+                      : product.name.length > 22 
+                      ? 'clamp(1.2rem, 2.5vw, 2rem)' 
+                      : product.name.length > 15 
+                      ? 'clamp(1.5rem, 3.2vw, 2.6rem)' 
+                      : 'clamp(1.8rem, 4vw, 3.2rem)'
+                  }}
+                  title={product.name}
+                >
                   {product.name}
                 </h1>
               </div>
@@ -742,13 +754,13 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
 
               {/* Validation Error */}
               {validationError && (
-                <div className="flex items-center gap-2 px-4 py-3 border border-[#CC3333]/40 bg-[#CC3333]/10 text-[#FF6666] text-[11px] font-mono font-bold uppercase tracking-widest">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <div className="flex items-center gap-1.5 md:gap-2 pt-1 pb-2 text-[#FF6666] text-[9.5px] sm:text-[10px] md:text-[11px] font-mono font-bold uppercase tracking-wider md:tracking-widest whitespace-nowrap">
+                  <svg className="shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10" />
                     <line x1="12" y1="8" x2="12" y2="12" />
                     <line x1="12" y1="16" x2="12.01" y2="16" />
                   </svg>
-                  {validationError}
+                  <span>{validationError}</span>
                 </div>
               )}
 

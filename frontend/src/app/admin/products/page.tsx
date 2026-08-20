@@ -166,7 +166,7 @@ export default function AdminProductsPage() {
         return item;
       });
       const total = next.reduce((acc, curr) => acc + (Number(curr.stock) || 0), 0);
-      if (total > 0) setFormStock(total);
+      setFormStock(total > 0 ? total : "");
       return next;
     });
   };
@@ -1847,9 +1847,26 @@ export default function AdminProductsPage() {
                     placeholder="10"
                     value={formStock}
                     onChange={(e) => {
-                      setFormStock(e.target.value !== "" ? Number(e.target.value) : "");
-                      if (e.target.value !== "") {
+                      const rawVal = e.target.value;
+                      const numVal = rawVal !== "" ? Number(rawVal) : "";
+                      setFormStock(numVal);
+                      if (rawVal !== "") {
                         setErrors((prev) => ({ ...prev, stock: "" }));
+                        setVariantStocks((prev) => {
+                          if (prev.length === 0) return prev;
+                          const perCombo = Math.max(0, Math.floor(Number(numVal) / prev.length));
+                          let remainder = Number(numVal) - (perCombo * prev.length);
+                          return prev.map((item) => {
+                            let s = perCombo;
+                            if (remainder > 0) {
+                              s += 1;
+                              remainder -= 1;
+                            }
+                            return { ...item, stock: s };
+                          });
+                        });
+                      } else {
+                        setVariantStocks((prev) => prev.map((item) => ({ ...item, stock: 0 })));
                       }
                     }}
                     style={getInputStyle(!!errors.stock)}

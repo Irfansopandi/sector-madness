@@ -50,7 +50,7 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   return (
     <ToastContext.Provider value={{ showToast, success, error }}>
       {children}
-      <div className="fixed bottom-6 right-6 z-[200000] flex flex-col gap-3 pointer-events-none w-full max-w-[380px] px-4 md:px-0">
+      <div className="fixed bottom-6 left-4 right-4 z-[200000] flex flex-col gap-3 pointer-events-none md:left-auto md:right-6 md:w-full md:max-w-[380px]">
         <AnimatePresence>
           {toasts.map((toast) => {
             const borderColors: Record<ToastType, string> = {

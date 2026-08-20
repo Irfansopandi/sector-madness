@@ -71,7 +71,7 @@ export default function ShoppingBagPage() {
   const { data: cartData, isLoading, isError, refetch } = useQuery({
     queryKey: ["cart", currentToken ?? "guest"],
     queryFn: getCart,
-    refetchInterval: currentToken ? 3000 : false,
+    refetchInterval: currentToken ? 8000 : false,
     refetchOnWindowFocus: true,
     enabled: !!currentToken,
   });
@@ -128,26 +128,58 @@ export default function ShoppingBagPage() {
     },
   });
 
-  // Mutation to delete item
+  // Mutation to delete item (optimistic update — removes instantly from UI)
   const deleteMutation = useMutation({
     mutationFn: (id: number | string) => deleteCartItem(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["cart", currentToken ?? "guest"] });
+      const previous = queryClient.getQueryData(["cart", currentToken ?? "guest"]);
+      queryClient.setQueryData(["cart", currentToken ?? "guest"], (old: any) => {
+        if (!old) return old;
+        const removed = old.items.find((i: any) => String(i.id) === String(id));
+        return {
+          ...old,
+          items: old.items.filter((item: any) => String(item.id) !== String(id)),
+          total_quantity: Math.max(0, (old.total_quantity || 0) - (removed?.quantity || 0)),
+        };
+      });
+      return { previous };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cart"] });
       success("Item removed from your shopping bag.", "SECTOR // REMOVED");
     },
-    onError: (err: any) => {
+    onError: (err: any, _id, context: any) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["cart", currentToken ?? "guest"], context.previous);
+      }
       error(err.response?.data?.message || "Failed to remove item.");
     },
   });
 
-  // Mutation to clear cart
+  // Mutation to clear cart (optimistic update — clears instantly from UI)
   const clearMutation = useMutation({
     mutationFn: clearCart,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["cart"] });
-      showToast("Shopping bag cleared completely.", "info", "VOlD // ATELIER");
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["cart", currentToken ?? "guest"] });
+      const previous = queryClient.getQueryData(["cart", currentToken ?? "guest"]);
+      queryClient.setQueryData(["cart", currentToken ?? "guest"], (old: any) => {
+        if (!old) return old;
+        return { ...old, items: [], total_quantity: 0 };
+      });
+      return { previous };
     },
-    onError: (err: any) => {
+    onSuccess: () => {
+      // Delay invalidation so Laravel queue finishes before the next background poll fires
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["cart"] });
+      }, 2500);
+      showToast("Shopping bag cleared completely.", "info", "VOID // ATELIER");
+    },
+    onError: (err: any, _vars, context: any) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["cart", currentToken ?? "guest"], context.previous);
+      }
       error(err.response?.data?.message || "Failed to clear bag.");
     },
   });
@@ -455,7 +487,6 @@ export default function ShoppingBagPage() {
 
               <div>
               {items.map((item, idx) => {
-                const isOutOfStock = item.stock <= 0;
                 const productName = item.product_name || "Technical Garment";
                 const matchingProduct = (realProducts && realProducts.length > 0 ? realProducts : []).find(
                   (p: any) =>
@@ -464,13 +495,7 @@ export default function ShoppingBagPage() {
                     String(p.id) === String(item.product_id) ||
                     String(p.id).padStart(3, "0") === String(item.product_id).padStart(3, "0")
                 );
-                const rawImage =
-                  item.product_image && item.product_image.trim() !== ""
-                    ? item.product_image
-                    : matchingProduct?.image || "/images/products/product-1.png";
-                const imageSrc = getImageUrl(rawImage);
-                const productSlug = (item as any).slug || matchingProduct?.slug || item.product_id;
-                const productLink = `/product/${productSlug}`;
+
                 const itemCategory = (item.category || "T-SHIRT").toUpperCase();
                 const hasColor =
                   item.color &&
@@ -482,6 +507,34 @@ export default function ShoppingBagPage() {
                   !["default", "none", "n/a", "null", "undefined", "one size", "onsize", ""].includes(
                     item.size.trim().toLowerCase()
                   );
+
+                let displayStock = item.stock;
+                if (matchingProduct && Array.isArray(matchingProduct.variants)) {
+                  if (hasColor) {
+                    const variant = matchingProduct.variants.find((v: any) => 
+                      v.color?.toLowerCase() === item.color.trim().toLowerCase() &&
+                      v.size?.toLowerCase() === (item.size || "").trim().toLowerCase()
+                    );
+                    if (variant && typeof variant.stock === 'number') {
+                      displayStock = variant.stock;
+                    }
+                  } else {
+                    const sizeVariants = matchingProduct.variants.filter((v: any) => 
+                      v.size?.toLowerCase() === (item.size || "").trim().toLowerCase()
+                    );
+                    if (sizeVariants.length > 0) {
+                      displayStock = sizeVariants.reduce((sum: number, v: any) => sum + (v.stock || 0), 0);
+                    }
+                  }
+                }
+                const isOutOfStock = displayStock <= 0;
+                const rawImage =
+                  item.product_image && item.product_image.trim() !== ""
+                    ? item.product_image
+                    : matchingProduct?.image || "/images/products/product-1.png";
+                const imageSrc = getImageUrl(rawImage);
+                const productSlug = (item as any).slug || matchingProduct?.slug || item.product_id;
+                const productLink = `/product/${productSlug}`;
 
                 return (
                   <motion.div
@@ -544,7 +597,7 @@ export default function ShoppingBagPage() {
                                 </>
                               )}
                               <span className="text-[#B6A47E] font-medium">
-                                <strong className="text-white font-bold">{Math.max(0, item.stock - item.quantity)}</strong> UNITS IN STOCK
+                                <strong className="text-white font-bold">{Math.max(0, displayStock - item.quantity)}</strong> UNITS IN STOCK
                               </span>
                             </div>
                           </div>
@@ -570,7 +623,7 @@ export default function ShoppingBagPage() {
                           <div className="flex items-center border border-[#3A3A3A] bg-[#0E0E0E]">
                             <button
                               type="button"
-                              onClick={() => handleQuantityChange(item.id, item.quantity - 1, item.stock)}
+                              onClick={() => handleQuantityChange(item.id, item.quantity - 1, displayStock)}
                               disabled={updateMutation.isPending || item.quantity <= 1}
                               className="w-9 h-9 flex items-center justify-center text-sm font-mono text-[#CCCCCC] hover:bg-[#222] hover:text-white transition-colors disabled:opacity-30 cursor-pointer"
                             >
@@ -601,7 +654,7 @@ export default function ShoppingBagPage() {
                                         return copy;
                                       });
                                       if (!isNaN(parsed) && parsed > 0 && parsed !== item.quantity) {
-                                        handleQuantityChange(item.id, Math.min(parsed, item.stock), item.stock);
+                                        handleQuantityChange(item.id, Math.min(parsed, displayStock), displayStock);
                                       }
                                     }
                                   }}
@@ -616,8 +669,8 @@ export default function ShoppingBagPage() {
                             })()}
                             <button
                               type="button"
-                              onClick={() => handleQuantityChange(item.id, item.quantity + 1, item.stock)}
-                              disabled={updateMutation.isPending || item.quantity >= item.stock}
+                              onClick={() => handleQuantityChange(item.id, item.quantity + 1, displayStock)}
+                              disabled={updateMutation.isPending || item.quantity >= displayStock}
                               className="w-9 h-9 flex items-center justify-center text-sm font-mono text-[#CCCCCC] hover:bg-[#222] hover:text-white transition-colors disabled:opacity-30 cursor-pointer"
                             >
                               +

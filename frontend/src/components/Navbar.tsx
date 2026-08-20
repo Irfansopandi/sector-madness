@@ -220,70 +220,64 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
 
   const featuredShopProduct = (() => {
     if (!activeProducts || activeProducts.length === 0) return null;
-    if (!hoveredFilter || hoveredFilter === "ALL") return activeProducts[0];
+    
+    // Fallback to a product with an image if ALL is hovered
+    if (!hoveredFilter || hoveredFilter === "ALL") {
+      return activeProducts.find((p: any) => p.image) || null;
+    }
 
     const cat = hoveredFilter.toUpperCase();
-
-    // 1. Check Category Matches
-    if (cat === "OUTERWEAR" || cat === "JACKETS") {
-      const match = activeProducts.find(p => p.name.toLowerCase().match(/(bomber|trench|anorak|vest|jacket|coat)/i));
-      if (match) return match;
-    }
-    if (cat === "T-SHIRT" || cat === "T-SHIRTS" || cat === "POLO SHIRT" || cat === "SHIRTS") {
-      const match = activeProducts.find(p => p.name.toLowerCase().match(/(tee|t-shirt|shirt|polo)/i));
-      if (match) return match;
-    }
-    if (cat === "BOTTOMS" || cat === "CARGO" || cat === "TROUSERS" || cat === "SHORTS & TROUSERS") {
-      const match = activeProducts.find(p => p.name.toLowerCase().match(/(cargo|trousers|pants|shorts)/i));
-      if (match) return match;
-    }
-    if (cat === "SWEATSHIRTS" || cat === "HOODIE") {
-      const match = activeProducts.find(p => p.name.toLowerCase().match(/(hoodie|sweat|sweatshirt|zip)/i));
-      if (match) return match;
-    }
-    if (cat === "ACCESSORIES") {
-      const match = activeProducts.find(p => p.name.toLowerCase().match(/(vest|cap|accessory|bag|belt)/i));
-      if (match) return match;
-    }
-
-    // 2. Exact match for custom Focus On / Collections from Admin (Highest Priority)
     const search = cat.toLowerCase();
-    const exactMatch = activeProducts.find((p) => {
+
+    // 1. Exact match for custom Focus On / Collections or Category from Admin (Highest Priority)
+    const exactMatch = activeProducts.find((p: any) => {
+      if (!p.image) return false; // Ensure product has an image
       const coll = (p.collection || "").toLowerCase();
       const collCode = (p.collection_code || "").toLowerCase();
-      return coll === search || collCode === search || coll.includes(search) || collCode.includes(search);
+      const catName = (p.category?.name || "").toLowerCase();
+      
+      return (
+        coll === search || collCode === search || coll.includes(search) || collCode.includes(search) ||
+        catName === search || catName.includes(search)
+      );
     });
     
     if (exactMatch) return exactMatch;
 
-    // 3. Search match for names and descriptions
-    const searchMatch = activeProducts.find((p) => {
+    // 2. Check Category Matches via regex if exact match not found
+    if (cat === "OUTERWEAR" || cat === "JACKETS") {
+      const match = activeProducts.find((p: any) => p.image && p.name.toLowerCase().match(/(bomber|trench|anorak|vest|jacket|coat)/i));
+      if (match) return match;
+    }
+    if (cat === "T-SHIRT" || cat === "T-SHIRTS" || cat === "POLO SHIRT" || cat === "SHIRTS") {
+      const match = activeProducts.find((p: any) => p.image && p.name.toLowerCase().match(/(tee|t-shirt|shirt|polo)/i));
+      if (match) return match;
+    }
+    if (cat === "BOTTOMS" || cat === "CARGO" || cat === "TROUSERS" || cat === "SHORTS & TROUSERS") {
+      const match = activeProducts.find((p: any) => p.image && p.name.toLowerCase().match(/(cargo|trousers|pants|shorts)/i));
+      if (match) return match;
+    }
+    if (cat === "SWEATSHIRTS" || cat === "HOODIE") {
+      const match = activeProducts.find((p: any) => p.image && p.name.toLowerCase().match(/(hoodie|sweat|sweatshirt|zip)/i));
+      if (match) return match;
+    }
+    if (cat === "ACCESSORIES") {
+      const match = activeProducts.find((p: any) => p.image && p.name.toLowerCase().match(/(vest|cap|accessory|bag|belt)/i));
+      if (match) return match;
+    }
+
+    // 3. Search match for names and descriptions as last resort
+    const searchMatch = activeProducts.find((p: any) => {
+      if (!p.image) return false;
       const name = (p.name || "").toLowerCase();
       const desc = (p.description || "").toLowerCase();
-      const catName = (p.category?.name || "").toLowerCase();
-      return (
-        name.includes(search) ||
-        desc.includes(search) ||
-        catName.includes(search)
-      );
+      return name.includes(search) || desc.includes(search);
     });
 
     if (searchMatch) return searchMatch;
 
-    // 4. Fallback Deterministic Specific Focus On Item Mappings
-    if (cat === "ZESTY") return activeProducts[1 % activeProducts.length];
-    if (cat === "PRISTINE") return activeProducts[2 % activeProducts.length];
-    if (cat === "LOFTY") return activeProducts[3 % activeProducts.length];
-    if (cat === "FANCY") return activeProducts[4 % activeProducts.length];
-    if (cat === "FROLIC") return activeProducts[5 % activeProducts.length];
-    if (cat === "SECTOR MADNESS" || cat === "SECTOR MADNESS | ORIGIN") return activeProducts[0];
-
-    // 4. Deterministic Index Fallback for any custom item
-    let hash = 0;
-    for (let i = 0; i < cat.length; i++) {
-      hash = (hash + cat.charCodeAt(i)) % activeProducts.length;
-    }
-    return activeProducts[hash] || activeProducts[0];
+    // Return null if no related product with image is found
+    return null;
   })();
 
   return (
@@ -548,12 +542,12 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                     href={`/product/${featuredShopProduct.slug}`}
                     className="group block w-full max-w-[260px]"
                   >
-                    <div className="relative aspect-[3/4] w-full bg-[#F4F4F4] overflow-hidden mb-3 border border-[#E5E5E5] flex items-center justify-center p-4">
+                    <div className="relative aspect-[3/4] w-full bg-[#F4F4F4] overflow-hidden mb-3 border border-[#E5E5E5] flex items-center justify-center">
                       <Image
                         src={getImageUrl(featuredShopProduct.image)}
                         alt={featuredShopProduct.name}
                         fill
-                        className="object-contain transition-transform duration-500 group-hover:scale-105"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                       {(() => {
                         const isOutOfStock = featuredShopProduct.variants && Array.isArray(featuredShopProduct.variants)
@@ -593,7 +587,17 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                       </div>
                     </div>
                   </Link>
-                ) : null}
+                ) : (
+                  <div className="block w-full max-w-[260px] invisible pointer-events-none">
+                    <div className="relative aspect-[3/4] w-full mb-3 p-4"></div>
+                    <div className="text-center">
+                      <p className="text-[11px] font-semibold tracking-[0.1em] uppercase line-clamp-1">&nbsp;</p>
+                      <div className="flex items-center justify-center gap-1.5 mt-0.5 flex-wrap">
+                        <p className="text-[10px] tracking-[0.15em] font-semibold uppercase">&nbsp;</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>

@@ -17,6 +17,8 @@ export default function WishlistPage() {
   const [bagToastMsg, setBagToastMsg] = useState("");
   const [showWishlistToast, setShowWishlistToast] = useState(false);
   const [wishlistToastMsg, setWishlistToastMsg] = useState("");
+  const [wishlistToastActionHref, setWishlistToastActionHref] = useState("/dashboard/wishlist");
+  const [wishlistToastActionText, setWishlistToastActionText] = useState("VIEW WISHLIST");
 
   const { data: apiProducts = [] } = useQuery({
     queryKey: ["products"],
@@ -70,9 +72,13 @@ export default function WishlistPage() {
       await removeFromWishlist(prod.product_id, prod.size, prod.color);
       queryClient.invalidateQueries({ queryKey: ["wishlist"] });
       setWishlistToastMsg(`"${prod.name}" removed from Wishlist.`);
+      setWishlistToastActionHref("/dashboard/wishlist");
+      setWishlistToastActionText("VIEW WISHLIST");
       setShowWishlistToast(true);
     } catch {
       setWishlistToastMsg("Failed to remove product. Please try again.");
+      setWishlistToastActionHref("/dashboard/wishlist");
+      setWishlistToastActionText("VIEW WISHLIST");
       setShowWishlistToast(true);
     }
   };
@@ -169,18 +175,39 @@ export default function WishlistPage() {
                 >
                   <div className="flex flex-col sm:flex-row items-start" style={{ gap: "28px" }}>
                     {/* Product Image — with left breathing room */}
-                    <Link
-                      href={productLink}
-                      className="relative w-[110px] h-[145px] bg-[#141414] shrink-0 overflow-hidden border border-[#262626] group"
-                      style={{ marginLeft: "12px" }}
-                    >
-                      <Image
-                        src={resolvedImage}
-                        alt={resolvedName}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    </Link>
+                    {prod.is_available === false ? (
+                      <div
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setWishlistToastMsg("This product is no longer available in the catalog.");
+                          setWishlistToastActionHref("/shop");
+                          setWishlistToastActionText("RETURN TO SHOP");
+                          setShowWishlistToast(true);
+                        }}
+                        className="relative w-[110px] h-[145px] bg-[#141414] shrink-0 overflow-hidden border border-[#262626] group cursor-pointer"
+                        style={{ marginLeft: "12px" }}
+                      >
+                        <Image
+                          src={resolvedImage}
+                          alt={resolvedName}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      </div>
+                    ) : (
+                      <Link
+                        href={productLink}
+                        className="relative w-[110px] h-[145px] bg-[#141414] shrink-0 overflow-hidden border border-[#262626] group"
+                        style={{ marginLeft: "12px" }}
+                      >
+                        <Image
+                          src={resolvedImage}
+                          alt={resolvedName}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      </Link>
+                    )}
 
                     {/* Details & Controls Column */}
                     <div className="wishlist-details-col flex-1 min-w-0 flex flex-col justify-between self-stretch w-full">
@@ -202,7 +229,23 @@ export default function WishlistPage() {
                           </div>
 
                           <h3 className="text-base font-bold tracking-wide text-white uppercase hover:text-[#D4AF37] transition-colors">
-                            <Link href={productLink}>{resolvedName}</Link>
+                            {prod.is_available === false ? (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setWishlistToastMsg("This product is no longer available in the catalog.");
+                                  setWishlistToastActionHref("/shop");
+                                  setWishlistToastActionText("RETURN TO SHOP");
+                                  setShowWishlistToast(true);
+                                }}
+                                className="uppercase border-none bg-transparent cursor-pointer text-inherit font-inherit p-0 text-left"
+                              >
+                                {resolvedName}
+                              </button>
+                            ) : (
+                              <Link href={productLink}>{resolvedName}</Link>
+                            )}
                           </h3>
                           <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-[#888888] tracking-wider pt-1">
                             {prod.color && !["default", "none", "n/a", "null", "undefined", ""].includes(prod.color.trim().toLowerCase()) && (
@@ -303,7 +346,7 @@ export default function WishlistPage() {
       </div>
 
       <BagToast show={showBagToast} onClose={() => setShowBagToast(false)} message={bagToastMsg} />
-      <WishlistToast show={showWishlistToast} onClose={() => setShowWishlistToast(false)} message={wishlistToastMsg} />
+      <WishlistToast show={showWishlistToast} onClose={() => setShowWishlistToast(false)} message={wishlistToastMsg} actionHref={wishlistToastActionHref} actionText={wishlistToastActionText} />
     </div>
   );
 }

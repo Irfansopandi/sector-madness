@@ -28,7 +28,7 @@ export default function BagToast({ show, onClose, message = "Item successfully r
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 16 }}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="fixed bottom-8 right-8 z-[100000] w-[340px] bg-[#0A0A0A] border-l-4 border-l-[#FFFFFF] border border-[#262626] p-6 shadow-2xl pointer-events-auto"
+          className="fixed z-[100000] bg-[#0A0A0A] border-l-4 border-l-[#FFFFFF] border border-[#262626] p-6 shadow-2xl pointer-events-auto bottom-6 left-4 right-4 sm:left-auto sm:right-8 sm:bottom-8 sm:w-[340px]"
           style={{ fontFamily: "'Inter', -apple-system, sans-serif" }}
         >
           {/* Header */}
