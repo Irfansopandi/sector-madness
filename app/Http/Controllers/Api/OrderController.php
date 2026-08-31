@@ -261,6 +261,7 @@ class OrderController extends Controller
                         'quantity'      => $item->quantity,
                         'price'         => (float)$priceIdr,
                         'subtotal'      => (float)$subtotalIdr,
+                        'package_weight_grams' => $item->product ? $item->product->package_weight_grams : 1000,
                     ];
                 }),
                 'summary'           => [

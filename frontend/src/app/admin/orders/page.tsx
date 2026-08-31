@@ -1786,16 +1786,21 @@ export default function AdminOrdersPage() {
                 {/* Inner Box with padding from the outer container */}
                 <div style={{ border: "2px solid #000000", backgroundColor: "#FFFFFF" }}>
                   {/* 1. Header Section */}
-                  <div
-                    style={{
-                      padding: "16px 20px",
-                      borderBottom: "2px solid #000000",
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      backgroundColor: "#FFFFFF",
-                    }}
-                  >
+                  {(() => {
+                    const printCourierName = printOrder.courier_info?.courier_name || printOrder.courier || "JNE EXPRESS";
+                    const isInstant = printCourierName.toUpperCase().includes('GOSEND') || printCourierName.toUpperCase().includes('GO-SEND') || printCourierName.toUpperCase().includes('GRAB');
+                    return (
+                      <>
+                        <div
+                          style={{
+                            padding: "16px 20px",
+                            borderBottom: "2px solid #000000",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            backgroundColor: "#FFFFFF",
+                          }}
+                        >
                     <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                       <h2
                         style={{
@@ -1834,7 +1839,7 @@ export default function AdminOrdersPage() {
                           fontFamily: "monospace",
                         }}
                       >
-                        {printOrder.courier_info?.courier_name || printOrder.courier || "JNE EXPRESS"}
+                        {printCourierName}
                       </span>
                     </div>
                   </div>
@@ -1875,33 +1880,42 @@ export default function AdminOrdersPage() {
                       {printOrder.courier_info?.tracking_number || printOrder.tracking_number || "BITESHIP-JNE-9234961475"}
                     </span>
                     {/* SVG Vector Barcode Lines Container (Guaranteed 100% Print in PDF & Printers) */}
-                    <div
-                      style={{
-                        margin: "6px 0",
-                        padding: "8px 12px",
-                        backgroundColor: "#FFFFFF",
-                        border: "1px solid #D1D5DB",
-                        borderRadius: "3px",
-                      }}
-                    >
-                      <svg viewBox="0 0 280 44" className="w-full h-11 block">
-                        <rect x="0" y="0" width="280" height="44" fill="#FFFFFF" />
-                        {[
-                          {x: 4, w: 4}, {x: 10, w: 2}, {x: 14, w: 5}, {x: 21, w: 2}, {x: 25, w: 4},
-                          {x: 31, w: 2}, {x: 35, w: 6}, {x: 43, w: 3}, {x: 48, w: 2}, {x: 52, w: 5},
-                          {x: 59, w: 3}, {x: 64, w: 2}, {x: 68, w: 6}, {x: 76, w: 2}, {x: 80, w: 4},
-                          {x: 86, w: 2}, {x: 90, w: 5}, {x: 97, w: 3}, {x: 102, w: 2}, {x: 106, w: 6},
-                          {x: 114, w: 4}, {x: 120, w: 2}, {x: 124, w: 5}, {x: 131, w: 2}, {x: 135, w: 6},
-                          {x: 143, w: 3}, {x: 148, w: 2}, {x: 152, w: 5}, {x: 159, w: 2}, {x: 163, w: 4},
-                          {x: 169, w: 6}, {x: 177, w: 2}, {x: 181, w: 4}, {x: 187, w: 2}, {x: 191, w: 5},
-                          {x: 198, w: 3}, {x: 203, w: 2}, {x: 207, w: 6}, {x: 215, w: 2}, {x: 219, w: 4},
-                          {x: 225, w: 2}, {x: 229, w: 5}, {x: 236, w: 3}, {x: 241, w: 2}, {x: 245, w: 6},
-                          {x: 253, w: 2}, {x: 257, w: 5}, {x: 264, w: 3}, {x: 269, w: 4}
-                        ].map((b, i) => (
-                          <rect key={i} x={b.x} y="2" width={b.w} height="40" fill="#000000" />
-                        ))}
-                      </svg>
-                    </div>
+                    {!isInstant && (
+                      <div
+                        style={{
+                          margin: "6px 0",
+                          padding: "8px 12px",
+                          backgroundColor: "#FFFFFF",
+                          border: "1px solid #D1D5DB",
+                          borderRadius: "3px",
+                        }}
+                      >
+                        <svg viewBox="0 0 280 44" className="w-full h-11 block">
+                          <rect x="0" y="0" width="280" height="44" fill="#FFFFFF" />
+                          {[
+                            {x: 4, w: 4}, {x: 10, w: 2}, {x: 14, w: 5}, {x: 21, w: 2}, {x: 25, w: 4},
+                            {x: 31, w: 2}, {x: 35, w: 6}, {x: 43, w: 3}, {x: 48, w: 2}, {x: 52, w: 5},
+                            {x: 59, w: 3}, {x: 64, w: 2}, {x: 68, w: 6}, {x: 76, w: 2}, {x: 80, w: 4},
+                            {x: 86, w: 2}, {x: 90, w: 5}, {x: 97, w: 3}, {x: 102, w: 2}, {x: 106, w: 6},
+                            {x: 114, w: 4}, {x: 120, w: 2}, {x: 124, w: 5}, {x: 131, w: 2}, {x: 135, w: 6},
+                            {x: 143, w: 3}, {x: 148, w: 2}, {x: 152, w: 5}, {x: 159, w: 2}, {x: 163, w: 4},
+                            {x: 169, w: 6}, {x: 177, w: 2}, {x: 181, w: 4}, {x: 187, w: 2}, {x: 191, w: 5},
+                            {x: 198, w: 3}, {x: 203, w: 2}, {x: 207, w: 6}, {x: 215, w: 2}, {x: 219, w: 4},
+                            {x: 225, w: 2}, {x: 229, w: 5}, {x: 236, w: 3}, {x: 241, w: 2}, {x: 245, w: 6},
+                            {x: 253, w: 2}, {x: 257, w: 5}, {x: 264, w: 3}, {x: 269, w: 4}
+                          ].map((b, i) => (
+                            <rect key={i} x={b.x} y="2" width={b.w} height="40" fill="#000000" />
+                          ))}
+                        </svg>
+                      </div>
+                    )}
+                    {isInstant && (
+                       <div style={{ marginTop: "12px" }}>
+                         <span style={{ fontSize: "12px", fontWeight: "bold", background: "#000", color: "#fff", padding: "4px 8px", borderRadius: "4px", letterSpacing: "2px" }}>
+                           INSTANT DELIVERY
+                         </span>
+                       </div>
+                    )}
                   </div>
 
                   {/* 3. Sender & Receiver Address Grid */}
@@ -1928,13 +1942,13 @@ export default function AdminOrdersPage() {
                         PENGIRIM (SENDER):
                       </span>
                       <p style={{ fontWeight: 800, fontSize: "12px", color: "#000000", margin: 0 }}>
-                        SECTOR MADNESS WAREHOUSE
+                        SECTOR MADNESS
                       </p>
                       <p style={{ fontSize: "10px", lineHeight: "1.5", color: "#1F2937", margin: 0 }}>
-                        Jl. Utama No. 88, Jakarta Selatan, DKI Jakarta 12190
+                        Jl citarum No 51 Adiarsa barat karawang barat, Karawang jawa barat, 41361
                       </p>
                       <p style={{ fontSize: "10px", fontWeight: 600, color: "#1F2937", margin: 0, paddingTop: "2px" }}>
-                        Telp: 0812-3456-7890
+                        Telp: 085946653103
                       </p>
                     </div>
                     {/* Receiver Column */}
@@ -2024,8 +2038,10 @@ export default function AdminOrdersPage() {
                     }}
                   >
                     <span>REF ORDER: {printOrder.order_number}</span>
-                    <span>BITESHIP LOGISTICS INTEGRATION</span>
                   </div>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
             </div>

@@ -371,8 +371,8 @@ function DashboardOverviewContent() {
     const pay = (o.payment_status || "").toLowerCase();
     const ship = (o.shipping_status || "").toLowerCase();
     const stat = (o.status || "").toLowerCase();
-    if (stat === "cancel pending" || ship === "cancel pending" || stat === "cancelled" || ship === "cancelled" || (ship === "pending" && pay === "paid") || (stat === "pending" && pay === "paid")) return false;
-    return (pay === "paid" || pay === "settled" || pay === "success") && (ship === "processing" || ship === "allocated" || ship === "in process" || ship === "" || stat === "processing" || stat === "allocated");
+    if (stat === "cancel pending" || ship === "cancel pending" || stat === "cancelled" || ship === "cancelled") return false;
+    return (pay === "paid" || pay === "settled" || pay === "success") && (ship === "processing" || ship === "allocated" || ship === "in process" || ship === "" || ship === "pending" || stat === "processing" || stat === "allocated" || stat === "pending");
   });
 
   const hasReadyToShipOrder = ordersList.some((o) => {
@@ -540,13 +540,13 @@ function DashboardOverviewContent() {
                   const isPaid = payStatus === "PAID" || payStatus === "SETTLED" || payStatus === "SUCCESS";
 
                   const shipStatus = (order.shipping_status || order.status || "PROCESSING").toUpperCase();
-                  const isCancelPending = shipStatus === "CANCEL PENDING" || shipStatus === "CANCELLATION PENDING" || (shipStatus === "PENDING" && isPaid);
+                  const isCancelPending = shipStatus === "CANCEL PENDING" || shipStatus === "CANCELLATION PENDING";
                   const isCancelled = shipStatus === "CANCELLED" || shipStatus === "DIBATALKAN";
                   const isCompleted = shipStatus === "COMPLETED" || shipStatus === "RECEIVED" || shipStatus === "SELESAI" || shipStatus === "DITERIMA";
                   const isDelivered = shipStatus === "DELIVERED";
                   const isShipped = shipStatus === "SHIPPED" || shipStatus === "IN TRANSIT" || shipStatus === "IN_TRANSIT" || shipStatus === "PACKED" || shipStatus === "READY_TO_SHIP" || shipStatus === "READY TO SHIP" || shipStatus === "READY FOR DISPATCH" || shipStatus === "SIAP KIRIM";
                   const isReady = isShipped;
-                  const isInProcess = !isCancelPending && !isCancelled && (shipStatus === "ALLOCATED" || shipStatus === "PROCESSING" || shipStatus === "IN PROCESS");
+                  const isInProcess = !isCancelPending && !isCancelled && (shipStatus === "ALLOCATED" || shipStatus === "PROCESSING" || shipStatus === "IN PROCESS" || (shipStatus === "PENDING" && isPaid));
                   const displayStatus = isCancelPending ? "CANCEL PENDING" : isCancelled ? "CANCELLED" : isCompleted ? "COMPLETED" : isDelivered ? "DELIVERED" : isShipped ? "READY TO SHIP" : isInProcess ? "IN PROCESS" : shipStatus;
 
                   return (
@@ -707,9 +707,9 @@ function DashboardOverviewContent() {
                       const st = (selectedOrderDetail.shipping_status || "PROCESSING").toUpperCase();
                       const pay = (selectedOrderDetail.payment_info?.payment_status || (selectedOrderDetail as any).payment_status || "").toUpperCase();
                       const isPaid = pay === "PAID" || pay === "SETTLED" || pay === "SUCCESS";
-                      if (st === "CANCEL PENDING" || st === "CANCELLATION PENDING" || (st === "PENDING" && isPaid)) return <span className="text-red-400 font-bold">CANCEL PENDING</span>;
+                      if (st === "CANCEL PENDING" || st === "CANCELLATION PENDING") return <span className="text-red-400 font-bold">CANCEL PENDING</span>;
                       if (st === "CANCELLED" || st === "DIBATALKAN") return <span className="text-red-500 font-bold">CANCELLED</span>;
-                      if (st === "ALLOCATED" || st === "PROCESSING" || st === "IN PROCESS") return "IN PROCESS";
+                      if (st === "ALLOCATED" || st === "PROCESSING" || st === "IN PROCESS" || (st === "PENDING" && isPaid)) return "IN PROCESS";
                       if (st === "PACKED" || st === "READY_TO_SHIP" || st === "READY TO SHIP" || st === "READY FOR DISPATCH" || st === "SIAP KIRIM" || st === "SHIPPED" || st === "IN TRANSIT") return <span className="text-sky-400 font-bold">READY TO SHIP</span>;
                       if (st === "DELIVERED") return <span className="text-emerald-400 font-bold">DELIVERED</span>;
                       if (st === "COMPLETED" || st === "RECEIVED") return <span className="text-emerald-500 font-bold">COMPLETED</span>;
@@ -725,7 +725,7 @@ function DashboardOverviewContent() {
                       const st = (selectedOrderDetail.shipping_status || "PROCESSING").toUpperCase();
                       const pay = (selectedOrderDetail.payment_info?.payment_status || (selectedOrderDetail as any).payment_status || "").toUpperCase();
                       const isPaid = pay === "PAID" || pay === "SETTLED" || pay === "SUCCESS";
-                      if (st === "CANCELLED" || st === "DIBATALKAN" || !isPaid || st === "PENDING" || st === "UNPAID" || st === "PENDING PAYMENT") return "-";
+                      if (st === "CANCELLED" || st === "DIBATALKAN" || !isPaid || (st === "PENDING" && !isPaid) || st === "UNPAID" || st === "PENDING PAYMENT") return "-";
                       if (st === "CANCEL PENDING" || st === "CANCELLATION PENDING") return "ON HOLD";
                       return selectedOrderDetail.courier_info?.courier_name || (selectedOrderDetail as any).courier || "JNE EXPRESS";
                     })()}
@@ -738,7 +738,7 @@ function DashboardOverviewContent() {
                       const st = (selectedOrderDetail.shipping_status || "PROCESSING").toUpperCase();
                       const pay = (selectedOrderDetail.payment_info?.payment_status || (selectedOrderDetail as any).payment_status || "").toUpperCase();
                       const isPaid = pay === "PAID" || pay === "SETTLED" || pay === "SUCCESS";
-                      if (!isPaid || st === "CANCEL PENDING" || st === "CANCELLATION PENDING" || st === "CANCELLED" || st === "DIBATALKAN" || st === "PENDING" || st === "UNPAID" || st === "PENDING PAYMENT") return "-";
+                      if (!isPaid || st === "CANCEL PENDING" || st === "CANCELLATION PENDING" || st === "CANCELLED" || st === "DIBATALKAN" || (st === "PENDING" && !isPaid) || st === "UNPAID" || st === "PENDING PAYMENT") return "-";
                       return selectedOrderDetail.courier_info?.tracking_number || (selectedOrderDetail as any).tracking_number || "PENDING ALLOCATION";
                     })()}
                   </span>
@@ -809,7 +809,7 @@ function DashboardOverviewContent() {
                   const isUnpaid = payStatus === "UNPAID" || (payStatus === "PENDING" && !isPaid) || payStatus === "AWAITING_PAYMENT";
                   const st = (selectedOrderDetail.shipping_status || "PROCESSING").toUpperCase();
                   const isCancelled = st === "CANCELLED" || st === "DIBATALKAN";
-                  const isCancelPending = st === "CANCEL PENDING" || st === "CANCELLATION PENDING" || (st === "PENDING" && isPaid);
+                  const isCancelPending = st === "CANCEL PENDING" || st === "CANCELLATION PENDING";
                   const isInProcessOrPending =
                     !isCancelPending && !isCancelled && (st === "IN PROCESS" || st === "PROCESSING" || st === "ALLOCATED" ||
                     st === "PENDING" || st === "PENDING PAYMENT" || st === "UNPAID");
@@ -896,7 +896,6 @@ function DashboardOverviewContent() {
               </button>
 
               <div style={{ paddingBottom: "20px" }} className="border-b border-white/[0.08] text-left">
-                <span style={{ marginBottom: "8px" }} className="text-[10px] font-mono text-[#B6A47E] uppercase tracking-widest block font-bold">[BITESHIP LOGISTICS INTEGRATION]</span>
                 <h3 className="text-xl md:text-2xl font-black uppercase tracking-wider text-[#F5F5F5] font-serif mt-1">SHIPMENT TRACKING</h3>
                 <p className="text-xs font-mono text-[#8A8A8A] mt-2">TRACKING NO: {trackingResi}</p>
               </div>

@@ -193,6 +193,14 @@ class PaymentController extends Controller
         if ($status === 'paid') {
             $order->update(['status' => 'paid']);
 
+            // Create a dummy Biteship Tracking Number if it doesn't exist
+            if ($order->shipment && empty($order->shipment->tracking_number)) {
+                $courier = strtoupper($order->shipment->courier_company ?? 'JNT');
+                $order->shipment->update([
+                    'tracking_number' => $courier . '-' . time()
+                ]);
+            }
+
             // Admin Notifications
             try {
                 $admins = \App\Models\Admin::all();

@@ -21,6 +21,7 @@ class Product extends Model
         'description',
         'material',
         'weight',
+        'package_weight_grams',
         'price',
         'original_price',
         'discount_percentage',

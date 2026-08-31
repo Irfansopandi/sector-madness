@@ -1672,13 +1672,13 @@ export default function AdminDashboardPage() {
                         PENGIRIM (SENDER):
                       </span>
                       <p style={{ fontWeight: 800, fontSize: "12px", color: "#000000", margin: 0 }}>
-                        SECTOR MADNESS WAREHOUSE
+                        SECTOR MADNESS
                       </p>
                       <p style={{ fontSize: "10px", lineHeight: "1.5", color: "#1F2937", margin: 0 }}>
-                        Jl. Utama No. 88, Jakarta Selatan, DKI Jakarta 12190
+                        Jl citarum No 51 Adiarsa barat karawang barat, Karawang jawa barat, 41361
                       </p>
                       <p style={{ fontSize: "10px", fontWeight: 600, color: "#1F2937", margin: 0, paddingTop: "2px" }}>
-                        Telp: 0812-3456-7890
+                        Telp: 085946653103
                       </p>
                     </div>
                     {/* Receiver Column */}
@@ -1768,7 +1768,6 @@ export default function AdminDashboardPage() {
                     }}
                   >
                     <span>REF ORDER: {printOrder.order_number}</span>
-                    <span>BITESHIP LOGISTICS INTEGRATION</span>
                   </div>
                 </div>
               </div>

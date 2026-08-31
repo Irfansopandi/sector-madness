@@ -33,27 +33,7 @@ declare global {
   }
 }
 
-// Built-in authentic shipping options matching reference design & logistics fallback (JNE & J&T Only)
-const DEFAULT_SHIPPING_OPTIONS: ShippingRate[] = [
-  {
-    courier_code: "jne",
-    courier_name: "JNE EXPRESS",
-    service_code: "REG",
-    service_name: "REGULER LOGISTICS (INTERNATIONAL / DOMESTIC)",
-    shipping_price: 15000,
-    estimated_delivery: "2 - 3 Days",
-    description: "Standard tracked express delivery via Biteship Integrated Network",
-  },
-  {
-    courier_code: "jnt",
-    courier_name: "J&T EXPRESS",
-    service_code: "EZ",
-    service_name: "REGULAR & VIP EXPRESS LOGISTICS",
-    shipping_price: 18000,
-    estimated_delivery: "1 - 2 Days",
-    description: "Priority expedited dispatch via Biteship Live Network",
-  },
-];
+
 
 // Comprehensive nationwide Indonesian location & real-time postal code directory (150+ districts & regions)
 import { INDONESIA_LOCATION_DIRECTORY, getRealtimePostalCode, getRealtimeProvince } from '@/utils/location';
@@ -407,29 +387,50 @@ function CheckoutContent() {
   /* ====================================================
      4. SHIPPING RATES OPTION (JNE & J&T ONLY, DYNAMIC TO ADDRESS)
   ==================================================== */
+  const totalWeightGrams = useMemo(() => {
+    let weight = 0;
+    const items = existingOrder ? (existingOrder.products || (existingOrder as any).items) : (cartData?.items || []);
+    items?.forEach((item: any) => {
+       const w = item.product?.package_weight_grams ? Number(item.product.package_weight_grams) : (item.package_weight_grams ? Number(item.package_weight_grams) : 1000);
+       const qty = Number(item.quantity) || 1;
+       weight += (w * qty);
+    });
+    return weight > 0 ? weight : 1000;
+  }, [cartData, existingOrder]);
+
   const { data: apiRates = [], isLoading: isRatesLoading } = useQuery({
-    queryKey: ["shipping-rates", selectedAreaId, addressLine2, city, stateProvince, postalCode],
-    queryFn: () => getShippingRates({ destination_area_id: selectedAreaId, destination_postcode: postalCode, couriers: "jne,jnt", city, province: stateProvince, district: addressLine2 } as any),
+    queryKey: ["shipping-rates", selectedAreaId, addressLine2, city, stateProvince, postalCode, totalWeightGrams],
+    queryFn: () => getShippingRates({ destination_area_id: selectedAreaId, destination_postcode: postalCode, couriers: "jne,jnt,gosend", city, province: stateProvince, district: addressLine2, weight: totalWeightGrams } as any),
   });
 
   const displayShippingOptions = useMemo<ShippingRate[]>(() => {
     return apiRates || [];
   }, [apiRates]);
 
-  const [selectedRate, setSelectedRate] = useState<ShippingRate>(DEFAULT_SHIPPING_OPTIONS[0]);
+  const [selectedRate, setSelectedRate] = useState<ShippingRate | null>(null);
 
   useEffect(() => {
     if (displayShippingOptions.length > 0) {
       const currentSelected = displayShippingOptions.find((r) => r.courier_code === selectedRate?.courier_code);
       if (currentSelected) {
-        if (currentSelected.shipping_price !== selectedRate.shipping_price || currentSelected.service_code !== selectedRate.service_code) {
+        if (currentSelected.shipping_price !== selectedRate?.shipping_price || currentSelected.service_code !== selectedRate?.service_code) {
           setSelectedRate(currentSelected);
         }
       } else {
+        // Match existing order rate
+        if (existingOrder && !selectedRate) {
+           const match = displayShippingOptions.find(r => r.courier_code === existingOrder.courier_info?.courier_code && r.service_code === existingOrder.courier_info?.service_code);
+           if (match) {
+              setSelectedRate(match);
+              return;
+           }
+        }
         setSelectedRate(displayShippingOptions[0]);
       }
+    } else {
+      setSelectedRate(null);
     }
-  }, [displayShippingOptions, selectedRate?.courier_code, selectedRate?.shipping_price, selectedRate?.service_code]);
+  }, [displayShippingOptions, selectedRate?.courier_code, selectedRate?.shipping_price, selectedRate?.service_code, existingOrder]);
 
   /* ====================================================
      5. PAYMENT METHOD & TERMS (CATEGORY DIVIDED, NO LOGOS, DROPDOWNS)
@@ -459,7 +460,7 @@ function CheckoutContent() {
   const displayItems = existingOrder?.products || (existingOrder as any)?.items || cartData?.items;
   const isItemsLoading = !isMounted || isCartLoading || isExistingOrderLoading;
   const subtotal = existingOrder?.summary?.subtotal || (existingOrder as any)?.total || cartData?.subtotal || 0;
-  const shippingCost = existingOrder?.summary?.shipping !== undefined ? existingOrder.summary.shipping : (selectedRate?.shipping_price || 0);
+  const shippingCost = selectedRate?.shipping_price || 0;
 
   const handleApplyPromo = async () => {
     if (!promoInput.trim() || isCheckingPromo) return;
@@ -542,6 +543,7 @@ function CheckoutContent() {
         grossAmount: grandTotal,
         receiverName: fullNameCombined,
         vaNumber: existingOrder?.payment_info?.snap_token,
+        shipping_rate: selectedRate,
       });
       setCustomModalOpen(true);
       return;
@@ -559,12 +561,12 @@ function CheckoutContent() {
         province: stateProvince,
         city: city,
         postal_code: postalCode,
-        courier_code: selectedRate.courier_code || "jne",
-        courier_name: selectedRate.courier_name || "JNE",
-        service_code: selectedRate.service_code || "REG",
-        service_name: selectedRate.service_name || "Regular Express",
-        shipping_price: selectedRate.shipping_price,
-        estimated_delivery: selectedRate.estimated_delivery,
+        courier_code: selectedRate?.courier_code || "jne",
+        courier_name: selectedRate?.courier_name || "JNE",
+        service_code: selectedRate?.service_code || "REG",
+        service_name: selectedRate?.service_name || "Regular Express",
+        shipping_price: selectedRate?.shipping_price || 0,
+        estimated_delivery: selectedRate?.estimated_delivery || "N/A",
         payment_method: selectedPaymentMethod,
       });
 
@@ -1143,7 +1145,15 @@ function CheckoutContent() {
                 </h2>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: "20px" }} className="font-mono">
-                  {displayShippingOptions.map((rate, index) => {
+                  {displayShippingOptions.length === 0 && (
+                    <div style={{ padding: "26px 28px", backgroundColor: "#121212", border: "1px solid #FF3333" }} className="text-center">
+                      <p className="text-[#FF3333] text-sm font-bold tracking-wider uppercase mb-2">SHIPPING RATES UNAVAILABLE</p>
+                      <p className="text-[#888888] text-xs">We couldn't retrieve real-time shipping rates for this destination. Please check your address or contact support.</p>
+                    </div>
+                  )}
+                  {displayShippingOptions
+                    .filter(rate => existingOrder ? rate.courier_code === selectedRate?.courier_code && rate.service_code === selectedRate?.service_code : true)
+                    .map((rate, index) => {
                     const isSelected = selectedRate?.service_code === rate.service_code;
                     return (
                       <div
@@ -1450,7 +1460,6 @@ function CheckoutContent() {
                                   { id: "mandiri_va", name: "MANDIRI — VIRTUAL ACCOUNT" },
                                   { id: "bri_va", name: "BRI — VIRTUAL ACCOUNT" },
                                   { id: "bni_va", name: "BNI — VIRTUAL ACCOUNT" },
-                                  { id: "permata_va", name: "PERMATA — VIRTUAL ACCOUNT" },
                                 ].map((item) => {
                                   const isSubSelected = selectedPaymentMethod === item.id;
                                   return (
@@ -1509,67 +1518,10 @@ function CheckoutContent() {
                             E-WALLET / INSTANT PAYMENT
                           </span>
                           <span className="text-[11px] text-[#777777] uppercase tracking-wider block">
-                            QRIS, GOPAY, OVO, DANA, SHOPEEPAY
+                            QRIS
                           </span>
                         </div>
                       </div>
-
-                      {/* Circular Button Sub-options for E-Wallet / Instant Payment with Smooth Expand Animation */}
-                      <AnimatePresence>
-                        {paymentCategory === "ewallet" && (
-                          <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                            exit={{ opacity: 0, height: 0 }}
-                            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                            className="overflow-hidden"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <div style={{ marginTop: "22px", paddingTop: "20px", borderTop: "1px solid #242424" }}>
-                              <label className="text-[11px] text-[#999999] tracking-[0.18em] uppercase block mb-3 font-bold">
-                                SELECT E-WALLET / SCAN METHOD :
-                              </label>
-
-                              <div className="space-y-2.5 font-mono">
-                                {[
-                                  { id: "qris", name: "QRIS — INSTANT UNIVERSAL SCAN" },
-                                  { id: "gopay", name: "GOPAY — GO-JEK INSTANT CHECKOUT" },
-                                  { id: "dana", name: "DANA — DIGITAL WALLET PROTOCOL" },
-                                  { id: "ovo", name: "OVO — INSTANT NOTIFICATION PAY" },
-                                  { id: "shopeepay", name: "SHOPEEPAY — EXPRESS WALLET" },
-                                ].map((item) => {
-                                  const isSubSelected = selectedPaymentMethod === item.id;
-                                  return (
-                                    <div
-                                      key={item.id}
-                                      onClick={() => setSelectedPaymentMethod(item.id)}
-                                      style={{ padding: "14px 18px" }}
-                                      className={`border transition-all cursor-pointer flex items-center gap-3.5 ${
-                                        isSubSelected
-                                          ? "bg-[#1C1C1C] border-white shadow-sm"
-                                          : "bg-[#090909] border-[#222222] hover:border-[#383838]"
-                                      }`}
-                                    >
-                                      {/* Circular Radio Button */}
-                                      <div
-                                        className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
-                                          isSubSelected ? "border-white bg-white/20" : "border-[#555555] bg-[#121212]"
-                                        }`}
-                                      >
-                                        {isSubSelected && <div className="w-2 h-2 rounded-full bg-white" />}
-                                      </div>
-
-                                      <span className="text-[12px] font-bold text-white uppercase tracking-wider block">
-                                        {item.name}
-                                      </span>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
                     </div>
 
                   </div>

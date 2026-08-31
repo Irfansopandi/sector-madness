@@ -96,6 +96,7 @@ export default function AdminProductsPage() {
   const [formStock, setFormStock] = useState<number | "">(10);
   const [formMaterial, setFormMaterial] = useState("");
   const [formWeight, setFormWeight] = useState("");
+  const [formPackageWeightGrams, setFormPackageWeightGrams] = useState<number | "">("");
   const [formDetails, setFormDetails] = useState("");
   const [sizeGuideRows, setSizeGuideRows] = useState<SizeGuideRow[]>([
     { size: "S", chest: "90 - 95", waist: "75 - 80" },
@@ -677,6 +678,7 @@ export default function AdminProductsPage() {
     setFormStock(10);
     setFormMaterial("");
     setFormWeight("");
+    setFormPackageWeightGrams("");
     setFormDetails("");
     setSizeGuideRows([]);
     setFormStory("");
@@ -722,6 +724,7 @@ export default function AdminProductsPage() {
     setFormStock(product.stock ?? 10);
     setFormMaterial(product.material || "");
     setFormWeight(product.weight || "");
+    setFormPackageWeightGrams(product.package_weight_grams || "");
     setFormDetails(formatDetailsText(product.details));
     setSizeGuideRows(parseSizeGuideRows(product.size_guide));
     setFormStory(product.story || "");
@@ -836,6 +839,7 @@ export default function AdminProductsPage() {
         collection_code: formCollectionCode.trim() || formCollection.trim() || undefined,
         material: formMaterial.trim() || undefined,
         weight: formWeight.trim() || undefined,
+        package_weight_grams: formPackageWeightGrams !== "" ? Number(formPackageWeightGrams) : undefined,
         details: formDetails.trim()
           ? formDetails.split("\n").map((s) => s.trim()).filter(Boolean)
           : undefined,
@@ -1881,7 +1885,7 @@ export default function AdminProductsPage() {
               </div>
 
               {/* Material & Weight Row */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px" }}>
                 <div>
                   <label style={labelStyle}>BAHAN / MATERIAL (OPSIONAL)</label>
                   <textarea
@@ -1901,6 +1905,18 @@ export default function AdminProductsPage() {
                     value={formWeight}
                     onChange={(e) => setFormWeight(e.target.value)}
                     style={getInputStyle(false)}
+                  />
+                </div>
+
+                <div>
+                  <label style={labelStyle}>PACKAGE WEIGHT (GRAMS) <span style={{ color: "#E53E3E" }}>*</span></label>
+                  <input
+                    type="number"
+                    min="1"
+                    placeholder="misal: 250"
+                    value={formPackageWeightGrams}
+                    onChange={(e) => setFormPackageWeightGrams(e.target.value ? Number(e.target.value) : "")}
+                    style={getInputStyle(!formPackageWeightGrams)}
                   />
                 </div>
               </div>

@@ -1270,6 +1270,7 @@ export interface AdminProduct {
   description?: string;
   material?: string;
   weight?: string;
+  package_weight_grams?: number;
   details?: string[] | string;
   size_guide?: any;
   story?: string;

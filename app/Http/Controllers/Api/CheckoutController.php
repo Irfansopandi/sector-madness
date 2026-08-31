@@ -487,13 +487,21 @@ class CheckoutController extends Controller
 
         // --- SERVER-SIDE SHIPPING RATE RECALCULATION & VALIDATION ---
         // DO NOT trust $request->shipping_price from frontend!
+        $totalWeightGrams = 0;
+        foreach ($cart->items as $item) {
+            $w = $item->product ? (int)($item->product->package_weight_grams) : 0;
+            if ($w <= 0) $w = 1000;
+            $totalWeightGrams += ($w * $item->quantity);
+        }
+        if ($totalWeightGrams <= 0) $totalWeightGrams = 1000;
+
         $shippingRequest = new \Illuminate\Http\Request();
         $shippingRequest->replace([
             'city' => $shippingAddressData['city'] ?? null,
             'province' => $shippingAddressData['province'] ?? null,
             'district' => $shippingAddressData['district'] ?? null,
             'destination_postcode' => $shippingAddressData['postal_code'] ?? null,
-            'weight' => 1500, // Matching the default in ShippingController
+            'weight' => $totalWeightGrams,
             'couriers' => strtolower($request->courier_code),
         ]);
 
@@ -778,6 +786,14 @@ class CheckoutController extends Controller
                         $order->payment->update(['payment_status' => 'paid']);
                     }
 
+                    // Create a dummy Biteship Tracking Number if it doesn't exist
+                    if ($order->shipment && empty($order->shipment->tracking_number)) {
+                        $courier = strtoupper($order->shipment->courier_company ?? 'JNT');
+                        $order->shipment->update([
+                            'tracking_number' => $courier . '-' . time()
+                        ]);
+                    }
+
                     if ($isFirstTime) {
                         // Kurangi stok produk & variant SETELAH pembayaran dikonfirmasi
                         foreach ($order->items as $item) {
@@ -812,13 +828,6 @@ class CheckoutController extends Controller
                         } catch (\Exception $e) {
                             \Illuminate\Support\Facades\Log::error('Admin Notification Failed on checkPaymentStatus: ' . $e->getMessage());
                         }
-                    }
-
-                    // Otomatis buat pengiriman & resi lacak Biteship
-                    try {
-                        app(\App\Http\Controllers\Api\ShippingController::class)->createShipment($order->order_number);
-                    } catch (\Exception $ex) {
-                        \Illuminate\Support\Facades\Log::error('Auto Biteship Shipment Creation Error: ' . $ex->getMessage());
                     }
 
                     return response()->json(['status' => true, 'is_paid' => true, 'transaction_status' => $transactionStatus]);
