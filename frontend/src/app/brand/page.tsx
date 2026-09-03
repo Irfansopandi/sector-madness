@@ -95,12 +95,12 @@ export default function BrandPage() {
                 }}
                 className="text-[#FFFFFF] mb-6 tracking-tight"
               >
-                Sector Madness was born from experience, memories, and a passion for creating something meaningful.
+                Sector Madness was born in <i className="font-serif">Karawang, Indonesia</i>, from experience, memories, and a passion for creating something meaningful.
               </p>
               
               <div className="space-y-6 lg:space-y-8 max-w-2xl text-justify md:text-left">
                 <p className="text-[15px] lg:text-[17.5px] leading-[1.7] lg:leading-[1.85] font-light text-[#A3A3A3]">
-                  The name Sector was inspired by Sector Tiga, a place that holds a special meaning in the founder&apos;s journey. Madness represents the courage to think differently, explore without limits, and create with purpose.
+                  The name <i className="font-serif text-[#F5F5F5]">Sector</i> was inspired by Sector Tiga, a place that holds a special meaning in the founder&apos;s journey. <i className="font-serif text-[#F5F5F5]">Madness</i> represents the courage to think differently, explore without limits, and create with purpose.
                 </p>
 
                 <p className="text-[15px] lg:text-[17.5px] leading-[1.7] lg:leading-[1.85] font-light text-[#A3A3A3]">

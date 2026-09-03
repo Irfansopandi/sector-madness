@@ -10,6 +10,7 @@ import {
   updateAdminHeroBanner,
   deleteAdminHeroBanner,
   uploadAdminImage,
+  getAdminProducts,
   AdminHeroBanner,
 } from "@/utils/api";
 import { Image as ImageIcon, Plus, X, Pencil, Trash2, Upload, Loader2, Info } from "lucide-react";
@@ -108,9 +109,18 @@ export default function AdminHeroBannersPage() {
   const [formImagePreview, setFormImagePreview] = useState("");
   const [formSortOrder, setFormSortOrder] = useState<number>(1);
   const [formIsActive, setFormIsActive] = useState<boolean>(true);
+  const [formTitle, setFormTitle] = useState("");
+  const [formDescription, setFormDescription] = useState("");
+  const [formLinkUrl, setFormLinkUrl] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const { data: productsData } = useQuery({
+    queryKey: ["adminProducts"],
+    queryFn: getAdminProducts,
+  });
+  const products = productsData || [];
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -241,6 +251,9 @@ export default function AdminHeroBannersPage() {
     setFormImagePreview("");
     setFormSortOrder(nextAvailable);
     setFormIsActive(true);
+    setFormTitle("");
+    setFormDescription("");
+    setFormLinkUrl("");
   };
 
   const openEditModal = (banner: AdminHeroBanner) => {
@@ -252,6 +265,9 @@ export default function AdminHeroBannersPage() {
     setFormImagePreview(banner.image_path ? `http://brand.test${banner.image_path}` : "");
     setFormSortOrder(banner.sort_order ?? 1);
     setFormIsActive(banner.is_active ?? true);
+    setFormTitle(banner.title || "");
+    setFormDescription(banner.description || "");
+    setFormLinkUrl(banner.link_url || "");
   };
 
   const closeModal = () => {
@@ -279,6 +295,9 @@ export default function AdminHeroBannersPage() {
         image_path: finalImagePath,
         sort_order: formSortOrder,
         is_active: formIsActive,
+        title: formTitle,
+        description: formDescription,
+        link_url: formLinkUrl,
       };
 
       if (modalMode === "add") {
@@ -424,7 +443,7 @@ export default function AdminHeroBannersPage() {
                 >
                   <tr>
                     <th style={{ padding: "18px 24px" }} className="font-bold">SORT ORDER</th>
-                    <th style={{ padding: "18px 24px" }} className="font-bold">IMAGE PATH</th>
+                    <th style={{ padding: "18px 24px" }} className="font-bold">BANNER INFO</th>
                     <th style={{ padding: "18px 24px" }} className="font-bold">STATUS</th>
                     <th style={{ padding: "18px 24px" }} className="font-bold text-right">ACTIONS</th>
                   </tr>
@@ -471,11 +490,15 @@ export default function AdminHeroBannersPage() {
                         </td>
                         <td
                           style={{ padding: "20px 24px" }}
-                          className={`font-mono ${
+                          className={`font-sans ${
                             isDarkMode ? "text-[#F5F5F5]" : "text-[#111827]"
                           }`}
                         >
-                          {banner.image_path}
+                          <div className="flex flex-col gap-1">
+                            <span className="font-bold text-[13px]">{banner.title || "(Tanpa Judul)"}</span>
+                            <span className="text-[11px] opacity-70 truncate max-w-[200px]" title={banner.description}>{banner.description || "(Tanpa Deskripsi)"}</span>
+                            <span className="text-[10px] text-[#B6A47E] mt-1 font-mono tracking-wider">{banner.link_url || "/shop"}</span>
+                          </div>
                         </td>
                         <td style={{ padding: "20px 24px" }}>
                           <span
@@ -879,6 +902,49 @@ export default function AdminHeroBannersPage() {
                     * Pilih nomor urutan 1 sampai 5 (setiap nomor hanya bisa dipakai 1 banner).
                   </p>
                 )}
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px", paddingTop: "8px" }}>
+                <label style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: isDarkMode ? "#CCCCCC" : "#374151" }}>JUDUL BANNER (OPSIONAL)</label>
+                <input
+                  type="text"
+                  value={formTitle}
+                  onChange={(e) => setFormTitle(e.target.value)}
+                  placeholder="Contoh: Essential Outerwear"
+                  style={{ width: "100%", height: "44px", padding: "0 12px", fontSize: "13px", outline: "none", backgroundColor: isDarkMode ? "#121214" : "#ffffff", border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #D1D5DB", borderRadius: "6px", color: isDarkMode ? "#ffffff" : "#000000" }}
+                />
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px", paddingTop: "4px" }}>
+                <label style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: isDarkMode ? "#CCCCCC" : "#374151" }}>DESKRIPSI SINGKAT (OPSIONAL)</label>
+                <textarea
+                  value={formDescription}
+                  onChange={(e) => setFormDescription(e.target.value)}
+                  placeholder="Contoh: Koleksi terbaru untuk cuaca dingin..."
+                  rows={3}
+                  style={{ width: "100%", padding: "12px", fontSize: "13px", outline: "none", backgroundColor: isDarkMode ? "#121214" : "#ffffff", border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #D1D5DB", borderRadius: "6px", color: isDarkMode ? "#ffffff" : "#000000", resize: "none" }}
+                />
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px", paddingTop: "4px" }}>
+                <label style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: isDarkMode ? "#CCCCCC" : "#374151" }}>TAUTAN TOMBOL SHOP (PILIH PRODUK)</label>
+                <select
+                  value={formLinkUrl}
+                  onChange={(e) => setFormLinkUrl(e.target.value)}
+                  style={{ width: "100%", height: "44px", padding: "0 12px", fontSize: "13px", outline: "none", backgroundColor: isDarkMode ? "#121214" : "#ffffff", border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid #D1D5DB", borderRadius: "6px", color: isDarkMode ? "#ffffff" : "#000000" }}
+                >
+                  <option value="">-- Ke Halaman Shop Utama --</option>
+                  {products.map((p) => {
+                    const url = `/product/${p.slug}`;
+                    const isUsed = banners.some((b) => b.link_url === url && b.id !== selectedBanner?.id);
+                    return (
+                      <option key={p.id} value={url} disabled={isUsed}>
+                        {p.name} {isUsed ? "(Sudah Dipakai)" : ""}
+                      </option>
+                    );
+                  })}
+                </select>
+                <p style={{ fontSize: "10px", fontWeight: 600, color: isDarkMode ? "#8A8A8A" : "#6B7280", marginTop: "2px" }}>
+                  * Jika dikosongkan, tombol akan mengarah ke halaman utama katalog (Shop).
+                </p>
               </div>
 
               <div style={{ display: "flex", alignItems: "center", gap: "10px", paddingTop: "8px" }}>

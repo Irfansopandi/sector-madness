@@ -329,6 +329,22 @@ export default function ShippingPage() {
                     Shipping via J&amp;T. Delivery time depends on the destination.
                   </p>
                 </div>
+
+                {/* GOSEND WITH ARROW */}
+                <div className="border-b border-[#222222] pb-6">
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-[#B6A47E] font-sans text-lg select-none">
+                      →
+                    </span>
+                    <h3 className="text-[#FFFFFF] text-xl font-bold tracking-wider uppercase">
+                      GOSEND / GOJEK
+                    </h3>
+                  </div>
+                  <p className="text-[14px] md:text-[15px] text-[#A0A0A0] font-light leading-relaxed pl-7">
+                    Instant & Same Day delivery services. <br />
+                    <span className="text-[#B6A47E] font-semibold">Note: Only available for delivery within Kabupaten Karawang.</span>
+                  </p>
+                </div>
               </div>
             </motion.div>
           </div>

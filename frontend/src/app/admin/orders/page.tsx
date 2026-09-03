@@ -12,6 +12,7 @@ import {
   getOrderDetail,
   OrderDetailData,
   getImageUrl,
+  createBiteshipShipment,
 } from "@/utils/api";
 import { PackageCheck, ArrowRight, X, Search, Filter, Eye, Truck, Printer, Clock, CheckCircle2, XCircle, AlertCircle, Loader2 } from "lucide-react";
 import Swal from "sweetalert2";
@@ -234,11 +235,35 @@ export default function AdminOrdersPage() {
     },
   });
 
+  const createBiteshipMut = useMutation({
+    mutationFn: (orderNumber: string) => createBiteshipShipment(orderNumber),
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+      Swal.fire({
+        icon: "success",
+        title: "Pickup Requested!",
+        text: data.message || "Biteship courier has been requested successfully.",
+        background: isDarkMode ? "#141414" : "#ffffff",
+        color: isDarkMode ? "#F5F5F5" : "#000000",
+      });
+      setSelectedOrderDetail(null);
+    },
+    onError: (err: any) => {
+      Swal.fire({
+        icon: "error",
+        title: "Request Failed",
+        text: err.response?.data?.message || "Failed to create Biteship shipment",
+        background: isDarkMode ? "#141414" : "#ffffff",
+        color: isDarkMode ? "#F5F5F5" : "#000000",
+      });
+    }
+  });
+
   const openUpdateModal = (ord: AdminOrder) => {
     setSelectedOrder(ord);
     const rawSt = (ord.shipping_status || "IN PROCESSING").toUpperCase();
     const mappedStatus =
-      rawSt === "ALLOCATED" || rawSt === "IN PROCESS" || rawSt === "PENDING" || rawSt === "PROCESSING"
+      rawSt === "ALLOCATED" || rawSt === "IN PROCESS" || rawSt === "PROCESSING"
         ? "IN PROCESSING"
         : rawSt;
     setShippingStatus(mappedStatus);
@@ -359,7 +384,7 @@ export default function AdminOrdersPage() {
 
     const rawSt = (ord.shipping_status || "IN PROCESSING").toUpperCase();
     const mappedStatus =
-      rawSt === "ALLOCATED" || rawSt === "IN PROCESS" || rawSt === "PENDING" || rawSt === "PROCESSING"
+      rawSt === "ALLOCATED" || rawSt === "IN PROCESS" || rawSt === "PROCESSING"
         ? "IN PROCESSING"
         : rawSt;
 
@@ -777,10 +802,14 @@ export default function AdminOrdersPage() {
                         <td style={{ padding: "14px 16px" }} className="whitespace-nowrap">
                           {(() => {
                             const rawSt = (ord.shipping_status || "IN PROCESSING").toUpperCase();
-                            const statusLabel =
-                              rawSt === "ALLOCATED" || rawSt === "IN PROCESS" || rawSt === "PENDING"
+                            const rawPaymentSt = (ord.payment_status || "PAID").toUpperCase();
+                            const isUnpaid = rawPaymentSt === "UNPAID" || rawPaymentSt === "PENDING";
+                            
+                            const statusLabel = isUnpaid 
+                              ? "PENDING"
+                              : (rawSt === "ALLOCATED" || rawSt === "IN PROCESS" || rawSt === "PROCESSING"
                                 ? "IN PROCESSING"
-                                : rawSt;
+                                : rawSt);
 
                             let textColor = isDarkMode ? "text-amber-300" : "text-amber-800";
 
@@ -826,6 +855,8 @@ export default function AdminOrdersPage() {
                           {(() => {
                             const isCancelledRow = checkIsOrderCancelled(ord);
                             const isCompletedRow = checkIsOrderFinished(ord);
+                            const rawPaymentStatusRow = (ord.payment_status || "PAID").toUpperCase();
+                            const isUnpaidRow = rawPaymentStatusRow === "UNPAID" || rawPaymentStatusRow === "PENDING";
                             return (
                               <div className="flex items-center justify-end gap-1.5">
                                 <button
@@ -841,7 +872,7 @@ export default function AdminOrdersPage() {
                                 >
                                   <Eye className="w-3.5 h-3.5" />
                                 </button>
-                                {!isCancelledRow && !isCompletedRow && (
+                                {!isCancelledRow && !isCompletedRow && !isUnpaidRow && (
                                   <button
                                     type="button"
                                     onClick={() => openUpdateModal(ord)}
@@ -856,7 +887,7 @@ export default function AdminOrdersPage() {
                                     <Truck className="w-3.5 h-3.5" />
                                   </button>
                                 )}
-                                {!isCancelledRow && !isCompletedRow && (
+                                {!isCancelledRow && !isCompletedRow && !isUnpaidRow && (
                                   <button
                                     type="button"
                                     onClick={() => handlePrintLabel(ord.order_number, ord)}
@@ -1641,6 +1672,8 @@ export default function AdminOrdersPage() {
               const discountVal = selectedOrderDetail.summary?.discount || 0;
               const isCancelledDetail = checkIsOrderCancelled(selectedOrderDetail);
               const isCompletedDetail = checkIsOrderFinished(selectedOrderDetail);
+              const rawPaymentStatus = (selectedOrderDetail.payment_info?.payment_status || (selectedOrderDetail as any).payment_status || "").toUpperCase();
+              const isUnpaid = rawPaymentStatus === "UNPAID" || rawPaymentStatus === "PENDING";
 
               return (
                 <div style={{ paddingTop: "24px" }} className="border-t border-white/[0.1] flex flex-col gap-4 font-mono text-xs">
@@ -1668,18 +1701,46 @@ export default function AdminOrdersPage() {
                   </div>
 
                   <div className="flex justify-end items-center gap-3 pt-2">
-                    {!isCancelledDetail && !isCompletedDetail && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setPrintOrder(selectedOrderDetail);
-                        }}
-                        style={{ padding: "14px 28px" }}
-                        className="bg-white/10 hover:bg-white text-white hover:text-black font-mono text-xs uppercase font-extrabold tracking-[0.2em] transition-all duration-300 cursor-pointer rounded-sm flex items-center gap-2 border border-white/20"
-                      >
-                        <Printer className="w-4 h-4" />
-                        <span>CETAK LABEL RESI</span>
-                      </button>
+                    {!isCancelledDetail && !isCompletedDetail && !isUnpaid && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            Swal.fire({
+                              title: 'Request Pickup?',
+                              text: "Kirim request pickup ke Biteship? Pastikan order sudah dikemas.",
+                              icon: 'warning',
+                              showCancelButton: true,
+                              confirmButtonColor: '#B6A47E',
+                              cancelButtonColor: '#333333',
+                              confirmButtonText: 'Yes, Request',
+                              background: isDarkMode ? '#141414' : '#ffffff',
+                              color: isDarkMode ? '#F5F5F5' : '#000000',
+                            }).then((result) => {
+                              if (result.isConfirmed) {
+                                createBiteshipMut.mutate(selectedOrderDetail.order_number);
+                              }
+                            });
+                          }}
+                          disabled={createBiteshipMut.isPending}
+                          style={{ padding: "14px 28px" }}
+                          className="bg-[#B6A47E]/10 hover:bg-[#B6A47E] text-[#B6A47E] hover:text-[#0A0A0A] font-mono text-xs uppercase font-extrabold tracking-[0.2em] transition-all duration-300 cursor-pointer rounded-sm flex items-center gap-2 border border-[#B6A47E]/30"
+                        >
+                          {createBiteshipMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Truck className="w-4 h-4" />}
+                          <span>REQUEST PICKUP</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPrintOrder(selectedOrderDetail);
+                          }}
+                          style={{ padding: "14px 28px" }}
+                          className="bg-white/10 hover:bg-white text-white hover:text-black font-mono text-xs uppercase font-extrabold tracking-[0.2em] transition-all duration-300 cursor-pointer rounded-sm flex items-center gap-2 border border-white/20"
+                        >
+                          <Printer className="w-4 h-4" />
+                          <span>CETAK LABEL RESI</span>
+                        </button>
+                      </>
                     )}
                     <button
                       type="button"

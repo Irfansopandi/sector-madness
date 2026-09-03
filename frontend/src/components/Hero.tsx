@@ -32,7 +32,7 @@ export default function Hero() {
     } catch {}
   }, []);
 
-  const { data: heroBanners = [] } = useQuery({
+  const { data: heroBanners = [], isLoading } = useQuery({
     queryKey: ["hero-banners"],
     queryFn: getHeroBanners,
     staleTime: 60_000,
@@ -55,7 +55,7 @@ export default function Hero() {
 
   useEffect(() => {
     if (activeBanners.length <= 1) return;
-    const timer = setInterval(transition, 5000);
+    const timer = setInterval(transition, 12000);
     return () => clearInterval(timer);
   }, [transition, activeBanners.length]);
 
@@ -84,9 +84,9 @@ export default function Hero() {
   const getSeamlessInitialScale = () => {
     if (!firstImageStartTime.current) return 1.05;
     const elapsed = (Date.now() - firstImageStartTime.current) / 1000;
-    // Ken Burns: scale 1.05 → 1.15 over 7s, cubic-bezier [0.25, 0.1, 0.25, 1]
+    // Ken Burns: scale 1.05 → 1.15 over 15s, cubic-bezier [0.25, 0.1, 0.25, 1]
     // Approximate with linear for simplicity (difference is negligible at this scale)
-    const progress = Math.min(elapsed / 7, 1);
+    const progress = Math.min(elapsed / 15, 1);
     return 1.05 + progress * 0.10;
   };
 
@@ -100,7 +100,7 @@ export default function Hero() {
           className="absolute inset-0 z-[1]"
           initial={{ scale: 1.05 }}
           animate={{ scale: 1.15 }}
-          transition={{ scale: { duration: 7, ease: [0.25, 0.1, 0.25, 1] } }}
+          transition={{ scale: { duration: 15, ease: [0.25, 0.1, 0.25, 1] } }}
           onAnimationStart={() => {
             if (!firstImageStartTime.current) {
               firstImageStartTime.current = Date.now();
@@ -137,11 +137,11 @@ export default function Hero() {
                 : { duration: 1.8, ease: "easeInOut" },
               scale: skipOpacityAnim
                 ? {
-                    // Remaining duration = 7s minus elapsed
-                    duration: Math.max(0.1, 7 - (firstImageStartTime.current ? (Date.now() - firstImageStartTime.current) / 1000 : 0)),
+                    // Remaining duration = 15s minus elapsed
+                    duration: Math.max(0.1, 15 - (firstImageStartTime.current ? (Date.now() - firstImageStartTime.current) / 1000 : 0)),
                     ease: [0.25, 0.1, 0.25, 1],
                   }
-                : { duration: 7, ease: [0.25, 0.1, 0.25, 1] },
+                : { duration: 15, ease: [0.25, 0.1, 0.25, 1] },
             }}
             className="absolute inset-0 z-[1]"
           >
@@ -159,70 +159,81 @@ export default function Hero() {
       </AnimatePresence>
 
       {/* Dark overlay */}
-      <div className="absolute inset-0 bg-black/40 z-[3]" />
-      <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/60 to-transparent z-[3]" />
-      {/* Solid block to completely prevent image bleeding at the bottom edge */}
+      <div className="absolute inset-0 bg-black/30 z-[3]" />
+      <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/50 to-transparent z-[3]" />
       <div className="absolute inset-x-0 bottom-0 h-4 bg-[#0A0A0A] z-[4]" />
 
       {/* Hero Content */}
-      <div className="relative z-[4] h-full flex flex-col items-center justify-center">
-        <Container className="flex flex-col items-center text-center">
-          {/* Brand Mark */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1.2, delay: 0.3 }}
-            className="mb-8 md:mb-10"
-          >
-            <span className="text-[10px] md:text-[11px] tracking-[0.4em] uppercase text-[#8A8A8A] font-[family-name:var(--font-body)]">
-              Est. 2024
-            </span>
-          </motion.div>
-
-          {/* Brand Name */}
-          <h1 className="font-[family-name:var(--font-display)] text-[clamp(2.5rem,8vw,7rem)] tracking-[-0.02em] text-[#F5F5F5] font-normal leading-[0.95] mb-10 md:mb-12 flex flex-col items-center text-center">
-            <motion.span
-              initial={{ opacity: 0, y: -45 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
-              className="block"
+      <div 
+        className="absolute inset-0 z-[4] flex items-end"
+        style={{
+          paddingBottom: "clamp(120px, 20vh, 250px)",
+          paddingLeft: "clamp(32px, 6vw, 80px)",
+          paddingRight: "clamp(32px, 6vw, 80px)",
+        }}
+      >
+        <div className="w-full max-w-[1500px] mx-auto flex flex-col">
+          <AnimatePresence mode="wait">
+            {!isLoading && (
+              <motion.div
+                key={currentIndex}
+                className={`w-fit max-w-full md:max-w-3xl flex flex-col ${
+                currentIndex % 2 === 0
+                  ? "items-start text-left self-start"
+                  : "items-end text-right self-end"
+              }`}
             >
-              SECTOR
-            </motion.span>
-            <motion.span
-              initial={{ opacity: 0, y: 45 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
-              className="block"
-            >
-              MADNESS
-            </motion.span>
-          </h1>
+              {/* Title */}
+              <motion.h2
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.7, ease: [0.25, 0.1, 0.25, 1] }}
+                style={{ fontFamily: "'Poppins', 'Inter', sans-serif", fontWeight: 700 }}
+                className="text-[clamp(1.75rem,5vw,3.5rem)] leading-[1.1] text-white tracking-tight"
+              >
+                {currentBanner?.title || (
+                  <>
+                    {currentIndex % 3 === 0 && "New: Signature Collection"}
+                    {currentIndex % 3 === 1 && "Essential Outerwear"}
+                    {currentIndex % 3 === 2 && "Timeless Classics"}
+                  </>
+                )}
+              </motion.h2>
 
-          {/* Tagline */}
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.9 }}
-            className="text-[12px] md:text-[13px] tracking-[0.25em] uppercase text-[#8A8A8A] font-[family-name:var(--font-body)] font-light mb-14 md:mb-16 max-w-md"
-          >
-            We trust quality
-          </motion.p>
+              {/* Description */}
+              <motion.p
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.7, delay: 0.15, ease: [0.25, 0.1, 0.25, 1] }}
+                className="font-sans text-[13px] md:text-[16px] text-gray-200 mt-3 md:mt-5 leading-relaxed font-light w-0 min-w-full"
+              >
+                {currentBanner?.description || (
+                  <>
+                    {currentIndex % 3 === 0 && "The latest collection revisits our streetwear origins, reworking classic graphics for the new season."}
+                    {currentIndex % 3 === 1 && "Engineered for comfort and durability. Discover our new range of jackets designed for everyday wear."}
+                    {currentIndex % 3 === 2 && "Staple pieces designed to be the foundation of your daily wardrobe, built to stand the test of time."}
+                  </>
+                )}
+              </motion.p>
 
-          {/* CTA Button */}
-          <motion.a
-            href="#collection"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 1.2 }}
-            className="group relative inline-flex items-center justify-center overflow-hidden bg-[#F5F5F5] text-[#0A0A0A] px-10 md:px-20 lg:px-24 py-4 md:py-5 min-w-[200px] sm:min-w-[260px] md:min-w-[360px] text-[9px] md:text-[12px] tracking-[0.25em] md:tracking-[0.3em] uppercase font-bold transition-all duration-500 hover:bg-[#B6A47E] hover:text-[#0A0A0A] shadow-[0_0_30px_rgba(245,245,245,0.15)] hover:shadow-[0_0_40px_rgba(182,164,126,0.3)] cursor-pointer"
-          >
-            <span className="relative z-10 flex items-center justify-center gap-4 w-full text-center">
-              <span>EXPLORE COLLECTION</span>
-              <span className="text-[14px] transition-transform duration-300 group-hover:translate-x-1.5">→</span>
-            </span>
-          </motion.a>
-        </Container>
+              {/* CTA Button */}
+              <motion.a
+                href={currentBanner?.link_url || "/shop"}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.7, delay: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                style={{ padding: "clamp(8px, 1.5vw, 12px) clamp(24px, 4vw, 40px)" }}
+                className="mt-16 md:mt-20 inline-flex items-center justify-center bg-[#F5F5F5] hover:bg-[#E5E5E5] text-[#0A0A0A] rounded-full font-sans font-medium text-[11px] md:text-[13px] transition-colors duration-300 shadow-lg"
+              >
+                Shop now
+              </motion.a>
+            </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </section>
   );

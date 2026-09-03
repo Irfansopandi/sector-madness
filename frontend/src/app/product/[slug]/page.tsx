@@ -563,7 +563,7 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
                   {product.category?.name || "Uncategorized"} &nbsp;—&nbsp; {product.collection}
                 </span>
                 <h1 
-                  className="font-[family-name:var(--font-display)] text-[#F5F5F5] leading-[1.1] tracking-[-0.01em] whitespace-nowrap overflow-hidden text-ellipsis block w-full"
+                  className="!font-[family-name:var(--font-body)] font-[600] text-[#F5F5F5] leading-[1.1] tracking-[-0.01em] whitespace-nowrap overflow-hidden text-ellipsis block w-full"
                   style={{
                     fontSize: product.name.length > 30 
                       ? 'clamp(1rem, 2vw, 1.6rem)' 

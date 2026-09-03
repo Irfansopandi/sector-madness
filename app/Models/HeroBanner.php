@@ -10,6 +10,9 @@ class HeroBanner extends Model
         'image_path',
         'sort_order',
         'is_active',
+        'title',
+        'description',
+        'link_url',
     ];
 
     protected $casts = [

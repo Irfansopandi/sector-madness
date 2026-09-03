@@ -342,6 +342,9 @@ export interface HeroBanner {
   image_path: string;
   sort_order: number;
   is_active: boolean;
+  title?: string;
+  description?: string;
+  link_url?: string;
 }
 
 /* ====================================================
@@ -1195,10 +1198,15 @@ export const updateAdminShipment = async (
   return res.data;
 };
 
+export const createBiteshipShipment = async (orderNumber: string) => {
+  const res = await api.post(`/shipping/create/${orderNumber}`);
+  return res.data;
+};
+
 export interface AdminHeroBanner {
   id: number;
   title?: string;
-  subtitle?: string;
+  description?: string;
   image_path: string;
   link_url?: string;
   sort_order: number;
