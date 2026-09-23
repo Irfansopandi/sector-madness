@@ -12,6 +12,7 @@ import { getCart, updateCartQuantity, deleteCartItem, clearCart, addToCart, getI
 import { getBagItems, saveBagItems } from "@/utils/bag";
 import { BagItemSkeleton, ErrorState } from "@/components/UIState";
 import { useToast } from "@/components/Toast";
+import ProductCard from "@/components/ProductCard";
 
 export default function ShoppingBagPage() {
   const router = useRouter();
@@ -217,7 +218,7 @@ export default function ShoppingBagPage() {
               <div className="flex items-center gap-2.5 text-xs md:text-sm font-mono tracking-[0.2em] uppercase mb-3 font-bold">
                 <Link
                   href="/"
-                  className="group text-[#A0A0A0] hover:text-[#B6A47E] transition-colors font-bold flex items-center gap-1.5 py-1 pr-2 -ml-1 rounded cursor-pointer"
+                  className="group text-[#A0A0A0] hover:text-white transition-colors font-bold flex items-center gap-1.5 py-1 pr-2 -ml-1 rounded cursor-pointer"
                 >
                   <span className="text-base leading-none transition-transform duration-300 group-hover:-translate-x-1">
                     ←
@@ -228,7 +229,7 @@ export default function ShoppingBagPage() {
                 <span className="text-white font-bold">SHOPPING BAG</span>
               </div>
 
-              <h1 className="text-3xl lg:text-5xl font-extrabold uppercase tracking-[0.08em] text-white">
+              <h1 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-3xl lg:text-5xl uppercase tracking-[0.08em] text-white">
                 SHOPPING BAG
               </h1>
             </div>
@@ -301,7 +302,7 @@ export default function ShoppingBagPage() {
                   </svg>
                 </div>
 
-                <h2 className="text-xl md:text-2xl font-black uppercase tracking-[0.15em] text-white mb-8">
+                <h2 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-xl md:text-2xl uppercase tracking-[0.15em] text-white mb-8">
                   YOUR SHOPPING BAG IS EMPTY
                 </h2>
                 <Link
@@ -323,13 +324,12 @@ export default function ShoppingBagPage() {
                   <div className="h-px flex-1 bg-[#262626]" />
                 </div>
 
-                {/* Desktop View (Static Grid, lg and up) */}
-                <div className="hidden lg:grid lg:grid-cols-3 gap-x-5 gap-y-12">
+                {/* Responsive Grid (All Devices) */}
+                <div className="grid grid-cols-3 gap-x-2 gap-y-6 sm:gap-x-4 sm:gap-y-8 lg:gap-x-5 lg:gap-y-12">
                   {(realProducts && realProducts.length > 0 ? realProducts : []).slice(0, 3).map((product: any, idx: number) => {
-                    const productImg = getImageUrl(product.image);
-                    const collectionCode = product.collection_code || product.collection || "SECTOR 001";
-                    const materialWeight = [product.material, product.weight].filter(Boolean).join(" · ") || "Technical Blend";
-                    const priceVal = typeof product.price === 'number' ? (product.price < 1000 ? product.price * 1000 : product.price) : 285000;
+                    const outOfStock = product.variants && Array.isArray(product.variants)
+                      ? product.variants.reduce((sum: number, v: any) => sum + (Number(v.stock) || 0), 0) === 0
+                      : false;
 
                     return (
                       <motion.div
@@ -338,121 +338,28 @@ export default function ShoppingBagPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.4, delay: 0.15 * idx }}
                       >
-                        <Link
-                          href={`/product/${product.slug}`}
-                          className="group block"
-                        >
-                          <div className="relative aspect-[3/4] overflow-hidden bg-[#161616] mb-5">
-                            <Image
-                              src={productImg}
-                              alt={product.name}
-                              fill
-                              className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
-                            />
-                            {product.limited && (
-                              <div className="absolute top-4 left-4">
-                                <span className="text-[9px] tracking-[0.2em] uppercase text-[#B6A47E]">
-                                  Limited Release
-                                </span>
-                              </div>
-                            )}
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-500" />
-                            <div className="absolute bottom-0 left-0 right-0 p-5 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out">
-                              <span className="text-[10px] tracking-[0.2em] uppercase text-[#F5F5F5]">
-                                View Product →
-                              </span>
-                            </div>
-                          </div>
-                          <div className="space-y-2">
-                            <span className="text-[9px] tracking-[0.25em] uppercase text-[#8A8A8A] block">
-                              {collectionCode}
-                            </span>
-                            <h3 className="text-[14px] md:text-[15px] text-[#E0E0E0] font-light tracking-wide">
-                              {product.name}
-                            </h3>
-                            <p className="text-[11px] text-[#666666] font-light">
-                              {materialWeight}
-                            </p>
-                            <p className="text-[13px] text-[#CCCCCC] font-light pt-1">
-                              Rp {priceVal.toLocaleString("id-ID")}
-                            </p>
-                          </div>
-                        </Link>
+                        <ProductCard
+                          index={idx}
+                          slug={product.slug}
+                          name={product.name}
+                          collection={product.collection || "The Atelier Series"}
+                          collectionCode={product.collection_code || product.collection || "SECTOR 001"}
+                          material={product.material || "Technical Blend"}
+                          weight={product.weight || "450 GSM"}
+                          price={typeof product.price === 'number' ? (product.price < 1000 ? product.price * 1000 : product.price) : 285000}
+                          originalPrice={product.original_price ? (product.original_price < 1000 ? product.original_price * 1000 : product.original_price) : undefined}
+                          discountPercentage={product.discount_percentage}
+                          discountExpiresAt={product.discount_expires_at}
+                          isFlashSale={product.is_flash_sale}
+                          image={product.image || "/images/products/product-1.png"}
+                          limited={Boolean(product.limited)}
+                          outOfStock={outOfStock}
+                        />
                       </motion.div>
                     );
                   })}
                 </div>
 
-                {/* Mobile & Tablet View (Infinite Marquee Auto-Scroll) */}
-                <div className="lg:hidden w-full relative overflow-hidden -mx-8 px-8 md:-mx-14 md:px-14">
-                  {/* Fade Edges for smoother visual */}
-                  <div className="absolute left-0 top-0 bottom-0 w-8 md:w-14 bg-gradient-to-r from-[#0A0A0A] to-transparent z-10 pointer-events-none" />
-                  <div className="absolute right-0 top-0 bottom-0 w-8 md:w-14 bg-gradient-to-l from-[#0A0A0A] to-transparent z-10 pointer-events-none" />
-                  
-                  <div className="flex w-max animate-bag-marquee hover:cursor-pointer">
-                    {/* Set 1 */}
-                    <div className="flex gap-x-4 md:gap-x-6 pr-4 md:pr-6">
-                      {(realProducts && realProducts.length > 0 ? realProducts : []).slice(0, 3).map((product: any, idx: number) => {
-                        const productImg = getImageUrl(product.image);
-                        const collectionCode = product.collection_code || product.collection || "SECTOR 001";
-                        const materialWeight = [product.material, product.weight].filter(Boolean).join(" · ") || "Technical Blend";
-                        const priceVal = typeof product.price === 'number' ? (product.price < 1000 ? product.price * 1000 : product.price) : 285000;
-
-                        return (
-                          <div key={`mobile-1-${idx}-${product.id}`} className="flex-none w-[160px] sm:w-[200px] md:w-[240px]">
-                            <Link href={`/product/${product.slug}`} className="group block">
-                              <div className="relative aspect-[3/4] overflow-hidden bg-[#161616] mb-3 md:mb-4">
-                                <Image src={productImg} alt={product.name} fill className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]" />
-                                {product.limited && (
-                                  <div className="absolute top-3 left-3 md:top-4 md:left-4">
-                                    <span className="text-[8px] md:text-[9px] tracking-[0.2em] uppercase text-[#B6A47E]">Limited</span>
-                                  </div>
-                                )}
-                              </div>
-                              <div className="space-y-1 md:space-y-1.5">
-                                <span className="text-[8px] md:text-[9px] tracking-[0.25em] uppercase text-[#8A8A8A] block">{collectionCode}</span>
-                                <h3 className="text-[12px] md:text-[13px] text-[#E0E0E0] font-light tracking-wide truncate">{product.name}</h3>
-                                <p className="text-[10px] md:text-[11px] text-[#666666] font-light truncate">{materialWeight}</p>
-                                <p className="text-[11px] md:text-[12px] text-[#CCCCCC] font-light pt-0.5">Rp {priceVal.toLocaleString("id-ID")}</p>
-                              </div>
-                            </Link>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    
-                    {/* Set 2 */}
-                    <div className="flex gap-x-4 md:gap-x-6 pr-4 md:pr-6" aria-hidden="true">
-                      {(realProducts && realProducts.length > 0 ? realProducts : []).slice(0, 3).map((product: any, idx: number) => {
-                        const productImg = getImageUrl(product.image);
-                        const collectionCode = product.collection_code || product.collection || "SECTOR 001";
-                        const materialWeight = [product.material, product.weight].filter(Boolean).join(" · ") || "Technical Blend";
-                        const priceVal = typeof product.price === 'number' ? (product.price < 1000 ? product.price * 1000 : product.price) : 285000;
-
-                        return (
-                          <div key={`mobile-2-${idx}-${product.id}`} className="flex-none w-[160px] sm:w-[200px] md:w-[240px]">
-                            <Link href={`/product/${product.slug}`} className="group block" tabIndex={-1}>
-                              <div className="relative aspect-[3/4] overflow-hidden bg-[#161616] mb-3 md:mb-4">
-                                <Image src={productImg} alt={product.name} fill className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]" />
-                                {product.limited && (
-                                  <div className="absolute top-3 left-3 md:top-4 md:left-4">
-                                    <span className="text-[8px] md:text-[9px] tracking-[0.2em] uppercase text-[#B6A47E]">Limited</span>
-                                  </div>
-                                )}
-                              </div>
-                              <div className="space-y-1 md:space-y-1.5">
-                                <span className="text-[8px] md:text-[9px] tracking-[0.25em] uppercase text-[#8A8A8A] block">{collectionCode}</span>
-                                <h3 className="text-[12px] md:text-[13px] text-[#E0E0E0] font-light tracking-wide truncate">{product.name}</h3>
-                                <p className="text-[10px] md:text-[11px] text-[#666666] font-light truncate">{materialWeight}</p>
-                                <p className="text-[11px] md:text-[12px] text-[#CCCCCC] font-light pt-0.5">Rp {priceVal.toLocaleString("id-ID")}</p>
-                              </div>
-                            </Link>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           ) : (
@@ -579,7 +486,7 @@ export default function ShoppingBagPage() {
                               )}
                             </div>
 
-                            <h3 className="text-base font-bold tracking-wide text-white uppercase hover:text-[#D4AF37] transition-colors">
+                            <h3 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-base tracking-wide text-white uppercase hover:text-[#8A8A8A] transition-colors">
                               <Link href={productLink}>{productName}</Link>
                             </h3>
 
@@ -596,7 +503,7 @@ export default function ShoppingBagPage() {
                                   <span className="text-[#333333]">|</span>
                                 </>
                               )}
-                              <span className="text-[#B6A47E] font-medium">
+                              <span className="text-[#FFFFFF] font-medium">
                                 <strong className="text-white font-bold">{Math.max(0, displayStock - item.quantity)}</strong> UNITS IN STOCK
                               </span>
                             </div>
@@ -706,7 +613,7 @@ export default function ShoppingBagPage() {
               <div className="pt-12">
                 <Link
                   href="/shop"
-                  className="group/shop inline-flex items-center gap-3 font-mono text-xs font-bold tracking-[0.2em] uppercase text-[#888888] hover:text-[#D4AF37] transition-colors duration-300 no-underline"
+                  className="group/shop inline-flex items-center gap-3 font-mono text-xs font-bold tracking-[0.2em] uppercase text-[#888888] hover:text-[#FFFFFF] transition-colors duration-300 no-underline"
                 >
                   CONTINUE SHOPPING
                   <span className="inline-block transition-transform duration-300 group-hover/shop:translate-x-2">→</span>
@@ -739,8 +646,8 @@ export default function ShoppingBagPage() {
               >
                 {/* Title */}
                 <h2 
-                  className="font-serif uppercase font-bold text-white text-lg tracking-[0.2em] os-title" 
-                  style={{ marginBottom: '24px', letterSpacing: '0.2em' }}
+                  className="uppercase text-white text-lg tracking-[0.2em] os-title" 
+                  style={{ marginBottom: '24px', letterSpacing: '0.2em', fontFamily: "'Roboto', sans-serif", fontWeight: 600 }}
                 >
                   ORDER SUMMARY
                 </h2>
@@ -763,7 +670,7 @@ export default function ShoppingBagPage() {
                     <span className="font-mono uppercase text-[13px]" style={{ color: '#888888', letterSpacing: '0.15em', lineHeight: '1.6' }}>
                       ESTIMATED<br />SHIPPING
                     </span>
-                    <span className="font-mono uppercase text-[13px] font-medium text-right" style={{ color: '#C6A875', letterSpacing: '0.15em', lineHeight: '1.6' }}>
+                    <span className="font-mono uppercase text-[13px] font-medium text-right" style={{ color: '#FFFFFF', letterSpacing: '0.15em', lineHeight: '1.6' }}>
                       CALCULATED<br />AT CHECKOUT
                     </span>
                   </div>

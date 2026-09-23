@@ -78,7 +78,8 @@ export default function Footer() {
               <div>
                 <h3 
                   translate="no" 
-                  className="font-[family-name:var(--font-display)] text-[26px] md:text-[30px] lg:text-[34px] font-normal tracking-[0.06em] uppercase text-[#F5F5F5] mb-8"
+                  style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }}
+                  className="text-[26px] md:text-[30px] lg:text-[34px] tracking-[0.06em] uppercase text-[#F5F5F5] mb-8"
                 >
                   SECTOR MADNESS
                 </h3>
@@ -89,7 +90,7 @@ export default function Footer() {
                   <p>
                     CREATED FOR THOSE WHO DEFINE THEIR OWN DIRECTION.
                   </p>
-                  <p className="text-[#B6A47E] text-[11px] md:text-[12px] tracking-[0.22em] font-medium pt-3">
+                  <p className="text-[#8A8A8A] text-[11px] md:text-[12px] tracking-[0.22em] font-medium pt-3">
                     EST. 2024
                   </p>
                 </div>
@@ -98,9 +99,9 @@ export default function Footer() {
               <div className="pt-2">
                 <Link
                   href="/brand"
-                  className="group inline-flex items-center text-[11px] md:text-[12px] tracking-[0.25em] uppercase font-[family-name:var(--font-body)] font-medium text-[#F5F5F5] opacity-90 hover:opacity-100 hover:text-[#B6A47E] transition-all duration-300 ease-out"
+                  className="group inline-flex items-center text-[11px] md:text-[12px] tracking-[0.25em] uppercase font-[family-name:var(--font-body)] font-medium text-[#F5F5F5] opacity-90 hover:opacity-100 hover:text-[#E5E5E5] transition-all duration-300 ease-out"
                 >
-                  <span className="relative pb-1.5 border-b border-[#F5F5F5]/30 group-hover:border-[#B6A47E] group-hover:translate-x-1 transition-all duration-300 ease-out inline-block">
+                  <span className="relative pb-1.5 border-b border-[#F5F5F5]/30 group-hover:border-[#E5E5E5] group-hover:translate-x-1 transition-all duration-300 ease-out inline-block">
                     DISCOVER OUR STORY
                   </span>
                   <span className="ml-4 transition-transform duration-300 ease-out group-hover:translate-x-2">
@@ -115,7 +116,7 @@ export default function Footer() {
               
               {/* COLUMN 1: Collections */}
               <div>
-                <h4 className="font-[family-name:var(--font-display)] text-[13px] md:text-[14px] tracking-[0.2em] uppercase font-medium text-[#F5F5F5] mb-8 md:mb-10">
+                <h4 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500 }} className="text-[13px] md:text-[14px] tracking-[0.2em] uppercase text-[#F5F5F5] mb-8 md:mb-10">
                   COLLECTIONS
                 </h4>
                 <ul className="space-y-4 md:space-y-5">
@@ -140,7 +141,7 @@ export default function Footer() {
 
               {/* COLUMN 2: Customer */}
               <div>
-                <h4 className="font-[family-name:var(--font-display)] text-[13px] md:text-[14px] tracking-[0.2em] uppercase font-medium text-[#F5F5F5] mb-8 md:mb-10">
+                <h4 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500 }} className="text-[13px] md:text-[14px] tracking-[0.2em] uppercase text-[#F5F5F5] mb-8 md:mb-10">
                   CUSTOMER
                 </h4>
                 <ul className="space-y-4 md:space-y-5">
@@ -175,7 +176,7 @@ export default function Footer() {
 
               {/* COLUMN 3: Company */}
               <div>
-                <h4 className="font-[family-name:var(--font-display)] text-[13px] md:text-[14px] tracking-[0.2em] uppercase font-medium text-[#F5F5F5] mb-8 md:mb-10">
+                <h4 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500 }} className="text-[13px] md:text-[14px] tracking-[0.2em] uppercase text-[#F5F5F5] mb-8 md:mb-10">
                   COMPANY
                 </h4>
                 <ul className="space-y-4 md:space-y-5">
@@ -220,7 +221,7 @@ export default function Footer() {
                 ALL RIGHTS RESERVED.
               </span>
               <span className="inline text-[#333333]">//</span>
-              <span className="text-[#B6A47E]/90 font-light inline">
+              <span className="text-[#8A8A8A] font-light inline">
                 Crafted in Karawang, Indonesia.
               </span>
             </div>
@@ -258,7 +259,8 @@ export default function Footer() {
           <div style={{ paddingBottom: "56px", marginBottom: "20px" }} className="border-b border-[#222222]">
             <h3 
               translate="no" 
-              className="font-[family-name:var(--font-display)] text-[22px] sm:text-[26px] font-normal tracking-[0.06em] uppercase text-[#F5F5F5] mb-4"
+              style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }}
+              className="text-[22px] sm:text-[26px] tracking-[0.06em] uppercase text-[#F5F5F5] mb-4"
             >
               SECTOR MADNESS
             </h3>
@@ -295,7 +297,7 @@ export default function Footer() {
                 style={{ paddingTop: "28px", paddingBottom: "28px" }}
                 className="w-full flex items-center justify-between text-left cursor-pointer group"
               >
-                <span className="font-[family-name:var(--font-display)] text-[13px] font-medium tracking-[0.2em] uppercase text-[#F5F5F5]">
+                <span style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500 }} className="text-[13px] tracking-[0.2em] uppercase text-[#F5F5F5]">
                   COLLECTIONS
                 </span>
                 <span className="text-[20px] text-[#F5F5F5] font-light">
@@ -330,7 +332,7 @@ export default function Footer() {
                 style={{ paddingTop: "28px", paddingBottom: "28px" }}
                 className="w-full flex items-center justify-between text-left cursor-pointer group"
               >
-                <span className="font-[family-name:var(--font-display)] text-[13px] font-medium tracking-[0.2em] uppercase text-[#F5F5F5]">
+                <span style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500 }} className="text-[13px] tracking-[0.2em] uppercase text-[#F5F5F5]">
                   CUSTOMER
                 </span>
                 <span className="text-[20px] text-[#F5F5F5] font-light">
@@ -364,7 +366,7 @@ export default function Footer() {
                 style={{ paddingTop: "28px", paddingBottom: "28px" }}
                 className="w-full flex items-center justify-between text-left cursor-pointer group"
               >
-                <span className="font-[family-name:var(--font-display)] text-[13px] font-medium tracking-[0.2em] uppercase text-[#F5F5F5]">
+                <span style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500 }} className="text-[13px] tracking-[0.2em] uppercase text-[#F5F5F5]">
                   COMPANY
                 </span>
                 <span className="text-[20px] text-[#F5F5F5] font-light">
@@ -398,7 +400,7 @@ export default function Footer() {
               <span className="text-[#F5F5F5] font-normal block" translate="no">
                 © 2026 SECTOR MADNESS. ALL RIGHTS RESERVED.
               </span>
-              <span className="text-[#B6A47E]/90 font-light block pt-1">
+              <span className="text-[#8A8A8A] font-light block pt-1">
                 Crafted in Karawang, Indonesia.
               </span>
             </div>

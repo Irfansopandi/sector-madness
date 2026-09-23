@@ -318,10 +318,10 @@ export default function AddressModal({ isOpen, onClose, onSuccess, editingAddres
             </button>
 
             <div className="border-b border-white/[0.1] pb-4">
-              <span className="text-xs font-mono text-[#B6A47E] uppercase tracking-[0.25em] block font-bold">
+              <span className="text-xs font-mono text-[#FFFFFF] uppercase tracking-[0.25em] block font-bold">
                 [ATELIER ADDRESS CONFIGURATION]
               </span>
-              <h3 className="text-xl md:text-2xl font-black uppercase tracking-wide text-[#F5F5F5] mt-1.5 font-serif">
+              <h3 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-xl md:text-2xl uppercase tracking-wide text-[#F5F5F5] mt-1.5">
                 {editingAddress ? "EDIT ADDRESS" : "ADD NEW ADDRESS"}
               </h3>
               <p className="text-xs text-[#8A8A8A] font-mono mt-1">
@@ -348,12 +348,12 @@ export default function AddressModal({ isOpen, onClose, onSuccess, editingAddres
                   onClick={handleUseCurrentLocation}
                   disabled={isLocating}
                   style={{ padding: "16px 24px" }}
-                  className="w-full bg-[#1C1C1C] border border-white/[0.12] hover:border-[#B6A47E]/50 text-[#F5F5F5] font-mono text-xs uppercase tracking-widest flex items-center justify-center gap-3 transition-colors cursor-pointer rounded-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-[#1C1C1C] border border-white/[0.12] hover:border-[#FFFFFF]/50 text-[#F5F5F5] font-mono text-xs uppercase tracking-widest flex items-center justify-center gap-3 transition-colors cursor-pointer rounded-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLocating ? (
                     <><Loader2 className="w-4 h-4 animate-spin" /> GETTING LOCATION...</>
                   ) : (
-                    <><MapPin className="w-4 h-4 text-[#B6A47E]" /> USE CURRENT LOCATION</>
+                    <><MapPin className="w-4 h-4 text-[#FFFFFF]" /> USE CURRENT LOCATION</>
                   )}
                 </button>
               </div>
@@ -372,7 +372,7 @@ export default function AddressModal({ isOpen, onClose, onSuccess, editingAddres
                     value={addressForm.label}
                     onChange={(e) => handleChange("label", e.target.value)}
                     style={{ padding: "18px 24px" }}
-                    className={`w-full font-mono text-sm focus:outline-none focus:ring-1 rounded-sm transition-all ${formErrors.label ? "bg-[#220B0B] border border-[#FF3333] text-white focus:border-[#FF5555] focus:ring-[#FF5555]/50" : "bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] focus:border-[#B6A47E] focus:ring-[#B6A47E]/50"}`}
+                    className={`w-full font-mono text-sm focus:outline-none focus:ring-1 rounded-sm transition-all ${formErrors.label ? "bg-[#220B0B] border border-[#FF3333] text-white focus:border-[#FF5555] focus:ring-[#FF5555]/50" : "bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] focus:border-[#FFFFFF] focus:ring-[#FFFFFF]/50"}`}
                   />
                   {formErrors.label && <span className="text-[#FF3333] text-[10px] font-mono mt-1 block font-bold">{formErrors.label}</span>}
                 </div>
@@ -387,7 +387,7 @@ export default function AddressModal({ isOpen, onClose, onSuccess, editingAddres
                       value={addressForm.receiver_name}
                       onChange={(e) => handleChange("receiver_name", e.target.value)}
                       style={{ padding: "18px 24px" }}
-                      className={`w-full font-mono text-sm focus:outline-none focus:ring-1 rounded-sm transition-all ${formErrors.receiver_name ? "bg-[#220B0B] border border-[#FF3333] text-white focus:border-[#FF5555] focus:ring-[#FF5555]/50" : "bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] focus:border-[#B6A47E] focus:ring-[#B6A47E]/50"}`}
+                      className={`w-full font-mono text-sm focus:outline-none focus:ring-1 rounded-sm transition-all ${formErrors.receiver_name ? "bg-[#220B0B] border border-[#FF3333] text-white focus:border-[#FF5555] focus:ring-[#FF5555]/50" : "bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] focus:border-[#FFFFFF] focus:ring-[#FFFFFF]/50"}`}
                     />
                     {formErrors.receiver_name && <span className="text-[#FF3333] text-[10px] font-mono mt-1 block font-bold">{formErrors.receiver_name}</span>}
                   </div>
@@ -402,7 +402,7 @@ export default function AddressModal({ isOpen, onClose, onSuccess, editingAddres
                       value={addressForm.phone_number}
                       onChange={(e) => handleChange("phone_number", e.target.value.replace(/[^0-9]/g, ""))}
                       style={{ padding: "18px 24px" }}
-                      className={`w-full font-mono text-sm focus:outline-none focus:ring-1 rounded-sm transition-all ${formErrors.phone_number ? "bg-[#220B0B] border border-[#FF3333] text-white focus:border-[#FF5555] focus:ring-[#FF5555]/50" : "bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] focus:border-[#B6A47E] focus:ring-[#B6A47E]/50"}`}
+                      className={`w-full font-mono text-sm focus:outline-none focus:ring-1 rounded-sm transition-all ${formErrors.phone_number ? "bg-[#220B0B] border border-[#FF3333] text-white focus:border-[#FF5555] focus:ring-[#FF5555]/50" : "bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] focus:border-[#FFFFFF] focus:ring-[#FFFFFF]/50"}`}
                     />
                     {formErrors.phone_number && <span className="text-[#FF3333] text-[10px] font-mono mt-1 block font-bold">{formErrors.phone_number}</span>}
                   </div>
@@ -424,7 +424,7 @@ export default function AddressModal({ isOpen, onClose, onSuccess, editingAddres
                       onChange={(e) => handleChange("province", e.target.value)}
                       placeholder="Enter your province"
                       style={{ padding: "18px 24px" }}
-                      className={`w-full font-mono text-sm focus:outline-none focus:ring-1 rounded-sm transition-all placeholder:text-[#444444] ${formErrors.province ? "bg-[#220B0B] border border-[#FF3333] text-white focus:border-[#FF5555] focus:ring-[#FF5555]/50" : "bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] focus:border-[#B6A47E] focus:ring-[#B6A47E]/50"}`}
+                      className={`w-full font-mono text-sm focus:outline-none focus:ring-1 rounded-sm transition-all placeholder:text-[#444444] ${formErrors.province ? "bg-[#220B0B] border border-[#FF3333] text-white focus:border-[#FF5555] focus:ring-[#FF5555]/50" : "bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] focus:border-[#FFFFFF] focus:ring-[#FFFFFF]/50"}`}
                     />
                     {formErrors.province && <span className="text-[#FF3333] text-[10px] font-mono mt-1 block font-bold">{formErrors.province}</span>}
                   </div>
@@ -448,7 +448,7 @@ export default function AddressModal({ isOpen, onClose, onSuccess, editingAddres
                       }, 300)}
                       placeholder="Enter your city"
                       style={{ padding: "18px 24px" }}
-                      className={`w-full font-mono text-sm focus:outline-none focus:ring-1 rounded-sm transition-all placeholder:text-[#444444] ${formErrors.city ? "bg-[#220B0B] border border-[#FF3333] text-white focus:border-[#FF5555] focus:ring-[#FF5555]/50" : "bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] focus:border-[#B6A47E] focus:ring-[#B6A47E]/50"}`}
+                      className={`w-full font-mono text-sm focus:outline-none focus:ring-1 rounded-sm transition-all placeholder:text-[#444444] ${formErrors.city ? "bg-[#220B0B] border border-[#FF3333] text-white focus:border-[#FF5555] focus:ring-[#FF5555]/50" : "bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] focus:border-[#FFFFFF] focus:ring-[#FFFFFF]/50"}`}
                     />
                     {formErrors.city && <span className="text-[#FF3333] text-[10px] font-mono mt-1 block font-bold">{formErrors.city}</span>}
                     
@@ -506,7 +506,7 @@ export default function AddressModal({ isOpen, onClose, onSuccess, editingAddres
                       }, 300)}
                       placeholder="Enter your district"
                       style={{ padding: "18px 24px" }}
-                      className={`w-full font-mono text-sm focus:outline-none focus:ring-1 rounded-sm transition-all placeholder:text-[#444444] ${formErrors.district ? "bg-[#220B0B] border border-[#FF3333] text-white focus:border-[#FF5555] focus:ring-[#FF5555]/50" : "bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] focus:border-[#B6A47E] focus:ring-[#B6A47E]/50"}`}
+                      className={`w-full font-mono text-sm focus:outline-none focus:ring-1 rounded-sm transition-all placeholder:text-[#444444] ${formErrors.district ? "bg-[#220B0B] border border-[#FF3333] text-white focus:border-[#FF5555] focus:ring-[#FF5555]/50" : "bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] focus:border-[#FFFFFF] focus:ring-[#FFFFFF]/50"}`}
                     />
                     {formErrors.district && <span className="text-[#FF3333] text-[10px] font-mono mt-1 block font-bold">{formErrors.district}</span>}
 
@@ -525,7 +525,7 @@ export default function AddressModal({ isOpen, onClose, onSuccess, editingAddres
                           >
                             <div className="flex items-start justify-between gap-2">
                               <span className="address-search-item-title text-[#FFFFFF] group-hover:text-white font-extrabold text-sm uppercase tracking-wide transition-colors min-w-0 break-words flex-1">
-                                {loc.district} {loc.subdistrict ? <span className="text-[#B6A47E] font-normal text-xs normal-case ml-1 inline-block">(Desa: {loc.subdistrict})</span> : ""}
+                                {loc.district} {loc.subdistrict ? <span className="text-[#FFFFFF] font-normal text-xs normal-case ml-1 inline-block">(Desa: {loc.subdistrict})</span> : ""}
                               </span>
                               <span className="address-search-item-badge bg-[#1C1C1C] text-[#DDDDDD] border border-[#3A3A3A] px-2.5 py-1 text-xs font-bold tracking-widest shrink-0 whitespace-nowrap">
                                 POS: {loc.postal_code}
@@ -551,7 +551,7 @@ export default function AddressModal({ isOpen, onClose, onSuccess, editingAddres
                       onChange={(e) => handleChange("postal_code", e.target.value)}
                       placeholder="Enter your postal code"
                       style={{ padding: "18px 24px" }}
-                      className={`w-full font-mono text-sm focus:outline-none focus:ring-1 rounded-sm transition-all placeholder:text-[#444444] ${formErrors.postal_code ? "bg-[#220B0B] border border-[#FF3333] text-white focus:border-[#FF5555] focus:ring-[#FF5555]/50" : "bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] focus:border-[#B6A47E] focus:ring-[#B6A47E]/50"}`}
+                      className={`w-full font-mono text-sm focus:outline-none focus:ring-1 rounded-sm transition-all placeholder:text-[#444444] ${formErrors.postal_code ? "bg-[#220B0B] border border-[#FF3333] text-white focus:border-[#FF5555] focus:ring-[#FF5555]/50" : "bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] focus:border-[#FFFFFF] focus:ring-[#FFFFFF]/50"}`}
                     />
                     {formErrors.postal_code && <span className="text-[#FF3333] text-[10px] font-mono mt-1 block font-bold">{formErrors.postal_code}</span>}
                   </div>
@@ -566,7 +566,7 @@ export default function AddressModal({ isOpen, onClose, onSuccess, editingAddres
                     onChange={(e) => handleChange("street_address", e.target.value)}
                     placeholder="Enter your address"
                     style={{ padding: "18px 24px" }}
-                    className={`w-full font-mono text-sm focus:outline-none focus:ring-1 rounded-sm transition-all placeholder:text-[#444444] ${formErrors.street_address ? "bg-[#220B0B] border border-[#FF3333] text-white focus:border-[#FF5555] focus:ring-[#FF5555]/50" : "bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] focus:border-[#B6A47E] focus:ring-[#B6A47E]/50"}`}
+                    className={`w-full font-mono text-sm focus:outline-none focus:ring-1 rounded-sm transition-all placeholder:text-[#444444] ${formErrors.street_address ? "bg-[#220B0B] border border-[#FF3333] text-white focus:border-[#FF5555] focus:ring-[#FF5555]/50" : "bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] focus:border-[#FFFFFF] focus:ring-[#FFFFFF]/50"}`}
                   />
                   {formErrors.street_address && <span className="text-[#FF3333] text-[10px] font-mono mt-1 block font-bold">{formErrors.street_address}</span>}
                 </div>
@@ -578,7 +578,7 @@ export default function AddressModal({ isOpen, onClose, onSuccess, editingAddres
                   id="is_default_check"
                   checked={addressForm.is_default}
                   onChange={(e) => setAddressForm({ ...addressForm, is_default: e.target.checked })}
-                  className="h-4 w-4 accent-[#B6A47E] cursor-pointer shrink-0"
+                  className="h-4 w-4 accent-[#FFFFFF] cursor-pointer shrink-0"
                 />
                 <label htmlFor="is_default_check" className="font-bold text-[#F5F5F5] tracking-wider uppercase cursor-pointer">
                   SET AS DEFAULT SHIPPING ADDRESS
@@ -599,7 +599,7 @@ export default function AddressModal({ isOpen, onClose, onSuccess, editingAddres
                   type="submit"
                   disabled={isSaving}
                   style={{ padding: "18px 0" }}
-                  className="flex-[2] bg-[#B6A47E] hover:bg-white text-[#0A0A0A] font-mono text-xs uppercase font-extrabold tracking-[0.2em] transition-colors shadow-lg rounded-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="flex-[2] bg-[#E5E5E5] hover:bg-white text-[#0A0A0A] font-mono text-xs uppercase font-extrabold tracking-[0.2em] transition-colors shadow-lg rounded-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                   <span>SAVE ADDRESS</span>

@@ -270,9 +270,9 @@ export default function PrivacyPolicyPage() {
               style={{
                 fontSize: "clamp(2.2rem, 4.5vw, 3.8rem)",
                 lineHeight: "1.15",
-                fontWeight: 900,
+                fontWeight: 500,
                 letterSpacing: "-0.03em",
-                fontFamily: "'Inter', -apple-system, sans-serif",
+                fontFamily: "'Roboto', sans-serif",
               }}
               className="uppercase text-[#FFFFFF] tracking-tight mb-6 whitespace-normal md:whitespace-nowrap"
             >
@@ -322,7 +322,7 @@ export default function PrivacyPolicyPage() {
                     {sec.code}
                   </span>
                   <span className="text-[#333333] text-xs">//</span>
-                  <h2 className="text-sm md:text-base font-bold tracking-[0.2em] uppercase text-[#FFFFFF]">
+                  <h2 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500 }} className="text-sm md:text-base tracking-[0.2em] uppercase text-[#FFFFFF]">
                     {sec.title}
                   </h2>
                 </div>
@@ -352,7 +352,7 @@ export default function PrivacyPolicyPage() {
                         style={{ marginTop: sIdx > 0 ? "24px" : "12px" }}
                         className="space-y-2 pt-2"
                       >
-                        <h3 className="text-xs font-bold text-[#FFFFFF] uppercase tracking-[0.15em] mb-2">
+                        <h3 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500 }} className="text-xs text-[#FFFFFF] uppercase tracking-[0.15em] mb-2">
                           {sub.subTitle}
                         </h3>
                         <ul className="space-y-3 pl-1 my-2">
@@ -420,7 +420,7 @@ export default function PrivacyPolicyPage() {
                   14
                 </span>
                 <span className="text-[#333333] text-xs">//</span>
-                <h2 className="text-sm md:text-base font-bold tracking-[0.2em] uppercase text-[#FFFFFF]">
+                <h2 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500 }} className="text-sm md:text-base tracking-[0.2em] uppercase text-[#FFFFFF]">
                   INQUIRIES &amp; CONTACT
                 </h2>
               </div>
@@ -462,8 +462,9 @@ export default function PrivacyPolicyPage() {
                   style={{
                     fontSize: "clamp(1.35rem, 2vw, 1.75rem)",
                     lineHeight: "1.25",
-                    fontWeight: 800,
+                    fontWeight: 500,
                     letterSpacing: "-0.02em",
+                    fontFamily: "'Roboto', sans-serif",
                   }}
                   className="text-[#FFFFFF] uppercase mb-4"
                 >

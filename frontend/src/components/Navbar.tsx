@@ -497,7 +497,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
             >
               {/* Column 1: PRODUCTS List */}
               <div className="col-span-5 border-r border-[#EEEEEE] pr-10">
-                <h4 style={{ marginBottom: "28px" }} className="font-[family-name:var(--font-display)] text-[13px] md:text-[14px] tracking-[0.2em] font-medium text-[#777777] uppercase">
+                <h4 style={{ marginBottom: "28px", fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-[13px] md:text-[14px] tracking-[0.2em] uppercase text-[#777777]">
                   PRODUCTS
                 </h4>
                 <ul className="flex flex-col gap-4">
@@ -517,7 +517,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
 
               {/* Column 2: FOCUS ON List */}
               <div className="col-span-5 border-r border-[#EEEEEE] pr-10 pl-10">
-                <h4 style={{ marginBottom: "28px" }} className="font-[family-name:var(--font-display)] text-[13px] md:text-[14px] tracking-[0.2em] font-medium text-[#777777] uppercase">
+                <h4 style={{ marginBottom: "28px", fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-[13px] md:text-[14px] tracking-[0.2em] uppercase text-[#777777]">
                   FOCUS ON
                 </h4>
                 <ul className="flex flex-col gap-4">
@@ -572,7 +572,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                       })()}
                     </div>
                     <div className="text-center">
-                      <p className="text-[11px] font-semibold tracking-[0.1em] uppercase text-[#0A0A0A] line-clamp-1">
+                      <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-[11px] tracking-[0.1em] uppercase text-[#0A0A0A] line-clamp-1">
                         {featuredShopProduct.name}
                       </p>
                       <div className="flex items-center justify-center gap-1.5 mt-0.5 flex-wrap">
@@ -726,7 +726,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                                   <div className="py-5 px-1 border-t border-[#F0F0F0] grid grid-cols-2 gap-4">
                                     {/* Left Column: PRODUCTS */}
                                     <div className="flex flex-col">
-                                      <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-[#888888] mb-4">
+                                      <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-[10px] tracking-[0.2em] uppercase text-[#888888] mb-4">
                                         PRODUCTS
                                       </p>
                                       <div className="flex flex-col gap-2.5">
@@ -749,7 +749,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                                     {/* Right Column: FOCUS ON */}
                                     {dynamicFocusOn.length > 0 && (
                                       <div className="flex flex-col border-l border-[#F0F0F0] pl-3 sm:pl-4">
-                                        <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-[#888888] mb-4">
+                                        <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-[10px] tracking-[0.2em] uppercase text-[#888888] mb-4">
                                           FOCUS ON
                                         </p>
                                         <div className="flex flex-col gap-2.5">

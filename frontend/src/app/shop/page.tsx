@@ -174,13 +174,14 @@ function ShopContent() {
           <nav className="flex items-center gap-2 mb-4">
             <Link
               href="/"
-              className="text-[10px] md:text-[11px] tracking-[0.2em] uppercase text-[#777777] hover:text-[#0A0A0A] transition-colors"
+              style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }}
+              className="text-[10px] md:text-[11px] tracking-[0.2em] uppercase text-[#777777] hover:text-white transition-colors"
             >
               HOME
             </Link>
             <span className="text-[10px] text-[#777777]">&gt;</span>
             {activeCategory === "ALL" || activeCategory === "ALL PRODUCTS" ? (
-              <span className="text-[10px] md:text-[11px] tracking-[0.2em] uppercase text-[#0A0A0A] font-medium">
+              <span style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-[10px] md:text-[11px] tracking-[0.2em] uppercase text-[#0A0A0A]">
                 SHOP
               </span>
             ) : (
@@ -188,12 +189,13 @@ function ShopContent() {
                 <Link
                   href="/shop"
                   onClick={(e) => { e.preventDefault(); setActiveCategory("ALL"); }}
-                  className="text-[10px] md:text-[11px] tracking-[0.2em] uppercase text-[#777777] hover:text-[#0A0A0A] transition-colors cursor-pointer"
+                  style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }}
+                  className="text-[10px] md:text-[11px] tracking-[0.2em] uppercase text-[#777777] hover:text-white transition-colors cursor-pointer"
                 >
                   SHOP
                 </Link>
                 <span className="text-[10px] text-[#777777]">&gt;</span>
-                <span className="text-[10px] md:text-[11px] tracking-[0.2em] uppercase text-[#0A0A0A] font-medium">
+                <span style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-[10px] md:text-[11px] tracking-[0.2em] uppercase text-[#0A0A0A]">
                   {activeCategory}
                 </span>
               </>
@@ -201,7 +203,7 @@ function ShopContent() {
           </nav>
 
           {/* Page Title */}
-          <h1 className="text-[32px] md:text-[40px] lg:text-[48px] font-bold tracking-[0.02em] uppercase text-[#0A0A0A]" style={{ marginBottom: "40px" }}>
+          <h1 className="text-[32px] md:text-[40px] lg:text-[48px] tracking-[0.02em] uppercase text-[#0A0A0A]" style={{ marginBottom: "40px", fontFamily: "'Roboto', sans-serif", fontWeight: 600 }}>
             {activeCategory === "ALL" || activeCategory === "ALL PRODUCTS" ? "SHOP" : activeCategory}
           </h1>
 
@@ -338,7 +340,7 @@ function ShopContent() {
 
                   {product.limited && (!product.discountPercentage || product.discountPercentage === 0) && (
                     <div className={`absolute ${gridCols === 6 ? "top-2 left-2 scale-[0.65] origin-top-left md:top-4 md:left-4 md:scale-100" : "top-4 left-4"} z-10`}>
-                      <span className="text-[9px] tracking-[0.2em] uppercase text-[#B6A47E] font-[family-name:var(--font-body)]">
+                      <span className="text-[9px] tracking-[0.2em] uppercase text-[#0A0A0A] font-[family-name:var(--font-body)] font-medium">
                         Limited Release
                       </span>
                     </div>
@@ -346,7 +348,7 @@ function ShopContent() {
 
                   {/* VIEW PRODUCT label - inside image */}
                   <div className={`absolute ${gridCols === 6 ? "bottom-2 left-2 scale-[0.65] origin-bottom-left md:bottom-4 md:left-4 md:scale-100" : "bottom-4 left-4"} z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300`}>
-                    <span className="text-[9px] tracking-[0.2em] uppercase text-[#F5F5F5] font-[family-name:var(--font-body)] font-medium">
+                    <span className="text-[9px] tracking-[0.2em] uppercase text-[#0A0A0A] font-[family-name:var(--font-body)] font-medium">
                       VIEW PRODUCT
                     </span>
                   </div>
@@ -360,7 +362,7 @@ function ShopContent() {
                   <span className="text-[9px] tracking-[0.25em] uppercase text-[#8A8A8A] font-[family-name:var(--font-body)] block">
                     {product.collectionCode}
                   </span>
-                  <h3 className="text-[14px] md:text-[15px] text-[#0A0A0A] font-[family-name:var(--font-body)] font-light tracking-wide">
+                  <h3 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-[14px] md:text-[15px] text-[#0A0A0A] tracking-wide">
                     {product.name}
                   </h3>
                   <p className="text-[11px] text-[#8A8A8A] font-[family-name:var(--font-body)] font-light">
@@ -412,7 +414,7 @@ function ShopContent() {
               className="flex items-center justify-between"
             >
               <h2
-                style={{ fontSize: "15px", letterSpacing: "0.15em", fontWeight: 700 }}
+                style={{ fontSize: "15px", letterSpacing: "0.15em", fontWeight: 600, fontFamily: "'Roboto', sans-serif" }}
                 className="uppercase text-[#0A0A0A]"
               >
                 FILTER & SORT
@@ -435,7 +437,7 @@ function ShopContent() {
 
               {/* ── SORT BY ── */}
               <h3
-                style={{ fontSize: "14px", letterSpacing: "0.12em", fontWeight: 700, marginBottom: "20px" }}
+                style={{ fontSize: "14px", letterSpacing: "0.12em", fontWeight: 600, marginBottom: "20px", fontFamily: "'Roboto', sans-serif" }}
                 className="uppercase text-[#0A0A0A]"
               >
                 SORT BY
@@ -470,7 +472,7 @@ function ShopContent() {
               {/* ── CATEGORY ── */}
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
                 <h3
-                  style={{ fontSize: "14px", letterSpacing: "0.12em", fontWeight: 700 }}
+                  style={{ fontSize: "14px", letterSpacing: "0.12em", fontWeight: 600, fontFamily: "'Roboto', sans-serif" }}
                   className="uppercase text-[#0A0A0A]"
                 >
                   CATEGORY

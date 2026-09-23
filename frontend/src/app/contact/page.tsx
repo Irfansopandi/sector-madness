@@ -131,7 +131,7 @@ export default function ContactPage() {
                       {item.title}
                     </span>
                     {item.subtitle && item.subtitle !== item.title && (
-                      <h2 className="text-sm md:text-base font-bold tracking-[0.2em] uppercase text-[#FFFFFF]">
+                      <h2 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500 }} className="text-sm md:text-base tracking-[0.2em] uppercase text-[#FFFFFF]">
                         {item.subtitle}
                       </h2>
                     )}
@@ -242,7 +242,7 @@ export default function ContactPage() {
               <span className="text-[11px] font-mono font-bold tracking-[0.25em] text-[#B6A47E] uppercase block mb-1">
                 {warehouseTitle}
               </span>
-              <h2 className="text-base md:text-lg font-bold tracking-[0.15em] uppercase text-[#FFFFFF]">
+              <h2 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500 }} className="text-base md:text-lg tracking-[0.15em] uppercase text-[#FFFFFF]">
                 {warehouseSubtitle}
               </h2>
               <div className="text-xs md:text-sm text-[#A0A0A0] font-light leading-relaxed space-y-1">

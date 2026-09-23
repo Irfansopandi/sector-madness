@@ -47,9 +47,10 @@ export default function JournalSection() {
             <Link
               href="/journal"
               style={{ fontSize: "11.5px", letterSpacing: "0.22em" }}
-              className="uppercase font-semibold text-[#B6A47E] hover:text-[#FFFFFF] transition-colors inline-flex items-center gap-2"
+              className="group uppercase font-semibold text-[#FFFFFF] hover:text-[#E5E5E5] transition-colors inline-flex items-center gap-2"
             >
-              EXPLORE ALL ARTICLES →
+              <span>EXPLORE ALL ARTICLES</span>
+              <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
             </Link>
           </AnimatedSection>
         </div>
@@ -74,7 +75,7 @@ export default function JournalSection() {
                 </div>
 
                 <div className="flex items-center justify-between text-[11.5px] text-[#A0A0A0] uppercase mb-4 tracking-[0.15em] font-medium">
-                  <span className="text-[#B6A47E] font-semibold">{article.category}</span>
+                  <span className="text-[#FFFFFF] font-semibold">{article.category}</span>
                   <span className="text-[#777777] group-hover:text-white transition-colors">READ MORE →</span>
                 </div>
 
@@ -84,6 +85,7 @@ export default function JournalSection() {
                     lineHeight: "1.2",
                     fontWeight: 700,
                     letterSpacing: "-0.02em",
+                    fontFamily: "'Roboto', sans-serif",
                   }}
                   className="text-[#FFFFFF] group-hover:opacity-85 transition-opacity duration-300 mb-5"
                 >

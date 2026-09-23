@@ -95,17 +95,17 @@ export default function WishlistPage() {
       {/* Header */}
       <div style={{ paddingTop: "24px", paddingBottom: "24px", paddingLeft: "28px", paddingRight: "28px" }} className="border-b border-white/[0.08] flex items-center justify-between">
         <div>
-          <h2 className="text-xl md:text-2xl font-black uppercase tracking-wider text-[#F5F5F5]">WISHLIST</h2>
+          <h2 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-xl md:text-2xl uppercase tracking-wider text-[#F5F5F5]">WISHLIST</h2>
           <p className="text-xs text-[#8A8A8A] mt-1 font-mono">Manage your favorite products</p>
         </div>
-        <span suppressHydrationWarning className="text-xs font-mono text-[#B6A47E] font-bold tracking-widest">{wishlistProducts.length} ITEMS</span>
+        <span suppressHydrationWarning className="text-xs font-mono text-[#FFFFFF] font-bold tracking-widest">{wishlistProducts.length} ITEMS</span>
       </div>
 
       {/* Content */}
       <div>
         {wishlistProducts.length === 0 ? (
           <div style={{ padding: "72px 0 88px 0" }} className="w-full flex flex-col items-center justify-center text-center">
-            <div style={{ marginBottom: "28px" }} className="w-16 h-16 rounded-full bg-white/[0.03] border border-white/[0.08] flex items-center justify-center text-[#B6A47E]">
+            <div style={{ marginBottom: "28px" }} className="w-16 h-16 rounded-full bg-white/[0.03] border border-white/[0.08] flex items-center justify-center text-[#FFFFFF]">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
               </svg>
@@ -114,7 +114,7 @@ export default function WishlistPage() {
             <Link
               href="/shop"
               style={{ padding: "16px 36px" }}
-              className="inline-block bg-white text-[#0A0A0A] font-mono text-xs uppercase font-black tracking-[0.25em] hover:bg-[#B6A47E] transition-all shadow-xl"
+              className="inline-block bg-white text-[#0A0A0A] font-mono text-xs uppercase font-black tracking-[0.25em] hover:bg-[#E5E5E5] transition-all shadow-xl"
             >
               START SHOPPING
             </Link>
@@ -219,7 +219,7 @@ export default function WishlistPage() {
                               {itemCategory}
                             </span>
                             {discountExpiresAt && (
-                              <CountdownTimer expiresAt={discountExpiresAt} compact />
+                              <CountdownTimer expiresAt={discountExpiresAt} compact textColor="white" />
                             )}
                             {!prod.in_stock && (
                               <span className="text-[10px] font-mono tracking-[0.2em] uppercase text-[#FF6666]">
@@ -228,7 +228,7 @@ export default function WishlistPage() {
                             )}
                           </div>
 
-                          <h3 className="text-base font-bold tracking-wide text-white uppercase hover:text-[#D4AF37] transition-colors">
+                          <h3 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-base tracking-wide text-white uppercase hover:text-[#8A8A8A] transition-colors">
                             {prod.is_available === false ? (
                               <button
                                 type="button"
@@ -265,7 +265,7 @@ export default function WishlistPage() {
                             ) : isSoldOut ? (
                               <strong className="text-[#FF6666] font-bold">SOLD OUT</strong>
                             ) : (
-                              <span className="text-[#B6A47E] font-medium">
+                              <span className="text-[#FFFFFF] font-medium">
                                 {resolvedStock !== null && resolvedStock !== undefined ? (
                                   <><strong className="text-white font-bold">{resolvedStock}</strong> UNITS IN STOCK</>
                                 ) : (
@@ -305,7 +305,7 @@ export default function WishlistPage() {
                             tabIndex={0}
                             onClick={() => handleMoveWishlistItemToBag(prod)}
                             onKeyDown={(e) => e.key === "Enter" && handleMoveWishlistItemToBag(prod)}
-                            className="inline-flex items-center gap-2 px-4 py-2 text-[#B6A47E] font-mono text-[11px] font-bold uppercase tracking-widest hover:text-white transition-all duration-300 cursor-pointer select-none"
+                            className="inline-flex items-center gap-2 px-4 py-2 text-[#FFFFFF] font-mono text-[11px] font-bold uppercase tracking-widest hover:text-white transition-all duration-300 cursor-pointer select-none"
                           >
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                               <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />

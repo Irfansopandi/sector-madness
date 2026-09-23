@@ -106,7 +106,7 @@ export default function OrderHistoryPage() {
       {/* Header with SHOW dropdown */}
       <div style={{ paddingTop: "20px", paddingBottom: "20px", paddingLeft: "16px", paddingRight: "16px" }} className="border-b border-white/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl md:text-2xl font-black uppercase tracking-wider text-[#F5F5F5]">ORDER HISTORY</h2>
+          <h2 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-xl md:text-2xl uppercase tracking-wider text-[#F5F5F5]">ORDER HISTORY</h2>
           <p className="text-xs text-[#8A8A8A] mt-1 font-mono">Archive of your completed and received fashion orders</p>
         </div>
 
@@ -154,7 +154,7 @@ export default function OrderHistoryPage() {
           <Link
             href="/shop"
             style={{ padding: "16px 36px" }}
-            className="inline-block bg-white text-[#0A0A0A] font-mono text-xs uppercase font-black tracking-[0.25em] hover:bg-[#B6A47E] transition-all shadow-xl rounded-sm"
+            className="inline-block bg-white text-[#0A0A0A] font-mono text-xs uppercase font-black tracking-[0.25em] hover:bg-[#E5E5E5] transition-all shadow-xl rounded-sm"
           >
             START SHOPPING
           </Link>
@@ -195,7 +195,7 @@ export default function OrderHistoryPage() {
                   <tr key={order.order_number} className="hover:bg-white/[0.02] transition-colors">
                     {/* Order Number & Date - Strictly No Wrap */}
                     <td style={cellStyle} className="align-middle whitespace-nowrap">
-                      <div className="font-bold text-[#B6A47E] text-sm tracking-wide whitespace-nowrap">{order.order_number}</div>
+                      <div className="font-bold text-[#FFFFFF] text-sm tracking-wide whitespace-nowrap">{order.order_number}</div>
                       <div className="text-[#8A8A8A] text-[11px] mt-1.5 whitespace-nowrap">{order.order_date}</div>
                     </td>
 
@@ -229,10 +229,10 @@ export default function OrderHistoryPage() {
                     <td style={cellStyle} className="align-middle text-right whitespace-nowrap">
                       <button
                         onClick={() => handleViewOrderDetails(order.order_number)}
-                        className="group inline-flex items-center gap-2 text-xs font-mono font-bold tracking-widest text-[#F5F5F5] hover:text-[#B6A47E] transition-colors cursor-pointer uppercase py-1 whitespace-nowrap"
+                        className="group inline-flex items-center gap-2 text-xs font-mono font-bold tracking-widest text-[#F5F5F5] hover:text-[#FFFFFF] transition-colors cursor-pointer uppercase py-1 whitespace-nowrap"
                       >
                         <span>DETAILS</span>
-                        <span className="group-hover:translate-x-1.5 transition-transform duration-200 text-[#B6A47E]">→</span>
+                        <span className="group-hover:translate-x-1.5 transition-transform duration-200 text-[#FFFFFF]">→</span>
                       </button>
                     </td>
                   </tr>
@@ -250,9 +250,9 @@ export default function OrderHistoryPage() {
           >
             <span className="text-[#8A8A8A]">
               Showing{" "}
-              <span className="font-bold text-[#B6A47E]">{Math.min(currentPage * itemsPerPage, ordersList.length)}</span>
+              <span className="font-bold text-[#FFFFFF]">{Math.min(currentPage * itemsPerPage, ordersList.length)}</span>
               {" "}of{" "}
-              <span className="text-[#B6A47E] font-extrabold">{ordersList.length}</span>
+              <span className="text-[#FFFFFF] font-extrabold">{ordersList.length}</span>
               {" "}data (Page {currentPage} of {Math.ceil(ordersList.length / itemsPerPage)})
             </span>
 
@@ -266,7 +266,7 @@ export default function OrderHistoryPage() {
                 className={`rounded-[5px] text-[11px] font-bold uppercase tracking-wider transition-all border ${
                   currentPage <= 1
                     ? "opacity-40 cursor-not-allowed border-transparent text-[#8A8A8A]"
-                    : "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-[#B6A47E] cursor-pointer"
+                    : "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-[#FFFFFF] cursor-pointer"
                 }`}
               >
                 PREVIOUS
@@ -281,7 +281,7 @@ export default function OrderHistoryPage() {
                   style={{ width: "32px", height: "32px" }}
                   className={`rounded-[5px] text-[11px] font-bold font-mono transition-all border cursor-pointer flex items-center justify-center ${
                     pg === currentPage
-                      ? "bg-[#B6A47E] border-[#B6A47E] text-black font-extrabold"
+                      ? "bg-[#FFFFFF] border-[#FFFFFF] text-black font-extrabold"
                       : "bg-white/5 border-white/10 text-white hover:bg-white/10"
                   }`}
                 >
@@ -298,7 +298,7 @@ export default function OrderHistoryPage() {
                 className={`rounded-[5px] text-[11px] font-bold uppercase tracking-wider transition-all border ${
                   currentPage >= Math.ceil(ordersList.length / itemsPerPage)
                     ? "opacity-40 cursor-not-allowed border-transparent text-[#8A8A8A]"
-                    : "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-[#B6A47E] cursor-pointer"
+                    : "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-[#FFFFFF] cursor-pointer"
                 }`}
               >
                 NEXT
@@ -329,10 +329,10 @@ export default function OrderHistoryPage() {
               </button>
 
               <div style={{ paddingBottom: "24px" }} className="border-b border-white/[0.1] text-left">
-                <span style={{ marginBottom: "10px" }} className="text-xs font-mono text-[#B6A47E] uppercase tracking-[0.25em] block font-bold">
+                <span style={{ marginBottom: "10px" }} className="text-xs font-mono text-[#FFFFFF] uppercase tracking-[0.25em] block font-bold">
                   [SECTOR MADNESS // INVOICE]
                 </span>
-                <h3 style={{ marginBottom: "8px" }} className="text-2xl md:text-3xl font-black uppercase tracking-wider text-[#F5F5F5] font-serif">
+                <h3 style={{ marginBottom: "8px", fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-2xl md:text-3xl uppercase tracking-wider text-[#F5F5F5]">
                   {selectedOrderDetail.order_number}
                 </h3>
                 <p className="text-xs font-mono text-[#8A8A8A]">
@@ -346,7 +346,7 @@ export default function OrderHistoryPage() {
               >
                 <div className="space-y-2 text-left">
                   <span className="text-[10px] md:text-[11px] text-[#8A8A8A] uppercase tracking-wider block font-bold">TOTAL</span>
-                  <span className="text-[#B6A47E] font-black text-sm md:text-base block">Rp {(selectedOrderDetail.summary?.grand_total || (selectedOrderDetail as any).total || 0).toLocaleString("id-ID")}</span>
+                  <span className="text-[#FFFFFF] font-black text-sm md:text-base block">Rp {(selectedOrderDetail.summary?.grand_total || (selectedOrderDetail as any).total || 0).toLocaleString("id-ID")}</span>
                 </div>
                 <div className="space-y-2 text-left">
                   <span className="text-[10px] md:text-[11px] text-[#8A8A8A] uppercase tracking-wider block font-bold">PAYMENT METHOD</span>
@@ -392,19 +392,19 @@ export default function OrderHistoryPage() {
                       <div
                         key={idx}
                         style={{ padding: "24px" }}
-                        className="flex items-center gap-8 bg-[#0A0A0A] border border-white/[0.08] hover:border-[#B6A47E]/40 transition-colors rounded-sm"
+                        className="flex items-center gap-8 bg-[#0A0A0A] border border-white/[0.08] hover:border-[#FFFFFF]/40 transition-colors rounded-sm"
                       >
                         <div className="w-24 h-32 relative bg-[#161616] flex-shrink-0 border border-white/[0.08] overflow-hidden">
                           <Image src={prodImg} alt={prodName} fill className="object-cover" />
                         </div>
                         <div className="flex-1 min-w-0 flex flex-col justify-center text-left">
-                          <h4 style={{ marginBottom: "10px" }} className="text-lg md:text-xl font-black text-[#F5F5F5] uppercase tracking-wide font-serif truncate">
+                          <h4 style={{ marginBottom: "10px", fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-lg md:text-xl text-[#F5F5F5] uppercase tracking-wide truncate">
                             {prodName}
                           </h4>
                           <p style={{ marginBottom: "14px" }} className="text-xs font-mono text-[#8A8A8A] tracking-widest uppercase">
                             {[validColor, validSize, `QTY: ${qty}`].filter(Boolean).join(" // ")}
                           </p>
-                          <p className="text-base font-mono text-[#B6A47E] font-black">
+                          <p className="text-base font-mono text-[#FFFFFF] font-black">
                             Rp {price.toLocaleString("id-ID")}
                           </p>
                         </div>
@@ -435,7 +435,7 @@ export default function OrderHistoryPage() {
                 <Link
                   href="/shop"
                   style={{ padding: "20px 0" }}
-                  className="w-full bg-[#B6A47E] text-[#0A0A0A] font-mono text-xs uppercase font-extrabold tracking-[0.25em] hover:bg-white transition-all duration-300 cursor-pointer shadow-xl rounded-sm block text-center"
+                  className="w-full bg-[#E5E5E5] text-[#0A0A0A] font-mono text-xs uppercase font-extrabold tracking-[0.25em] hover:bg-white transition-all duration-300 cursor-pointer shadow-xl rounded-sm block text-center"
                 >
                   BUY AGAIN
                 </Link>

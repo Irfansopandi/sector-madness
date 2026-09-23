@@ -117,7 +117,7 @@ export default function ProductCard({
           {/* Limited label */}
           {limited && !activeDiscount && (
             <div className="absolute top-2 left-2 md:top-4 md:left-4 scale-[0.65] origin-top-left md:scale-100 z-10">
-              <span className="text-[9px] tracking-[0.2em] uppercase text-[#B6A47E] font-[family-name:var(--font-body)]">
+              <span className="text-[9px] tracking-[0.2em] uppercase text-[#0A0A0A] font-[family-name:var(--font-body)] font-medium">
                 Limited Release
               </span>
             </div>
@@ -127,7 +127,7 @@ export default function ProductCard({
           <div className={`absolute bottom-2 left-2 md:bottom-4 md:left-4 z-10 scale-[0.65] origin-bottom-left md:scale-100 transition-opacity duration-300 ${
             isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
           }`}>
-            <span className="text-[9px] tracking-[0.2em] uppercase text-[#F5F5F5] font-[family-name:var(--font-body)] font-medium">
+            <span className="text-[9px] tracking-[0.2em] uppercase text-[#0A0A0A] font-[family-name:var(--font-body)] font-medium">
               VIEW PRODUCT
             </span>
           </div>
@@ -149,7 +149,7 @@ export default function ProductCard({
           <span className="text-[8px] md:text-[10px] tracking-[0.2em] uppercase text-[#8A8A8A] font-[family-name:var(--font-body)] block">
             {collectionCode}
           </span>
-          <h3 className="text-[12px] md:text-[15px] text-[#F5F5F5] font-[family-name:var(--font-body)] font-normal tracking-wide leading-tight md:leading-normal">
+          <h3 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-[12px] md:text-[15px] text-[#F5F5F5] tracking-wide leading-tight md:leading-normal">
             {name}
           </h3>
           <p className="text-[9px] md:text-[11px] text-[#8A8A8A] font-[family-name:var(--font-body)] font-light">

@@ -33,9 +33,9 @@ export default function BrandPage() {
               style={{
                 fontSize: "clamp(3.5rem, 9.5vw, 9rem)",
                 lineHeight: "0.95",
-                fontWeight: 900,
+                fontWeight: 500,
                 letterSpacing: "-0.04em",
-                fontFamily: "'Inter', -apple-system, sans-serif",
+                fontFamily: "'Roboto', sans-serif",
               }}
               className="uppercase text-[#FFFFFF] tracking-tighter"
             >
@@ -45,7 +45,7 @@ export default function BrandPage() {
             {/* Suggested Subheading */}
             <p
               style={{ fontSize: "clamp(1.2rem, 2.5vw, 2.4rem)", letterSpacing: "0.02em", fontWeight: 300 }}
-              className="text-[#B6A47E] mt-2 max-w-3xl leading-snug"
+              className="text-[#FFFFFF] mt-2 max-w-3xl leading-snug"
             >
               Sector Madness. We Trust Quality.
             </p>
@@ -84,7 +84,7 @@ export default function BrandPage() {
               style={{ paddingTop: "36px" }}
               className="lg:col-span-6 space-y-8"
             >
-              <span className="inline-block h-[2px] w-16 bg-[#B6A47E] mb-2" />
+              <span className="inline-block h-[2px] w-16 bg-[#FFFFFF] mb-2" />
               
               <p
                 style={{
@@ -111,7 +111,7 @@ export default function BrandPage() {
                   Inspired by streetwear culture and everyday life, each collection is thoughtfully developed with careful attention to materials, construction, and finishing details, creating garments made to stand the test of time.
                 </p>
 
-                <div className="py-4 lg:py-5 my-4 border-l-2 border-[#B6A47E] pl-5 lg:pl-6 bg-[#111111]/40">
+                <div className="py-4 lg:py-5 my-4 border-l-2 border-[#FFFFFF] pl-5 lg:pl-6 bg-[#111111]/40">
                   <p className="text-[15px] lg:text-[18.5px] leading-[1.6] lg:leading-[1.65] text-[#F5F5F5] italic text-left">
                     &ldquo;To us, clothing is more than what you wear. It is an expression of character and a part of every story you create.&rdquo;
                   </p>
@@ -171,7 +171,7 @@ export default function BrandPage() {
             >
               {/* TITLE HEADER */}
               <div style={{ paddingTop: "24px", marginBottom: "16px" }} className="space-y-3">
-                <span className="text-[11.5px] font-semibold tracking-[0.25em] text-[#B6A47E] uppercase block">
+                <span className="text-[11.5px] font-semibold tracking-[0.25em] text-[#FFFFFF] uppercase block">
                   PURPOSE & DIRECTION
                 </span>
 
@@ -179,9 +179,9 @@ export default function BrandPage() {
                   style={{
                     fontSize: "clamp(2.2rem, 4vw, 3.5rem)",
                     lineHeight: "1.1",
-                    fontWeight: 800,
+                    fontWeight: 500,
                     letterSpacing: "-0.03em",
-                    fontFamily: "'Inter', -apple-system, sans-serif",
+                    fontFamily: "'Roboto', sans-serif",
                   }}
                   className="text-[#FFFFFF] uppercase tracking-tight"
                 >
@@ -198,8 +198,8 @@ export default function BrandPage() {
                 }}
               >
                 <div style={{ marginBottom: "16px" }} className="flex items-center gap-3">
-                  <span className="h-[2px] w-8 bg-[#B6A47E]" />
-                  <span className="text-[12px] font-bold tracking-[0.25em] text-[#B6A47E] uppercase">
+                  <span className="h-[2px] w-8 bg-[#FFFFFF]" />
+                  <span className="text-[12px] font-bold tracking-[0.25em] text-[#FFFFFF] uppercase">
                     OUR VISION
                   </span>
                 </div>
@@ -219,33 +219,33 @@ export default function BrandPage() {
                 }}
               >
                 <div style={{ marginBottom: "16px" }} className="flex items-center gap-3">
-                  <span className="h-[2px] w-8 bg-[#B6A47E]" />
-                  <span className="text-[12px] font-bold tracking-[0.25em] text-[#B6A47E] uppercase">
+                  <span className="h-[2px] w-8 bg-[#FFFFFF]" />
+                  <span className="text-[12px] font-bold tracking-[0.25em] text-[#FFFFFF] uppercase">
                     OUR MISSION
                   </span>
                 </div>
                 
                 <ul className="space-y-5">
                   <li className="flex items-start gap-4">
-                    <span className="text-[12px] font-mono font-bold text-[#B6A47E] pt-1">01</span>
+                    <span className="text-[12px] font-mono font-bold text-[#FFFFFF] pt-1">01</span>
                     <span style={{ fontSize: "15.5px", lineHeight: "1.75", fontWeight: 300 }} className="text-[#A3A3A3]">
                       Deliver high-quality products at a fair, proportional value.
                     </span>
                   </li>
                   <li className="flex items-start gap-4">
-                    <span className="text-[12px] font-mono font-bold text-[#B6A47E] pt-1">02</span>
+                    <span className="text-[12px] font-mono font-bold text-[#FFFFFF] pt-1">02</span>
                     <span style={{ fontSize: "15.5px", lineHeight: "1.75", fontWeight: 300 }} className="text-[#A3A3A3]">
                       Create simple, functional, and versatile designs for diverse daily activities.
                     </span>
                   </li>
                   <li className="flex items-start gap-4">
-                    <span className="text-[12px] font-mono font-bold text-[#B6A47E] pt-1">03</span>
+                    <span className="text-[12px] font-mono font-bold text-[#FFFFFF] pt-1">03</span>
                     <span style={{ fontSize: "15.5px", lineHeight: "1.75", fontWeight: 300 }} className="text-[#A3A3A3]">
                       Maintain rigorous quality control across every stage, from material selection to production.
                     </span>
                   </li>
                   <li className="flex items-start gap-4">
-                    <span className="text-[12px] font-mono font-bold text-[#B6A47E] pt-1">04</span>
+                    <span className="text-[12px] font-mono font-bold text-[#FFFFFF] pt-1">04</span>
                     <span style={{ fontSize: "15.5px", lineHeight: "1.75", fontWeight: 300 }} className="text-[#A3A3A3]">
                       Build lasting customer trust through consistent product quality and reliable service.
                     </span>
@@ -272,7 +272,7 @@ export default function BrandPage() {
             >
               {/* TITLE HEADER */}
               <div style={{ paddingTop: "24px", marginBottom: "16px" }} className="space-y-3">
-                <span className="text-[11.5px] font-semibold tracking-[0.25em] text-[#B6A47E] uppercase block">
+                <span className="text-[11.5px] font-semibold tracking-[0.25em] text-[#FFFFFF] uppercase block">
                   IDENTITY &amp; CHARACTER
                 </span>
 
@@ -280,9 +280,9 @@ export default function BrandPage() {
                   style={{
                     fontSize: "clamp(2rem, 3.8vw, 3.2rem)",
                     lineHeight: "1.15",
-                    fontWeight: 800,
+                    fontWeight: 500,
                     letterSpacing: "-0.03em",
-                    fontFamily: "'Inter', -apple-system, sans-serif",
+                    fontFamily: "'Roboto', sans-serif",
                   }}
                   className="text-[#FFFFFF] uppercase tracking-tight"
                 >
@@ -365,7 +365,7 @@ export default function BrandPage() {
               &ldquo;Because quality is not just a standard, it is our commitment. Sector Madness. Built from Experience. Made for Every Story.&rdquo;
             </p>
 
-            <div className="w-20 h-[1px] bg-[#B6A47E]/60 mx-auto" />
+            <div className="w-20 h-[1px] bg-[#FFFFFF]/60 mx-auto" />
 
             <p className="text-[12px] tracking-[0.25em] uppercase text-[#8A8A8A] font-medium">
               SECTOR MADNESS
@@ -375,7 +375,7 @@ export default function BrandPage() {
               <Link
                 href="/shop"
                 style={{ fontSize: "12px", letterSpacing: "0.25em", padding: "18px 46px" }}
-                className="inline-block bg-[#FFFFFF] text-[#0A0A0A] font-bold uppercase hover:bg-[#B6A47E] hover:text-[#FFFFFF] transition-all duration-300 rounded-none tracking-widest cursor-pointer"
+                className="inline-block bg-[#FFFFFF] text-[#0A0A0A] font-bold uppercase hover:bg-[#E5E5E5] hover:text-[#0A0A0A] transition-all duration-300 rounded-none tracking-widest cursor-pointer"
               >
                 DISCOVER THE COLLECTION →
               </Link>
@@ -384,7 +384,7 @@ export default function BrandPage() {
         </div>
         
         {/* Subtle radial glow in background */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#B6A47E]/5 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#FFFFFF]/5 rounded-full blur-[120px] pointer-events-none" />
       </section>
 
       {/* Footer */}

@@ -6,9 +6,10 @@ interface CountdownTimerProps {
   expiresAt: string;
   compact?: boolean;
   onExpire?: () => void;
+  textColor?: "white" | "black";
 }
 
-export default function CountdownTimer({ expiresAt, compact = false, onExpire }: CountdownTimerProps) {
+export default function CountdownTimer({ expiresAt, compact = false, onExpire, textColor = "black" }: CountdownTimerProps) {
   const [timeLeft, setTimeLeft] = useState<{
     days: number;
     hours: number;
@@ -62,13 +63,13 @@ export default function CountdownTimer({ expiresAt, compact = false, onExpire }:
   const pad = (n: number) => String(n).padStart(2, "0");
 
   if (compact) {
+    const mainColor = textColor === "black" ? "text-[#0A0A0A]" : "text-[#FFFFFF]";
+    const labelColor = textColor === "black" ? "text-[#555555]" : "text-[#8A8A8A]";
+
     return (
-      <div className="inline-flex items-center gap-1.5 text-white py-1 px-2 text-[9px] tracking-[0.1em] font-mono font-medium drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-        <svg className="w-3 h-3 text-[#FF3B30] animate-pulse shrink-0" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M13 2L3 14h7v8l10-12h-7V2z" />
-        </svg>
-        <span className="uppercase text-[8.5px] text-[#D1D1D1] tracking-[0.05em]">ENDS IN</span>
-        <span className="text-white font-bold tracking-tight">
+      <div className={`inline-flex items-center gap-1.5 ${mainColor} py-1 px-2 text-[9px] tracking-[0.1em] font-mono font-medium`}>
+        <span className={`uppercase text-[8.5px] ${labelColor} tracking-[0.05em]`}>ENDS IN</span>
+        <span className={`${mainColor} font-bold tracking-tight`}>
           {timeLeft.days > 0 ? `${timeLeft.days}d ` : ""}
           {pad(timeLeft.hours)}:{pad(timeLeft.minutes)}:{pad(timeLeft.seconds)}
         </span>
@@ -86,21 +87,21 @@ export default function CountdownTimer({ expiresAt, compact = false, onExpire }:
         <span className="text-[10px] text-[#888888] tracking-[0.1em] uppercase mr-1 hidden sm:inline">ENDS IN</span>
         {timeLeft.days > 0 && (
           <>
-            <span className="bg-[#1A1A1A] text-white text-[11px] font-bold px-2 py-1 rounded-sm">
+            <span className="text-white text-[11px] font-bold">
               {pad(timeLeft.days)}d
             </span>
             <span className="text-[#888888] text-xs font-bold">:</span>
           </>
         )}
-        <span className="bg-[#1A1A1A] text-white text-[11px] font-bold px-2 py-1 rounded-sm">
+        <span className="text-white text-[11px] font-bold">
           {pad(timeLeft.hours)}h
         </span>
         <span className="text-[#888888] text-xs font-bold">:</span>
-        <span className="bg-[#1A1A1A] text-white text-[11px] font-bold px-2 py-1 rounded-sm">
+        <span className="text-white text-[11px] font-bold">
           {pad(timeLeft.minutes)}m
         </span>
         <span className="text-[#888888] text-xs font-bold">:</span>
-        <span className="bg-[#1A1A1A] text-[#FF3B30] text-[11px] font-bold px-2 py-1 rounded-sm animate-pulse">
+        <span className="text-white text-[11px] font-bold animate-pulse">
           {pad(timeLeft.seconds)}s
         </span>
       </div>

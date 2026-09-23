@@ -106,7 +106,7 @@ function CheckoutSuccessContent() {
         PAYMENT VERIFIED & CONFIRMED
       </div>
 
-      <h1 className="text-2xl sm:text-3xl lg:text-5xl font-black uppercase tracking-[0.1em] text-white mb-5 sm:mb-4 text-center px-2">
+      <h1 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-2xl sm:text-3xl lg:text-5xl uppercase tracking-[0.1em] text-white mb-5 sm:mb-4 text-center px-2">
         PAYMENT CONFIRMED
       </h1>
 
@@ -189,7 +189,7 @@ function CheckoutSuccessContent() {
           {/* Purchased Items Section */}
           {order.products && order.products.length > 0 && (
             <div style={{ paddingTop: "36px" }}>
-              <h4 style={{ marginBottom: "20px" }} className="text-xs font-mono font-bold text-[#888888] uppercase tracking-[0.18em]">
+              <h4 style={{ marginBottom: "20px", fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-xs text-[#888888] uppercase tracking-[0.18em]">
                 PURCHASED ITEMS ({order.products.reduce((acc: number, item: any) => acc + (item.quantity || 1), 0)})
               </h4>
 
@@ -215,7 +215,7 @@ function CheckoutSuccessContent() {
                       </div>
 
                       <div className="min-w-0 space-y-1.5 sm:space-y-1 flex-1">
-                        <h5 className="font-bold text-white uppercase tracking-wide truncate text-[11px] sm:text-xs leading-snug">
+                        <h5 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-white uppercase tracking-wide truncate text-[11px] sm:text-xs leading-snug">
                           {item.product_name}
                         </h5>
                         <div className="text-[10px] sm:text-[11px] text-[#777777] uppercase tracking-wider flex flex-wrap items-center gap-x-2 gap-y-1">

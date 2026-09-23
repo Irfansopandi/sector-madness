@@ -145,7 +145,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <main
       style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}
-      className="min-h-screen bg-[#0A0A0A] text-[#F5F5F5] flex flex-col selection:bg-[#B6A47E] selection:text-[#0A0A0A]"
+      className="min-h-screen bg-[#0A0A0A] text-[#F5F5F5] flex flex-col selection:bg-[#FFFFFF] selection:text-[#0A0A0A]"
     >
       <Navbar mode="dark" />
 
@@ -189,7 +189,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           /* Active state: underline only, no background box */
           .dashboard-link.active {
-            border-bottom-color: #B6A47E !important;
+            border-bottom-color: #FFFFFF !important;
             background-color: transparent !important;
           }
 
@@ -261,7 +261,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             flex-direction: column-reverse !important;
             gap: 12px !important;
           }
-          .fixed.inset-0 .bg-\\[\\#B6A47E\\] {
+          .fixed.inset-0 .bg-\\[\\#FFFFFF\\] {
             white-space: nowrap !important;
             font-size: 11px !important;
             letter-spacing: 0.1em !important;
@@ -311,11 +311,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     }}
                     className={`dashboard-link flex items-center gap-3.5 pr-5 text-sm tracking-[0.15em] uppercase transition-all duration-200 cursor-pointer font-semibold whitespace-nowrap text-left border-l-[3.5px] ${
                       isActive
-                        ? "active bg-white/[0.08] text-[#F5F5F5] font-bold border-[#B6A47E] shadow-sm"
+                        ? "active bg-white/[0.08] text-[#F5F5F5] font-bold border-[#FFFFFF] shadow-sm"
                         : "border-transparent text-[#8A8A8A] hover:bg-white/[0.05] hover:text-[#F5F5F5] hover:border-white/40"
                     }`}
                   >
-                    <span className={isActive ? "text-[#B6A47E]" : "text-[#8A8A8A]"}>{item.icon}</span>
+                    <span className={isActive ? "text-[#FFFFFF]" : "text-[#8A8A8A]"}>{item.icon}</span>
                     <span>{item.label}</span>
                   </Link>
                 );

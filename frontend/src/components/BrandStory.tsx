@@ -17,7 +17,7 @@ export default function BrandStory() {
               <span style={{ fontSize: "11px", letterSpacing: "0.25em", fontWeight: 600 }} className="uppercase text-[#8A8A8A]">
                 PHILOSOPHY & VISION
               </span>
-              <span className="hidden sm:inline-block text-[11px] tracking-[0.2em] uppercase text-[#B6A47E] font-medium">
+              <span className="hidden sm:inline-block text-[11px] tracking-[0.2em] uppercase text-[#FFFFFF] font-medium">
                 SECTOR MADNESS
               </span>
             </div>
@@ -41,7 +41,7 @@ export default function BrandStory() {
           <AnimatedSection delay={0.25}>
             <p
               style={{ fontSize: "clamp(1.2rem, 2.2vw, 2rem)", letterSpacing: "0.02em", fontWeight: 300 }}
-              className="text-[#B6A47E] leading-relaxed max-w-2xl"
+              className="text-[#FFFFFF] leading-relaxed max-w-2xl"
             >
               Sector Madness. We Trust Quality.
             </p>
@@ -89,7 +89,7 @@ export default function BrandStory() {
                   Inspired by streetwear culture and everyday life, each collection is thoughtfully developed with careful attention to materials, construction, and finishing details, creating garments made to stand the test of time.
                 </p>
 
-                <div className="py-4 lg:py-5 my-3 border-l-2 border-[#B6A47E] pl-5 lg:pl-6 bg-[#111111]/40">
+                <div className="py-4 lg:py-5 my-3 border-l-2 border-[#FFFFFF] pl-5 lg:pl-6 bg-[#111111]/40">
                   <p className="text-[15px] lg:text-[19.5px] leading-[1.6] lg:leading-[1.65] text-[#F5F5F5] italic">
                     &ldquo;To us, clothing is more than what you wear. It is an expression of character and a part of every story you create.&rdquo;
                   </p>
@@ -100,7 +100,7 @@ export default function BrandStory() {
             <AnimatedSection delay={0.3} className="pt-8 border-t border-[#222222]/70">
               <Link
                 href="/brand"
-                className="inline-flex items-center justify-center bg-[#FFFFFF] text-[#0A0A0A] uppercase hover:bg-[#B6A47E] hover:text-[#FFFFFF] transition-all duration-300 rounded-none cursor-pointer whitespace-nowrap font-bold text-center"
+                className="inline-flex items-center justify-center bg-[#FFFFFF] text-[#0A0A0A] uppercase hover:bg-[#E5E5E5] hover:text-[#0A0A0A] transition-all duration-300 rounded-none cursor-pointer whitespace-nowrap font-bold text-center"
                 style={{
                   fontSize: "clamp(9px, 1.2vw, 12px)",
                   letterSpacing: "0.22em",

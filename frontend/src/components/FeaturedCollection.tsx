@@ -189,11 +189,11 @@ export default function FeaturedCollection() {
           <span className="text-[10px] md:text-[11px] tracking-[0.3em] uppercase text-[#8A8A8A] font-[family-name:var(--font-body)] block mb-3">
             Sector
           </span>
-          <h2 className="!font-sans text-[20px] md:text-[24px] lg:text-[28px] text-[#F5F5F5] !font-black tracking-[0.05em] uppercase">
+          <h2 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-[20px] md:text-[24px] lg:text-[28px] text-[#F5F5F5] tracking-[0.05em] uppercase">
             FEATURED PRODUCTS
           </h2>
         </div>
-        <span className="text-[10px] md:text-[11px] font-mono tracking-[0.2em] uppercase text-[#B6A47E] font-medium hidden sm:inline-block">
+        <span className="text-[10px] md:text-[11px] font-mono tracking-[0.2em] uppercase text-[#FFFFFF] font-medium hidden sm:inline-block">
           TOP {featuredProducts.length} SELECTIONS
         </span>
       </div>

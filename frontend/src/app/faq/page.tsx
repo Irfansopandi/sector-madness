@@ -256,7 +256,7 @@ export default function FAQPage() {
                     <span className="text-sm md:text-base font-mono font-bold tracking-[0.25em] text-[#B6A47E]">
                       {catGroup.code}
                     </span>
-                    <h2 className="text-sm md:text-base lg:text-lg font-bold tracking-[0.25em] uppercase text-[#FFFFFF]">
+                    <h2 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500 }} className="text-sm md:text-base lg:text-lg tracking-[0.25em] uppercase text-[#FFFFFF]">
                       {catGroup.category}
                     </h2>
                   </div>
@@ -343,8 +343,9 @@ export default function FAQPage() {
                   style={{
                     fontSize: "clamp(1.35rem, 2vw, 1.75rem)",
                     lineHeight: "1.15",
-                    fontWeight: 800,
+                    fontWeight: 500,
                     letterSpacing: "-0.02em",
+                    fontFamily: "'Roboto', sans-serif",
                   }}
                   className="text-[#FFFFFF] uppercase"
                 >

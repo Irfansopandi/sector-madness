@@ -166,7 +166,7 @@ export default function CustomPaymentModal({
   return (
     <div className="fixed inset-0 z-[99999] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 sm:p-8 overflow-y-auto animate-fadeIn">
       {/* Main Luxury Modal Container */}
-      <div className="w-full max-w-4xl bg-[#0A0A0A] border border-[#252525] text-white font-mono shadow-[0_0_60px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col max-h-[98vh] sm:max-h-[94vh]">
+      <div style={{ fontFamily: "'Roboto', sans-serif" }} className="w-full max-w-4xl bg-[#0A0A0A] border border-[#252525] text-white shadow-[0_0_60px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col max-h-[98vh] sm:max-h-[94vh]">
         
         {/* Top Protocol Bar */}
         <div className="bg-[#111111] border-b border-[#222222] px-6 sm:px-10 py-5 flex items-center justify-between shrink-0 gap-3">

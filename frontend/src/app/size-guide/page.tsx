@@ -208,8 +208,8 @@ export default function SizeGuidePage() {
                       className="border-b border-[#333333] mb-6 md:mb-8"
                     >
                       <h2
-                        style={{ marginTop: "4px" }}
-                        className="text-sm md:text-base lg:text-lg font-bold tracking-[0.25em] uppercase text-[#FFFFFF] mb-2"
+                        style={{ marginTop: "4px", fontFamily: "'Roboto', sans-serif", fontWeight: 500 }}
+                        className="text-sm md:text-base lg:text-lg tracking-[0.25em] uppercase text-[#FFFFFF] mb-2"
                       >
                         {guide.category} {guide.fit_description ? `(${guide.fit_description})` : ""}
                       </h2>
@@ -270,7 +270,7 @@ export default function SizeGuidePage() {
                 <span className="text-sm md:text-base font-mono font-bold tracking-[0.25em] text-[#B6A47E] uppercase block mb-3">
                   MEASUREMENT ADVICE
                 </span>
-                <h3 className="text-sm md:text-base lg:text-lg font-bold tracking-[0.25em] uppercase text-[#FFFFFF]">
+                <h3 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500 }} className="text-sm md:text-base lg:text-lg tracking-[0.25em] uppercase text-[#FFFFFF]">
                   HOW TO MEASURE YOUR BODY
                 </h3>
               </div>
@@ -337,8 +337,9 @@ export default function SizeGuidePage() {
                   style={{
                     fontSize: "clamp(1.35rem, 2vw, 1.75rem)",
                     lineHeight: "1.15",
-                    fontWeight: 800,
+                    fontWeight: 500,
                     letterSpacing: "-0.02em",
+                    fontFamily: "'Roboto', sans-serif",
                   }}
                   className="text-[#FFFFFF] uppercase"
                 >

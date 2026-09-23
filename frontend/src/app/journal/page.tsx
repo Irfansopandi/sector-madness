@@ -138,7 +138,7 @@ export default function JournalPage() {
                   <div className="lg:col-span-4 flex flex-col justify-between h-full py-2 space-y-8">
                     <div>
                       <div className="flex items-center gap-3 text-[11.5px] text-[#A0A0A0] uppercase mb-4 tracking-[0.2em] font-medium">
-                        <span className="text-[#B6A47E] font-semibold">{featuredArticle.category}</span>
+                        <span className="text-[#FFFFFF] font-semibold">{featuredArticle.category}</span>
                         {featuredArticle.issue && (
                           <>
                             <span>•</span>
@@ -151,9 +151,9 @@ export default function JournalPage() {
                         style={{
                           fontSize: "clamp(2rem, 3.5vw, 3.5rem)",
                           lineHeight: "1.08",
-                          fontWeight: 800,
+                          fontWeight: 600,
                           letterSpacing: "-0.03em",
-                          fontFamily: "'Inter', -apple-system, sans-serif",
+                          fontFamily: "'Roboto', sans-serif",
                         }}
                         className="text-[#FFFFFF] group-hover:opacity-85 transition-opacity duration-300 mb-6"
                       >
@@ -200,7 +200,7 @@ export default function JournalPage() {
 
                       {/* Typographic Metadata below photo */}
                       <div className="flex items-center gap-3 text-[11.5px] text-[#A0A0A0] uppercase mb-4 tracking-[0.18em] font-medium">
-                        <span className="text-[#B6A47E] font-semibold">{item.category}</span>
+                        <span className="text-[#FFFFFF] font-semibold">{item.category}</span>
                         {item.issue && (
                           <>
                             <span>•</span>
@@ -213,8 +213,9 @@ export default function JournalPage() {
                         style={{
                           fontSize: "clamp(1.4rem, 2vw, 2.2rem)",
                           lineHeight: "1.2",
-                          fontWeight: 700,
+                          fontWeight: 600,
                           letterSpacing: "-0.02em",
+                          fontFamily: "'Roboto', sans-serif",
                         }}
                         className="text-[#FFFFFF] group-hover:opacity-85 transition-opacity duration-300 mb-5"
                       >
@@ -291,7 +292,7 @@ export default function JournalPage() {
                 <div style={{ paddingLeft: "clamp(32px, 5vw, 64px)", paddingRight: "clamp(32px, 5vw, 64px)" }} className="py-10 md:py-16">
                   
                   <div style={{ paddingBottom: "20px", marginBottom: "16px" }} className="border-b border-[#222222]">
-                    <div style={{ marginBottom: "16px" }} className="flex items-center gap-3 text-[10px] md:text-[12px] text-[#B6A47E] uppercase tracking-[0.2em] font-semibold whitespace-nowrap overflow-x-auto scrollbar-none">
+                    <div style={{ marginBottom: "16px" }} className="flex items-center gap-3 text-[10px] md:text-[12px] text-[#FFFFFF] uppercase tracking-[0.2em] font-semibold whitespace-nowrap overflow-x-auto scrollbar-none">
                       <span>{selectedArticle.category}</span>
                       {selectedArticle.date && (
                         <>
@@ -305,9 +306,9 @@ export default function JournalPage() {
                       style={{
                         fontSize: "clamp(1.2rem, 4vw, 4rem)",
                         lineHeight: "1.05",
-                        fontWeight: 800,
+                        fontWeight: 600,
                         letterSpacing: "-0.03em",
-                        fontFamily: "'Inter', -apple-system, sans-serif",
+                        fontFamily: "'Roboto', sans-serif",
                       }}
                       className="text-[#FFFFFF] whitespace-nowrap"
                     >
@@ -330,7 +331,7 @@ export default function JournalPage() {
 
                   {/* Highlight Quote Box */}
                   {selectedArticle.quote && (
-                    <div style={{ marginTop: "20px", marginBottom: "20px" }} className="p-5 md:p-12 border-l-4 border-[#B6A47E] bg-[#141414]/60">
+                    <div style={{ marginTop: "20px", marginBottom: "20px" }} className="p-5 md:p-12 border-l-4 border-[#FFFFFF] bg-[#141414]/60">
                       <p style={{ lineHeight: "1.65", fontWeight: 600 }} className="text-[15px] md:text-[20px] text-[#FFFFFF] italic">
                         &ldquo;{selectedArticle.quote}&rdquo;
                       </p>
@@ -346,7 +347,7 @@ export default function JournalPage() {
                       href="/shop"
                       onClick={() => setSelectedArticle(null)}
                       style={{ fontSize: "12px", letterSpacing: "0.22em", padding: "18px 42px" }}
-                      className="bg-[#FFFFFF] text-[#0A0A0A] uppercase font-bold hover:bg-[#B6A47E] hover:text-[#0A0A0A] transition-colors rounded-none text-center sm:text-right shrink-0"
+                      className="bg-[#FFFFFF] text-[#0A0A0A] uppercase font-bold hover:bg-[#E5E5E5] hover:text-[#0A0A0A] transition-colors rounded-none text-center sm:text-right shrink-0"
                     >
                       EXPLORE THE COLLECTION →
                     </Link>

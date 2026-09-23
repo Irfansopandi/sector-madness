@@ -615,7 +615,7 @@ function CheckoutContent() {
               <span className="text-[11px] font-mono tracking-[0.25em] text-[#8A8A8A] uppercase block mb-2 font-bold">
                 ATELIER CONCIERGE // SECURE PROTOCOL
               </span>
-              <h1 className="text-3xl lg:text-5xl font-extrabold uppercase tracking-[0.08em] text-white">
+              <h1 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-3xl lg:text-5xl uppercase tracking-[0.08em] text-white">
                 SECURE CHECKOUT
               </h1>
             </div>
@@ -657,8 +657,8 @@ function CheckoutContent() {
               {/* 1. CONTACT INFORMATION */}
               <section style={{ display: "flex", flexDirection: "column" }}>
                 <h2 
-                  className="font-serif uppercase font-bold text-white text-lg tracking-[0.2em] border-b border-[#222222]"
-                  style={{ paddingBottom: "24px", marginBottom: "36px" }}
+                  className="uppercase text-white text-lg tracking-[0.2em] border-b border-[#222222]"
+                  style={{ paddingBottom: "24px", marginBottom: "36px", fontFamily: "'Roboto', sans-serif", fontWeight: 600 }}
                 >
                   CONTACT INFORMATION
                 </h2>
@@ -879,7 +879,7 @@ function CheckoutContent() {
               {/* 2. SHIPPING DETAILS */}
               <section style={{ display: "flex", flexDirection: "column" }}>
                 <div className="flex items-center justify-between border-b border-[#222222]" style={{ paddingBottom: "24px", marginBottom: "36px" }}>
-                  <h2 className="font-serif uppercase font-bold text-white text-lg tracking-[0.2em]">
+                  <h2 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="uppercase text-white text-lg tracking-[0.2em]">
                     SHIPPING DETAILS
                   </h2>
                   <span className="text-[11px] font-mono text-[#777777] tracking-wider hidden sm:inline-block font-bold whitespace-nowrap">
@@ -1224,8 +1224,8 @@ function CheckoutContent() {
               >
                 {/* Title Matching Shopping Bag */}
                 <h2 
-                  className="font-serif uppercase font-bold text-white text-lg tracking-[0.2em]" 
-                  style={{ marginBottom: "28px", letterSpacing: "0.2em" }}
+                  className="uppercase text-white text-lg tracking-[0.2em]" 
+                  style={{ marginBottom: "28px", letterSpacing: "0.2em", fontFamily: "'Roboto', sans-serif", fontWeight: 600 }}
                 >
                   ORDER SUMMARY
                 </h2>
@@ -1402,8 +1402,8 @@ function CheckoutContent() {
                 {/* INTEGRATED PAYMENT METHOD (TWO CATEGORIES WITH DROPDOWN, NO LOGOS) */}
                 <div style={{ marginBottom: "36px" }}>
                   <h3 
-                    className="font-serif uppercase font-bold text-white text-base tracking-[0.2em]" 
-                    style={{ marginBottom: "20px", letterSpacing: "0.2em" }}
+                    className="uppercase text-white text-base tracking-[0.2em]" 
+                    style={{ marginBottom: "20px", letterSpacing: "0.2em", fontFamily: "'Roboto', sans-serif", fontWeight: 600 }}
                   >
                     PAYMENT METHOD
                   </h3>

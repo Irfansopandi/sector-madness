@@ -208,8 +208,9 @@ export default function ShippingPage() {
                 style={{
                   fontSize: "clamp(1.8rem, 3.5vw, 2.8rem)",
                   lineHeight: "1.1",
-                  fontWeight: 800,
+                  fontWeight: 500,
                   letterSpacing: "-0.03em",
+                  fontFamily: "'Roboto', sans-serif",
                 }}
                 className="text-[#F5F5F5] uppercase mb-5 md:mb-6"
               >
@@ -291,8 +292,9 @@ export default function ShippingPage() {
                 style={{
                   fontSize: "clamp(1.8rem, 3.5vw, 2.8rem)",
                   lineHeight: "1.1",
-                  fontWeight: 800,
+                  fontWeight: 500,
                   letterSpacing: "-0.03em",
+                  fontFamily: "'Roboto', sans-serif",
                 }}
                 className="text-[#F5F5F5] uppercase mb-8 md:mb-10"
               >
@@ -306,7 +308,7 @@ export default function ShippingPage() {
                     <span className="text-[#B6A47E] font-sans text-lg select-none">
                       →
                     </span>
-                    <h3 className="text-[#FFFFFF] text-xl font-bold tracking-wider uppercase">
+                    <h3 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500 }} className="text-[#FFFFFF] text-xl tracking-wider uppercase">
                       JNE
                     </h3>
                   </div>
@@ -321,7 +323,7 @@ export default function ShippingPage() {
                     <span className="text-[#B6A47E] font-sans text-lg select-none">
                       →
                     </span>
-                    <h3 className="text-[#FFFFFF] text-xl font-bold tracking-wider uppercase">
+                    <h3 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500 }} className="text-[#FFFFFF] text-xl tracking-wider uppercase">
                       J&amp;T
                     </h3>
                   </div>
@@ -336,7 +338,7 @@ export default function ShippingPage() {
                     <span className="text-[#B6A47E] font-sans text-lg select-none">
                       →
                     </span>
-                    <h3 className="text-[#FFFFFF] text-xl font-bold tracking-wider uppercase">
+                    <h3 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500 }} className="text-[#FFFFFF] text-xl tracking-wider uppercase">
                       GOSEND / GOJEK
                     </h3>
                   </div>
@@ -375,8 +377,9 @@ export default function ShippingPage() {
                 style={{
                   fontSize: "clamp(1.8rem, 3.5vw, 2.8rem)",
                   lineHeight: "1.1",
-                  fontWeight: 800,
+                  fontWeight: 500,
                   letterSpacing: "-0.03em",
+                  fontFamily: "'Roboto', sans-serif",
                 }}
                 className="text-[#F5F5F5] uppercase mb-5 md:mb-6"
               >
@@ -445,8 +448,9 @@ export default function ShippingPage() {
               style={{
                 fontSize: "clamp(1.8rem, 3.5vw, 2.8rem)",
                 lineHeight: "1.1",
-                fontWeight: 800,
+                fontWeight: 500,
                 letterSpacing: "-0.03em",
+                fontFamily: "'Roboto', sans-serif",
               }}
               className="text-[#FFFFFF] uppercase"
             >
@@ -537,8 +541,9 @@ export default function ShippingPage() {
               style={{
                 fontSize: "clamp(1.8rem, 3.5vw, 2.8rem)",
                 lineHeight: "1.1",
-                fontWeight: 800,
+                fontWeight: 500,
                 letterSpacing: "-0.03em",
+                fontFamily: "'Roboto', sans-serif",
               }}
               className="text-[#FFFFFF] uppercase mb-4 md:mb-5"
             >
@@ -602,8 +607,9 @@ export default function ShippingPage() {
               style={{
                 fontSize: "clamp(1.8rem, 3.5vw, 3rem)",
                 lineHeight: "1.05",
-                fontWeight: 800,
+                fontWeight: 500,
                 letterSpacing: "-0.03em",
+                fontFamily: "'Roboto', sans-serif",
               }}
               className="text-[#FFFFFF] uppercase"
             >

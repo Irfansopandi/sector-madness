@@ -284,7 +284,7 @@ export default function OrdersPage() {
     <div className="bg-[#141414] border border-white/[0.08] p-6 sm:p-8 space-y-6 shadow-2xl">
       <div style={{ paddingTop: "20px", paddingBottom: "20px", paddingLeft: "16px", paddingRight: "16px" }} className="border-b border-white/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl md:text-2xl font-black uppercase tracking-wider text-[#F5F5F5]">ORDERS</h2>
+          <h2 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-xl md:text-2xl uppercase tracking-wider text-[#F5F5F5]">ORDERS</h2>
           <p className="text-xs text-[#8A8A8A] mt-1 font-mono">Manage and track the status of your fashion orders</p>
         </div>
         
@@ -322,7 +322,7 @@ export default function OrdersPage() {
 
       {ordersList.length === 0 ? (
         <div style={{ padding: "72px 24px 88px 24px" }} className="w-full flex flex-col items-center justify-center text-center">
-          <div style={{ marginBottom: "28px" }} className="w-16 h-16 rounded-full bg-white/[0.03] border border-white/[0.08] flex items-center justify-center text-[#B6A47E] shadow-sm">
+          <div style={{ marginBottom: "28px" }} className="w-16 h-16 rounded-full bg-white/[0.03] border border-white/[0.08] flex items-center justify-center text-[#FFFFFF] shadow-sm">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
               <line x1="3" y1="6" x2="21" y2="6" />
@@ -333,7 +333,7 @@ export default function OrdersPage() {
           <Link
             href="/shop"
             style={{ padding: "16px 36px" }}
-            className="inline-block bg-white text-[#0A0A0A] font-mono text-xs uppercase font-black tracking-[0.25em] hover:bg-[#B6A47E] transition-all shadow-xl rounded-sm"
+            className="inline-block bg-white text-[#0A0A0A] font-mono text-xs uppercase font-black tracking-[0.25em] hover:bg-[#E5E5E5] transition-all shadow-xl rounded-sm"
           >
             START SHOPPING
           </Link>
@@ -375,7 +375,7 @@ export default function OrdersPage() {
                   <tr key={order.order_number} className="hover:bg-white/[0.02] transition-colors">
                     {/* Order Number & Date - Strictly No Wrap */}
                     <td style={cellStyle} className="align-middle whitespace-nowrap">
-                      <div className="font-bold text-[#B6A47E] text-sm tracking-wide whitespace-nowrap">{order.order_number}</div>
+                      <div className="font-bold text-[#FFFFFF] text-sm tracking-wide whitespace-nowrap">{order.order_number}</div>
                       <div className="text-[#8A8A8A] text-[11px] mt-1.5 whitespace-nowrap">{order.order_date}</div>
                     </td>
 
@@ -391,16 +391,16 @@ export default function OrdersPage() {
 
                     {/* Payment Tag */}
                     <td style={cellStyle} className="align-middle whitespace-nowrap">
-                      <span className={`inline-flex items-center gap-2 text-xs font-mono font-bold tracking-wider uppercase whitespace-nowrap ${isPaid ? "text-[#B6A47E]" : "text-amber-400"}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${isPaid ? "bg-[#B6A47E]" : "bg-amber-400"}`} />
+                      <span className={`inline-flex items-center gap-2 text-xs font-mono font-bold tracking-wider uppercase whitespace-nowrap ${isPaid ? "text-[#FFFFFF]" : "text-amber-400"}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${isPaid ? "bg-[#FFFFFF]" : "bg-amber-400"}`} />
                         {payStatus}
                       </span>
                     </td>
 
                     {/* Shipping Status Tag */}
                     <td style={cellStyle} className="align-middle whitespace-nowrap">
-                      <span className={`inline-flex items-center gap-2 text-xs font-mono font-bold tracking-wider uppercase whitespace-nowrap ${isCancelled ? "text-red-500" : isCancelPending ? "text-red-400" : isDelivered ? "text-emerald-400" : isReady ? "text-sky-400" : isInProcess ? "text-[#B6A47E]" : "text-amber-400"}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${isCancelled ? "bg-red-500" : isCancelPending ? "bg-red-400 animate-pulse" : isDelivered ? "bg-emerald-400" : isReady ? "bg-sky-400" : isInProcess ? "bg-[#B6A47E]" : "bg-amber-400"} ${isInProcess || isReady ? "animate-pulse" : ""}`} />
+                      <span className={`inline-flex items-center gap-2 text-xs font-mono font-bold tracking-wider uppercase whitespace-nowrap ${isCancelled ? "text-red-500" : isCancelPending ? "text-red-400" : isDelivered ? "text-emerald-400" : isReady ? "text-sky-400" : isInProcess ? "text-[#FFFFFF]" : "text-amber-400"}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${isCancelled ? "bg-red-500" : isCancelPending ? "bg-red-400 animate-pulse" : isDelivered ? "bg-emerald-400" : isReady ? "bg-sky-400" : isInProcess ? "bg-[#FFFFFF]" : "bg-amber-400"} ${isInProcess || isReady ? "animate-pulse" : ""}`} />
                         {displayStatus}
                       </span>
                     </td>
@@ -409,10 +409,10 @@ export default function OrdersPage() {
                     <td style={cellStyle} className="align-middle text-right whitespace-nowrap">
                       <button
                         onClick={() => handleViewOrderDetails(order.order_number)}
-                        className="group inline-flex items-center gap-2 text-xs font-mono font-bold tracking-widest text-[#F5F5F5] hover:text-[#B6A47E] transition-colors cursor-pointer uppercase py-1 whitespace-nowrap"
+                        className="group inline-flex items-center gap-2 text-xs font-mono font-bold tracking-widest text-[#F5F5F5] hover:text-[#FFFFFF] transition-colors cursor-pointer uppercase py-1 whitespace-nowrap"
                       >
                         <span>DETAILS</span>
-                        <span className="group-hover:translate-x-1.5 transition-transform duration-200 text-[#B6A47E]">→</span>
+                        <span className="group-hover:translate-x-1.5 transition-transform duration-200 text-[#FFFFFF]">→</span>
                       </button>
                     </td>
                   </tr>
@@ -429,9 +429,9 @@ export default function OrdersPage() {
               {/* Info text - left */}
               <span className="text-[#8A8A8A]">
                 Showing{" "}
-                <span className="font-bold text-[#B6A47E]">{Math.min(currentPage * itemsPerPage, ordersList.length)}</span>
+                <span className="font-bold text-[#FFFFFF]">{Math.min(currentPage * itemsPerPage, ordersList.length)}</span>
                 {" "}of{" "}
-                <span className="text-[#B6A47E] font-extrabold">{ordersList.length}</span>
+                <span className="text-[#FFFFFF] font-extrabold">{ordersList.length}</span>
                 {" "}data (Page {currentPage} of {Math.ceil(ordersList.length / itemsPerPage)})
               </span>
 
@@ -446,7 +446,7 @@ export default function OrdersPage() {
                   className={`rounded-[5px] text-[11px] font-bold uppercase tracking-wider transition-all border ${
                     currentPage <= 1
                       ? "opacity-40 cursor-not-allowed border-transparent text-[#8A8A8A]"
-                      : "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-[#B6A47E] cursor-pointer"
+                      : "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-[#FFFFFF] cursor-pointer"
                   }`}
                 >
                   PREVIOUS
@@ -461,7 +461,7 @@ export default function OrdersPage() {
                     style={{ width: "32px", height: "32px" }}
                     className={`rounded-[5px] text-[11px] font-bold font-mono transition-all border cursor-pointer flex items-center justify-center ${
                       pg === currentPage
-                        ? "bg-[#B6A47E] border-[#B6A47E] text-black font-extrabold"
+                        ? "bg-[#FFFFFF] border-[#FFFFFF] text-black font-extrabold"
                         : "bg-white/5 border-white/10 text-white hover:bg-white/10"
                     }`}
                   >
@@ -478,7 +478,7 @@ export default function OrdersPage() {
                   className={`rounded-[5px] text-[11px] font-bold uppercase tracking-wider transition-all border ${
                     currentPage >= Math.ceil(ordersList.length / itemsPerPage)
                       ? "opacity-40 cursor-not-allowed border-transparent text-[#8A8A8A]"
-                      : "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-[#B6A47E] cursor-pointer"
+                      : "bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-[#FFFFFF] cursor-pointer"
                   }`}
                 >
                   NEXT
@@ -509,10 +509,10 @@ export default function OrdersPage() {
               </button>
 
               <div style={{ paddingBottom: "24px" }} className="border-b border-white/[0.1] text-left">
-                <span style={{ marginBottom: "10px" }} className="text-xs font-mono text-[#B6A47E] uppercase tracking-[0.25em] block font-bold">
+                <span style={{ marginBottom: "10px" }} className="text-xs font-mono text-[#FFFFFF] uppercase tracking-[0.25em] block font-bold">
                   [SECTOR MADNESS // INVOICE]
                 </span>
-                <h3 style={{ marginBottom: "8px" }} className="text-2xl md:text-3xl font-black uppercase tracking-wider text-[#F5F5F5] font-serif">
+                <h3 style={{ marginBottom: "8px", fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-2xl md:text-3xl uppercase tracking-wider text-[#F5F5F5]">
                   {selectedOrderDetail.order_number}
                 </h3>
                 <p className="text-xs font-mono text-[#8A8A8A]">
@@ -526,7 +526,7 @@ export default function OrdersPage() {
               >
                 <div className="space-y-2 text-left">
                   <span className="text-[10px] md:text-[11px] text-[#8A8A8A] uppercase tracking-wider block font-bold">TOTAL</span>
-                  <span className="text-[#B6A47E] font-black text-sm md:text-base block">Rp {(selectedOrderDetail.summary?.grand_total || (selectedOrderDetail as any).total || 0).toLocaleString("id-ID")}</span>
+                  <span className="text-[#FFFFFF] font-black text-sm md:text-base block">Rp {(selectedOrderDetail.summary?.grand_total || (selectedOrderDetail as any).total || 0).toLocaleString("id-ID")}</span>
                 </div>
                 <div className="space-y-2 text-left">
                   <span className="text-[10px] md:text-[11px] text-[#8A8A8A] uppercase tracking-wider block font-bold">PAYMENT METHOD</span>
@@ -565,7 +565,7 @@ export default function OrdersPage() {
                 </div>
                 <div className="space-y-2 text-left">
                   <span className="text-[10px] md:text-[11px] text-[#8A8A8A] uppercase tracking-wider block font-bold">TRACKING NO.</span>
-                  <span className="text-[#B6A47E] font-extrabold text-sm uppercase block">
+                  <span className="text-[#FFFFFF] font-extrabold text-sm uppercase block">
                     {(() => {
                       const st = (selectedOrderDetail.shipping_status || "PROCESSING").toUpperCase();
                       const pay = (selectedOrderDetail.payment_info?.payment_status || (selectedOrderDetail as any).payment_status || "").toUpperCase();
@@ -595,19 +595,19 @@ export default function OrdersPage() {
                       <div
                         key={idx}
                         style={{ padding: "24px" }}
-                        className="flex items-center gap-8 bg-[#0A0A0A] border border-white/[0.08] hover:border-[#B6A47E]/40 transition-colors rounded-sm"
+                        className="flex items-center gap-8 bg-[#0A0A0A] border border-white/[0.08] hover:border-[#FFFFFF]/40 transition-colors rounded-sm"
                       >
                         <div className="w-24 h-32 relative bg-[#161616] flex-shrink-0 border border-white/[0.08] overflow-hidden">
                           <Image src={prodImg} alt={prodName} fill className="object-cover" />
                         </div>
                         <div className="flex-1 min-w-0 flex flex-col justify-center text-left">
-                          <h4 style={{ marginBottom: "10px" }} className="text-lg md:text-xl font-black text-[#F5F5F5] uppercase tracking-wide font-serif truncate">
+                          <h4 style={{ marginBottom: "10px", fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-lg md:text-xl text-[#F5F5F5] uppercase tracking-wide truncate">
                             {prodName}
                           </h4>
                           <p style={{ marginBottom: "14px" }} className="text-xs font-mono text-[#8A8A8A] tracking-widest uppercase">
                             {[validColor, validSize, `QTY: ${qty}`].filter(Boolean).join(" // ")}
                           </p>
-                          <p className="text-base font-mono text-[#B6A47E] font-black">
+                          <p className="text-base font-mono text-[#FFFFFF] font-black">
                             Rp {price.toLocaleString("id-ID")}
                           </p>
                         </div>
@@ -663,7 +663,7 @@ export default function OrdersPage() {
                         <button
                           onClick={() => handleOpenTrackShipment(selectedOrderDetail.courier_info?.tracking_number)}
                           style={{ padding: "20px 0" }}
-                          className="flex-1 bg-[#B6A47E] text-[#0A0A0A] font-mono text-xs uppercase font-extrabold tracking-[0.25em] hover:bg-white transition-all duration-300 cursor-pointer shadow-xl rounded-sm block text-center"
+                          className="flex-1 bg-[#E5E5E5] text-[#0A0A0A] font-mono text-xs uppercase font-extrabold tracking-[0.25em] hover:bg-white transition-all duration-300 cursor-pointer shadow-xl rounded-sm block text-center"
                         >
                           TRACK SHIPMENT
                         </button>
@@ -728,7 +728,7 @@ export default function OrdersPage() {
               </button>
 
               <div style={{ paddingBottom: "20px" }} className="border-b border-white/[0.08] text-left">
-                <h3 className="text-xl md:text-2xl font-black uppercase tracking-wider text-[#F5F5F5] font-serif mt-1">SHIPMENT TRACKING</h3>
+                <h3 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-xl md:text-2xl uppercase tracking-wider text-[#F5F5F5] mt-1">SHIPMENT TRACKING</h3>
                 <p className="text-xs font-mono text-[#8A8A8A] mt-2">TRACKING NO: {trackingResi}</p>
               </div>
 
@@ -741,7 +741,7 @@ export default function OrdersPage() {
                 </div>
                 <div className="flex justify-between items-center gap-4">
                   <span className="text-[#8A8A8A]">Current Status:</span>
-                  <span className="text-[#B6A47E] font-extrabold uppercase text-right">
+                  <span className="text-[#FFFFFF] font-extrabold uppercase text-right">
                     {trackingData?.current_status || (() => {
                       const st = (selectedOrderDetail?.shipping_status || "IN PROCESS").toUpperCase();
                       if (st === "ALLOCATED" || st === "PROCESSING" || st === "IN PROCESS") return "IN PROCESS";
@@ -796,7 +796,7 @@ export default function OrdersPage() {
                 <span className="text-xs font-mono text-red-500 uppercase tracking-[0.25em] block font-bold">
                   [ATELIER ORDER CANCELLATION]
                 </span>
-                <h3 className="text-xl md:text-2xl font-black uppercase tracking-wide text-[#F5F5F5] mt-1.5 font-serif">
+                <h3 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-xl md:text-2xl uppercase tracking-wide text-[#F5F5F5] mt-1.5">
                   CANCELLATION & REFUND FORM
                 </h3>
                 <p className="text-xs text-[#8A8A8A] font-mono mt-1">
@@ -871,7 +871,7 @@ export default function OrdersPage() {
 
                 {/* REFUND ACCOUNT DETAILS */}
                 <div className="space-y-8 pt-6 border-t border-white/[0.08]">
-                  <label className="text-xs font-mono text-[#B6A47E] uppercase tracking-widest block font-bold">
+                  <label className="text-xs font-mono text-[#FFFFFF] uppercase tracking-widest block font-bold">
                     2. REFUND ACCOUNT DETAILS:
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-8" style={{ marginTop: "24px" }}>
@@ -883,7 +883,7 @@ export default function OrdersPage() {
                         onChange={(e) => setBankName(e.target.value)}
                         placeholder="Enter your bank or e-wallet name"
                         style={{ padding: "18px 24px" }}
-                        className="w-full bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] font-mono text-sm focus:outline-none focus:border-[#B6A47E] focus:ring-1 focus:ring-[#B6A47E]/50 rounded-sm placeholder:text-[#444444] transition-all"
+                        className="w-full bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] font-mono text-sm focus:outline-none focus:border-[#FFFFFF] focus:ring-1 focus:ring-[#FFFFFF]/50 rounded-sm placeholder:text-[#444444] transition-all"
                       />
                     </div>
                     <div className="space-y-2">
@@ -894,7 +894,7 @@ export default function OrdersPage() {
                         onChange={(e) => setAccountNumber(e.target.value)}
                         placeholder="Enter your account number"
                         style={{ padding: "18px 24px" }}
-                        className="w-full bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] font-mono text-sm focus:outline-none focus:border-[#B6A47E] focus:ring-1 focus:ring-[#B6A47E]/50 rounded-sm placeholder:text-[#444444] transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        className="w-full bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] font-mono text-sm focus:outline-none focus:border-[#FFFFFF] focus:ring-1 focus:ring-[#FFFFFF]/50 rounded-sm placeholder:text-[#444444] transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
                   </div>
@@ -906,7 +906,7 @@ export default function OrdersPage() {
                       onChange={(e) => setAccountName(e.target.value)}
                       placeholder="Enter your full name as on account"
                       style={{ padding: "18px 24px" }}
-                      className="w-full bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] font-mono text-sm focus:outline-none focus:border-[#B6A47E] focus:ring-1 focus:ring-[#B6A47E]/50 rounded-sm placeholder:text-[#444444] transition-all"
+                      className="w-full bg-[#0A0A0A] border border-white/20 text-[#F5F5F5] font-mono text-sm focus:outline-none focus:border-[#FFFFFF] focus:ring-1 focus:ring-[#FFFFFF]/50 rounded-sm placeholder:text-[#444444] transition-all"
                     />
                   </div>
                 </div>
@@ -952,7 +952,7 @@ export default function OrdersPage() {
                   type="button"
                   onClick={handleSubmitCancellation}
                   style={{ padding: "18px 0" }}
-                  className="flex-[2] bg-[#B6A47E] hover:bg-white text-[#0A0A0A] font-mono text-xs uppercase font-extrabold tracking-[0.2em] transition-colors shadow-lg rounded-sm flex items-center justify-center gap-2 cursor-pointer"
+                  className="flex-[2] bg-[#E5E5E5] hover:bg-white text-[#0A0A0A] font-mono text-xs uppercase font-extrabold tracking-[0.2em] transition-colors shadow-lg rounded-sm flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <span>SUBMIT CANCELLATION & REFUND</span>
                 </button>
@@ -979,7 +979,7 @@ export default function OrdersPage() {
                 </svg>
               </div>
 
-              <h3 style={{ marginBottom: "16px" }} className="text-lg font-bold uppercase tracking-[0.15em] text-[#F5F5F5] font-serif">
+              <h3 style={{ marginBottom: "16px", fontFamily: "'Roboto', sans-serif", fontWeight: 500 }} className="text-lg uppercase tracking-[0.15em] text-[#F5F5F5]">
                 CONFIRM CANCELLATION
               </h3>
 
@@ -1028,13 +1028,13 @@ export default function OrdersPage() {
               style={{ padding: "40px 36px" }}
               className="bg-[#141414] border border-white/[0.12] text-[#F5F5F5] w-full max-w-[460px] flex flex-col items-center text-center shadow-2xl rounded-sm font-sans relative"
             >
-              <div style={{ marginBottom: "28px" }} className="w-14 h-14 rounded-full bg-[#B6A47E]/10 border border-[#B6A47E]/30 flex items-center justify-center shadow-inner">
-                <svg className="w-7 h-7 text-[#B6A47E]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <div style={{ marginBottom: "28px" }} className="w-14 h-14 rounded-full bg-[#FFFFFF]/10 border border-[#FFFFFF]/30 flex items-center justify-center shadow-inner">
+                <svg className="w-7 h-7 text-[#FFFFFF]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
 
-              <h3 style={{ marginBottom: "16px" }} className="text-lg font-bold uppercase tracking-[0.15em] text-[#F5F5F5] font-serif">
+              <h3 style={{ marginBottom: "16px", fontFamily: "'Roboto', sans-serif", fontWeight: 500 }} className="text-lg uppercase tracking-[0.15em] text-[#F5F5F5]">
                 {(() => {
                   const pay = (selectedOrderDetail?.payment_info?.payment_status || (selectedOrderDetail as any)?.payment_status || "").toUpperCase();
                   const isPaid = pay === "PAID" || pay === "SETTLED" || pay === "SUCCESS";
@@ -1064,7 +1064,7 @@ export default function OrdersPage() {
                   }
                 }}
                 style={{ padding: "14px 0" }}
-                className="w-full bg-[#B6A47E] hover:bg-white text-[#0A0A0A] font-mono text-xs uppercase font-extrabold tracking-[0.15em] rounded-sm transition-all shadow-lg cursor-pointer"
+                className="w-full bg-[#E5E5E5] hover:bg-white text-[#0A0A0A] font-mono text-xs uppercase font-extrabold tracking-[0.15em] rounded-sm transition-all shadow-lg cursor-pointer"
               >
                 GOT IT & CLOSE
               </button>
@@ -1090,11 +1090,11 @@ export default function OrdersPage() {
                 </svg>
               </div>
 
-              <span className="text-[10px] font-mono tracking-[0.3em] uppercase text-[#B6A47E] font-semibold block mb-2">
+              <span className="text-[10px] font-mono tracking-[0.3em] uppercase text-[#FFFFFF] font-semibold block mb-2">
                 ORDER DELIVERY CONFIRMATION
               </span>
 
-              <h3 style={{ marginBottom: "14px" }} className="text-lg font-bold uppercase tracking-[0.12em] text-[#F5F5F5] font-serif">
+              <h3 style={{ marginBottom: "14px", fontFamily: "'Roboto', sans-serif", fontWeight: 500 }} className="text-lg uppercase tracking-[0.12em] text-[#F5F5F5]">
                 HAVE YOU RECEIVED THIS ORDER?
               </h3>
 

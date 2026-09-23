@@ -216,7 +216,7 @@ export default function ProfilePage() {
       {profileSuccessMsg && (
         <div 
           style={{ padding: "16px 20px", marginBottom: "32px" }} 
-          className="bg-[#0A0A0A] border border-[#B6A47E]/50 text-[#B6A47E] text-xs font-mono font-bold tracking-wider uppercase flex items-center gap-3.5 rounded-none"
+          className="bg-[#0A0A0A] border border-[#FFFFFF]/50 text-[#FFFFFF] text-xs font-mono font-bold tracking-wider uppercase flex items-center gap-3.5 rounded-none"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
@@ -237,7 +237,7 @@ export default function ProfilePage() {
             value={profileForm.name}
             onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
             style={{ padding: "18px 22px", fontSize: "14px" }}
-            className="w-full bg-[#0A0A0A] border border-white/[0.12] text-[#F5F5F5] font-semibold outline-none focus:border-[#B6A47E] transition-colors rounded-none"
+            className="w-full bg-[#0A0A0A] border border-white/[0.12] text-[#F5F5F5] font-semibold outline-none focus:border-[#FFFFFF] transition-colors rounded-none"
           />
         </div>
 
@@ -251,7 +251,7 @@ export default function ProfilePage() {
             value={profileForm.email}
             onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
             style={{ padding: "18px 22px", fontSize: "14px" }}
-            className="w-full bg-[#0A0A0A] border border-white/[0.12] text-[#F5F5F5] font-semibold outline-none focus:border-[#B6A47E] transition-colors rounded-none"
+            className="w-full bg-[#0A0A0A] border border-white/[0.12] text-[#F5F5F5] font-semibold outline-none focus:border-[#FFFFFF] transition-colors rounded-none"
           />
         </div>
 
@@ -267,7 +267,7 @@ export default function ProfilePage() {
             onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value.replace(/[^0-9]/g, "") })}
             placeholder="Enter your phone number"
             style={{ padding: "18px 22px", fontSize: "14px" }}
-            className="w-full bg-[#0A0A0A] border border-white/[0.12] text-[#F5F5F5] font-semibold outline-none focus:border-[#B6A47E] transition-colors font-mono rounded-none"
+            className="w-full bg-[#0A0A0A] border border-white/[0.12] text-[#F5F5F5] font-semibold outline-none focus:border-[#FFFFFF] transition-colors font-mono rounded-none"
           />
         </div>
 
@@ -280,7 +280,7 @@ export default function ProfilePage() {
             value={profileForm.dob || ""}
             onChange={(e) => setProfileForm({ ...profileForm, dob: e.target.value })}
             style={{ padding: "18px 22px", fontSize: "14px" }}
-            className="w-full bg-[#0A0A0A] border border-white/[0.12] text-[#F5F5F5] font-semibold outline-none focus:border-[#B6A47E] transition-colors rounded-none [color-scheme:dark]"
+            className="w-full bg-[#0A0A0A] border border-white/[0.12] text-[#F5F5F5] font-semibold outline-none focus:border-[#FFFFFF] transition-colors rounded-none [color-scheme:dark]"
           />
         </div>
 
@@ -288,7 +288,7 @@ export default function ProfilePage() {
           <button
             type="submit"
             style={{ padding: "18px 0", letterSpacing: "0.25em" }}
-            className="w-full bg-[#B6A47E] text-[#0A0A0A] font-mono text-xs uppercase font-extrabold hover:bg-white transition-all duration-300 cursor-pointer shadow-xl rounded-sm block text-center"
+            className="w-full bg-[#E5E5E5] text-[#0A0A0A] font-mono text-xs uppercase font-extrabold hover:bg-white transition-all duration-300 cursor-pointer shadow-xl rounded-sm block text-center"
           >
             UPDATE PERSONAL INFO
           </button>
@@ -297,7 +297,7 @@ export default function ProfilePage() {
 
       <form onSubmit={handleSavePassword} style={{ marginTop: "48px", display: "flex", flexDirection: "column", gap: "28px" }}>
         <div id="password" style={{ paddingTop: "40px", display: "flex", flexDirection: "column", gap: "28px" }} className="border-t border-white/[0.08]">
-          <h3 style={{ letterSpacing: "0.2em" }} className="text-xs font-mono text-[#B6A47E] uppercase font-extrabold">
+          <h3 style={{ letterSpacing: "0.2em", fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-xs text-[#FFFFFF] uppercase">
             CHANGE PASSWORD
           </h3>
           
@@ -312,7 +312,7 @@ export default function ProfilePage() {
                 onChange={(e) => setProfileForm({ ...profileForm, newPassword: e.target.value })}
                 placeholder="Enter your current password"
                 style={{ padding: "18px 56px 18px 22px", fontSize: "14px" }}
-                className="w-full bg-[#0A0A0A] border border-white/[0.12] text-[#F5F5F5] outline-none focus:border-[#B6A47E] transition-colors font-mono rounded-none"
+                className="w-full bg-[#0A0A0A] border border-white/[0.12] text-[#F5F5F5] outline-none focus:border-[#FFFFFF] transition-colors font-mono rounded-none"
               />
               <button
                 type="button"
@@ -333,7 +333,7 @@ export default function ProfilePage() {
               </button>
             </div>
             <p style={{ fontSize: "12px", marginTop: "10px" }} className="text-[#8A8A8A] font-mono font-normal flex items-center gap-1.5">
-              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="flex-shrink-0 text-[#B6A47E]">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="flex-shrink-0 text-[#FFFFFF]">
                 <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
               </svg>
               Must be at least 8 characters in length.
@@ -351,7 +351,7 @@ export default function ProfilePage() {
                 onChange={(e) => setProfileForm({ ...profileForm, confirmNewPassword: e.target.value })}
                 placeholder="Enter your new password"
                 style={{ padding: "18px 56px 18px 22px", fontSize: "14px" }}
-                className="w-full bg-[#0A0A0A] border border-white/[0.12] text-[#F5F5F5] outline-none focus:border-[#B6A47E] transition-colors font-mono rounded-none"
+                className="w-full bg-[#0A0A0A] border border-white/[0.12] text-[#F5F5F5] outline-none focus:border-[#FFFFFF] transition-colors font-mono rounded-none"
               />
               <button
                 type="button"
@@ -372,7 +372,7 @@ export default function ProfilePage() {
               </button>
             </div>
             <p style={{ fontSize: "12px", marginTop: "10px" }} className="text-[#8A8A8A] font-mono font-normal flex items-center gap-1.5">
-              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="flex-shrink-0 text-[#B6A47E]">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="flex-shrink-0 text-[#FFFFFF]">
                 <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
               </svg>
               Must match the new password entered above (min. 8 characters).
@@ -384,7 +384,7 @@ export default function ProfilePage() {
           <button
             type="submit"
             style={{ padding: "18px 0", letterSpacing: "0.25em" }}
-            className="w-full bg-[#B6A47E] text-[#0A0A0A] font-mono text-xs uppercase font-extrabold hover:bg-white transition-all duration-300 cursor-pointer shadow-xl rounded-sm block text-center"
+            className="w-full bg-[#E5E5E5] text-[#0A0A0A] font-mono text-xs uppercase font-extrabold hover:bg-white transition-all duration-300 cursor-pointer shadow-xl rounded-sm block text-center"
           >
             UPDATE PASSWORD
           </button>

@@ -515,10 +515,10 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
               {/* Product Story Section — Spacious High-Fashion Termination Boundary */}
               <AnimatedSection className="mt-16 md:mt-24 lg:mt-12 border-t border-[#222222] pt-12 md:pt-16 pb-6 md:pb-10 flex flex-col justify-center">
                 <div className="max-w-2xl my-auto">
-                  <span className="text-[10px] sm:text-[11px] tracking-[0.3em] uppercase text-[#8A8A8A] font-[family-name:var(--font-body)] block mb-6 md:mb-8">
+                  <span style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500 }} className="text-[10px] sm:text-[11px] tracking-[0.3em] uppercase text-[#8A8A8A] block mb-6 md:mb-8">
                     The Story
                   </span>
-                  <p className="font-[family-name:var(--font-display)] text-[15px] md:text-[18px] lg:text-[20px] font-light text-[#F5F5F5]/90 leading-[1.8] tracking-[-0.01em]">
+                  <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 400 }} className="text-[15px] md:text-[18px] lg:text-[20px] text-[#F5F5F5]/90 leading-[1.8] tracking-[-0.01em]">
                     {product.story}
                   </p>
                 </div>
@@ -537,7 +537,7 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
               <div>
                 <Link
                   href="/shop"
-                  className="inline-flex items-center gap-2 text-[10px] font-mono tracking-[0.25em] text-[#8A8A8A] hover:text-[#B6A47E] transition-colors uppercase mb-1 group cursor-pointer"
+                  className="inline-flex items-center gap-2 text-[10px] font-mono tracking-[0.25em] text-[#8A8A8A] hover:text-white transition-colors uppercase mb-1 group cursor-pointer"
                 >
                   <svg
                     width="10"
@@ -563,8 +563,10 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
                   {product.category?.name || "Uncategorized"} &nbsp;—&nbsp; {product.collection}
                 </span>
                 <h1 
-                  className="!font-[family-name:var(--font-body)] font-[600] text-[#F5F5F5] leading-[1.1] tracking-[-0.01em] whitespace-nowrap overflow-hidden text-ellipsis block w-full"
+                  className="text-[#F5F5F5] leading-[1.1] tracking-[-0.01em] whitespace-nowrap overflow-hidden text-ellipsis block w-full"
                   style={{
+                    fontFamily: "'Roboto', sans-serif",
+                    fontWeight: 600,
                     fontSize: product.name.length > 30 
                       ? 'clamp(1rem, 2vw, 1.6rem)' 
                       : product.name.length > 22 
@@ -608,7 +610,7 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
                     <span className={`text-[10px] sm:text-[11px] tracking-[0.2em] uppercase font-[family-name:var(--font-body)] font-medium whitespace-nowrap shrink-0 ${
                       totalProductStock <= 0
                         ? "text-[#FF6666]"
-                        : "text-[#B6A47E]"
+                        : "text-[#FFFFFF]"
                     }`}>
                       PRODUCT STOCK: {Math.max(0, totalProductStock)}
                     </span>
@@ -789,7 +791,7 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
                         className={`w-full text-xs tracking-[0.3em] uppercase font-[family-name:var(--font-body)] font-bold transition-colors duration-300 shadow-xl ${
                           isItemOutOfStock
                             ? "bg-[#1C1C1C] text-[#666666] border border-[#2A2A2A] cursor-not-allowed opacity-60"
-                            : "bg-[#F5F5F5] text-[#0A0A0A] hover:bg-[#B6A47E] hover:text-[#0A0A0A] cursor-pointer"
+                            : "bg-[#F5F5F5] text-[#0A0A0A] hover:bg-[#E5E5E5] hover:text-[#0A0A0A] cursor-pointer"
                         }`}
                         style={{ padding: "18px 0px" }}
                       >

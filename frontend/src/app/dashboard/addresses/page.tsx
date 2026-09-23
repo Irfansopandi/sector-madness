@@ -114,7 +114,7 @@ export default function AddressBookPage() {
       {/* Header — Without white background button and without bottom line border */}
       <div style={{ paddingTop: "24px", paddingBottom: "24px", paddingLeft: "28px", paddingRight: "28px" }} className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl md:text-2xl font-black uppercase tracking-wider text-[#F5F5F5]">ADDRESSES</h2>
+          <h2 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-xl md:text-2xl uppercase tracking-wider text-[#F5F5F5]">ADDRESSES</h2>
           <p className="text-xs text-[#8A8A8A] mt-1 font-mono">Manage your saved delivery destinations</p>
         </div>
         <button
@@ -128,14 +128,14 @@ export default function AddressBookPage() {
 
       {addressesList.length === 0 ? (
         <div style={{ padding: "72px 24px 88px 24px" }} className="w-full flex flex-col items-center justify-center text-center">
-          <div style={{ marginBottom: "28px" }} className="w-16 h-16 rounded-full bg-white/[0.03] border border-white/[0.08] flex items-center justify-center text-[#B6A47E] shadow-sm">
-            <MapPin className="w-8 h-8 text-[#B6A47E]" />
+          <div style={{ marginBottom: "28px" }} className="w-16 h-16 rounded-full bg-white/[0.03] border border-white/[0.08] flex items-center justify-center text-[#FFFFFF] shadow-sm">
+            <MapPin className="w-8 h-8 text-[#FFFFFF]" />
           </div>
           <p style={{ marginBottom: "18px" }} className="text-sm font-mono uppercase tracking-[0.2em] text-[#8A8A8A] font-bold">No Addresses Saved Yet</p>
           <button
             onClick={handleOpenAddAddress}
             style={{ padding: "16px 36px" }}
-            className="inline-block bg-white text-[#0A0A0A] font-mono text-xs uppercase font-black tracking-[0.25em] hover:bg-[#B6A47E] transition-all shadow-xl rounded-sm cursor-pointer"
+            className="inline-block bg-white text-[#0A0A0A] font-mono text-xs uppercase font-black tracking-[0.25em] hover:bg-[#E5E5E5] transition-all shadow-xl rounded-sm cursor-pointer"
           >
             ADD YOUR FIRST ADDRESS
           </button>
@@ -162,7 +162,7 @@ export default function AddressBookPage() {
                     padding: "32px 28px",
                     boxSizing: "border-box",
                     backgroundColor: "#0D0D0D",
-                    border: addr.is_default ? "1px solid #B6A47E" : "1px solid #222222",
+                    border: addr.is_default ? "1px solid #FFFFFF" : "1px solid #222222",
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "space-between",
@@ -201,7 +201,7 @@ export default function AddressBookPage() {
                         <span
                           style={{
                             padding: "5px 12px",
-                            backgroundColor: "#B6A47E",
+                            backgroundColor: "#FFFFFF",
                             color: "#0A0A0A",
                             fontFamily: "monospace",
                             fontSize: "10px",
@@ -238,7 +238,7 @@ export default function AddressBookPage() {
                         style={{
                           fontFamily: "monospace",
                           fontSize: "12px",
-                          color: "#B6A47E",
+                          color: "#FFFFFF",
                           fontWeight: 500,
                           letterSpacing: "0.08em",
                         }}
@@ -304,7 +304,7 @@ export default function AddressBookPage() {
                         style={{
                           background: "none",
                           border: "none",
-                          color: "#B6A47E",
+                          color: "#FFFFFF",
                           fontWeight: 700,
                           letterSpacing: "0.1em",
                           textTransform: "uppercase",
