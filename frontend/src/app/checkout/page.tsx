@@ -733,9 +733,9 @@ function CheckoutContent() {
                       <button
                         type="button"
                         onClick={() => setIsAddressModalOpen(true)}
-                        className="group flex items-center gap-1.5 text-[11px] font-mono text-[#B6A47E] hover:text-white uppercase font-bold tracking-wider transition-colors cursor-pointer"
+                        className="group flex items-center gap-1.5 text-[11px] font-mono text-[#FFFFFF] hover:text-white uppercase font-bold tracking-wider transition-colors cursor-pointer"
                       >
-                        <Plus className="w-3.5 h-3.5 transition-transform duration-300 group-hover:rotate-90 text-[#B6A47E] group-hover:text-white" />
+                        <Plus className="w-3.5 h-3.5 transition-transform duration-300 group-hover:rotate-90 text-[#FFFFFF] group-hover:text-white" />
                         <span>ADD NEW</span>
                       </button>
                       <Link
@@ -772,7 +772,7 @@ function CheckoutContent() {
                             padding: "26px 22px",
                             boxSizing: "border-box",
                             backgroundColor: isSelected ? "#0F0F0F" : "#080808",
-                            border: isSelected ? "1px solid #B6A47E" : "1px solid #222222",
+                            border: isSelected ? "1px solid #FFFFFF" : "1px solid #222222",
                             cursor: "pointer",
                             display: "flex",
                             flexDirection: "column",
@@ -813,7 +813,7 @@ function CheckoutContent() {
                               <span
                                 style={{
                                   padding: "4px 10px",
-                                  backgroundColor: "#B6A47E",
+                                  backgroundColor: "#FFFFFF",
                                   color: "#0A0A0A",
                                   fontFamily: "monospace",
                                   fontSize: "9px",
@@ -850,7 +850,7 @@ function CheckoutContent() {
                               style={{
                                 fontFamily: "monospace",
                                 fontSize: "11px",
-                                color: "#B6A47E",
+                                color: "#FFFFFF",
                                 fontWeight: 500,
                                 marginBottom: "12px",
                               }}
@@ -1006,7 +1006,7 @@ function CheckoutContent() {
                             >
                               <div className="flex items-center justify-between">
                                 <span className="text-[#FFFFFF] group-hover:text-white font-extrabold text-sm uppercase tracking-wide transition-colors">
-                                  {loc.district} {loc.subdistrict ? <span className="text-[#B6A47E] font-normal text-xs normal-case ml-1">(Desa: {loc.subdistrict})</span> : ""}
+                                  {loc.district} {loc.subdistrict ? <span className="text-[#FFFFFF] font-normal text-xs normal-case ml-1">(Desa: {loc.subdistrict})</span> : ""}
                                 </span>
                                 <span className="bg-[#1C1C1C] text-[#DDDDDD] border border-[#3A3A3A] px-2.5 py-1 text-xs font-bold tracking-widest ml-3 shrink-0 whitespace-nowrap">
                                   POS: {loc.postal_code}
@@ -1204,9 +1204,10 @@ function CheckoutContent() {
                     setMobileStep(2);
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
-                  className="w-full bg-[#FFFFFF] text-[#0A0A0A] uppercase tracking-[0.2em] font-extrabold text-sm py-5 hover:bg-[#B6A47E] hover:text-white transition-colors disabled:opacity-50 disabled:bg-[#333] disabled:text-[#888] disabled:cursor-not-allowed"
+                  className="w-full bg-[#FFFFFF] text-[#0A0A0A] uppercase tracking-[0.2em] font-extrabold text-sm py-5 rounded-full hover:bg-[#CCCCCC] hover:text-[#000000] transition-colors disabled:opacity-50 disabled:bg-[#333] disabled:text-[#888] disabled:cursor-not-allowed flex items-center justify-center gap-3"
                 >
-                  CONTINUE TO PAYMENT
+                  <span>CONTINUE TO PAYMENT</span>
+                  <span className="text-lg leading-none mt-[-2px]">→</span>
                 </button>
               </div>
 
@@ -1281,7 +1282,7 @@ function CheckoutContent() {
                         placeholder="Enter voucher code"
                         disabled={!!appliedPromo}
                         style={{ padding: "16px 18px" }}
-                        className="w-full bg-[#121212] border border-[#2B2B2B] text-xs text-white uppercase tracking-wider placeholder:text-[#555555] focus:border-[#B6A47E] outline-none transition-colors font-extrabold disabled:opacity-50 disabled:bg-[#101010] rounded-lg"
+                        className="w-full bg-[#121212] border border-[#2B2B2B] text-xs text-white uppercase tracking-wider placeholder:text-[#555555] focus:border-[#FFFFFF] outline-none transition-colors font-extrabold disabled:opacity-50 disabled:bg-[#101010] rounded-lg"
                         onKeyDown={(e) => {
                           if (e.key === "Enter") {
                             e.preventDefault();
@@ -1296,7 +1297,7 @@ function CheckoutContent() {
                       onClick={handleApplyPromo}
                       disabled={!!appliedPromo || !promoInput.trim() || isCheckingPromo}
                       style={{ padding: "0 26px" }}
-                      className="bg-[#B6A47E] text-[#0A0A0A] font-mono font-black text-xs tracking-widest uppercase hover:bg-[#a3926d] transition-colors shrink-0 disabled:bg-[#202020] disabled:text-[#555555] disabled:cursor-not-allowed cursor-pointer rounded-lg flex items-center gap-2"
+                      className="bg-[#FFFFFF] text-[#0A0A0A] font-mono font-black text-xs tracking-widest uppercase hover:bg-[#a3926d] transition-colors shrink-0 disabled:bg-[#202020] disabled:text-[#555555] disabled:cursor-not-allowed cursor-pointer rounded-lg flex items-center gap-2"
                     >
                       {isCheckingPromo ? (
                         <>
@@ -1316,10 +1317,10 @@ function CheckoutContent() {
                   {appliedPromo && (
                     <div
                       style={{ marginTop: "14px", padding: "14px 18px" }}
-                      className="bg-[#121214] border border-[#B6A47E]/40 rounded-lg flex items-center justify-between gap-4 font-mono transition-all"
+                      className="bg-[#121214] border border-[#FFFFFF]/40 rounded-lg flex items-center justify-between gap-4 font-mono transition-all"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-8 h-8 rounded-md bg-[#B6A47E]/10 border border-[#B6A47E]/30 flex items-center justify-center text-[#B6A47E] shrink-0">
+                        <div className="w-8 h-8 rounded-md bg-[#FFFFFF]/10 border border-[#FFFFFF]/30 flex items-center justify-center text-[#FFFFFF] shrink-0">
                           <Ticket className="w-4 h-4" />
                         </div>
                         <div className="min-w-0 text-left">
@@ -1362,11 +1363,11 @@ function CheckoutContent() {
                     </span>
                   </div>
 
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px" }}>
                     <span className="font-mono uppercase text-sm" style={{ color: "#888888", letterSpacing: "0.15em", lineHeight: "1.6" }}>
                       SHIPPING ({selectedRate ? selectedRate.courier_name : "CALCULATING"})
                     </span>
-                    <span className="font-mono uppercase text-base font-semibold text-white tracking-wider text-right" style={{ letterSpacing: "0.15em", lineHeight: "1.6" }}>
+                    <span className="font-mono uppercase text-base font-semibold text-white tracking-wider text-right shrink-0 whitespace-nowrap" style={{ letterSpacing: "0.15em", lineHeight: "1.6" }}>
                       Rp {shippingCost.toLocaleString("id-ID")}
                     </span>
                   </div>
@@ -1537,15 +1538,15 @@ function CheckoutContent() {
                     <Link
                       href="/privacy"
                       target="_blank"
-                      className="text-white underline underline-offset-4 decoration-[#666666] hover:decoration-white hover:text-[#B6A47E] cursor-pointer transition-colors font-bold inline"
+                      className="text-white underline underline-offset-4 decoration-[#666666] hover:decoration-white hover:text-[#FFFFFF] cursor-pointer transition-colors font-bold inline"
                     >
                       PRIVACY POLICY
                     </Link>
                     .
                   </p>
 
-                  <label className="flex items-center gap-3 cursor-pointer select-none group w-full py-1">
-                    <div className="relative flex items-center justify-center w-4 h-4 shrink-0">
+                  <label className="flex items-start sm:items-center gap-3 cursor-pointer select-none group w-full py-1">
+                    <div className="relative flex items-center justify-center w-4 h-4 shrink-0 mt-0.5 sm:mt-0">
                       <input
                         type="checkbox"
                         checked={agreedToTerms}
@@ -1559,12 +1560,12 @@ function CheckoutContent() {
                         <path strokeLinecap="square" strokeLinejoin="miter" d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
-                    <span className="text-[10px] lg:text-[10.5px] xl:text-[11px] text-[#E0E0E0] font-medium uppercase tracking-[0.03em] whitespace-nowrap shrink-0">
+                    <span className="text-[10px] lg:text-[10.5px] xl:text-[11px] text-[#E0E0E0] font-medium uppercase tracking-[0.03em] leading-relaxed break-words">
                       I HAVE READ AND AGREE TO THE{" "}
                       <Link
                         href="/terms"
                         target="_blank"
-                        className="text-white font-extrabold underline underline-offset-4 decoration-white hover:text-[#B6A47E] cursor-pointer transition-colors inline"
+                        className="text-white font-extrabold underline underline-offset-4 decoration-white hover:text-[#FFFFFF] cursor-pointer transition-colors inline"
                       >
                         TERMS AND CONDITIONS
                       </Link>{" "}

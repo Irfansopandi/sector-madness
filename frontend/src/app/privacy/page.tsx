@@ -228,7 +228,7 @@ export default function PrivacyPolicyPage() {
         fontFamily:
           "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       }}
-      className="min-h-screen bg-[#0A0A0A] text-[#F5F5F5] selection:bg-[#B6A47E] selection:text-[#0A0A0A] overflow-x-hidden"
+      className="min-h-screen bg-[#0A0A0A] text-[#F5F5F5] selection:bg-[#FFFFFF] selection:text-[#0A0A0A] overflow-x-hidden"
     >
       <Navbar mode="dark" />
 
@@ -261,7 +261,7 @@ export default function PrivacyPolicyPage() {
                 DATA GOVERNANCE &amp; PRIVACY PROTOCOL
               </span>
               <span className="hidden md:inline-block text-[#333333] text-xs">//</span>
-              <span className="text-xs font-mono text-[#B6A47E] whitespace-nowrap mt-1 md:mt-0">
+              <span className="text-xs font-mono text-[#FFFFFF] whitespace-nowrap mt-1 md:mt-0">
                 Last updated: August 2, 2026
               </span>
             </div>
@@ -318,7 +318,7 @@ export default function PrivacyPolicyPage() {
                 className="border-b border-[#333333]"
               >
                 <div className="flex items-center gap-3 mb-4">
-                  <span className="text-xs font-mono font-bold tracking-[0.25em] text-[#B6A47E] uppercase block">
+                  <span className="text-xs font-mono font-bold tracking-[0.25em] text-[#FFFFFF] uppercase block">
                     {sec.code}
                   </span>
                   <span className="text-[#333333] text-xs">//</span>
@@ -361,7 +361,7 @@ export default function PrivacyPolicyPage() {
                               key={bIdx}
                               className="flex items-center gap-3 text-xs md:text-sm text-[#C0C0C0] font-light leading-relaxed"
                             >
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#B6A47E] shrink-0" />
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#FFFFFF] shrink-0" />
                               <span className="leading-relaxed">{bullet}</span>
                             </li>
                           ))}
@@ -382,7 +382,7 @@ export default function PrivacyPolicyPage() {
                           key={bIdx}
                           className="flex items-center gap-3 text-xs md:text-sm text-[#C0C0C0] font-light leading-relaxed"
                         >
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#B6A47E] shrink-0" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#FFFFFF] shrink-0" />
                           <span className="leading-relaxed">{bullet}</span>
                         </li>
                       ))}
@@ -416,7 +416,7 @@ export default function PrivacyPolicyPage() {
               className="space-y-5"
             >
               <div className="flex items-center gap-3 mb-3">
-                <span className="text-xs font-mono font-bold tracking-[0.25em] text-[#B6A47E] uppercase block">
+                <span className="text-xs font-mono font-bold tracking-[0.25em] text-[#FFFFFF] uppercase block">
                   14
                 </span>
                 <span className="text-[#333333] text-xs">//</span>
@@ -432,9 +432,9 @@ export default function PrivacyPolicyPage() {
               <div className="pt-3">
                 <Link
                   href="/contact"
-                  className="group inline-flex items-center text-xs md:text-sm tracking-[0.25em] uppercase font-medium text-[#F5F5F5] opacity-90 hover:opacity-100 hover:text-[#B6A47E] transition-all duration-300 ease-out"
+                  className="group inline-flex items-center text-xs md:text-sm tracking-[0.25em] uppercase font-medium text-[#F5F5F5] opacity-90 hover:opacity-100 hover:text-[#FFFFFF] transition-all duration-300 ease-out"
                 >
-                  <span className="relative pb-1 border-b border-[#F5F5F5]/30 group-hover:border-[#B6A47E] transition-colors duration-300">
+                  <span className="relative pb-1 border-b border-[#F5F5F5]/30 group-hover:border-[#FFFFFF] transition-colors duration-300">
                     CONTACT SUPPORT
                   </span>
                   <span className="ml-3 transition-transform duration-300 ease-out group-hover:translate-x-2">
@@ -454,7 +454,7 @@ export default function PrivacyPolicyPage() {
               className="bg-[#121212] border border-[#222222] flex flex-col justify-between"
             >
               <div className="space-y-6">
-                <span className="text-[11px] font-semibold tracking-[0.28em] text-[#B6A47E] uppercase block mb-3">
+                <span className="text-[11px] font-semibold tracking-[0.28em] text-[#FFFFFF] uppercase block mb-3">
                   PRIVACY PROTOCOL
                 </span>
 

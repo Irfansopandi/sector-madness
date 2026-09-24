@@ -90,7 +90,7 @@ export default function SizeGuidePage() {
         fontFamily:
           "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       }}
-      className="min-h-screen bg-[#0A0A0A] text-[#F5F5F5] selection:bg-[#B6A47E] selection:text-[#0A0A0A] overflow-x-hidden"
+      className="min-h-screen bg-[#0A0A0A] text-[#F5F5F5] selection:bg-[#FFFFFF] selection:text-[#0A0A0A] overflow-x-hidden"
     >
       <Navbar mode="dark" />
 
@@ -172,7 +172,7 @@ export default function SizeGuidePage() {
                       onClick={() => setActiveCategoryName(group.category)}
                       className={`text-xs md:text-sm font-semibold tracking-[0.22em] uppercase transition-colors duration-200 shrink-0 pb-1 ${
                         isActive
-                          ? "text-[#B6A47E] border-b-2 border-[#B6A47E]"
+                          ? "text-[#FFFFFF] border-b-2 border-[#FFFFFF]"
                           : "text-[#8A8A8A] hover:text-[#FFFFFF]"
                       }`}
                     >
@@ -224,7 +224,7 @@ export default function SizeGuidePage() {
                     <div className="overflow-x-auto pt-2 mb-12">
                       <table className="w-full text-center border-collapse text-xs md:text-sm">
                         <thead>
-                          <tr className="border-b border-[#333333] text-[#B6A47E] font-mono tracking-[0.2em] uppercase">
+                          <tr className="border-b border-[#333333] text-[#FFFFFF] font-mono tracking-[0.2em] uppercase">
                             {guide.columns?.map((colHeader, index) => (
                               <th key={index} className="py-4 px-4 font-semibold text-center">
                                 {colHeader}
@@ -267,7 +267,7 @@ export default function SizeGuidePage() {
                 style={{ paddingBottom: "32px", marginBottom: "40px" }}
                 className="border-b border-[#333333]"
               >
-                <span className="text-sm md:text-base font-mono font-bold tracking-[0.25em] text-[#B6A47E] uppercase block mb-3">
+                <span className="text-sm md:text-base font-mono font-bold tracking-[0.25em] text-[#FFFFFF] uppercase block mb-3">
                   MEASUREMENT ADVICE
                 </span>
                 <h3 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500 }} className="text-sm md:text-base lg:text-lg tracking-[0.25em] uppercase text-[#FFFFFF]">
@@ -281,7 +281,7 @@ export default function SizeGuidePage() {
                 className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12"
               >
                 <div className="space-y-3">
-                  <h4 className="text-xs font-mono font-bold tracking-[0.2em] text-[#B6A47E] uppercase">
+                  <h4 className="text-xs font-mono font-bold tracking-[0.2em] text-[#FFFFFF] uppercase">
                     01. CHEST / BUST
                   </h4>
                   <p className="text-xs text-[#999999] leading-relaxed font-light">
@@ -290,7 +290,7 @@ export default function SizeGuidePage() {
                 </div>
 
                 <div className="space-y-3">
-                  <h4 className="text-xs font-mono font-bold tracking-[0.2em] text-[#B6A47E] uppercase">
+                  <h4 className="text-xs font-mono font-bold tracking-[0.2em] text-[#FFFFFF] uppercase">
                     02. SHOULDER WIDTH
                   </h4>
                   <p className="text-xs text-[#999999] leading-relaxed font-light">
@@ -299,7 +299,7 @@ export default function SizeGuidePage() {
                 </div>
 
                 <div className="space-y-3">
-                  <h4 className="text-xs font-mono font-bold tracking-[0.2em] text-[#B6A47E] uppercase">
+                  <h4 className="text-xs font-mono font-bold tracking-[0.2em] text-[#FFFFFF] uppercase">
                     03. GARMENT LENGTH
                   </h4>
                   <p className="text-xs text-[#999999] leading-relaxed font-light">
@@ -308,7 +308,7 @@ export default function SizeGuidePage() {
                 </div>
 
                 <div className="space-y-3">
-                  <h4 className="text-xs font-mono font-bold tracking-[0.2em] text-[#B6A47E] uppercase">
+                  <h4 className="text-xs font-mono font-bold tracking-[0.2em] text-[#FFFFFF] uppercase">
                     04. WAIST / OUTSEAM
                   </h4>
                   <p className="text-xs text-[#999999] leading-relaxed font-light">
@@ -329,7 +329,7 @@ export default function SizeGuidePage() {
               className="bg-[#121212] border border-[#222222] flex flex-col justify-between space-y-8"
             >
               <div className="space-y-4">
-                <span className="text-[11px] font-semibold tracking-[0.28em] text-[#B6A47E] uppercase block">
+                <span className="text-[11px] font-semibold tracking-[0.28em] text-[#FFFFFF] uppercase block">
                   PERSONAL ASSISTANCE
                 </span>
 
@@ -356,9 +356,9 @@ export default function SizeGuidePage() {
                   href={waLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group inline-flex items-center text-[12px] md:text-[13px] tracking-[0.28em] uppercase font-medium text-[#F5F5F5] opacity-90 hover:opacity-100 hover:text-[#B6A47E] transition-all duration-300 ease-out"
+                  className="group inline-flex items-center text-[12px] md:text-[13px] tracking-[0.28em] uppercase font-medium text-[#F5F5F5] opacity-90 hover:opacity-100 hover:text-[#FFFFFF] transition-all duration-300 ease-out"
                 >
-                  <span className="relative pb-2 border-b border-[#F5F5F5]/30 group-hover:border-[#B6A47E] transition-colors duration-300">
+                  <span className="relative pb-2 border-b border-[#F5F5F5]/30 group-hover:border-[#FFFFFF] transition-colors duration-300">
                     ASK FIT CONSULTANT
                   </span>
                   <span className="ml-4 transition-transform duration-300 ease-out group-hover:translate-x-2">

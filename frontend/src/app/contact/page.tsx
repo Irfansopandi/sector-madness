@@ -39,7 +39,7 @@ export default function ContactPage() {
         fontFamily:
           "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       }}
-      className="min-h-screen bg-[#0A0A0A] text-[#F5F5F5] selection:bg-[#B6A47E] selection:text-[#0A0A0A] overflow-x-hidden"
+      className="min-h-screen bg-[#0A0A0A] text-[#F5F5F5] selection:bg-[#FFFFFF] selection:text-[#0A0A0A] overflow-x-hidden"
     >
       <Navbar mode="dark" />
 
@@ -127,7 +127,7 @@ export default function ContactPage() {
                     }}
                     className={`${isLast ? "" : "border-b border-[#333333] mb-6 md:mb-8"} space-y-3`}
                   >
-                    <span className="text-[11px] font-mono font-bold tracking-[0.25em] text-[#B6A47E] uppercase block mb-2">
+                    <span className="text-[11px] font-mono font-bold tracking-[0.25em] text-[#FFFFFF] uppercase block mb-2">
                       {item.title}
                     </span>
                     {item.subtitle && item.subtitle !== item.title && (
@@ -158,7 +158,7 @@ export default function ContactPage() {
                             href={hrefUrl}
                             target={hrefUrl.startsWith("http") ? "_blank" : "_self"}
                             rel="noopener noreferrer"
-                            className="group inline-flex items-center text-base md:text-lg text-[#F5F5F5] font-light hover:text-[#B6A47E] transition-colors tracking-wide"
+                            className="group inline-flex items-center text-base md:text-lg text-[#F5F5F5] font-light hover:text-[#FFFFFF] transition-colors tracking-wide"
                           >
                             <span>{item.value}</span>
                             <span className="ml-3 transition-transform duration-300 group-hover:translate-x-1">
@@ -239,7 +239,7 @@ export default function ContactPage() {
               style={{ paddingBottom: "20px" }}
               className="border-b border-[#333333] mb-6 space-y-3"
             >
-              <span className="text-[11px] font-mono font-bold tracking-[0.25em] text-[#B6A47E] uppercase block mb-1">
+              <span className="text-[11px] font-mono font-bold tracking-[0.25em] text-[#FFFFFF] uppercase block mb-1">
                 {warehouseTitle}
               </span>
               <h2 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500 }} className="text-base md:text-lg tracking-[0.15em] uppercase text-[#FFFFFF]">
@@ -275,7 +275,7 @@ export default function ContactPage() {
                       href={`https://www.google.com/maps?q=${mapLat},${mapLng}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[#B6A47E] hover:underline font-bold flex items-center gap-1 uppercase tracking-wider whitespace-nowrap"
+                      className="text-[#FFFFFF] hover:underline font-bold flex items-center gap-1 uppercase tracking-wider whitespace-nowrap"
                     >
                       <span>Open in Google Maps</span>
 
@@ -290,7 +290,7 @@ export default function ContactPage() {
                   href={`https://www.google.com/maps?q=${mapLat},${mapLng}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hidden lg:flex text-[#B6A47E] hover:underline font-bold items-center gap-1 uppercase tracking-wider whitespace-nowrap"
+                  className="hidden lg:flex text-[#FFFFFF] hover:underline font-bold items-center gap-1 uppercase tracking-wider whitespace-nowrap"
                 >
                   <span>Open in Google Maps</span>
                   <span>↗</span>

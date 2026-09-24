@@ -189,24 +189,24 @@ export default function CustomPaymentModal({
           <div className="space-y-14">
 
             {/* ─── SECTION 1: Order Identity & Timer ─── */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8" style={{ paddingBottom: "32px", borderBottom: "1px solid #1E1E1E" }}>
-              <div className="space-y-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 sm:gap-8 w-full" style={{ paddingBottom: "32px", borderBottom: "1px solid #1E1E1E" }}>
+              <div className="space-y-3 w-full sm:w-auto overflow-hidden">
                 <span className="text-[11px] sm:text-xs text-[#666] uppercase tracking-[0.25em] block font-bold">
                   TRANSACTION REFERENCE
                 </span>
-                <h2 className="text-xl sm:text-2xl font-black text-white tracking-[0.15em] uppercase">
+                <div className="text-[13px] min-[375px]:text-sm sm:text-2xl font-black text-white tracking-[0.15em] uppercase whitespace-nowrap overflow-x-auto">
                   {orderNumber}
-                </h2>
-                <span className="text-[11px] text-[#A67C00] font-bold uppercase tracking-[0.2em] block">
+                </div>
+                <span className="text-[10px] sm:text-[11px] text-[#FFFFFF] font-bold uppercase tracking-[0.2em] block truncate">
                   STATUS: AWAITING CUSTOMER SETTLEMENT
                 </span>
               </div>
 
-              <div className="bg-[#131313] border border-[#252525] text-right shrink-0" style={{ padding: "20px 28px" }}>
-                <span className="text-[10px] sm:text-[11px] text-[#777] uppercase tracking-[0.2em] block font-bold" style={{ marginBottom: "8px" }}>
-                  PAYMENT TIMELINE EXPIRES IN
+              <div className="flex items-center justify-between sm:block sm:text-right shrink-0 w-full sm:w-auto mt-2 sm:mt-0">
+                <span className="text-[10px] sm:text-[11px] text-[#777] uppercase tracking-[0.2em] block font-bold sm:mb-2">
+                  PAYMENT EXPIRES IN
                 </span>
-                <div className="text-lg sm:text-xl font-black text-white tracking-[0.12em]">
+                <div className="text-base sm:text-xl font-black text-white tracking-[0.12em]">
                   {String(timeLeft.hours).padStart(2, "0")} : {String(timeLeft.minutes).padStart(2, "0")} : {String(timeLeft.seconds).padStart(2, "0")}
                 </div>
               </div>
@@ -238,9 +238,9 @@ export default function CustomPaymentModal({
                         <span className="text-[11px] text-[#777] uppercase tracking-[0.25em] block font-bold">
                           VIRTUAL ACCOUNT PARTNER
                         </span>
-                        <h3 className="text-base sm:text-lg font-extrabold text-white uppercase tracking-[0.15em]">
+                        <div className="text-base sm:text-lg font-extrabold text-white uppercase tracking-[0.15em]">
                           {paymentInfo.title}
-                        </h3>
+                        </div>
                       </div>
                       <span className="text-[11px] font-black bg-white/10 border border-white/20 text-white tracking-[0.15em] uppercase hidden sm:block" style={{ padding: "8px 16px" }}>
                         AUTOMATED 24/7
@@ -254,7 +254,7 @@ export default function CustomPaymentModal({
                       </span>
                       <div className="flex flex-col sm:flex-row items-stretch sm:items-center" style={{ gap: "16px" }}>
                         <div 
-                          className="flex-1 bg-[#050505] border border-[#333] font-black text-white tracking-[0.1em] sm:tracking-[0.2em] select-all text-center sm:text-left shadow-inner text-base sm:text-2xl break-all" 
+                          className="flex-1 bg-[#050505] border border-[#333] font-black text-white tracking-[0.1em] sm:tracking-[0.2em] select-all text-center sm:text-left shadow-inner text-[13px] sm:text-2xl whitespace-nowrap overflow-x-auto" 
                           style={{ padding: "16px 16px" }}
                         >
                           {paymentInfo.vaNumber}
@@ -380,9 +380,9 @@ export default function CustomPaymentModal({
                   <span className="text-[11px] sm:text-xs text-[#777] uppercase tracking-[0.3em] block font-bold">
                     UNIVERSAL SCAN PROTOCOL
                   </span>
-                  <h3 className="text-lg sm:text-xl font-extrabold text-white uppercase tracking-[0.2em]">
+                  <div className="text-lg sm:text-xl font-extrabold text-white uppercase tracking-[0.2em]">
                     {paymentInfo.title}
-                  </h3>
+                  </div>
                 </div>
                 
                 {/* QR Code Box */}

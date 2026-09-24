@@ -93,7 +93,7 @@ export default function WishlistPage() {
         }
       `}} />
       {/* Header */}
-      <div style={{ paddingTop: "24px", paddingBottom: "24px", paddingLeft: "28px", paddingRight: "28px" }} className="border-b border-white/[0.08] flex items-center justify-between">
+      <div style={{ paddingTop: "24px", paddingBottom: "24px", paddingLeft: "clamp(16px, 4vw, 28px)", paddingRight: "clamp(16px, 4vw, 28px)" }} className="border-b border-white/[0.08] flex items-center justify-between">
         <div>
           <h2 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-xl md:text-2xl uppercase tracking-wider text-[#F5F5F5]">WISHLIST</h2>
           <p className="text-xs text-[#8A8A8A] mt-1 font-mono">Manage your favorite products</p>
@@ -173,8 +173,8 @@ export default function WishlistPage() {
                     borderBottom: idx !== wishlistProducts.length - 1 ? "1px solid #222222" : "none",
                   }}
                 >
-                  <div className="flex flex-col sm:flex-row items-start" style={{ gap: "28px" }}>
-                    {/* Product Image — with left breathing room */}
+                  <div className="grid grid-cols-[90px_1fr] sm:grid-cols-[110px_1fr] gap-x-4 gap-y-5 sm:gap-x-7 sm:gap-y-0" style={{ paddingLeft: "clamp(16px, 4vw, 28px)", paddingRight: "clamp(16px, 4vw, 28px)" }}>
+                    {/* Product Image */}
                     {prod.is_available === false ? (
                       <div
                         onClick={(e) => {
@@ -184,8 +184,7 @@ export default function WishlistPage() {
                           setWishlistToastActionText("RETURN TO SHOP");
                           setShowWishlistToast(true);
                         }}
-                        className="relative w-[110px] h-[145px] bg-[#141414] shrink-0 overflow-hidden border border-[#262626] group cursor-pointer"
-                        style={{ marginLeft: "12px" }}
+                        className="relative w-full aspect-[3/4] bg-[#141414] overflow-hidden border border-[#262626] group cursor-pointer sm:row-span-2"
                       >
                         <Image
                           src={resolvedImage}
@@ -197,8 +196,7 @@ export default function WishlistPage() {
                     ) : (
                       <Link
                         href={productLink}
-                        className="relative w-[110px] h-[145px] bg-[#141414] shrink-0 overflow-hidden border border-[#262626] group"
-                        style={{ marginLeft: "12px" }}
+                        className="relative w-full aspect-[3/4] bg-[#141414] overflow-hidden border border-[#262626] group sm:row-span-2"
                       >
                         <Image
                           src={resolvedImage}
@@ -209,133 +207,131 @@ export default function WishlistPage() {
                       </Link>
                     )}
 
-                    {/* Details & Controls Column */}
-                    <div className="wishlist-details-col flex-1 min-w-0 flex flex-col justify-between self-stretch w-full">
-                      {/* Top: Info & Price */}
-                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-3 flex-wrap">
-                            <span className="text-[10px] font-mono tracking-[0.2em] uppercase text-[#888888]">
-                              {itemCategory}
+                    {/* Details & Price Column */}
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4 min-w-0">
+                      {/* Top: Info */}
+                      <div className="space-y-1 sm:space-y-2">
+                        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                          <span className="text-[9px] sm:text-[10px] font-mono tracking-[0.2em] uppercase text-[#888888]">
+                            {itemCategory}
+                          </span>
+                          {discountExpiresAt && (
+                            <CountdownTimer expiresAt={discountExpiresAt} compact textColor="white" />
+                          )}
+                          {!prod.in_stock && (
+                            <span className="text-[9px] sm:text-[10px] font-mono tracking-[0.2em] uppercase bg-[#881111] text-white px-2 py-0.5 font-bold">
+                              OUT OF STOCK
                             </span>
-                            {discountExpiresAt && (
-                              <CountdownTimer expiresAt={discountExpiresAt} compact textColor="white" />
-                            )}
-                            {!prod.in_stock && (
-                              <span className="text-[10px] font-mono tracking-[0.2em] uppercase text-[#FF6666]">
-                                OUT OF STOCK
-                              </span>
-                            )}
-                          </div>
-
-                          <h3 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-base tracking-wide text-white uppercase hover:text-[#8A8A8A] transition-colors">
-                            {prod.is_available === false ? (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  setWishlistToastMsg("This product is no longer available in the catalog.");
-                                  setWishlistToastActionHref("/shop");
-                                  setWishlistToastActionText("RETURN TO SHOP");
-                                  setShowWishlistToast(true);
-                                }}
-                                className="uppercase border-none bg-transparent cursor-pointer text-inherit font-inherit p-0 text-left"
-                              >
-                                {resolvedName}
-                              </button>
-                            ) : (
-                              <Link href={productLink}>{resolvedName}</Link>
-                            )}
-                          </h3>
-                          <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-[#888888] tracking-wider pt-1">
-                            {prod.color && !["default", "none", "n/a", "null", "undefined", ""].includes(prod.color.trim().toLowerCase()) && (
-                              <>
-                                <span>
-                                  COLOR: <strong className="text-[#EDEDED] font-normal">{prod.color}</strong>
-                                </span>
-                                <span className="text-[#333333]">|</span>
-                              </>
-                            )}
-                            <span>
-                              SIZE: <strong className="text-[#EDEDED] font-normal">{prod.size || "—"}</strong>
-                            </span>
-                            <span className="text-[#333333]">|</span>
-                            {prod.is_available === false ? (
-                              <strong className="text-[#777777] font-bold">UNAVAILABLE</strong>
-                            ) : isSoldOut ? (
-                              <strong className="text-[#FF6666] font-bold">SOLD OUT</strong>
-                            ) : (
-                              <span className="text-[#FFFFFF] font-medium">
-                                {resolvedStock !== null && resolvedStock !== undefined ? (
-                                  <><strong className="text-white font-bold">{resolvedStock}</strong> UNITS IN STOCK</>
-                                ) : (
-                                  <strong className="text-white font-bold">AVAILABLE IN STOCK</strong>
-                                )}
-                              </span>
-                            )}
-                          </div>
+                          )}
                         </div>
 
-                        {/* Price Section */}
-                        <div className="text-left sm:text-right shrink-0 flex flex-col items-start sm:items-end gap-0.5" style={{ paddingRight: "12px" }}>
-                          {/* Top: Promo / Discounted Price (BOLD) */}
-                          <p className="text-base font-bold font-mono text-white tracking-wide">
-                            Rp {(resolvedPrice).toLocaleString("id-ID")}
-                          </p>
-
-                          {/* Bottom: Normal / Original Price (NOT BOLD, CROSSED OUT) */}
-                          {originalPrice && originalPrice > resolvedPrice && (
-                            <span className="text-xs font-mono font-normal text-[#888888] line-through">
-                              Rp {(originalPrice).toLocaleString("id-ID")}
+                        <h3 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-[13px] sm:text-base tracking-wide text-white uppercase hover:text-[#8A8A8A] transition-colors leading-snug">
+                          {prod.is_available === false ? (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setWishlistToastMsg("This product is no longer available in the catalog.");
+                                setWishlistToastActionHref("/shop");
+                                setWishlistToastActionText("RETURN TO SHOP");
+                                setShowWishlistToast(true);
+                              }}
+                              className="uppercase border-none bg-transparent cursor-pointer text-inherit font-inherit p-0 text-left"
+                            >
+                              {resolvedName}
+                            </button>
+                          ) : (
+                            <Link href={productLink}>{resolvedName}</Link>
+                          )}
+                        </h3>
+                        
+                        <div className="flex flex-wrap items-center gap-x-2 sm:gap-x-4 gap-y-1 text-[10px] sm:text-xs font-mono text-[#888888] tracking-wider pt-0.5 sm:pt-1">
+                          {prod.color && !["default", "none", "n/a", "null", "undefined", ""].includes(prod.color.trim().toLowerCase()) && (
+                            <>
+                              <span>
+                                COLOR: <strong className="text-[#EDEDED] font-normal">{prod.color}</strong>
+                              </span>
+                              <span className="text-[#333333]">|</span>
+                            </>
+                          )}
+                          <span>
+                            SIZE: <strong className="text-[#EDEDED] font-normal">{prod.size || "—"}</strong>
+                          </span>
+                          <span className="text-[#333333]">|</span>
+                          {prod.is_available === false ? (
+                            <strong className="text-[#777777] font-bold">UNAVAILABLE</strong>
+                          ) : isSoldOut ? (
+                            <strong className="text-[#FF6666] font-bold">SOLD OUT</strong>
+                          ) : (
+                            <span className="text-[#FFFFFF] font-medium">
+                              {resolvedStock !== null && resolvedStock !== undefined ? (
+                                <><strong className="text-white font-bold">{resolvedStock}</strong> IN STOCK</>
+                              ) : (
+                                <strong className="text-white font-bold">AVAILABLE IN STOCK</strong>
+                              )}
                             </span>
                           )}
                         </div>
                       </div>
 
-                      {/* Bottom: Add to Bag & Remove */}
-                      <div className={`flex items-center mt-8 pt-2 ${(isSoldOut || prod.is_available === false) ? 'justify-between' : 'justify-between'}`}>
-                        {/* Add to Bag — styled inline like Shopping Bag (no button element) */}
-                        {prod.is_available === false ? (
-                          <span className="inline-flex items-center gap-2 px-4 py-2 text-[#777777] font-mono text-[11px] font-bold uppercase tracking-widest select-none cursor-not-allowed">
-                            PRODUCT UNAVAILABLE
-                          </span>
-                        ) : !isSoldOut ? (
-                          <span
-                            role="button"
-                            tabIndex={0}
-                            onClick={() => handleMoveWishlistItemToBag(prod)}
-                            onKeyDown={(e) => e.key === "Enter" && handleMoveWishlistItemToBag(prod)}
-                            className="inline-flex items-center gap-2 px-4 py-2 text-[#FFFFFF] font-mono text-[11px] font-bold uppercase tracking-widest hover:text-white transition-all duration-300 cursor-pointer select-none"
-                          >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-                              <line x1="3" y1="6" x2="21" y2="6" />
-                              <path d="M16 10a4 4 0 0 1-8 0" />
-                            </svg>
-                            ADD TO BAG
-                          </span>
-                        ) : (
-                          <div /> // Placeholder to keep Trash Icon on the right if sold out
-                        )}
+                      {/* Price Section */}
+                      <div className="text-left sm:text-right shrink-0 flex flex-col items-start sm:items-end gap-0.5 pt-1 sm:pt-0">
+                        {/* Top: Promo / Discounted Price (BOLD) */}
+                        <p className="text-[13px] sm:text-base font-bold font-mono text-white tracking-wide">
+                          Rp {(resolvedPrice).toLocaleString("id-ID")}
+                        </p>
 
-                        {/* Trash Icon — with right breathing room */}
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveWishlistItem(prod)}
-                          className="p-2 text-[#777777] hover:text-[#E53E3E] transition-colors cursor-pointer"
-                          style={{ marginRight: "12px" }}
-                          aria-label="Remove from wishlist"
-                          title="Remove from wishlist"
-                        >
-                          <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" className="transition-transform hover:scale-110">
-                            <path d="M2 4h12" />
-                            <path d="M5 4V2.5A.5.5 0 0 1 5.5 2h5a.5.5 0 0 1 .5.5V4" />
-                            <path d="M3.5 4l.7 9.5a1 1 0 0 0 1 .9h5.6a1 1 0 0 0 1-.9L12.5 4" />
-                            <line x1="6.5" y1="7" x2="6.5" y2="12" />
-                            <line x1="9.5" y1="7" x2="9.5" y2="12" />
-                          </svg>
-                        </button>
+                        {/* Bottom: Normal / Original Price (NOT BOLD, CROSSED OUT) */}
+                        {originalPrice && originalPrice > resolvedPrice && (
+                          <span className="text-[10px] sm:text-[11px] font-mono font-normal text-[#888888] line-through tracking-wider">
+                            Rp {(originalPrice).toLocaleString("id-ID")}
+                          </span>
+                        )}
                       </div>
+                    </div>
+
+                    {/* Bottom: Add to Bag & Remove */}
+                    <div className="col-span-2 sm:col-span-1 flex items-center justify-between sm:mt-auto sm:pt-6 pt-2 border-t sm:border-none border-[#1C1C1C]">
+                      {/* Add to Bag — styled inline like Shopping Bag (no button element) */}
+                      {prod.is_available === false ? (
+                        <span className="inline-flex items-center gap-2 px-1 sm:px-4 py-2 text-[#777777] font-mono text-[9px] sm:text-[11px] font-bold uppercase tracking-widest select-none cursor-not-allowed">
+                          PRODUCT UNAVAILABLE
+                        </span>
+                      ) : !isSoldOut ? (
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => handleMoveWishlistItemToBag(prod)}
+                          onKeyDown={(e) => e.key === "Enter" && handleMoveWishlistItemToBag(prod)}
+                          className="inline-flex items-center gap-1 sm:gap-2 py-2 text-[#FFFFFF] font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-widest hover:text-white transition-all duration-300 cursor-pointer select-none"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                            <line x1="3" y1="6" x2="21" y2="6" />
+                            <path d="M16 10a4 4 0 0 1-8 0" />
+                          </svg>
+                          ADD TO BAG
+                        </span>
+                      ) : (
+                        <div /> // Placeholder to keep Trash Icon on the right if sold out
+                      )}
+
+                      {/* Trash Icon */}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveWishlistItem(prod)}
+                        className="p-2 text-[#777777] hover:text-[#E53E3E] transition-colors cursor-pointer"
+                        aria-label="Remove from wishlist"
+                        title="Remove from wishlist"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" className="transition-transform hover:scale-110 sm:w-[18px] sm:h-[18px]">
+                          <path d="M2 4h12" />
+                          <path d="M5 4V2.5A.5.5 0 0 1 5.5 2h5a.5.5 0 0 1 .5.5V4" />
+                          <path d="M3.5 4l.7 9.5a1 1 0 0 0 1 .9h5.6a1 1 0 0 0 1-.9L12.5 4" />
+                          <line x1="6.5" y1="7" x2="6.5" y2="12" />
+                          <line x1="9.5" y1="7" x2="9.5" y2="12" />
+                        </svg>
+                      </button>
                     </div>
                   </div>
                 </motion.div>

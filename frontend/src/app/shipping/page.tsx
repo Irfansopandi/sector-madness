@@ -29,7 +29,7 @@ export default function ShippingPage() {
       title: "ORDER PLACED",
       icon: (
         <svg
-          className="w-6 h-6 text-[#B6A47E]"
+          className="w-6 h-6 text-[#FFFFFF]"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -48,7 +48,7 @@ export default function ShippingPage() {
       title: "PAYMENT CONFIRMED",
       icon: (
         <svg
-          className="w-6 h-6 text-[#B6A47E]"
+          className="w-6 h-6 text-[#FFFFFF]"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -66,7 +66,7 @@ export default function ShippingPage() {
       title: "ORDER PROCESSING",
       icon: (
         <svg
-          className="w-6 h-6 text-[#B6A47E]"
+          className="w-6 h-6 text-[#FFFFFF]"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -85,7 +85,7 @@ export default function ShippingPage() {
       title: "SHIPPED",
       icon: (
         <svg
-          className="w-6 h-6 text-[#B6A47E]"
+          className="w-6 h-6 text-[#FFFFFF]"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -105,7 +105,7 @@ export default function ShippingPage() {
       title: "DELIVERED",
       icon: (
         <svg
-          className="w-6 h-6 text-[#B6A47E]"
+          className="w-6 h-6 text-[#FFFFFF]"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -126,7 +126,7 @@ export default function ShippingPage() {
         fontFamily:
           "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       }}
-      className="min-h-screen bg-[#0A0A0A] text-[#F5F5F5] selection:bg-[#B6A47E] selection:text-[#0A0A0A] overflow-x-hidden"
+      className="min-h-screen bg-[#0A0A0A] text-[#F5F5F5] selection:bg-[#FFFFFF] selection:text-[#0A0A0A] overflow-x-hidden"
     >
       <Navbar mode="dark" />
 
@@ -201,7 +201,7 @@ export default function ShippingPage() {
               viewport={{ once: true }}
               transition={{ duration: 0.7 }}
             >
-              <span className="text-[11px] tracking-[0.3em] uppercase text-[#B6A47E] font-semibold block mb-4">
+              <span className="text-[11px] tracking-[0.3em] uppercase text-[#FFFFFF] font-semibold block mb-4">
                 01 / ORIGIN
               </span>
               <h2
@@ -285,7 +285,7 @@ export default function ShippingPage() {
               viewport={{ once: true }}
               transition={{ duration: 0.7 }}
             >
-              <span className="text-[11px] tracking-[0.3em] uppercase text-[#B6A47E] font-semibold block mb-4">
+              <span className="text-[11px] tracking-[0.3em] uppercase text-[#FFFFFF] font-semibold block mb-4">
                 02 / LOGISTICS
               </span>
               <h2
@@ -305,7 +305,7 @@ export default function ShippingPage() {
                 {/* JNE WITH ARROW */}
                 <div className="border-b border-[#222222] pb-6">
                   <div className="flex items-center gap-3 mb-2">
-                    <span className="text-[#B6A47E] font-sans text-lg select-none">
+                    <span className="text-[#FFFFFF] font-sans text-lg select-none">
                       →
                     </span>
                     <h3 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500 }} className="text-[#FFFFFF] text-xl tracking-wider uppercase">
@@ -320,7 +320,7 @@ export default function ShippingPage() {
                 {/* J&T WITH ARROW */}
                 <div className="border-b border-[#222222] pb-6">
                   <div className="flex items-center gap-3 mb-2">
-                    <span className="text-[#B6A47E] font-sans text-lg select-none">
+                    <span className="text-[#FFFFFF] font-sans text-lg select-none">
                       →
                     </span>
                     <h3 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500 }} className="text-[#FFFFFF] text-xl tracking-wider uppercase">
@@ -335,7 +335,7 @@ export default function ShippingPage() {
                 {/* GOSEND WITH ARROW */}
                 <div className="border-b border-[#222222] pb-6">
                   <div className="flex items-center gap-3 mb-2">
-                    <span className="text-[#B6A47E] font-sans text-lg select-none">
+                    <span className="text-[#FFFFFF] font-sans text-lg select-none">
                       →
                     </span>
                     <h3 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500 }} className="text-[#FFFFFF] text-xl tracking-wider uppercase">
@@ -344,7 +344,7 @@ export default function ShippingPage() {
                   </div>
                   <p className="text-[14px] md:text-[15px] text-[#A0A0A0] font-light leading-relaxed pl-7">
                     Instant & Same Day delivery services. <br />
-                    <span className="text-[#B6A47E] font-semibold">Note: Only available for delivery within Kabupaten Karawang.</span>
+                    <span className="text-[#FFFFFF] font-semibold">Note: Only available for delivery within Kabupaten Karawang.</span>
                   </p>
                 </div>
               </div>
@@ -370,7 +370,7 @@ export default function ShippingPage() {
               viewport={{ once: true }}
               transition={{ duration: 0.7 }}
             >
-              <span className="text-[11px] tracking-[0.3em] uppercase text-[#B6A47E] font-semibold block mb-4">
+              <span className="text-[11px] tracking-[0.3em] uppercase text-[#FFFFFF] font-semibold block mb-4">
                 03 / CALCULATION
               </span>
               <h2
@@ -440,7 +440,7 @@ export default function ShippingPage() {
             style={{ marginBottom: "clamp(20px, 3vw, 30px)" }}
             className="max-w-3xl"
           >
-            <span className="text-[11px] font-semibold tracking-[0.28em] text-[#B6A47E] uppercase block mb-3 md:mb-4">
+            <span className="text-[11px] font-semibold tracking-[0.28em] text-[#FFFFFF] uppercase block mb-3 md:mb-4">
               04 / WORKFLOW
             </span>
 
@@ -474,13 +474,13 @@ export default function ShippingPage() {
                   {/* Top Header: Pure Icon & Centered Arrow */}
                   <div className="flex items-center justify-between mb-4 md:mb-5 pr-2 md:pr-4">
                     {/* Pure Vector Icon */}
-                    <div className="text-[#B6A47E] flex items-center justify-center">
+                    <div className="text-[#FFFFFF] flex items-center justify-center">
                       {step.icon}
                     </div>
 
                     {/* Uniform Centered Arrow */}
                     {idx < steps.length - 1 && (
-                      <span className="hidden md:inline-flex items-center text-[#B6A47E] opacity-60 ml-auto mr-auto">
+                      <span className="hidden md:inline-flex items-center text-[#FFFFFF] opacity-60 ml-auto mr-auto">
                         <svg
                           className="w-7 h-4"
                           viewBox="0 0 28 12"
@@ -533,7 +533,7 @@ export default function ShippingPage() {
             transition={{ duration: 0.7, ease: "easeOut" }}
             className="max-w-3xl"
           >
-            <span className="text-[11px] font-semibold tracking-[0.28em] text-[#B6A47E] uppercase block mb-3 md:mb-4">
+            <span className="text-[11px] font-semibold tracking-[0.28em] text-[#FFFFFF] uppercase block mb-3 md:mb-4">
               05 / FULFILLMENT
             </span>
 
@@ -599,7 +599,7 @@ export default function ShippingPage() {
             transition={{ duration: 0.8, ease: "easeOut" }}
             className="max-w-3xl space-y-5 md:space-y-6"
           >
-            <span className="text-[11px] font-semibold tracking-[0.28em] text-[#B6A47E] uppercase block">
+            <span className="text-[11px] font-semibold tracking-[0.28em] text-[#FFFFFF] uppercase block">
               INQUIRIES
             </span>
 
@@ -632,9 +632,9 @@ export default function ShippingPage() {
                 href={waLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group inline-flex items-center text-[12px] md:text-[13px] tracking-[0.28em] uppercase font-medium text-[#F5F5F5] opacity-90 hover:opacity-100 hover:text-[#B6A47E] transition-all duration-300 ease-out"
+                className="group inline-flex items-center text-[12px] md:text-[13px] tracking-[0.28em] uppercase font-medium text-[#F5F5F5] opacity-90 hover:opacity-100 hover:text-[#FFFFFF] transition-all duration-300 ease-out"
               >
-                <span className="relative pb-2 border-b border-[#F5F5F5]/30 group-hover:border-[#B6A47E] transition-colors duration-300">
+                <span className="relative pb-2 border-b border-[#F5F5F5]/30 group-hover:border-[#FFFFFF] transition-colors duration-300">
                   CONTACT US 
                 </span>
                 <span className="ml-4 transition-transform duration-300 ease-out group-hover:translate-x-2">

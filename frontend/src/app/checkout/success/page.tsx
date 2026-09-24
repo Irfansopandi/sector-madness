@@ -101,7 +101,7 @@ function CheckoutSuccessContent() {
       className="w-full max-w-5xl mx-auto bg-[#0E0E0E] border border-[#262626] shadow-2xl relative text-center"
     >
       {/* Badge — Borderless */}
-      <div className="inline-flex items-center gap-2 px-5 py-2 bg-[#141414] text-[#B6A47E] font-mono text-[11px] font-bold uppercase tracking-[0.22em] mb-7 text-center">
+      <div className="inline-flex items-center gap-2 px-5 py-2 bg-[#141414] text-[#FFFFFF] font-mono text-[11px] font-bold uppercase tracking-[0.22em] mb-7 text-center">
         <span className="w-2 h-2 rounded-full bg-[#38A169] animate-pulse" />
         PAYMENT VERIFIED & CONFIRMED
       </div>
@@ -127,14 +127,14 @@ function CheckoutSuccessContent() {
       ) : (
         <div style={{ padding: "40px 36px", marginBottom: "44px", width: "100%" }} className="bg-[#121212] border border-[#2A2A2A] text-left font-mono">
           {/* Reference & Status Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 pb-6 border-b border-[#222222]">
-            <div>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 pb-6 border-b border-[#222222] overflow-hidden">
+            <div className="min-w-0">
               <span className="text-[10px] text-[#777777] block uppercase tracking-widest font-bold mb-1">ORDER REFERENCE NUMBER</span>
-              <span className="text-lg font-extrabold text-white tracking-widest block">{order.order_number}</span>
+              <span className="text-[13px] sm:text-lg font-extrabold text-white tracking-widest block whitespace-nowrap overflow-x-auto">{order.order_number}</span>
             </div>
-            <div className="sm:text-right">
+            <div className="sm:text-right min-w-0">
               <span className="text-[10px] text-[#777777] block uppercase tracking-widest font-bold mb-1">ORDER DATE</span>
-              <span className="text-sm font-bold text-[#E5E5E5] tracking-widest block uppercase">
+              <span className="text-[11px] sm:text-sm font-bold text-[#E5E5E5] tracking-widest block uppercase whitespace-nowrap overflow-x-auto">
                 {displayOrderDate}
               </span>
             </div>
@@ -292,18 +292,18 @@ function CheckoutSuccessContent() {
       )}
 
       {/* Action Navigation Buttons — Spacious, Luxury Styled, Well-Aligned */}
-      <div style={{ paddingTop: "32px", width: "100%" }} className="flex flex-col sm:flex-row items-center justify-center gap-5 border-t border-[#222222]">
+      <div style={{ paddingTop: "32px", width: "100%" }} className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5 border-t border-[#222222]">
         <Link
           href={orderNumber ? `/dashboard?order=${orderNumber}` : "/dashboard"}
-          style={{ padding: "18px 36px" }}
-          className="w-full sm:w-auto bg-[#FFFFFF] text-[#0A0A0A] font-mono text-xs font-black uppercase tracking-[0.22em] hover:bg-[#B6A47E] transition-all duration-300 shadow-xl no-underline inline-flex items-center justify-center cursor-pointer"
+          style={{ padding: "clamp(14px, 2vw, 18px) clamp(16px, 4vw, 36px)" }}
+          className="w-full sm:w-auto bg-[#FFFFFF] text-[#0A0A0A] font-mono text-[10px] sm:text-xs font-black uppercase tracking-[0.15em] sm:tracking-[0.22em] hover:bg-[#EAEAEA] transition-all duration-300 shadow-xl no-underline inline-flex items-center justify-center cursor-pointer whitespace-nowrap"
         >
           VIEW ORDERS IN DASHBOARD →
         </Link>
         <Link
           href="/shop"
-          style={{ padding: "18px 36px" }}
-          className="w-full sm:w-auto bg-[#141414] text-[#FFFFFF] border border-[#333333] font-mono text-xs font-bold uppercase tracking-[0.22em] hover:border-[#666666] hover:bg-[#1C1C1C] transition-all duration-300 no-underline inline-flex items-center justify-center cursor-pointer"
+          style={{ padding: "clamp(14px, 2vw, 18px) clamp(16px, 4vw, 36px)" }}
+          className="w-full sm:w-auto bg-[#141414] text-[#FFFFFF] border border-[#333333] font-mono text-[10px] sm:text-xs font-bold uppercase tracking-[0.15em] sm:tracking-[0.22em] hover:border-[#666666] hover:bg-[#1C1C1C] transition-all duration-300 no-underline inline-flex items-center justify-center cursor-pointer whitespace-nowrap"
         >
           CONTINUE BROWSING CATALOG
         </Link>

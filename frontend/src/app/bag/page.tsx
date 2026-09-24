@@ -459,9 +459,9 @@ export default function ShoppingBagPage() {
                       borderBottom: idx !== items.length - 1 ? '1px solid #222222' : 'none'
                     }}
                   >
-                    <div className="flex flex-col sm:flex-row items-start" style={{ gap: '28px' }}>
+                    <div className="grid grid-cols-[90px_1fr] sm:grid-cols-[110px_1fr] gap-x-4 gap-y-5 sm:gap-x-7 sm:gap-y-0">
                       {/* Product Image */}
-                      <Link href={productLink} className="relative w-[110px] h-[145px] bg-[#141414] shrink-0 overflow-hidden border border-[#262626] group">
+                      <Link href={productLink} className="relative w-full aspect-[3/4] bg-[#141414] overflow-hidden border border-[#262626] group sm:row-span-2">
                         <Image
                           src={imageSrc}
                           alt={productName}
@@ -470,138 +470,135 @@ export default function ShoppingBagPage() {
                         />
                       </Link>
 
-                      {/* Details & Controls Column (beside image) */}
-                      <div className="flex-1 min-w-0 flex flex-col justify-between self-stretch w-full">
-                        {/* Top Area: Info & Price in ONE row */}
-                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-3">
-                              <span className="text-[10px] font-mono tracking-[0.2em] uppercase text-[#888888]">
-                                {itemCategory}
+                      {/* Details & Price Column */}
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4 min-w-0">
+                        <div className="space-y-1 sm:space-y-2">
+                          <div className="flex items-center gap-2 sm:gap-3">
+                            <span className="text-[9px] sm:text-[10px] font-mono tracking-[0.2em] uppercase text-[#888888]">
+                              {itemCategory}
+                            </span>
+                            {isOutOfStock && (
+                              <span className="text-[9px] sm:text-[10px] font-mono tracking-[0.2em] uppercase bg-[#881111] text-white px-2 py-0.5 font-bold">
+                                OUT OF STOCK
                               </span>
-                              {isOutOfStock && (
-                                <span className="text-[10px] font-mono tracking-[0.2em] uppercase bg-[#881111] text-white px-2 py-0.5 font-bold">
-                                  OUT OF STOCK
-                                </span>
-                              )}
-                            </div>
-
-                            <h3 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-base tracking-wide text-white uppercase hover:text-[#8A8A8A] transition-colors">
-                              <Link href={productLink}>{productName}</Link>
-                            </h3>
-
-                            <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-[#888888] tracking-wider pt-1">
-                              {hasColor && (
-                                <>
-                                  <span>COLOR: <strong className="text-[#EDEDED] font-normal">{item.color}</strong></span>
-                                  <span className="text-[#333333]">|</span>
-                                </>
-                              )}
-                              {hasSize && (
-                                <>
-                                  <span>SIZE: <strong className="text-[#EDEDED] font-normal">{item.size}</strong></span>
-                                  <span className="text-[#333333]">|</span>
-                                </>
-                              )}
-                              <span className="text-[#FFFFFF] font-medium">
-                                <strong className="text-white font-bold">{Math.max(0, displayStock - item.quantity)}</strong> UNITS IN STOCK
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Price block */}
-                          <div className="text-left sm:text-right shrink-0 space-y-1 pt-8 sm:pt-12">
-                            {/* TOP: Final Discounted Subtotal Price */}
-                            <p className="text-base font-bold font-mono text-white tracking-wide">
-                              Rp {item.subtotal.toLocaleString("id-ID")}
-                            </p>
-
-                            {/* BOTTOM: Normal / Original Price (strike-through) */}
-                            {item.discount > 0 && (
-                              <p className="text-[11px] font-mono text-[#777777] line-through tracking-wider">
-                                Rp {((item.original_price || (item.price + item.discount)) * item.quantity).toLocaleString("id-ID")}
-                              </p>
                             )}
                           </div>
+
+                          <h3 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }} className="text-[13px] sm:text-base tracking-wide text-white uppercase hover:text-[#8A8A8A] transition-colors leading-snug">
+                            <Link href={productLink}>{productName}</Link>
+                          </h3>
+
+                          <div className="flex flex-wrap items-center gap-x-2 sm:gap-x-4 gap-y-1 text-[10px] sm:text-xs font-mono text-[#888888] tracking-wider pt-0.5 sm:pt-1">
+                            {hasColor && (
+                              <>
+                                <span>COLOR: <strong className="text-[#EDEDED] font-normal">{item.color}</strong></span>
+                                <span className="text-[#333333]">|</span>
+                              </>
+                            )}
+                            {hasSize && (
+                              <>
+                                <span>SIZE: <strong className="text-[#EDEDED] font-normal">{item.size}</strong></span>
+                                <span className="text-[#333333]">|</span>
+                              </>
+                            )}
+                            <span className="text-[#FFFFFF] font-medium">
+                              <strong className="text-white font-bold">{Math.max(0, displayStock - item.quantity)}</strong> IN STOCK
+                            </span>
+                          </div>
                         </div>
 
-                        {/* Bottom Area: Quantity Selector & Trash Icon perfectly aligned on same row */}
-                        <div className="flex items-center justify-between mt-8 pt-2">
-                          <div className="flex items-center border border-[#3A3A3A] bg-[#0E0E0E]">
-                            <button
-                              type="button"
-                              onClick={() => handleQuantityChange(item.id, item.quantity - 1, displayStock)}
-                              disabled={updateMutation.isPending || item.quantity <= 1}
-                              className="w-9 h-9 flex items-center justify-center text-sm font-mono text-[#CCCCCC] hover:bg-[#222] hover:text-white transition-colors disabled:opacity-30 cursor-pointer"
-                            >
-                              −
-                            </button>
-                            {(() => {
-                              const displayQty = editingQty[item.id] !== undefined ? editingQty[item.id] : String(item.quantity);
-                              return (
-                                <input
-                                  type="text"
-                                  inputMode="numeric"
-                                  pattern="[0-9]*"
-                                  value={displayQty}
-                                  onFocus={(e) => e.target.select()}
-                                  onChange={(e) => {
-                                    const val = e.target.value;
-                                    if (val === "" || /^\d+$/.test(val)) {
-                                      setEditingQty((prev: Record<string | number, string>) => ({ ...prev, [item.id]: val }));
-                                    }
-                                  }}
-                                  onBlur={() => {
-                                    const rawVal = editingQty[item.id];
-                                    if (rawVal !== undefined) {
-                                      const parsed = parseInt(rawVal, 10);
-                                      setEditingQty((prev: Record<string | number, string>) => {
-                                        const copy = { ...prev };
-                                        delete copy[item.id];
-                                        return copy;
-                                      });
-                                      if (!isNaN(parsed) && parsed > 0 && parsed !== item.quantity) {
-                                        handleQuantityChange(item.id, Math.min(parsed, displayStock), displayStock);
-                                      }
-                                    }
-                                  }}
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter") {
-                                      (e.target as HTMLInputElement).blur();
-                                    }
-                                  }}
-                                  className="w-12 text-center font-mono text-sm font-bold text-white bg-transparent border-0 outline-none focus:outline-none focus:ring-0 p-0"
-                                />
-                              );
-                            })()}
-                            <button
-                              type="button"
-                              onClick={() => handleQuantityChange(item.id, item.quantity + 1, displayStock)}
-                              disabled={updateMutation.isPending || item.quantity >= displayStock}
-                              className="w-9 h-9 flex items-center justify-center text-sm font-mono text-[#CCCCCC] hover:bg-[#222] hover:text-white transition-colors disabled:opacity-30 cursor-pointer"
-                            >
-                              +
-                            </button>
-                          </div>
+                        {/* Price block */}
+                        <div className="text-left sm:text-right shrink-0 space-y-0.5 sm:space-y-1 pt-1 sm:pt-0">
+                          {/* TOP: Final Discounted Subtotal Price */}
+                          <p className="text-[13px] sm:text-base font-bold font-mono text-white tracking-wide">
+                            Rp {item.subtotal.toLocaleString("id-ID")}
+                          </p>
 
-                          {/* Trash Icon aligned far right with price & quantity */}
+                          {/* BOTTOM: Normal / Original Price (strike-through) */}
+                          {item.discount > 0 && (
+                            <p className="text-[10px] sm:text-[11px] font-mono text-[#777777] line-through tracking-wider">
+                              Rp {((item.original_price || (item.price + item.discount)) * item.quantity).toLocaleString("id-ID")}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Bottom Area: Quantity Selector & Trash Icon perfectly aligned on same row */}
+                      <div className="col-span-2 sm:col-span-1 flex items-center justify-between sm:mt-auto sm:pt-6 pt-2 border-t sm:border-none border-[#1C1C1C]">
+                        <div className="flex items-center border border-[#3A3A3A] bg-[#0E0E0E]">
                           <button
                             type="button"
-                            onClick={() => deleteMutation.mutate(item.id)}
-                            disabled={deleteMutation.isPending}
-                            className="p-2 text-[#777777] hover:text-[#E53E3E] transition-colors cursor-pointer disabled:opacity-40"
-                            aria-label="Remove item"
-                            title="Remove item"
+                            onClick={() => handleQuantityChange(item.id, item.quantity - 1, displayStock)}
+                            disabled={updateMutation.isPending || item.quantity <= 1}
+                            className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-sm font-mono text-[#CCCCCC] hover:bg-[#222] hover:text-white transition-colors disabled:opacity-30 cursor-pointer"
                           >
-                            <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" className="transition-transform hover:scale-110">
-                              <path d="M2 4h12" />
-                              <path d="M5 4V2.5A.5.5 0 0 1 5.5 2h5a.5.5 0 0 1 .5.5V4" />
-                              <path d="M3.5 4l.7 9.5a1 1 0 0 0 1 .9h5.6a1 1 0 0 0 1-.9L12.5 4" />
-                              <line x1="6.5" y1="7" x2="6.5" y2="12" />
-                              <line x1="9.5" y1="7" x2="9.5" y2="12" />
-                            </svg>
+                            −
+                          </button>
+                          {(() => {
+                            const displayQty = editingQty[item.id] !== undefined ? editingQty[item.id] : String(item.quantity);
+                            return (
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                value={displayQty}
+                                onFocus={(e) => e.target.select()}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  if (val === "" || /^\d+$/.test(val)) {
+                                    setEditingQty((prev: Record<string | number, string>) => ({ ...prev, [item.id]: val }));
+                                  }
+                                }}
+                                onBlur={() => {
+                                  const rawVal = editingQty[item.id];
+                                  if (rawVal !== undefined) {
+                                    const parsed = parseInt(rawVal, 10);
+                                    setEditingQty((prev: Record<string | number, string>) => {
+                                      const copy = { ...prev };
+                                      delete copy[item.id];
+                                      return copy;
+                                    });
+                                    if (!isNaN(parsed) && parsed > 0 && parsed !== item.quantity) {
+                                      handleQuantityChange(item.id, Math.min(parsed, displayStock), displayStock);
+                                    }
+                                  }
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    (e.target as HTMLInputElement).blur();
+                                  }
+                                }}
+                                className="w-10 sm:w-12 text-center font-mono text-xs sm:text-sm font-bold text-white bg-transparent border-0 outline-none focus:outline-none focus:ring-0 p-0"
+                              />
+                            );
+                          })()}
+                          <button
+                            type="button"
+                            onClick={() => handleQuantityChange(item.id, item.quantity + 1, displayStock)}
+                            disabled={updateMutation.isPending || item.quantity >= displayStock}
+                            className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-sm font-mono text-[#CCCCCC] hover:bg-[#222] hover:text-white transition-colors disabled:opacity-30 cursor-pointer"
+                          >
+                            +
                           </button>
                         </div>
+
+                        {/* Trash Icon aligned far right with price & quantity */}
+                        <button
+                          type="button"
+                          onClick={() => deleteMutation.mutate(item.id)}
+                          disabled={deleteMutation.isPending}
+                          className="p-2 text-[#777777] hover:text-[#E53E3E] transition-colors cursor-pointer disabled:opacity-40"
+                          aria-label="Remove item"
+                          title="Remove item"
+                        >
+                          <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" className="transition-transform hover:scale-110">
+                            <path d="M2 4h12" />
+                            <path d="M5 4V2.5A.5.5 0 0 1 5.5 2h5a.5.5 0 0 1 .5.5V4" />
+                            <path d="M3.5 4l.7 9.5a1 1 0 0 0 1 .9h5.6a1 1 0 0 0 1-.9L12.5 4" />
+                            <line x1="6.5" y1="7" x2="6.5" y2="12" />
+                            <line x1="9.5" y1="7" x2="9.5" y2="12" />
+                          </svg>
+                        </button>
                       </div>
                     </div>
                   </motion.div>

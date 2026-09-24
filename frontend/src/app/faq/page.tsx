@@ -173,7 +173,7 @@ export default function FAQPage() {
         fontFamily:
           "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       }}
-      className="min-h-screen bg-[#0A0A0A] text-[#F5F5F5] selection:bg-[#B6A47E] selection:text-[#0A0A0A] overflow-x-hidden"
+      className="min-h-screen bg-[#0A0A0A] text-[#F5F5F5] selection:bg-[#FFFFFF] selection:text-[#0A0A0A] overflow-x-hidden"
     >
       <Navbar mode="dark" />
 
@@ -253,7 +253,7 @@ export default function FAQPage() {
                 {/* Category Header */}
                 <div className="border-b border-[#333333] mb-8 md:mb-10">
                   <div className="flex items-center gap-4 pb-5 md:pb-6">
-                    <span className="text-sm md:text-base font-mono font-bold tracking-[0.25em] text-[#B6A47E]">
+                    <span className="text-sm md:text-base font-mono font-bold tracking-[0.25em] text-[#FFFFFF]">
                       {catGroup.code}
                     </span>
                     <h2 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500 }} className="text-sm md:text-base lg:text-lg tracking-[0.25em] uppercase text-[#FFFFFF]">
@@ -281,13 +281,13 @@ export default function FAQPage() {
                               letterSpacing: "-0.01em",
                             }}
                             className={`transition-colors duration-200 pr-6 ${
-                              isOpen ? "text-[#B6A47E]" : "text-[#FFFFFF] group-hover:text-[#B6A47E]"
+                              isOpen ? "text-[#FFFFFF]" : "text-[#FFFFFF] group-hover:text-[#FFFFFF]"
                             }`}
                           >
                             {item.question}
                           </span>
 
-                          <span className="shrink-0 w-8 h-8 flex items-center justify-center text-[#B6A47E] text-lg font-light select-none transition-transform duration-300">
+                          <span className="shrink-0 w-8 h-8 flex items-center justify-center text-[#FFFFFF] text-lg font-light select-none transition-transform duration-300">
                             {isOpen ? "−" : "+"}
                           </span>
                         </button>
@@ -335,7 +335,7 @@ export default function FAQPage() {
               className="bg-[#121212] border border-[#222222] flex flex-col justify-between space-y-8"
             >
               <div className="space-y-4">
-                <span className="text-[11px] font-semibold tracking-[0.28em] text-[#B6A47E] uppercase block">
+                <span className="text-[11px] font-semibold tracking-[0.28em] text-[#FFFFFF] uppercase block">
                   DIRECT SUPPORT
                 </span>
 
@@ -362,9 +362,9 @@ export default function FAQPage() {
                   href={waLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group inline-flex items-center text-[12px] md:text-[13px] tracking-[0.28em] uppercase font-medium text-[#F5F5F5] opacity-90 hover:opacity-100 hover:text-[#B6A47E] transition-all duration-300 ease-out"
+                  className="group inline-flex items-center text-[12px] md:text-[13px] tracking-[0.28em] uppercase font-medium text-[#F5F5F5] opacity-90 hover:opacity-100 hover:text-[#FFFFFF] transition-all duration-300 ease-out"
                 >
-                  <span className="relative pb-2 border-b border-[#F5F5F5]/30 group-hover:border-[#B6A47E] transition-colors duration-300">
+                  <span className="relative pb-2 border-b border-[#F5F5F5]/30 group-hover:border-[#FFFFFF] transition-colors duration-300">
                     CHAT ON WHATSAPP
                   </span>
                   <span className="ml-4 transition-transform duration-300 ease-out group-hover:translate-x-2">
