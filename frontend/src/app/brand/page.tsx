@@ -95,7 +95,7 @@ export default function BrandPage() {
                 }}
                 className="text-[#FFFFFF] mb-6 tracking-tight"
               >
-                Sector Madness was born in <i className="font-serif">Karawang, Indonesia</i>, from experience, memories, and a passion for creating something meaningful.
+                Sector Madness was born in <i className="font-serif">Karawang, Indonesia</i>, from experience, memories, and a passion for creating something&nbsp;meaningful.
               </p>
               
               <div className="space-y-6 lg:space-y-8 max-w-2xl text-justify md:text-left">
@@ -104,7 +104,7 @@ export default function BrandPage() {
                 </p>
 
                 <p className="text-[15px] lg:text-[17.5px] leading-[1.7] lg:leading-[1.85] font-light text-[#A3A3A3]">
-                  We believe quality clothing should never rely solely on a name or a trend. Every product should deliver comfort, durability, and craftsmanship that can be appreciated every day.
+                  We believe quality clothing should never rely solely on a name or a trend. Every product should deliver comfort, durability, and craftsmanship that can be appreciated every&nbsp;day.
                 </p>
 
                 <p className="text-[15px] lg:text-[17.5px] leading-[1.7] lg:leading-[1.85] font-light text-[#A3A3A3]">

@@ -271,15 +271,15 @@ export default function Footer() {
               <p>
                 CREATED FOR THOSE WHO DEFINE THEIR OWN DIRECTION.
               </p>
-              <p className="text-[#B6A47E] text-[11px] tracking-[0.2em] font-medium pt-2">
+              <p className="text-[#8A8A8A] text-[11px] tracking-[0.2em] font-medium pt-2">
                 EST. 2024
               </p>
             </div>
             <Link
               href="/brand"
-              className="group inline-flex items-center text-[11px] tracking-[0.25em] uppercase font-[family-name:var(--font-body)] font-medium text-[#F5F5F5] opacity-90 hover:opacity-100 hover:text-[#B6A47E] transition-all duration-300 ease-out"
+              className="group inline-flex items-center text-[11px] tracking-[0.25em] uppercase font-[family-name:var(--font-body)] font-medium text-[#F5F5F5] opacity-90 hover:opacity-100 hover:text-[#E5E5E5] transition-all duration-300 ease-out"
             >
-              <span className="relative pb-1 border-b border-[#F5F5F5]/30 group-hover:border-[#B6A47E] inline-block">
+              <span className="relative pb-1 border-b border-[#F5F5F5]/30 group-hover:border-[#E5E5E5] inline-block">
                 DISCOVER OUR STORY
               </span>
               <span className="ml-3 transition-transform duration-300 ease-out group-hover:translate-x-1">

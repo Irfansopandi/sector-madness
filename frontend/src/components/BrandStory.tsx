@@ -69,12 +69,12 @@ export default function BrandStory() {
           {/* Right Column: Impactful Editorial Copy */}
           <div style={{ paddingTop: "36px" }} className="lg:col-span-6 flex flex-col justify-between h-full space-y-10 pb-2">
             <AnimatedSection delay={0.2}>
-              <div className="space-y-6 lg:space-y-8 max-w-2xl">
+              <div className="space-y-6 lg:space-y-8 max-w-2xl text-justify md:text-left">
                 <p
                   style={{ fontSize: "clamp(1.2rem, 2.8vw, 2.25rem)", lineHeight: "1.35", fontWeight: 500 }}
                   className="text-[#FFFFFF] tracking-tight"
                 >
-                  Sector Madness was born in <i className="font-serif">Karawang, Indonesia</i>, from experience, memories, and a passion for creating something meaningful.
+                  Sector Madness was born in <i className="font-serif">Karawang, Indonesia</i>, from experience, memories, and a passion for creating something&nbsp;meaningful.
                 </p>
 
                 <p className="text-[15px] lg:text-[18.5px] leading-[1.7] lg:leading-[1.85] font-light text-[#A3A3A3]">
@@ -82,7 +82,7 @@ export default function BrandStory() {
                 </p>
 
                 <p className="text-[15px] lg:text-[18.5px] leading-[1.7] lg:leading-[1.85] font-light text-[#A3A3A3]">
-                  We believe quality clothing should never rely solely on a name or a trend. Every product should deliver comfort, durability, and craftsmanship that can be appreciated every day.
+                  We believe quality clothing should never rely solely on a name or a trend. Every product should deliver comfort, durability, and craftsmanship that can be appreciated every&nbsp;day.
                 </p>
 
                 <p className="text-[15px] lg:text-[18.5px] leading-[1.7] lg:leading-[1.85] font-light text-[#A3A3A3]">

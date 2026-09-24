@@ -74,8 +74,8 @@ export default function CampaignGallery() {
             {/* Text Banner Column */}
             <div
               style={{
-                paddingLeft: "60px",
-                paddingRight: "60px",
+                paddingLeft: "clamp(32px, 6vw, 60px)",
+                paddingRight: "clamp(32px, 6vw, 60px)",
                 paddingTop: "70px",
                 paddingBottom: "70px",
               }}
@@ -102,7 +102,7 @@ export default function CampaignGallery() {
                 </p>
 
                 {/* Compelling Description */}
-                <p className="text-[14px] md:text-[15px] text-[#A0A0A0] font-[family-name:var(--font-body)] font-light leading-relaxed mb-8 max-w-md">
+                <p className="text-[14px] md:text-[15px] text-[#A0A0A0] font-[family-name:var(--font-body)] font-light leading-relaxed mb-8 max-w-md text-justify md:text-left">
                   {description}
                 </p>
 

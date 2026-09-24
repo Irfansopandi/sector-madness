@@ -198,8 +198,27 @@ export default function ShoppingBagPage() {
   };
 
   const items = cartData?.items || [];
-  const hasOutOfStockItem = items.some((item) => item.stock <= 0);
+  const hasOutOfStockItem = items.some((item: any) => item.stock <= 0);
   const isCheckoutDisabled = items.length === 0 || hasOutOfStockItem || isLoading || isError;
+
+  const recommendedProducts = React.useMemo(() => {
+    return (realProducts || [])
+      .filter((product: any) => {
+        const isOutOfStock = product.variants && Array.isArray(product.variants)
+          ? product.variants.reduce((sum: number, v: any) => sum + (Number(v.stock) || 0), 0) <= 0
+          : false;
+        return !isOutOfStock;
+      })
+      .sort((a: any, b: any) => {
+        const dateA = new Date(a.created_at || 0).getTime();
+        const dateB = new Date(b.created_at || 0).getTime();
+        if (dateB !== dateA) return dateB - dateA;
+        const soldA = a.sales_count || a.sold_count || 0;
+        const soldB = b.sales_count || b.sold_count || 0;
+        return soldB - soldA;
+      })
+      .slice(0, 4);
+  }, [realProducts]);
 
   return (
     <main
@@ -325,11 +344,9 @@ export default function ShoppingBagPage() {
                 </div>
 
                 {/* Responsive Grid (All Devices) */}
-                <div className="grid grid-cols-3 gap-x-2 gap-y-6 sm:gap-x-4 sm:gap-y-8 lg:gap-x-5 lg:gap-y-12">
-                  {(realProducts && realProducts.length > 0 ? realProducts : []).slice(0, 3).map((product: any, idx: number) => {
-                    const outOfStock = product.variants && Array.isArray(product.variants)
-                      ? product.variants.reduce((sum: number, v: any) => sum + (Number(v.stock) || 0), 0) === 0
-                      : false;
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-2 gap-y-6 sm:gap-x-4 sm:gap-y-8 lg:gap-x-5 lg:gap-y-12">
+                  {recommendedProducts.map((product: any, idx: number) => {
+                    const outOfStock = false; // Already filtered out
 
                     return (
                       <motion.div

@@ -1000,11 +1000,12 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                                     sizes="(max-w-768px) 100vw, 33vw"
                                   />
                                 </div>
-                                <h5 style={{ fontSize: "14px", letterSpacing: "0.15em", fontWeight: 700 }} className="uppercase text-[#0A0A0A] group-hover:underline mb-1">
+                                <h5 style={{ fontSize: "14px", letterSpacing: "0.15em", fontWeight: 700 }} className="uppercase text-[#0A0A0A] mb-1">
                                   {prod.name}
                                 </h5>
-                                <p style={{ fontSize: "12px", letterSpacing: "0.1em" }} className="text-[#666666] uppercase">
-                                  EXPLORE ITEM →
+                                <p style={{ fontSize: "12px", letterSpacing: "0.1em" }} className="text-[#666666] uppercase group-hover:text-[#0A0A0A] transition-colors flex items-center gap-1">
+                                  <span>EXPLORE ITEM</span>
+                                  <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
                                 </p>
                               </Link>
                             ))}
@@ -1039,7 +1040,7 @@ export default function Navbar({ mode = "dark", activeLink }: NavbarProps) {
                                         sizes="(max-w-768px) 100vw, 33vw"
                                       />
                                     </div>
-                                    <h5 style={{ fontSize: "13px", letterSpacing: "0.15em", fontWeight: 700 }} className="uppercase text-[#0A0A0A] group-hover:underline">
+                                    <h5 style={{ fontSize: "13px", letterSpacing: "0.15em", fontWeight: 700 }} className="uppercase text-[#0A0A0A]">
                                       {prod.name}
                                     </h5>
                                     <p style={{ fontSize: "13px", letterSpacing: "0.05em", marginTop: "4px", color: "#555555" }}>

@@ -518,7 +518,7 @@ function ProductDetail({ product }: { product: (typeof products)[0] }) {
                   <span style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500 }} className="text-[10px] sm:text-[11px] tracking-[0.3em] uppercase text-[#8A8A8A] block mb-6 md:mb-8">
                     The Story
                   </span>
-                  <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 400 }} className="text-[15px] md:text-[18px] lg:text-[20px] text-[#F5F5F5]/90 leading-[1.8] tracking-[-0.01em]">
+                  <p style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 400 }} className="text-[15px] md:text-[18px] lg:text-[20px] text-[#F5F5F5]/90 leading-[1.8] tracking-[-0.01em] text-justify lg:text-left">
                     {product.story}
                   </p>
                 </div>
