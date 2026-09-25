@@ -116,13 +116,11 @@ export default function AdminLocationPickerMap({
       L.control.zoom({ position: "bottomright" }).addTo(map);
 
       // CartoDB Dark or Light tile layer
-      const tileUrl = isDarkMode
-        ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-        : "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
+      const tileUrl = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 
       L.tileLayer(tileUrl, {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        subdomains: "abcd",
+        className: isDarkMode ? 'dark-map-tiles' : '',
         maxZoom: 19,
       }).addTo(map);
 
