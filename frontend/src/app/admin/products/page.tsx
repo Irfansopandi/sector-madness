@@ -735,7 +735,7 @@ export default function AdminProductsPage() {
       product.image
         ? product.image.startsWith("http")
           ? product.image
-          : `http://brand.test${product.image}`
+          : getImageUrl(product.image)
         : ""
     );
 
@@ -743,7 +743,7 @@ export default function AdminProductsPage() {
     setGalleryPaths(existingGallery);
     setGalleryFiles([]);
     setGalleryPreviews(
-      existingGallery.map((g) => (g.startsWith("http") ? g : `http://brand.test${g}`))
+      existingGallery.map((g) => (g.startsWith("http") ? g : getImageUrl(g)))
     );
 
     setSelectedSizes(Array.isArray(product.sizes) ? product.sizes.map(getLabelString) : []);
@@ -1230,7 +1230,7 @@ export default function AdminProductsPage() {
                         const imgUrl = prod.image
                           ? prod.image.startsWith("http")
                             ? prod.image
-                            : `http://brand.test${prod.image}`
+                            : getImageUrl(prod.image)
                           : "/images/placeholder.png";
 
                         return (

@@ -262,7 +262,7 @@ export default function AdminHeroBannersPage() {
     setSelectedBanner(banner);
     setFormImagePath(banner.image_path || "");
     setFormImageFile(null);
-    setFormImagePreview(banner.image_path ? `http://brand.test${banner.image_path}` : "");
+    setFormImagePreview(banner.image_path ? (banner.image_path.startsWith('http') ? banner.image_path : `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://brand.test"}${banner.image_path}`) : "");
     setFormSortOrder(banner.sort_order ?? 1);
     setFormIsActive(banner.is_active ?? true);
     setFormTitle(banner.title || "");

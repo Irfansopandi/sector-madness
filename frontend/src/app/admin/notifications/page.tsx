@@ -59,7 +59,7 @@ export default function AdminNotificationsPage() {
   const fetchNotifications = async (token: string) => {
     try {
       setLoading(true);
-      const res = await fetch("http://brand.test/api/admin/notifications/all", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://brand.test/api"}/admin/notifications/all`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -78,7 +78,7 @@ export default function AdminNotificationsPage() {
       const adminToken = localStorage.getItem("sector_madness_token");
       if (adminToken) {
         try {
-          await fetch(`http://brand.test/api/admin/notifications/${notif.id}/read`, {
+          await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://brand.test/api"}/admin/notifications/${notif.id}/read`, {
             method: "PUT",
             headers: { Authorization: `Bearer ${adminToken}` },
           });

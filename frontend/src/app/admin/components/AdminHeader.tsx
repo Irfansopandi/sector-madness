@@ -53,7 +53,7 @@ export default function AdminHeader({
   useEffect(() => {
     const fetchNotifications = async (token: string) => {
       try {
-        const res = await fetch("http://brand.test/api/admin/notifications", {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://brand.test/api"}/admin/notifications`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data = await res.json();
@@ -218,7 +218,7 @@ export default function AdminHeader({
                     const adminToken = localStorage.getItem("sector_madness_token");
                     if (adminToken) {
                       try {
-                        await fetch(`http://brand.test/api/admin/notifications/read-all`, {
+                        await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://brand.test/api"}/admin/notifications/read-all`, {
                           method: "PUT",
                           headers: { Authorization: `Bearer ${adminToken}` }
                         });
@@ -251,7 +251,7 @@ export default function AdminHeader({
                         const adminToken = localStorage.getItem("sector_madness_token");
                         if (adminToken) {
                           try {
-                            await fetch(`http://brand.test/api/admin/notifications/${notif.id}/read`, {
+                            await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://brand.test/api"}/admin/notifications/${notif.id}/read`, {
                               method: "PUT",
                               headers: { Authorization: `Bearer ${adminToken}` }
                             });
