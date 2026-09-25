@@ -224,7 +224,7 @@ export default function SizeGuidePage() {
                     <div className="overflow-x-auto pt-2 mb-12">
                       <table className="w-full text-center border-collapse text-xs md:text-sm">
                         <thead>
-                          <tr className="border-b border-[#333333] text-[#FFFFFF] font-mono tracking-[0.2em] uppercase">
+                          <tr style={{ fontFamily: "'Inter', sans-serif" }} className="border-b border-[#333333] text-[#FFFFFF] tracking-[0.2em] uppercase">
                             {guide.columns?.map((colHeader, index) => (
                               <th key={index} className="py-4 px-4 font-semibold text-center">
                                 {colHeader}
@@ -267,7 +267,7 @@ export default function SizeGuidePage() {
                 style={{ paddingBottom: "32px", marginBottom: "40px" }}
                 className="border-b border-[#333333]"
               >
-                <span className="text-sm md:text-base font-mono font-bold tracking-[0.25em] text-[#FFFFFF] uppercase block mb-3">
+                <span style={{ fontFamily: "'Inter', sans-serif" }} className="text-sm md:text-base font-bold tracking-[0.25em] text-[#FFFFFF] uppercase block mb-3">
                   MEASUREMENT ADVICE
                 </span>
                 <h3 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500 }} className="text-sm md:text-base lg:text-lg tracking-[0.25em] uppercase text-[#FFFFFF]">
@@ -281,7 +281,7 @@ export default function SizeGuidePage() {
                 className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12"
               >
                 <div className="space-y-3">
-                  <h4 className="text-xs font-mono font-bold tracking-[0.2em] text-[#FFFFFF] uppercase">
+                  <h4 style={{ fontFamily: "'Inter', sans-serif" }} className="text-xs font-bold tracking-[0.2em] text-[#FFFFFF] uppercase">
                     01. CHEST / BUST
                   </h4>
                   <p className="text-xs text-[#999999] leading-relaxed font-light">
@@ -290,7 +290,7 @@ export default function SizeGuidePage() {
                 </div>
 
                 <div className="space-y-3">
-                  <h4 className="text-xs font-mono font-bold tracking-[0.2em] text-[#FFFFFF] uppercase">
+                  <h4 style={{ fontFamily: "'Inter', sans-serif" }} className="text-xs font-bold tracking-[0.2em] text-[#FFFFFF] uppercase">
                     02. SHOULDER WIDTH
                   </h4>
                   <p className="text-xs text-[#999999] leading-relaxed font-light">
@@ -299,7 +299,7 @@ export default function SizeGuidePage() {
                 </div>
 
                 <div className="space-y-3">
-                  <h4 className="text-xs font-mono font-bold tracking-[0.2em] text-[#FFFFFF] uppercase">
+                  <h4 style={{ fontFamily: "'Inter', sans-serif" }} className="text-xs font-bold tracking-[0.2em] text-[#FFFFFF] uppercase">
                     03. GARMENT LENGTH
                   </h4>
                   <p className="text-xs text-[#999999] leading-relaxed font-light">
@@ -308,7 +308,7 @@ export default function SizeGuidePage() {
                 </div>
 
                 <div className="space-y-3">
-                  <h4 className="text-xs font-mono font-bold tracking-[0.2em] text-[#FFFFFF] uppercase">
+                  <h4 style={{ fontFamily: "'Inter', sans-serif" }} className="text-xs font-bold tracking-[0.2em] text-[#FFFFFF] uppercase">
                     04. WAIST / OUTSEAM
                   </h4>
                   <p className="text-xs text-[#999999] leading-relaxed font-light">

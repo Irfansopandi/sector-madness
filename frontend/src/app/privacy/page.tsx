@@ -7,18 +7,18 @@ import Footer from "@/components/Footer";
 
 interface SubGroup {
   subTitle: string;
-  bullets: string[];
+  bullets: React.ReactNode[];
 }
 
 interface PrivacySection {
   code: string;
   title: string;
-  intro?: string;
-  paragraphs?: string[];
+  intro?: React.ReactNode;
+  paragraphs?: React.ReactNode[];
   subGroups?: SubGroup[];
-  listIntro?: string;
-  bullets?: string[];
-  outro?: string[];
+  listIntro?: React.ReactNode;
+  bullets?: React.ReactNode[];
+  outro?: React.ReactNode[];
 }
 
 export default function PrivacyPolicyPage() {
@@ -26,198 +26,176 @@ export default function PrivacyPolicyPage() {
     {
       code: "01",
       title: "INFORMATION WE COLLECT",
-      intro: "We may collect essential personal information provided by users when accessing the SECTOR MADNESS platform, including:",
-      subGroups: [
-        {
-          subTitle: "ACCOUNT INFORMATION",
-          bullets: [
-            "Account name & credentials",
-            "Email address",
-            "System encrypted passwords",
-            "Date of birth, when requested or provided",
-          ],
-        },
-        {
-          subTitle: "CONTACT & DELIVERY INFORMATION",
-          bullets: [
-            "Contact phone number",
-            "Delivery shipping address",
-            "City",
-            "Province",
-            "Postal code",
-            "Essential logistics dispatch details",
-          ],
-        },
-        {
-          subTitle: "ORDER & TRANSACTION INFORMATION",
-          bullets: [
-            "Purchased product items",
-            "Garment size specifications",
-            "Product quantities",
-            "Order identification numbers",
-            "Order status updates",
-            "Logistics dispatch & tracking waybill numbers",
-          ],
-        },
+      intro: "When you visit the Sector Madness website, we may automatically collect certain information about the device you use, including:",
+      bullets: [
+        "Device type and operating system",
+        "Browser type and version",
+        "IP address",
+        "Time zone",
+        "Pages or products you visit",
+        "Time and duration of your visit",
+        "The source that referred you to our website",
+        "Information about how you interact with our website",
       ],
       outro: [
-        "We only collect information strictly required to operate platform functionalities and process user requests.",
+        "This information may be collected through technologies such as cookies, log files, web beacons, pixels, or similar technologies.",
+      ],
+      subGroups: [
+        {
+          subTitle: "COOKIES",
+          bullets: [
+            "Cookies are small files stored on your device when you visit a website. Cookies help us recognize your device, remember certain preferences, and understand how visitors use our website.",
+            "You can manage or disable cookies through your browser settings. However, disabling certain cookies may affect the functionality or user experience of our website.",
+          ],
+        },
       ],
     },
     {
       code: "02",
-      title: "HOW WE UTILIZE INFORMATION",
-      listIntro: "User information may be processed for essential operational purposes, including:",
+      title: "ORDER INFORMATION",
+      intro: "When you place or attempt to place an order through the Sector Madness website, we may collect information necessary to process your order, including:",
       bullets: [
-        "Creating and managing user account profiles",
-        "Processing order transactions",
-        "Verifying payment confirmation",
-        "Executing shipping and logistics dispatch",
-        "Providing real time order status updates",
-        "Issuing courier tracking waybill numbers",
-        "Responding to user inquiries",
-        "Delivering dedicated customer support",
-        "Enhancing platform security & fraud prevention",
-        "Optimizing user browsing experience",
-        "Operating and maintaining SECTOR MADNESS services",
+        "Full name",
+        "Phone number",
+        "Email address",
+        "Shipping address",
+        "Billing address, when required",
+        "Details of the products ordered",
+        "Product sizes and quantities",
+        "Payment information required to process the transaction",
+        "Other information you provide during the ordering process",
       ],
       outro: [
-        "User information is never utilized for unrelated third party purposes without lawful basis or consent.",
+        "We refer to this information as Order Information.",
+        "Sector Madness does not store complete payment card information when payments are processed through third-party payment service providers. Payment information is processed in accordance with the security systems and policies of the payment provider used.",
       ],
     },
     {
       code: "03",
-      title: "PAYMENT INFORMATION",
-      paragraphs: [
-        "For transaction authorization, SECTOR MADNESS utilizes authorized third party payment gateways (including Midtrans API).",
-        "Payment credentials are processed securely through certified payment service providers.",
-        "SECTOR MADNESS does not directly store credit card numbers or sensitive banking credentials on our servers when processed via gateway providers.",
-        "Detailed payment processing data is governed by PCI DSS security standards and the privacy policies of our authorized payment providers.",
+      title: "HOW WE USE YOUR PERSONAL INFORMATION",
+      listIntro: "The information we collect may be used for Sector Madness' operational purposes, including:",
+      bullets: [
+        "Processing and fulfilling your orders",
+        "Processing payments",
+        "Arranging product delivery",
+        "Sending order confirmations and order-related information",
+        "Contacting you regarding your orders or our services",
+        "Providing customer support",
+        "Preventing and detecting suspicious transactions, fraud, or misuse of our website",
+        "Improving the quality of Sector Madness products and services",
+        "Analyzing website usage to improve the user experience",
+        "Sending information about products, promotions, or Sector Madness activities when you have given your consent or where permitted by applicable law",
+      ],
+      outro: [
+        "Information collected automatically through our website may also be used to help us understand how visitors use our website and to improve its performance and security.",
       ],
     },
     {
       code: "04",
-      title: "SHIPPING & LOGISTICS DISPATCH",
-      intro: "To fulfill orders, shipping information is transmitted to authorized courier logistics partners, including:",
+      title: "SHARING INFORMATION WITH THIRD PARTIES",
+      paragraphs: [
+        "Sector Madness may use third-party services that help us operate our website and conduct our business.",
+      ],
+      listIntro: "These third parties may include:",
       bullets: [
-        "JNE",
-        "J&T",
-        "Integrated logistics aggregators within our system (Biteship API)",
+        "Website hosting or e-commerce platform providers",
+        "Payment service providers",
+        "Shipping and delivery services",
+        "Website analytics providers",
+        "Technology and security service providers",
+        "Other service providers necessary for the operation of Sector Madness",
       ],
       outro: [
-        "Transmitted details include recipient name, contact phone number, and shipping address to ensure accurate dispatch to your destination.",
+        "We only provide third parties with the information necessary to perform services related to our business operations.",
+        "We may also disclose personal information when required by applicable law, regulations, legal proceedings, or an official request from an authorized authority.",
       ],
     },
     {
       code: "05",
-      title: "DATA STORAGE & RETENTION",
+      title: "INFORMATION SECURITY",
       paragraphs: [
-        "User data is stored for as long as necessary to operate SECTOR MADNESS services, fulfill transactional obligations, maintain security, or comply with legal requirements.",
-        "We employ reasonable technical safeguards to protect information against unauthorized access, improper use, unauthorized modification, loss, or disclosure.",
-        "However, users acknowledge that no digital storage or internet transmission method can be guaranteed 100% immune to all security risks.",
+        "Sector Madness takes reasonable measures to protect the personal information we hold and to prevent unauthorized access, use, alteration, or disclosure.",
+        "However, no method of data storage or transmission over the internet can be guaranteed to be completely secure. Therefore, we cannot guarantee the absolute security of your information.",
       ],
     },
     {
       code: "06",
-      title: "ACCOUNT SECURITY PROTOCOL",
-      intro: "Registered account holders are responsible for maintaining the confidentiality of their authentication credentials.",
-      listIntro: "Users are strongly advised never to share:",
+      title: "MARKETING COMMUNICATIONS",
+      listIntro: "If you have given your consent to receive communications from Sector Madness, we may contact you regarding:",
       bullets: [
-        "Account passwords",
-        "Login credentials",
-        "Personal account access details",
+        "New products",
+        "Restocks",
+        "Pre-orders",
+        "Promotions or special offers",
+        "Brand-related information",
+        "Sector Madness activities or campaigns",
       ],
       outro: [
-        "If you suspect or detect unauthorized access to your account, please contact SECTOR MADNESS support immediately.",
+        "You may request to stop receiving marketing communications from us at any time by contacting us through the information provided in the Contact Us section.",
       ],
     },
     {
       code: "07",
-      title: "COOKIES & TRACKING TECHNOLOGIES",
-      intro: "The SECTOR MADNESS platform utilizes cookies and similar technologies to ensure optimal website functionality and analyze user interactions.",
-      listIntro: "Cookies are utilized to:",
-      bullets: [
-        "Maintain active user login sessions",
-        "Store user browsing preferences",
-        "Support shopping bag/cart functionality",
-        "Improve overall user browsing experience",
-        "Analyze website usage metrics and performance",
-      ],
-      outro: [
-        "If analytics tools or third party tracking services are implemented, specific usage guidelines will be updated within this policy.",
+      title: "GOOGLE ANALYTICS AND ANALYTICS TECHNOLOGIES",
+      paragraphs: [
+        "The Sector Madness website may use third-party analytics services to help us understand how visitors use our website.",
+        "Information collected through analytics services may include device information, pages visited, visit duration, and interactions with the website.",
+        "This information is used to analyze and improve the performance and user experience of the Sector Madness website.",
       ],
     },
     {
       code: "08",
-      title: "THIRD PARTY SERVICE PROVIDERS",
-      listIntro: "SECTOR MADNESS may engage verified third party service providers to support platform operations, including but not limited to:",
+      title: "YOUR RIGHTS REGARDING PERSONAL INFORMATION",
+      listIntro: "You may contact Sector Madness if you wish to:",
       bullets: [
-        "Payment authorization gateways",
-        "Logistics & courier dispatch partners",
-        "Cloud hosting & server infrastructure",
-        "Transactional email dispatch services",
-        "Analytics & technical diagnostic tools",
+        "Know what personal information we hold about you",
+        "Correct inaccurate information",
+        "Update your personal information",
+        "Request the deletion of certain personal information, where permitted by applicable law and where such deletion does not conflict with our data retention obligations",
+        "Submit questions or complaints regarding how your personal information is used",
       ],
       outro: [
-        "Third party providers only receive data essential to perform their specified functions and operate under their respective privacy policies.",
+        "For requests relating to personal information, we may ask for additional information to verify that the request is being made by the relevant data subject.",
       ],
     },
     {
       code: "09",
-      title: "TRANSACTIONAL COMMUNICATIONS",
-      listIntro: "SECTOR MADNESS processes contact details to deliver service related communications, including:",
+      title: "DATA RETENTION",
+      listIntro: "Sector Madness retains personal information for as long as necessary to fulfill the purposes for which it was collected, including to:",
       bullets: [
-        "Order receipts & confirmations",
-        "Payment verifications",
-        "Dispatch & shipping tracking updates",
-        "Order status modifications",
-        "Account security notices",
-        "Customer support responses",
+        "Fulfill orders",
+        "Provide customer support",
+        "Complete transactions",
+        "Comply with legal or administrative obligations",
+        "Resolve disputes when necessary",
       ],
       outro: [
-        "If promotional communications or newsletters are offered, users will be provided with explicit options to opt in or unsubscribe.",
+        "When information is no longer required, it may be deleted or retained in a form that no longer allows individuals to be identified, as necessary and in accordance with applicable requirements.",
       ],
     },
     {
       code: "10",
-      title: "USER DATA RIGHTS",
-      listIntro: "Users hold specific rights regarding their personal data under applicable regulations, including the right to:",
-      bullets: [
-        "Inspect personal data processed by SECTOR MADNESS",
-        "Update inaccurate or outdated information",
-        "Request data corrections",
-        "Request account & data erasure under specific conditions",
-        "Inquire about data processing methods",
-        "Withdraw consent where processing relies on consent",
-      ],
-      outro: [
-        "Requests regarding personal data can be submitted via the Contact page and may require identity verification for security.",
+      title: "CHILDREN'S PRIVACY",
+      paragraphs: [
+        "The Sector Madness website is intended for the general public and is not specifically directed toward children.",
+        "We do not knowingly collect personal information from children without parental or guardian consent where such consent is required by law.",
+        "If you become aware that a child has provided us with personal information without the required consent, please contact us so that we can take appropriate action.",
       ],
     },
     {
       code: "11",
-      title: "MINORS & CHILDREN PRIVACY",
+      title: "LINKS TO THIRD-PARTY WEBSITES",
       paragraphs: [
-        "The SECTOR MADNESS platform is not directed specifically toward children.",
-        "We do not knowingly collect personal data from minors.",
-        "If a parent or guardian discovers that a child has provided personal information without consent, please contact SECTOR MADNESS to review and remove the data.",
+        "The Sector Madness website may contain links to third-party websites or services, including marketplaces, social media platforms, payment services, or shipping providers.",
+        "Sector Madness is not responsible for the privacy practices or content of these third party websites or services. We recommend that you review the privacy policies of each third party before providing them with your personal information.",
       ],
     },
     {
       code: "12",
-      title: "THIRD PARTY HYPERLINKS",
+      title: "CHANGES TO THIS PRIVACY POLICY",
       paragraphs: [
-        "The SECTOR MADNESS website may contain links to external third party websites or services.",
-        "SECTOR MADNESS is not responsible for the privacy practices, security protocols, or content of third party websites.",
-        "Users are encouraged to inspect third party privacy policies before submitting personal data.",
-      ],
-    },
-    {
-      code: "13",
-      title: "POLICY REVISIONS",
-      paragraphs: [
-        "SECTOR MADNESS reserves the right to update this Privacy Policy periodically to reflect service adjustments, system updates, third party integrations, operational needs, or legal requirements.",
-        "The latest version will be published directly on this page with the revised date displayed at the top.",
+        "Sector Madness may update this Privacy Policy from time to time to reflect changes to our services, technology, business practices, or applicable laws and regulations.",
+        "Any changes will be posted on the Privacy Policy page of the Sector Madness website. The date of the latest update will be displayed at the top of this page.",
       ],
     },
   ];
@@ -402,7 +380,7 @@ export default function PrivacyPolicyPage() {
               </motion.div>
             ))}
 
-            {/* 14 / CONTACT US CLAUSE */}
+            {/* 13 / CONTACT US CLAUSE */}
             <motion.div
               initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -417,17 +395,30 @@ export default function PrivacyPolicyPage() {
             >
               <div className="flex items-center gap-3 mb-3">
                 <span className="text-xs font-mono font-bold tracking-[0.25em] text-[#FFFFFF] uppercase block">
-                  14
+                  13
                 </span>
                 <span className="text-[#333333] text-xs">//</span>
                 <h2 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500 }} className="text-sm md:text-base tracking-[0.2em] uppercase text-[#FFFFFF]">
-                  INQUIRIES &amp; CONTACT
+                  CONTACT US
                 </h2>
               </div>
 
-              <p className="text-xs md:text-sm text-[#A0A0A0] font-light leading-relaxed">
-                If you have questions regarding this Privacy Policy, personal data protection, or wish to submit a data access request, please contact our team via the Contact page.
-              </p>
+              <div className="text-xs md:text-sm text-[#A0A0A0] font-light leading-relaxed space-y-4">
+                <p>
+                  If you have any questions, requests, or complaints regarding this Privacy Policy or how Sector Madness handles your personal information, you may contact us through:
+                </p>
+                
+                <div>
+                  <p className="font-bold text-[#FFFFFF]">Sector Madness</p>
+                  <p>Email: sectormadnessid@gmail.com</p>
+                  <p>Website: www.sectormadness.com</p>
+                  <p>Instagram: @sectormadness.id</p>
+                </div>
+                
+                <div className="pt-2">
+                  <p>© 2026 Sector Madness. All Rights Reserved.</p>
+                </div>
+              </div>
 
               <div className="pt-3">
                 <Link

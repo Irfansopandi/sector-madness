@@ -1703,32 +1703,39 @@ export default function AdminOrdersPage() {
                   <div className="flex justify-end items-center gap-3 pt-2">
                     {!isCancelledDetail && !isCompletedDetail && !isUnpaid && (
                       <>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            Swal.fire({
-                              title: 'Request Pickup?',
-                              text: "Kirim request pickup ke Biteship? Pastikan order sudah dikemas.",
-                              icon: 'warning',
-                              showCancelButton: true,
-                              confirmButtonColor: '#B6A47E',
-                              cancelButtonColor: '#333333',
-                              confirmButtonText: 'Yes, Request',
-                              background: isDarkMode ? '#141414' : '#ffffff',
-                              color: isDarkMode ? '#F5F5F5' : '#000000',
-                            }).then((result) => {
-                              if (result.isConfirmed) {
-                                createBiteshipMut.mutate(selectedOrderDetail.order_number);
-                              }
-                            });
-                          }}
-                          disabled={createBiteshipMut.isPending}
-                          style={{ padding: "14px 28px" }}
-                          className="bg-[#B6A47E]/10 hover:bg-[#B6A47E] text-[#B6A47E] hover:text-[#0A0A0A] font-mono text-xs uppercase font-extrabold tracking-[0.2em] transition-all duration-300 cursor-pointer rounded-sm flex items-center gap-2 border border-[#B6A47E]/30"
-                        >
-                          {createBiteshipMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Truck className="w-4 h-4" />}
-                          <span>REQUEST PICKUP</span>
-                        </button>
+                        {(() => {
+                          const rawShippingStatus = (selectedOrderDetail.shipping_status || "").toUpperCase();
+                          const isShipped = rawShippingStatus === "SHIPPED";
+                          if (!isShipped) return null;
+                          return (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                Swal.fire({
+                                  title: 'Request Pickup?',
+                                  text: "Kirim request pickup ke Biteship? Pastikan order sudah dikemas.",
+                                  icon: 'warning',
+                                  showCancelButton: true,
+                                  confirmButtonColor: '#B6A47E',
+                                  cancelButtonColor: '#333333',
+                                  confirmButtonText: 'Yes, Request',
+                                  background: isDarkMode ? '#141414' : '#ffffff',
+                                  color: isDarkMode ? '#F5F5F5' : '#000000',
+                                }).then((result) => {
+                                  if (result.isConfirmed) {
+                                    createBiteshipMut.mutate(selectedOrderDetail.order_number);
+                                  }
+                                });
+                              }}
+                              disabled={createBiteshipMut.isPending}
+                              style={{ padding: "14px 28px" }}
+                              className="bg-[#B6A47E]/10 hover:bg-[#B6A47E] text-[#B6A47E] hover:text-[#0A0A0A] font-mono text-xs uppercase font-extrabold tracking-[0.2em] transition-all duration-300 cursor-pointer rounded-sm flex items-center gap-2 border border-[#B6A47E]/30"
+                            >
+                              {createBiteshipMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Truck className="w-4 h-4" />}
+                              <span>REQUEST PICKUP</span>
+                            </button>
+                          );
+                        })()}
                         <button
                           type="button"
                           onClick={() => {

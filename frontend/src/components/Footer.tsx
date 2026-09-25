@@ -220,10 +220,6 @@ export default function Footer() {
               <span className="inline">
                 ALL RIGHTS RESERVED.
               </span>
-              <span className="inline text-[#333333]">//</span>
-              <span className="text-[#8A8A8A] font-light inline">
-                Crafted in Karawang, Indonesia.
-              </span>
             </div>
 
             {/* Social Links */}

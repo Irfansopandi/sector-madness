@@ -59,7 +59,7 @@ export default function BrandPage() {
             className="relative w-full full-bleed-brand aspect-[4/3] sm:aspect-[16/9] lg:aspect-[21/9] lg:min-h-[480px] bg-[#141414] overflow-hidden border-y lg:border border-[#222222]"
           >
             <Image
-              src="/images/story/stories.webp"
+              src="/images/story/stories-1.webp"
               alt="SECTOR MADNESS Hero Banner"
               fill
               priority
@@ -207,7 +207,7 @@ export default function BrandPage() {
                   style={{ fontSize: "16.5px", lineHeight: "1.8", fontWeight: 300 }}
                   className="text-[#F0F0F0] pl-1"
                 >
-                  To become a leading local streetwear brand recognized for quality, comfort, and distinctive characterful design.
+                  To become a leading local brand known for quality, comfort, and distinctive, character-filled designs.
                 </p>
               </div>
 
@@ -343,14 +343,14 @@ export default function BrandPage() {
       </section>
 
       {/* ── SECTION 03: THE MOVEMENT MANIFESTO ── */}
-      <section className="py-32 md:py-48 relative overflow-hidden bg-[#0A0A0A]">
-        <div className="max-w-[1100px] mx-auto px-6 text-center relative z-10">
+      <section className="py-32 md:py-48 relative overflow-hidden bg-[#0A0A0A] flex items-center justify-center">
+        <div className="max-w-[1100px] w-full mx-auto px-6 text-center relative z-10 flex flex-col items-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.9 }}
-            className="space-y-12"
+            className="space-y-12 flex flex-col items-center w-full"
           >
             <p
               style={{
@@ -360,22 +360,20 @@ export default function BrandPage() {
                 letterSpacing: "-0.02em",
                 fontFamily: "'Inter', -apple-system, sans-serif",
               }}
-              className="text-[#FFFFFF] tracking-tight px-2 md:px-0 md:font-extrabold md:leading-[1.3]"
+              className="text-[#FFFFFF] tracking-tight px-2 md:px-0 md:font-extrabold md:leading-[1.3] text-center w-full"
             >
               &ldquo;Because quality is not just a standard, it is our commitment. Sector Madness. Built from Experience. Made for Every Story.&rdquo;
             </p>
 
-            <div className="w-20 h-[1px] bg-[#FFFFFF]/60 mx-auto" />
-
-            <p className="text-[12px] tracking-[0.25em] uppercase text-[#8A8A8A] font-medium">
+            <p className="text-[12px] tracking-[0.25em] uppercase text-[#8A8A8A] font-medium text-center">
               SECTOR MADNESS
             </p>
 
-            <div className="pt-10">
+            <div className="pt-10 flex justify-center w-full">
               <Link
                 href="/shop"
                 style={{ fontSize: "12px", letterSpacing: "0.25em", padding: "18px 46px" }}
-                className="inline-block bg-[#FFFFFF] text-[#0A0A0A] font-bold uppercase hover:bg-[#E5E5E5] hover:text-[#0A0A0A] transition-all duration-300 rounded-none tracking-widest cursor-pointer"
+                className="inline-block bg-[#FFFFFF] text-[#0A0A0A] font-bold uppercase hover:bg-[#E5E5E5] hover:text-[#0A0A0A] transition-all duration-300 rounded-none tracking-widest cursor-pointer text-center"
               >
                 DISCOVER THE COLLECTION →
               </Link>

@@ -153,6 +153,14 @@ export default function ContactPage() {
                       }
 
                       if (hrefUrl) {
+                        let displayValue = item.value;
+                        if (item.link && item.link.includes("instagram.com")) {
+                          const igMatch = item.link.match(/instagram\.com\/([^\/?]+)/);
+                          if (igMatch && igMatch[1]) {
+                            displayValue = `@${igMatch[1]}`;
+                          }
+                        }
+
                         return (
                           <a
                             href={hrefUrl}
@@ -160,10 +168,7 @@ export default function ContactPage() {
                             rel="noopener noreferrer"
                             className="group inline-flex items-center text-base md:text-lg text-[#F5F5F5] font-light hover:text-[#FFFFFF] transition-colors tracking-wide"
                           >
-                            <span>{item.value}</span>
-                            <span className="ml-3 transition-transform duration-300 group-hover:translate-x-1">
-                              {hrefUrl.startsWith("mailto") ? "→" : "↗"}
-                            </span>
+                            <span>{displayValue}</span>
                           </a>
                         );
                       }

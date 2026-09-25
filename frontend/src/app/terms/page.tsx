@@ -8,148 +8,118 @@ import Footer from "@/components/Footer";
 interface SectionItem {
   code: string;
   title: string;
-  intro?: string;
-  paragraphs?: string[];
-  listIntro?: string;
-  bullets?: string[];
-  outro?: string[];
+  intro?: React.ReactNode;
+  paragraphs?: React.ReactNode[];
+  listIntro?: React.ReactNode;
+  bullets?: React.ReactNode[];
+  outro?: React.ReactNode[];
 }
 
 export default function TermsPage() {
   const sections: SectionItem[] = [
     {
       code: "01",
-      title: "GENERAL PROTOCOL",
+      title: "GENERAL",
       paragraphs: [
-        "SECTOR MADNESS provides this website as a digital platform for catalog discovery and online product acquisition.",
-        "By accessing and utilizing this website, users are responsible for providing truthful information and operating in accordance with applicable terms and regulations.",
-        "SECTOR MADNESS reserves the right to modify content, products, pricing, and terms on the website without prior notice whenever operational adjustments are required.",
+        <>By placing an order with <strong className="font-medium text-white">Sector Madness</strong>, you agree to the following Terms & Conditions. These terms apply to all purchases made through our official website and sales channels.</>,
       ],
     },
     {
       code: "02",
-      title: "PRODUCT SPECIFICATIONS",
+      title: "ORDERS",
       paragraphs: [
-        "We endeavor to present product information as accurately as possible, including photography, color fidelity, sizing parameters, material specifications, and product details.",
-        "However, actual color representation may vary slightly depending on display hardware, screen resolution, and color calibration.",
-        "Users are advised to thoroughly review all product information and the Size Guide prior to completing a purchase.",
-        "Product availability is subject to change at any time based on available inventory stock.",
+        "Once an order has been placed and payment has been confirmed, it is considered final.",
+        "Customers are responsible for providing accurate information, including name, phone number, shipping address, size, color, and quantity.",
+        "Sector Madness reserves the right to cancel an order in the event of incorrect pricing, stock issues, system errors, or other circumstances that prevent the order from being processed.",
       ],
     },
     {
       code: "03",
-      title: "ORDER FULFILLMENT PROTOCOL",
-      listIntro: "Users are strictly responsible for ensuring all order details are correct before completing payment, including:",
-      bullets: [
-        "Selected product item",
-        "Garment sizing",
-        "Product quantity",
-        "Recipient name",
-        "Contact phone number",
-        "Shipping delivery address",
-      ],
-      outro: [
-        "Once an order is confirmed and processed, modifications to order information may no longer be possible.",
-        "SECTOR MADNESS reserves the right to cancel an order under specific conditions such as product information errors, pricing inaccuracies, stock issues, or unprocessable conditions.",
-        "If a cancellation is initiated by SECTOR MADNESS for these reasons, payment resolution will be executed according to applicable conditions and payment methods.",
+      title: "PRICE & PAYMENT",
+      paragraphs: [
+        <>All prices are listed in <strong className="font-medium text-white">Indonesian Rupiah (IDR)</strong> unless otherwise stated.</>,
+        "Prices may change without prior notice.",
+        "Orders must be paid within the specified payment period. Unpaid orders may be cancelled automatically.",
+        "Additional costs, such as shipping fees, will be displayed or communicated before payment is completed.",
       ],
     },
     {
       code: "04",
-      title: "PRICING & PAYMENT",
+      title: "PRE-ORDER",
       paragraphs: [
-        "Prices listed on the website reflect current rates at the time of purchase and are subject to adjustment without prior notice.",
-        "Price adjustments will not affect previously confirmed orders, except in cases of verified pricing errors or necessary corrections.",
-        "Full payment confirmation is required before an order can enter logistics processing.",
-        "Shipping tariffs are calculated based on destination address and courier selection, displayed clearly during checkout.",
+        <>Some Sector Madness products may be available through a <strong className="font-medium text-white">Pre-Order</strong> system.</>,
+        "Production will begin after the Pre-Order period has ended. Estimated production and delivery times will be stated when the product is released.",
+        "Production or delivery times may change due to production, material availability, or shipping circumstances.",
+        "By placing a Pre-Order, customers agree to the stated production timeline and terms.",
       ],
     },
     {
       code: "05",
-      title: "LOGISTICS & DISPATCH",
+      title: "DELIVERY",
       paragraphs: [
-        "SECTOR MADNESS provides dispatch services via available courier logistics partners, including JNE and J&T.",
-        "Shipping rates and estimated transit times vary based on destination location, selected service tier, and courier operational schedules.",
-        "Once an order is dispatched, tracking information or waybill numbers will be provided when available.",
-        "Delays caused by courier operations, weather conditions, statutory holidays, or events beyond SECTOR MADNESS control may affect final delivery times.",
-        "For additional logistics information, users are encouraged to view our Shipping Protocol page.",
+        "Orders will be shipped after payment has been confirmed.",
+        "Delivery times depend on the shipping provider and destination.",
+        "Sector Madness is not responsible for delays caused by shipping providers, weather, holidays, or circumstances beyond our control.",
+        "Customers are responsible for providing a complete and correct shipping address.",
       ],
     },
     {
       code: "06",
-      title: "FINAL SALE POLICY",
-      intro: "SECTOR MADNESS does not offer returns, item exchanges, or monetary refunds for orders that have been successfully confirmed. All purchases are final.",
-      listIntro: "Before completing a purchase, users are strictly responsible for ensuring:",
+      title: "RETURNS & EXCHANGES",
+      listIntro: "We only accept returns or exchanges for:",
       bullets: [
-        "Selected product is correct",
-        "Garment sizing is appropriate",
-        "Product quantity is correct",
-        "Recipient information is accurate",
-        "Shipping address is correct",
-        "Contact phone number is accurate",
+        "Defective products;",
+        "Incorrect products;",
+        "Damaged products received before use;",
+        "Missing items.",
       ],
       outro: [
-        "Because all orders are final, users are strongly advised to double check all order details before completing payment.",
+        <>Claims must be submitted within <strong className="font-medium text-white">3 × 24 hours of receiving the order.</strong></>,
+        "Customers may be required to provide photos, videos, order details, and other information for verification.",
+        "Products must be unused, unwashed, and unmodified.",
+        "Size exchanges are only available when specifically stated and subject to product availability.",
+        <><strong className="font-medium text-white">SALE, CLEARANCE, CUSTOM, and FINAL SALE</strong> items may not be eligible for returns or exchanges.</>,
       ],
     },
     {
       code: "07",
-      title: "INTELLECTUAL PROPERTY",
-      listIntro: "All content available on the SECTOR MADNESS website, including but not limited to:",
-      bullets: [
-        "SECTOR MADNESS brand name",
-        "Official logos",
-        "Product photography",
-        "Editorial photography",
-        "Videography",
-        "Visual design assets",
-        "Written content & copy",
-        "Graphics & diagrams",
-        "Website layout & design elements",
-      ],
-      outro: [
-        "remains the exclusive property of SECTOR MADNESS or is used under appropriate rights. Content may not be copied, modified, distributed, republished, or commercially used without explicit written authorization from SECTOR MADNESS.",
+      title: "PRODUCT INFORMATION",
+      paragraphs: [
+        "Product colors may vary slightly depending on the customer's screen or device.",
+        "Minor differences in measurements, printing, embroidery, washing, or finishing may occur as a result of the production process.",
+        "Sector Madness reserves the right to make reasonable changes to product specifications without changing the overall design or character of the product.",
       ],
     },
     {
       code: "08",
-      title: "PLATFORM USAGE & SECURITY",
-      intro: "Users are permitted to use the SECTOR MADNESS website for legitimate purposes, including browsing products and completing purchases.",
-      listIntro: "Users are strictly prohibited from using the website to:",
-      bullets: [
-        "Engage in illegal activities",
-        "Attempt unauthorized access",
-        "Interfere with website security or operation",
-        "Harm other parties using website systems",
-        "Copy or scrape website content without authorization",
-      ],
-      outro: [
-        "SECTOR MADNESS reserves the right to restrict or terminate user access if activities violating website terms are detected.",
+      title: "PROMOTIONS",
+      paragraphs: [
+        "Promotional offers and discount codes are subject to their respective terms and validity periods.",
+        "Discount codes cannot be combined unless stated otherwise.",
+        "Sector Madness reserves the right to modify or end any promotion without prior notice.",
       ],
     },
     {
       code: "09",
-      title: "PRIVACY & DATA HANDLING",
-      listIntro: "SECTOR MADNESS processes information provided by users for essential operational purposes, including:",
-      bullets: [
-        "Account creation & management",
-        "Order processing",
-        "Payment verification",
-        "Logistics & shipping dispatch",
-        "Order related communication",
-        "Customer support services",
-      ],
-      outro: [
-        "The collection and protection of user data is further explained in our Privacy Policy. Users are encouraged to review the Privacy Policy prior to using our website services.",
+      title: "INTELLECTUAL PROPERTY",
+      paragraphs: [
+        "All Sector Madness logos, designs, images, graphics, product photography, written content, packaging, and other creative materials are protected and remain the property of Sector Madness or their respective rights holders.",
+        "No content may be copied, reproduced, distributed, or used commercially without prior written permission.",
       ],
     },
     {
       code: "10",
-      title: "POLICY REVISIONS",
+      title: "FORCE MAJEURE",
       paragraphs: [
-        "SECTOR MADNESS reserves the right to update or revise these Terms & Conditions at any time to align with website, service, or operational developments.",
-        "Any revisions will be updated directly on this page with the revised date displayed at the top.",
-        "Users are advised to review these Terms & Conditions periodically.",
+        "Sector Madness shall not be responsible for delays or failure to fulfil an order caused by circumstances beyond our reasonable control, including natural disasters, transportation disruptions, system failures, government restrictions, or other unforeseen circumstances.",
+      ],
+    },
+    {
+      code: "11",
+      title: "CHANGES TO TERMS",
+      paragraphs: [
+        "Sector Madness reserves the right to update or change these Terms & Conditions at any time.",
+        "The latest version will apply from the date of publication.",
       ],
     },
   ];
@@ -309,7 +279,7 @@ export default function TermsPage() {
               </motion.div>
             ))}
 
-            {/* 11 / CONTACT US CLAUSE */}
+            {/* 12 / CONTACT US CLAUSE */}
             <motion.div
               initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -324,17 +294,31 @@ export default function TermsPage() {
             >
               <div className="flex items-center gap-3 mb-3">
                 <span className="text-xs font-mono font-bold tracking-[0.25em] text-[#FFFFFF] uppercase block">
-                  11
+                  12
                 </span>
                 <span className="text-[#333333] text-xs">//</span>
                 <h2 style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 500 }} className="text-sm md:text-base tracking-[0.2em] uppercase text-[#FFFFFF]">
-                  INQUIRIES &amp; CONTACT
+                  CONTACT
                 </h2>
               </div>
 
-              <p className="text-xs md:text-sm text-[#A0A0A0] font-light leading-relaxed">
-                Should you have any questions regarding these Terms &amp; Conditions, order status, or platform governance, please contact our support team directly.
-              </p>
+              <div className="text-xs md:text-sm text-[#A0A0A0] font-light leading-relaxed space-y-4">
+                <p>
+                  For questions regarding orders, products, shipping, returns, or these Terms &amp; Conditions, please contact us:
+                </p>
+                
+                <div>
+                  <p className="font-bold text-[#FFFFFF]">SECTOR MADNESS</p>
+                  <p>Email: sectormadnessid@gmail.com</p>
+                  <p>Instagram: @sectormadness.id</p>
+                </div>
+                
+                <div className="pt-2">
+                  <p className="font-bold text-[#FFFFFF]">SECTOR MADNESS</p>
+                  <p className="italic text-[#C0C0C0]">We Trust Quality.</p>
+                  <p className="italic text-[#C0C0C0]">Built from Experience. Made for Every Story.</p>
+                </div>
+              </div>
 
               <div className="pt-3">
                 <Link

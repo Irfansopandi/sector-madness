@@ -500,7 +500,7 @@ export default function ShippingPage() {
                   </div>
 
                   {/* Step Title with Added Clearance */}
-                  <h3 className="text-[#FFFFFF] text-xs md:text-sm font-semibold tracking-[0.22em] uppercase leading-relaxed">
+                  <h3 style={{ fontFamily: "'Inter', sans-serif" }} className="text-[#FFFFFF] text-xs md:text-sm font-semibold tracking-[0.22em] uppercase leading-relaxed">
                     {step.title}
                   </h3>
                 </div>
