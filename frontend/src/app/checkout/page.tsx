@@ -726,7 +726,10 @@ function CheckoutContent() {
                 <section style={{ display: "flex", flexDirection: "column", marginBottom: "48px" }}>
                   {/* Section Header */}
                   <div className="flex items-center justify-between border-b border-[#222222]" style={{ paddingBottom: "20px", marginBottom: "28px" }}>
-                    <h2 className="font-serif uppercase font-bold text-white text-lg tracking-[0.2em]">
+                    <h2 
+                      className="uppercase text-white text-lg tracking-[0.2em]"
+                      style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 600 }}
+                    >
                       ADDRESS
                     </h2>
                     <div className="flex items-center gap-5">
@@ -1138,8 +1141,8 @@ function CheckoutContent() {
               {/* 3. SHIPPING METHOD (INTERNATIONAL & DOMESTIC LOGISTICS) */}
               <section style={{ display: "flex", flexDirection: "column" }}>
                 <h2 
-                  className="font-serif uppercase font-bold text-white text-lg tracking-[0.2em] border-b border-[#222222]"
-                  style={{ paddingBottom: "24px", marginBottom: "36px" }}
+                  className="uppercase text-white text-lg tracking-[0.2em] border-b border-[#222222]"
+                  style={{ paddingBottom: "24px", marginBottom: "36px", fontFamily: "'Roboto', sans-serif", fontWeight: 600 }}
                 >
                   SHIPPING METHOD (INTERNATIONAL & DOMESTIC)
                 </h2>
