@@ -12,6 +12,11 @@ const nextConfig: NextConfig = {
         pathname: "/storage/**",
       },
       {
+        protocol: "https",
+        hostname: "api.sectormadness.com",
+        pathname: "/storage/**",
+      },
+      {
         protocol: "http",
         hostname: "localhost",
         pathname: "/storage/**",
