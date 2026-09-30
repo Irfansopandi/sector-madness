@@ -133,21 +133,37 @@ export default function FeaturedCollection() {
   }, [featuredProducts.length, shouldDuplicate, updateCenteredCard]);
 
   // Continuous Smooth Auto-Scroll
+  const exactScrollLeftRef = useRef<number | null>(null);
+
   useEffect(() => {
     let animationFrameId: number;
 
     const autoScrollStep = () => {
       if (!isPaused && !isDraggingRef.current && scrollRef.current && shouldDuplicate) {
-        scrollRef.current.scrollLeft += 0.8;
+        // Sync our precise tracker if it's uninitialized or if the user/script manually changed scrollLeft
+        if (
+          exactScrollLeftRef.current === null ||
+          Math.abs(scrollRef.current.scrollLeft - exactScrollLeftRef.current) > 2
+        ) {
+          exactScrollLeftRef.current = scrollRef.current.scrollLeft;
+        }
+
+        // Increment precise tracker and apply to DOM
+        exactScrollLeftRef.current += 0.8;
+        scrollRef.current.scrollLeft = exactScrollLeftRef.current;
+
         normalizeScroll();
         updateCenteredCard();
+      } else {
+        // Reset the tracker so it resyncs perfectly when resuming
+        exactScrollLeftRef.current = null;
       }
       animationFrameId = requestAnimationFrame(autoScrollStep);
     };
 
     animationFrameId = requestAnimationFrame(autoScrollStep);
     return () => cancelAnimationFrame(animationFrameId);
-  }, [isPaused, normalizeScroll, updateCenteredCard]);
+  }, [isPaused, normalizeScroll, updateCenteredCard, shouldDuplicate]);
 
   // Mouse Drag Handlers for Desktop
   const handleMouseDown = (e: React.MouseEvent) => {
