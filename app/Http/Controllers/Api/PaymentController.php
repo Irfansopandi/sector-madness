@@ -34,138 +34,52 @@ class PaymentController extends Controller
             return response()->json(['status' => false, 'message' => 'Order not found'], 404);
         }
 
-        // --- 1. Duitku Gateway Integration (Primary) ---
-        $duitkuMerchant = config('services.duitku.merchant_code') ?? env('DUITKU_MERCHANT_CODE');
-        if (!empty($duitkuMerchant)) {
-            $paymentMethod = $order->payment?->payment_type ?? $request->input('payment_method', 'bca_va');
-            $shippingData = [];
-            if ($order->shipment) {
-                $shippingData = [
-                    'receiver_name'  => $order->user?->name ?? 'Customer',
-                    'phone_number'   => $order->user?->phone ?? '08123456789',
-                    'street_address' => $order->shipment->destination_address ?? 'Customer Address',
-                    'city'           => $order->shipment->destination_city ?? 'Jakarta',
-                    'postal_code'    => $order->shipment->destination_postal_code ?? '10110',
-                ];
-            }
-
-            $duitkuRes = $this->duitkuService->createInvoice($order, $paymentMethod, $shippingData);
-
-            if ($duitkuRes['success']) {
-                $ref = $duitkuRes['reference'];
-                $payUrl = $duitkuRes['payment_url'];
-                $vaNo = $duitkuRes['va_number'];
-                $qr = $duitkuRes['qr_string'];
-
-                if ($order->payment) {
-                    $order->payment->update([
-                        'transaction_id'   => $ref,
-                        'snap_token'       => $payUrl ?? $vaNo ?? $ref,
-                        'payload_response' => $duitkuRes['raw'] ?? [],
-                    ]);
-                }
-
-                return response()->json([
-                    'status'       => true,
-                    'gateway'      => 'duitku',
-                    'token'        => $ref ?? $vaNo,
-                    'reference'    => $ref,
-                    'redirect_url' => $payUrl,
-                    'payment_url'  => $payUrl,
-                    'va_number'    => $vaNo,
-                    'qr_string'    => $qr,
-                ], 200);
-            }
-
-            Log::warning('Duitku createInvoice failed in generateToken, fallback to simulation/Midtrans: ' . ($duitkuRes['error'] ?? 'Unknown error'));
-        }
-
-        // --- 2. Midtrans Gateway (Fallback) ---
-        $serverKey = env('MIDTRANS_SERVER_KEY');
-        $isProduction = env('MIDTRANS_IS_PRODUCTION', false);
-
-        if (!empty($serverKey)) {
-            $endpoint = $isProduction 
-                ? 'https://app.midtrans.com/snap/v1/transactions' 
-                : 'https://app.sandbox.midtrans.com/snap/v1/transactions';
-
-            $itemDetails = [];
-            foreach ($order->items as $item) {
-                $rawP = (float)$item->price;
-                $itemP = (int)($rawP < 1000 ? $rawP * 1000 : $rawP);
-                $itemDetails[] = [
-                    'id'       => $item->product_id ? (string)$item->product_id : 'SM-001',
-                    'price'    => $itemP,
-                    'quantity' => $item->quantity,
-                    'name'     => substr($item->product_name . ($item->color || $item->size ? ' (' . implode(', ', array_filter([$item->color, $item->size])) . ')' : ''), 0, 48),
-                ];
-            }
-            if ($order->shipment && $order->shipment->shipping_cost > 0) {
-                $itemDetails[] = [
-                    'id'       => 'SHIPPING',
-                    'price'    => (int)$order->shipment->shipping_cost,
-                    'quantity' => 1,
-                    'name'     => 'Shipping Cost (' . $order->shipment->courier_company . ')',
-                ];
-            }
-
-            $rawTotal = (float)$order->total_amount;
-            $grossAmount = (int)($rawTotal < 1000 ? $rawTotal * 1000 : $rawTotal);
-
-            $payload = [
-                'transaction_details' => [
-                    'order_id'     => $order->order_number,
-                    'gross_amount' => $grossAmount,
-                ],
-                'customer_details' => [
-                    'first_name' => $order->user ? $order->user->name : 'Customer',
-                    'email'      => $order->user ? $order->user->email : 'customer@sectormadness.com',
-                    'phone'      => $order->user ? ($order->user->phone ?? '+628123456789') : '+628123456789',
-                ],
-                'item_details' => $itemDetails,
+        // --- 1. Duitku Gateway Integration (Exclusively) ---
+        $paymentMethod = $order->payment?->payment_type ?? $request->input('payment_method', 'bca_va');
+        $shippingData = [];
+        if ($order->shipment) {
+            $shippingData = [
+                'receiver_name'  => $order->user?->name ?? 'Customer',
+                'phone_number'   => $order->user?->phone ?? '08123456789',
+                'street_address' => $order->shipment->destination_address ?? 'Customer Address',
+                'city'           => $order->shipment->destination_city ?? 'Jakarta',
+                'postal_code'    => $order->shipment->destination_postal_code ?? '10110',
             ];
-
-            try {
-                $response = Http::withBasicAuth($serverKey, '')
-                    ->withHeaders(['Content-Type' => 'application/json'])
-                    ->post($endpoint, $payload);
-
-                if ($response->successful()) {
-                    $snapToken = $response->json()['token'] ?? null;
-                    $redirectUrl = $response->json()['redirect_url'] ?? null;
-
-                    if ($order->payment) {
-                        $order->payment->update([
-                            'snap_token' => $snapToken,
-                            'payload_response' => $response->json(),
-                        ]);
-                    }
-
-                    return response()->json([
-                        'status' => true,
-                        'token'  => $snapToken,
-                        'redirect_url' => $redirectUrl,
-                    ], 200);
-                }
-            } catch (\Exception $e) {
-                Log::error('Midtrans Exception: ' . $e->getMessage());
-            }
         }
 
-        // --- 3. Simulation Mode (Fallback when no API Key is configured) ---
-        $simToken = $order->payment && $order->payment->snap_token 
-            ? $order->payment->snap_token 
-            : 'SIM-' . strtoupper(Str::random(16));
+        $duitkuRes = $this->duitkuService->createInvoice($order, $paymentMethod, $shippingData);
+
+        if (!$duitkuRes['success']) {
+            Log::error("Duitku createInvoice failed in generateToken for Order {$order_number}: " . ($duitkuRes['error'] ?? 'Unknown error'));
+            return response()->json([
+                'status'  => false,
+                'message' => 'Gagal membuat invoice Duitku: ' . ($duitkuRes['error'] ?? 'Koneksi gateway gagal'),
+                'details' => $duitkuRes['raw'] ?? null,
+            ], 422);
+        }
+
+        $ref    = $duitkuRes['reference'];
+        $payUrl = $duitkuRes['payment_url'];
+        $vaNo   = $duitkuRes['va_number'];
+        $qr     = $duitkuRes['qr_string'];
 
         if ($order->payment) {
-            $order->payment->update(['snap_token' => $simToken]);
+            $order->payment->update([
+                'transaction_id'   => $ref,
+                'snap_token'       => $payUrl ?? $vaNo ?? $ref,
+                'payload_response' => $duitkuRes['raw'] ?? [],
+            ]);
         }
 
         return response()->json([
             'status'       => true,
-            'message'      => 'Simulation mode token generated',
-            'token'        => $simToken,
-            'redirect_url' => 'https://sandbox.duitku.com',
+            'gateway'      => 'duitku',
+            'token'        => $ref ?? $vaNo,
+            'reference'    => $ref,
+            'redirect_url' => $payUrl,
+            'payment_url'  => $payUrl,
+            'va_number'    => $vaNo,
+            'qr_string'    => $qr,
         ], 200);
     }
 

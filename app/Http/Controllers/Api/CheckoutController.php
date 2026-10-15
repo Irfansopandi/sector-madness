@@ -602,154 +602,27 @@ class CheckoutController extends Controller
         });
 
         // Admin notification moved to PaymentController (only when paid)
-        // 7. Call Payment Gateway (Duitku Primary, Midtrans Fallback)
-        $duitkuMerchant = config('services.duitku.merchant_code') ?? env('DUITKU_MERCHANT_CODE');
-        $duitkuService  = app(DuitkuService::class);
+        // 7. Call Payment Gateway (Duitku Exclusively)
+        $duitkuService = app(DuitkuService::class);
+        $duitkuRes = $duitkuService->createInvoice($order, $request->payment_method, $shippingAddressData);
 
-        $vaNumber        = null;
-        $qrString        = null;
-        $paymentUrl      = null;
-        $reference       = null;
-        $gatewayResponse = [];
+        if (!$duitkuRes['success']) {
+            Log::error("Duitku Payment Creation Failed for Order {$order->order_number}: " . ($duitkuRes['error'] ?? 'Unknown error'), [
+                'raw' => $duitkuRes['raw'] ?? null
+            ]);
+            return response()->json([
+                'status'  => false,
+                'message' => 'Gagal membuat transaksi pembayaran via Duitku: ' . ($duitkuRes['error'] ?? 'Koneksi gateway gagal'),
+                'details' => $duitkuRes['raw'] ?? null,
+            ], 422);
+        }
+
+        $reference       = $duitkuRes['reference'];
+        $paymentUrl      = $duitkuRes['payment_url'];
+        $vaNumber        = $duitkuRes['va_number'];
+        $qrString        = $duitkuRes['qr_string'];
+        $gatewayResponse = $duitkuRes['raw'] ?? [];
         $gatewayUsed     = 'duitku';
-
-        if (!empty($duitkuMerchant)) {
-            $duitkuRes = $duitkuService->createInvoice($order, $request->payment_method, $shippingAddressData);
-            if ($duitkuRes['success']) {
-                $reference       = $duitkuRes['reference'];
-                $paymentUrl      = $duitkuRes['payment_url'];
-                $vaNumber        = $duitkuRes['va_number'];
-                $qrString        = $duitkuRes['qr_string'];
-                $gatewayResponse = $duitkuRes['raw'] ?? [];
-            } else {
-                Log::warning('Duitku createInvoice failed in createPayment: ' . ($duitkuRes['error'] ?? 'Unknown error'));
-            }
-        }
-
-        // Fallback to Midtrans Core API if Duitku did not provide transaction
-        if (empty($vaNumber) && empty($qrString) && empty($paymentUrl)) {
-            $gatewayUsed  = 'midtrans';
-            $serverKey    = env('MIDTRANS_SERVER_KEY');
-            $isProduction = env('MIDTRANS_IS_PRODUCTION', false);
-            $endpoint     = $isProduction ? 'https://api.midtrans.com/v2/charge' : 'https://api.sandbox.midtrans.com/v2/charge';
-
-            // Set payment type and specific parameters based on user selection
-            $paymentMethod = strtolower($request->payment_method);
-            $paymentType = 'bank_transfer';
-            $bankTransfer = null;
-            $echannel = null;
-            
-            switch ($paymentMethod) {
-                case 'bca_va':
-                    $paymentType = 'bank_transfer';
-                    $bankTransfer = ['bank' => 'bca'];
-                    break;
-                case 'bni_va':
-                    $paymentType = 'bank_transfer';
-                    $bankTransfer = ['bank' => 'bni'];
-                    break;
-                case 'bri_va':
-                    $paymentType = 'bank_transfer';
-                    $bankTransfer = ['bank' => 'bri'];
-                    break;
-                case 'permata_va':
-                    $paymentType = 'bank_transfer';
-                    $bankTransfer = ['bank' => 'permata'];
-                    break;
-                case 'cimb_va':
-                    $paymentType = 'bank_transfer';
-                    $bankTransfer = ['bank' => 'cimb'];
-                    break;
-                case 'mandiri_va':
-                    $paymentType = 'echannel';
-                    $echannel = [
-                        'bill_info1' => 'Payment For',
-                        'bill_info2' => 'Sector Madness'
-                    ];
-                    break;
-                case 'qris':
-                case 'gopay':
-                case 'shopeepay':
-                case 'ovo':
-                case 'dana':
-                    $paymentType = 'qris';
-                    $qrisAcquirer = ['acquirer' => 'gopay'];
-                    break;
-                default:
-                    $paymentType = 'bank_transfer';
-                    $bankTransfer = ['bank' => 'bca'];
-                    break;
-            }
-
-            $payload = [
-                'payment_type' => $paymentType,
-                'transaction_details' => [
-                    'order_id'     => $order->order_number,
-                    'gross_amount' => (int)$grandTotal,
-                ],
-                'customer_details' => [
-                    'first_name' => $shippingAddressData['receiver_name'],
-                    'email'      => $user->email,
-                    'phone'      => $shippingAddressData['phone_number'],
-                    'shipping_address' => [
-                        'first_name' => $shippingAddressData['receiver_name'],
-                        'phone'      => $shippingAddressData['phone_number'],
-                        'address'    => $shippingAddressData['street_address'],
-                        'city'       => $shippingAddressData['city'],
-                        'postal_code'=> $shippingAddressData['postal_code'],
-                    ],
-                ],
-                'item_details' => $itemDetailsForMidtrans,
-            ];
-
-            if ($paymentType === 'bank_transfer' && isset($bankTransfer)) {
-                $payload['bank_transfer'] = $bankTransfer;
-            } elseif ($paymentType === 'echannel' && isset($echannel)) {
-                $payload['echannel'] = $echannel;
-            } elseif ($paymentType === 'qris' && isset($qrisAcquirer)) {
-                $payload['qris'] = $qrisAcquirer;
-            }
-
-            if (!empty($serverKey)) {
-                try {
-                    $res = Http::withBasicAuth($serverKey, '')
-                        ->withHeaders([
-                            'Content-Type' => 'application/json',
-                            'Accept' => 'application/json'
-                        ])
-                        ->post($endpoint, $payload);
-
-                    $midtransResponse = $res->json() ?? [];
-                    $gatewayResponse = $midtransResponse;
-                    if ($res->successful() && isset($midtransResponse['status_code']) && in_array($midtransResponse['status_code'], ['200', '201'])) {
-                        if (isset($midtransResponse['va_numbers'][0]['va_number'])) {
-                            $vaNumber = $midtransResponse['va_numbers'][0]['va_number'];
-                        } elseif (isset($midtransResponse['permata_va_number'])) {
-                            $vaNumber = $midtransResponse['permata_va_number'];
-                        } elseif (isset($midtransResponse['biller_code']) && isset($midtransResponse['bill_key'])) {
-                            $vaNumber = $midtransResponse['biller_code'] . $midtransResponse['bill_key'];
-                        }
-                        
-                        if (isset($midtransResponse['actions'])) {
-                            foreach ($midtransResponse['actions'] as $action) {
-                                if ($action['name'] === 'generate-qr-code') {
-                                    $qrString = $action['url'];
-                                }
-                            }
-                        }
-                        if (isset($midtransResponse['qr_string'])) {
-                            $qrString = $midtransResponse['qr_string'];
-                        }
-                    }
-                } catch (\Exception $e) {
-                    Log::error('Midtrans Core API Exception: ' . $e->getMessage());
-                }
-            }
-
-            if (empty($vaNumber) && empty($qrString)) {
-                $vaNumber = '891180' . date('YmdHis');
-            }
-        }
 
         // Rekam OrderPayment
         OrderPayment::create([
@@ -792,157 +665,70 @@ class CheckoutController extends Controller
             return response()->json(['status' => true, 'is_paid' => true, 'transaction_status' => 'settlement']);
         }
 
-        // 2. Query Duitku Status (Primary)
-        $duitkuMerchant = config('services.duitku.merchant_code') ?? env('DUITKU_MERCHANT_CODE');
-        if (!empty($duitkuMerchant)) {
-            $duitkuRes = app(DuitkuService::class)->checkTransactionStatus($order_number);
-            if ($duitkuRes['status'] && $duitkuRes['is_paid']) {
-                $isFirstTime = in_array($order->status, ['pending', 'unpaid']);
-                $order->update(['status' => 'processing']);
-                if ($order->payment) {
-                    $order->payment->update(['payment_status' => 'paid', 'paid_at' => now()]);
-                }
-
-                if ($order->shipment && empty($order->shipment->tracking_number)) {
-                    $courier = strtoupper($order->shipment->courier_company ?? 'JNT');
-                    $order->shipment->update(['tracking_number' => $courier . '-' . time()]);
-                }
-
-                if ($isFirstTime) {
-                    foreach ($order->items as $item) {
-                        $product = \App\Models\Product::find($item->product_id);
-                        if ($product) {
-                            $product->decrement('stock', $item->quantity);
-                            $variant = \App\Models\ProductVariant::where('product_id', $product->id)
-                                ->where('color', $item->color ?: 'Default')
-                                ->where('size', $item->size ?: 'M')
-                                ->first();
-                            if ($variant) {
-                                $variant->decrement('stock', $item->quantity);
-                            }
-                        }
-                    }
-
-                    if ($order->user_id) {
-                        $cart = \App\Models\Cart::where('user_id', $order->user_id)->first();
-                        if ($cart) {
-                            $cart->items()->delete();
-                        }
-                    }
-
-                    try {
-                        $admins = \App\Models\Admin::all();
-                        $title = '🛒 New Paid Order Received (Duitku)';
-                        $message = "Order baru #{$order->order_number} telah dibayar via Duitku senilai Rp " . number_format($order->total_amount, 0, ',', '.');
-                        \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\AdminOrderNotification($title, $message, $order->order_number));
-                        \App\Jobs\SendAdminPushNotification::dispatch($title, $message, '/admin/orders?tab=processing');
-                    } catch (\Exception $e) {
-                        Log::error('Admin Notification Failed on Duitku checkPaymentStatus: ' . $e->getMessage());
-                    }
-                }
-
-                return response()->json(['status' => true, 'is_paid' => true, 'transaction_status' => 'settlement']);
+        // 2. Query Duitku Status
+        $duitkuRes = app(DuitkuService::class)->checkTransactionStatus($order_number);
+        if ($duitkuRes['status'] && $duitkuRes['is_paid']) {
+            $isFirstTime = in_array($order->status, ['pending', 'unpaid']);
+            $order->update(['status' => 'processing']);
+            if ($order->payment) {
+                $order->payment->update(['payment_status' => 'paid', 'paid_at' => now()]);
             }
 
-            if ($duitkuRes['status'] && in_array($duitkuRes['transaction_status'], ['cancel', 'deny', 'expire'])) {
-                $order->update(['status' => 'cancelled']);
-                if ($order->payment) {
-                    $order->payment->update(['payment_status' => 'failed']);
-                }
-                return response()->json(['status' => true, 'is_paid' => false, 'transaction_status' => $duitkuRes['transaction_status']]);
+            if ($order->shipment && empty($order->shipment->tracking_number)) {
+                $courier = strtoupper($order->shipment->courier_company ?? 'JNT');
+                $order->shipment->update(['tracking_number' => $courier . '-' . time()]);
             }
+
+            if ($isFirstTime) {
+                foreach ($order->items as $item) {
+                    $product = \App\Models\Product::find($item->product_id);
+                    if ($product) {
+                        $product->decrement('stock', $item->quantity);
+                        $variant = \App\Models\ProductVariant::where('product_id', $product->id)
+                            ->where('color', $item->color ?: 'Default')
+                            ->where('size', $item->size ?: 'M')
+                            ->first();
+                        if ($variant) {
+                            $variant->decrement('stock', $item->quantity);
+                        }
+                    }
+                }
+
+                if ($order->user_id) {
+                    $cart = \App\Models\Cart::where('user_id', $order->user_id)->first();
+                    if ($cart) {
+                        $cart->items()->delete();
+                    }
+                }
+
+                try {
+                    $admins = \App\Models\Admin::all();
+                    $title = '🛒 New Paid Order Received (Duitku)';
+                    $message = "Order baru #{$order->order_number} telah dibayar via Duitku senilai Rp " . number_format($order->total_amount, 0, ',', '.');
+                    \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\AdminOrderNotification($title, $message, $order->order_number));
+                    \App\Jobs\SendAdminPushNotification::dispatch($title, $message, '/admin/orders?tab=processing');
+                } catch (\Exception $e) {
+                    Log::error('Admin Notification Failed on Duitku checkPaymentStatus: ' . $e->getMessage());
+                }
+            }
+
+            return response()->json(['status' => true, 'is_paid' => true, 'transaction_status' => 'settlement']);
         }
 
-        // 3. Fallback to Midtrans status inquiry
-        $serverKey = env('MIDTRANS_SERVER_KEY');
-        $isProduction = env('MIDTRANS_IS_PRODUCTION', false);
-        $endpoint = $isProduction ? "https://api.midtrans.com/v2/{$order_number}/status" : "https://api.sandbox.midtrans.com/v2/{$order_number}/status";
-
-        try {
-            $res = Http::withBasicAuth($serverKey, '')
-                ->withHeaders(['Accept' => 'application/json'])
-                ->get($endpoint);
-
-            if ($res->successful()) {
-                $statusData = $res->json();
-                $transactionStatus = $statusData['transaction_status'] ?? 'pending';
-
-                if (in_array($transactionStatus, ['settlement', 'capture'])) {
-                    // Cek apakah order belum diproses untuk menghindari aksi ganda (stok kurang 2x, notif 2x)
-                    $isFirstTime = in_array($order->status, ['pending', 'unpaid']);
-                    
-                    // Payment is successful! Update database
-                    $order->update(['status' => 'processing']);
-                    if ($order->payment) {
-                        $order->payment->update(['payment_status' => 'paid']);
-                    }
-
-                    // Create a dummy Biteship Tracking Number if it doesn't exist
-                    if ($order->shipment && empty($order->shipment->tracking_number)) {
-                        $courier = strtoupper($order->shipment->courier_company ?? 'JNT');
-                        $order->shipment->update([
-                            'tracking_number' => $courier . '-' . time()
-                        ]);
-                    }
-
-                    if ($isFirstTime) {
-                        // Kurangi stok produk & variant SETELAH pembayaran dikonfirmasi
-                        foreach ($order->items as $item) {
-                            $product = \App\Models\Product::find($item->product_id);
-                            if ($product) {
-                                $product->decrement('stock', $item->quantity);
-
-                                // Decrement variant stock
-                                $variant = \App\Models\ProductVariant::where('product_id', $product->id)
-                                    ->where('color', $item->color ?: 'Default')
-                                    ->where('size', $item->size ?: 'M')
-                                    ->first();
-                                if ($variant) {
-                                    $variant->decrement('stock', $item->quantity);
-                                }
-                            }
-                        }
-                        
-                        // Clear user cart upon successful payment
-                        $cart = \App\Models\Cart::where('user_id', $order->user_id)->first();
-                        if ($cart) {
-                            $cart->items()->delete();
-                        }
-
-                        // Send Admin Notification for new Paid Order
-                        try {
-                            $admins = \App\Models\Admin::all();
-                            $title = '🛒 New Paid Order Received';
-                            $message = "Order baru #{$order->order_number} telah dibayar senilai Rp " . number_format($order->total_amount, 0, ',', '.');
-                            \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\AdminOrderNotification($title, $message, $order->order_number));
-                            \App\Jobs\SendAdminPushNotification::dispatch($title, $message, '/admin/orders?tab=processing');
-                        } catch (\Exception $e) {
-                            \Illuminate\Support\Facades\Log::error('Admin Notification Failed on checkPaymentStatus: ' . $e->getMessage());
-                        }
-                    }
-
-                    return response()->json(['status' => true, 'is_paid' => true, 'transaction_status' => $transactionStatus]);
-                }
-
-                // If expire or cancel
-                if (in_array($transactionStatus, ['cancel', 'deny', 'expire'])) {
-                    $order->update(['status' => 'cancelled']);
-                    if ($order->payment) {
-                        $order->payment->update(['payment_status' => 'failed']);
-                    }
-                    return response()->json(['status' => true, 'is_paid' => false, 'transaction_status' => $transactionStatus]);
-                }
-
-                return response()->json(['status' => true, 'is_paid' => false, 'transaction_status' => $transactionStatus]);
+        if ($duitkuRes['status'] && in_array($duitkuRes['transaction_status'], ['cancel', 'deny', 'expire'])) {
+            $order->update(['status' => 'cancelled']);
+            if ($order->payment) {
+                $order->payment->update(['payment_status' => 'failed']);
             }
-
-            // Midtrans returned 404, means transaction not found (or not paid / no webhook generated yet)
-            return response()->json(['status' => true, 'is_paid' => false, 'transaction_status' => 'pending_api']);
-
-        } catch (\Exception $e) {
-            Log::error('Check Payment Status Exception: ' . $e->getMessage());
-            return response()->json(['status' => false, 'message' => 'Exception connecting to Midtrans API', 'is_paid' => false], 500);
+            return response()->json(['status' => true, 'is_paid' => false, 'transaction_status' => $duitkuRes['transaction_status']]);
         }
+
+        return response()->json([
+            'status'             => true,
+            'is_paid'            => false,
+            'transaction_status' => $duitkuRes['transaction_status'] ?? 'pending',
+            'duitku_raw'         => $duitkuRes['raw'] ?? null
+        ]);
     }
 
     /**
