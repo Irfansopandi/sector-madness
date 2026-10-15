@@ -80,12 +80,6 @@ export default function OrderDetailPage() {
       style={{ fontFamily: "'Inter', -apple-system, sans-serif" }}
       className="min-h-screen bg-[#0A0A0A] text-[#FFFFFF] flex flex-col selection:bg-[#FFFFFF] selection:text-[#0A0A0A]"
     >
-      <Script
-        src={process.env.NEXT_PUBLIC_MIDTRANS_SNAP_URL || (process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === "true" ? "https://app.midtrans.com/snap/snap.js" : "https://app.sandbox.midtrans.com/snap/snap.js")}
-        data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || "Mid-client-sBSqTk7RhzcH4GEK"}
-        strategy="afterInteractive"
-      />
-      
       <Navbar />
 
       {/* FULL-WIDTH HEADER SECTION WITH EDGE-TO-EDGE BORDER LINE */}
@@ -348,7 +342,8 @@ export default function OrderDetailPage() {
           paymentMethod={order.payment_info?.method || "bca_va"}
           grossAmount={order.summary?.grand_total || (order as any).total || 0}
           receiverName={order.customer_info?.name || "Customer"}
-          vaNumber={order.payment_info?.snap_token}
+          vaNumber={order.payment_info?.snap_token?.startsWith("http") ? undefined : order.payment_info?.snap_token}
+          paymentUrl={order.payment_info?.snap_token?.startsWith("http") ? order.payment_info?.snap_token : undefined}
         />
       )}
 

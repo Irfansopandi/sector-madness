@@ -65,10 +65,11 @@ Route::get('/shipping/areas', [ShippingController::class, 'searchAreas']);
 Route::get('/shipping/track/{tracking_number}', [ShippingController::class, 'track']);
 Route::post('/shipping/create/{order_number}', [ShippingController::class, 'createShipment']);
 
-// Midtrans Webhooks & Tokens
+// Payment Gateway Webhooks & Tokens
 Route::post('/payment/token/{order_number}', [PaymentController::class, 'generateToken']);
 Route::post('/payment/instant-token', [PaymentController::class, 'instantToken']);
 Route::post('/webhook/midtrans', [PaymentController::class, 'webhook']);
+Route::post('/webhook/duitku', [PaymentController::class, 'webhookDuitku']);
 
 /*
 |--------------------------------------------------------------------------

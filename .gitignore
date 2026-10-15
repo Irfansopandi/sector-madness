@@ -22,3 +22,13 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Sensitive local data, database exports & archives
+*.sql
+*.tar.gz
+*.zip
+debug_log.txt
+unzip.php
+zip_script.php
+make_zip.py
+scratch/

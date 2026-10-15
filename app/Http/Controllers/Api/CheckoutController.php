@@ -13,6 +13,7 @@ use App\Models\Product;
 use App\Models\ShippingAddress;
 use App\Models\User;
 use App\Models\Voucher;
+use App\Services\DuitkuService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -601,168 +602,258 @@ class CheckoutController extends Controller
         });
 
         // Admin notification moved to PaymentController (only when paid)
-        // 7. Call Midtrans Core API (v2/charge)
-        $serverKey = env('MIDTRANS_SERVER_KEY');
-        $isProduction = env('MIDTRANS_IS_PRODUCTION', false);
-        $endpoint = $isProduction ? 'https://api.midtrans.com/v2/charge' : 'https://api.sandbox.midtrans.com/v2/charge';
+        // 7. Call Payment Gateway (Duitku Primary, Midtrans Fallback)
+        $duitkuMerchant = config('services.duitku.merchant_code') ?? env('DUITKU_MERCHANT_CODE');
+        $duitkuService  = app(DuitkuService::class);
 
-        // Set payment type and specific parameters based on user selection
-        $paymentMethod = strtolower($request->payment_method);
-        $paymentType = 'bank_transfer';
-        $bankTransfer = null;
-        $echannel = null;
-        
-        switch ($paymentMethod) {
-            case 'bca_va':
-                $paymentType = 'bank_transfer';
-                $bankTransfer = ['bank' => 'bca'];
-                break;
-            case 'bni_va':
-                $paymentType = 'bank_transfer';
-                $bankTransfer = ['bank' => 'bni'];
-                break;
-            case 'bri_va':
-                $paymentType = 'bank_transfer';
-                $bankTransfer = ['bank' => 'bri'];
-                break;
-            case 'permata_va':
-                $paymentType = 'bank_transfer';
-                $bankTransfer = ['bank' => 'permata'];
-                break;
-            case 'cimb_va':
-                $paymentType = 'bank_transfer';
-                $bankTransfer = ['bank' => 'cimb'];
-                break;
-            case 'mandiri_va':
-                $paymentType = 'echannel';
-                $echannel = [
-                    'bill_info1' => 'Payment For',
-                    'bill_info2' => 'Sector Madness'
-                ];
-                break;
-            case 'qris':
-            case 'gopay':
-            case 'shopeepay':
-            case 'ovo':
-            case 'dana':
-                $paymentType = 'qris';
-                $qrisAcquirer = ['acquirer' => 'gopay'];
-                break;
-            default:
-                $paymentType = 'bank_transfer';
-                $bankTransfer = ['bank' => 'bca'];
-                break;
+        $vaNumber        = null;
+        $qrString        = null;
+        $paymentUrl      = null;
+        $reference       = null;
+        $gatewayResponse = [];
+        $gatewayUsed     = 'duitku';
+
+        if (!empty($duitkuMerchant)) {
+            $duitkuRes = $duitkuService->createInvoice($order, $request->payment_method, $shippingAddressData);
+            if ($duitkuRes['success']) {
+                $reference       = $duitkuRes['reference'];
+                $paymentUrl      = $duitkuRes['payment_url'];
+                $vaNumber        = $duitkuRes['va_number'];
+                $qrString        = $duitkuRes['qr_string'];
+                $gatewayResponse = $duitkuRes['raw'] ?? [];
+            } else {
+                Log::warning('Duitku createInvoice failed in createPayment: ' . ($duitkuRes['error'] ?? 'Unknown error'));
+            }
         }
 
-        $payload = [
-            'payment_type' => $paymentType,
-            'transaction_details' => [
-                'order_id'     => $order->order_number,
-                'gross_amount' => (int)$grandTotal,
-            ],
-            'customer_details' => [
-                'first_name' => $shippingAddressData['receiver_name'],
-                'email'      => $user->email,
-                'phone'      => $shippingAddressData['phone_number'],
-                'shipping_address' => [
-                    'first_name' => $shippingAddressData['receiver_name'],
-                    'phone'      => $shippingAddressData['phone_number'],
-                    'address'    => $shippingAddressData['street_address'],
-                    'city'       => $shippingAddressData['city'],
-                    'postal_code'=> $shippingAddressData['postal_code'],
+        // Fallback to Midtrans Core API if Duitku did not provide transaction
+        if (empty($vaNumber) && empty($qrString) && empty($paymentUrl)) {
+            $gatewayUsed  = 'midtrans';
+            $serverKey    = env('MIDTRANS_SERVER_KEY');
+            $isProduction = env('MIDTRANS_IS_PRODUCTION', false);
+            $endpoint     = $isProduction ? 'https://api.midtrans.com/v2/charge' : 'https://api.sandbox.midtrans.com/v2/charge';
+
+            // Set payment type and specific parameters based on user selection
+            $paymentMethod = strtolower($request->payment_method);
+            $paymentType = 'bank_transfer';
+            $bankTransfer = null;
+            $echannel = null;
+            
+            switch ($paymentMethod) {
+                case 'bca_va':
+                    $paymentType = 'bank_transfer';
+                    $bankTransfer = ['bank' => 'bca'];
+                    break;
+                case 'bni_va':
+                    $paymentType = 'bank_transfer';
+                    $bankTransfer = ['bank' => 'bni'];
+                    break;
+                case 'bri_va':
+                    $paymentType = 'bank_transfer';
+                    $bankTransfer = ['bank' => 'bri'];
+                    break;
+                case 'permata_va':
+                    $paymentType = 'bank_transfer';
+                    $bankTransfer = ['bank' => 'permata'];
+                    break;
+                case 'cimb_va':
+                    $paymentType = 'bank_transfer';
+                    $bankTransfer = ['bank' => 'cimb'];
+                    break;
+                case 'mandiri_va':
+                    $paymentType = 'echannel';
+                    $echannel = [
+                        'bill_info1' => 'Payment For',
+                        'bill_info2' => 'Sector Madness'
+                    ];
+                    break;
+                case 'qris':
+                case 'gopay':
+                case 'shopeepay':
+                case 'ovo':
+                case 'dana':
+                    $paymentType = 'qris';
+                    $qrisAcquirer = ['acquirer' => 'gopay'];
+                    break;
+                default:
+                    $paymentType = 'bank_transfer';
+                    $bankTransfer = ['bank' => 'bca'];
+                    break;
+            }
+
+            $payload = [
+                'payment_type' => $paymentType,
+                'transaction_details' => [
+                    'order_id'     => $order->order_number,
+                    'gross_amount' => (int)$grandTotal,
                 ],
-            ],
-            'item_details' => $itemDetailsForMidtrans,
-        ];
+                'customer_details' => [
+                    'first_name' => $shippingAddressData['receiver_name'],
+                    'email'      => $user->email,
+                    'phone'      => $shippingAddressData['phone_number'],
+                    'shipping_address' => [
+                        'first_name' => $shippingAddressData['receiver_name'],
+                        'phone'      => $shippingAddressData['phone_number'],
+                        'address'    => $shippingAddressData['street_address'],
+                        'city'       => $shippingAddressData['city'],
+                        'postal_code'=> $shippingAddressData['postal_code'],
+                    ],
+                ],
+                'item_details' => $itemDetailsForMidtrans,
+            ];
 
-        if ($paymentType === 'bank_transfer' && isset($bankTransfer)) {
-            $payload['bank_transfer'] = $bankTransfer;
-        } elseif ($paymentType === 'echannel' && isset($echannel)) {
-            $payload['echannel'] = $echannel;
-        } elseif ($paymentType === 'qris' && isset($qrisAcquirer)) {
-            $payload['qris'] = $qrisAcquirer;
-        }
+            if ($paymentType === 'bank_transfer' && isset($bankTransfer)) {
+                $payload['bank_transfer'] = $bankTransfer;
+            } elseif ($paymentType === 'echannel' && isset($echannel)) {
+                $payload['echannel'] = $echannel;
+            } elseif ($paymentType === 'qris' && isset($qrisAcquirer)) {
+                $payload['qris'] = $qrisAcquirer;
+            }
 
-        $snapToken = null; // Snap token is no longer used, but we keep the variable for DB structure
-        $vaNumber = null;
-        $qrString = null;
-        $midtransResponse = [];
+            if (!empty($serverKey)) {
+                try {
+                    $res = Http::withBasicAuth($serverKey, '')
+                        ->withHeaders([
+                            'Content-Type' => 'application/json',
+                            'Accept' => 'application/json'
+                        ])
+                        ->post($endpoint, $payload);
 
-        try {
-            $res = Http::withBasicAuth($serverKey, '')
-                ->withHeaders([
-                    'Content-Type' => 'application/json',
-                    'Accept' => 'application/json'
-                ])
-                ->post($endpoint, $payload);
-
-            $midtransResponse = $res->json() ?? [];
-            if ($res->successful() && isset($midtransResponse['status_code']) && in_array($midtransResponse['status_code'], ['200', '201'])) {
-                // Parse Virtual Account Number
-                if (isset($midtransResponse['va_numbers'][0]['va_number'])) {
-                    $vaNumber = $midtransResponse['va_numbers'][0]['va_number'];
-                } elseif (isset($midtransResponse['permata_va_number'])) {
-                    $vaNumber = $midtransResponse['permata_va_number'];
-                } elseif (isset($midtransResponse['biller_code']) && isset($midtransResponse['bill_key'])) {
-                    // For Mandiri
-                    $vaNumber = $midtransResponse['biller_code'] . $midtransResponse['bill_key'];
-                }
-                
-                // Parse QR Code (actions -> url for qris)
-                if (isset($midtransResponse['actions'])) {
-                    foreach ($midtransResponse['actions'] as $action) {
-                        if ($action['name'] === 'generate-qr-code') {
-                            $qrString = $action['url'];
+                    $midtransResponse = $res->json() ?? [];
+                    $gatewayResponse = $midtransResponse;
+                    if ($res->successful() && isset($midtransResponse['status_code']) && in_array($midtransResponse['status_code'], ['200', '201'])) {
+                        if (isset($midtransResponse['va_numbers'][0]['va_number'])) {
+                            $vaNumber = $midtransResponse['va_numbers'][0]['va_number'];
+                        } elseif (isset($midtransResponse['permata_va_number'])) {
+                            $vaNumber = $midtransResponse['permata_va_number'];
+                        } elseif (isset($midtransResponse['biller_code']) && isset($midtransResponse['bill_key'])) {
+                            $vaNumber = $midtransResponse['biller_code'] . $midtransResponse['bill_key'];
+                        }
+                        
+                        if (isset($midtransResponse['actions'])) {
+                            foreach ($midtransResponse['actions'] as $action) {
+                                if ($action['name'] === 'generate-qr-code') {
+                                    $qrString = $action['url'];
+                                }
+                            }
+                        }
+                        if (isset($midtransResponse['qr_string'])) {
+                            $qrString = $midtransResponse['qr_string'];
                         }
                     }
+                } catch (\Exception $e) {
+                    Log::error('Midtrans Core API Exception: ' . $e->getMessage());
                 }
-                if (isset($midtransResponse['qr_string'])) {
-                    $qrString = $midtransResponse['qr_string']; // Sometime gopay returns it like this
-                }
-            } else {
-                Log::warning('Midtrans Core API Failed: ' . json_encode($midtransResponse));
-                file_put_contents(base_path('debug_log.txt'), "API FAILED: " . json_encode($midtransResponse) . "\n", FILE_APPEND);
+            }
+
+            if (empty($vaNumber) && empty($qrString)) {
                 $vaNumber = '891180' . date('YmdHis');
             }
-        } catch (\Exception $e) {
-            Log::error('Midtrans Core API Exception: ' . $e->getMessage());
-            file_put_contents(base_path('debug_log.txt'), "EXCEPTION: " . $e->getMessage() . "\n", FILE_APPEND);
-            $vaNumber = '891180' . date('YmdHis');
         }
-
-        file_put_contents(base_path('debug_log.txt'), "Extracted VA: " . $vaNumber . " QR: " . $qrString . "\n", FILE_APPEND);
 
         // Rekam OrderPayment
         OrderPayment::create([
-            'order_id'       => $order->id,
-            'snap_token'     => $snapToken ?? $vaNumber, // Can store VA for reference if token is null
-            'payment_type'   => $request->payment_method,
-            'payment_status' => 'unpaid',
-            'gross_amount'   => $grandTotal,
+            'order_id'         => $order->id,
+            'transaction_id'   => $reference,
+            'snap_token'       => $paymentUrl ?? $vaNumber ?? $reference,
+            'payment_type'     => $request->payment_method,
+            'payment_status'   => 'unpaid',
+            'gross_amount'     => $grandTotal,
+            'payload_response' => $gatewayResponse,
         ]);
 
         return response()->json([
             'status'       => true,
-            'message'      => 'Payment transaction generated via Midtrans Core API',
+            'gateway'      => $gatewayUsed,
+            'message'      => 'Payment transaction generated successfully',
             'order_number' => $order->order_number,
             'va_number'    => $vaNumber,
             'qr_string'    => $qrString,
+            'payment_url'  => $paymentUrl,
+            'reference'    => $reference,
             'data'         => $order->load('items', 'payment', 'shipment'),
-            'midtrans'     => $midtransResponse,
+            'response'     => $gatewayResponse,
         ], 201);
     }
 
     /**
-     * Check Real-Time Payment Status directly with Midtrans Core API
+     * Check Real-Time Payment Status directly with Payment Gateway (Duitku / Midtrans)
      * Endpoint: GET /api/checkout/status/{order_number}
      */
     public function checkPaymentStatus($order_number, Request $request)
     {
-        $order = Order::where('order_number', $order_number)->first();
+        $order = Order::with(['payment', 'items', 'shipment'])->where('order_number', $order_number)->first();
         if (!$order) {
             return response()->json(['status' => false, 'message' => 'Order not found'], 404);
         }
 
+        // 1. If already marked paid in DB, return immediately
+        if ($order->status === 'paid' || ($order->payment && $order->payment->payment_status === 'paid')) {
+            return response()->json(['status' => true, 'is_paid' => true, 'transaction_status' => 'settlement']);
+        }
+
+        // 2. Query Duitku Status (Primary)
+        $duitkuMerchant = config('services.duitku.merchant_code') ?? env('DUITKU_MERCHANT_CODE');
+        if (!empty($duitkuMerchant)) {
+            $duitkuRes = app(DuitkuService::class)->checkTransactionStatus($order_number);
+            if ($duitkuRes['status'] && $duitkuRes['is_paid']) {
+                $isFirstTime = in_array($order->status, ['pending', 'unpaid']);
+                $order->update(['status' => 'processing']);
+                if ($order->payment) {
+                    $order->payment->update(['payment_status' => 'paid', 'paid_at' => now()]);
+                }
+
+                if ($order->shipment && empty($order->shipment->tracking_number)) {
+                    $courier = strtoupper($order->shipment->courier_company ?? 'JNT');
+                    $order->shipment->update(['tracking_number' => $courier . '-' . time()]);
+                }
+
+                if ($isFirstTime) {
+                    foreach ($order->items as $item) {
+                        $product = \App\Models\Product::find($item->product_id);
+                        if ($product) {
+                            $product->decrement('stock', $item->quantity);
+                            $variant = \App\Models\ProductVariant::where('product_id', $product->id)
+                                ->where('color', $item->color ?: 'Default')
+                                ->where('size', $item->size ?: 'M')
+                                ->first();
+                            if ($variant) {
+                                $variant->decrement('stock', $item->quantity);
+                            }
+                        }
+                    }
+
+                    if ($order->user_id) {
+                        $cart = \App\Models\Cart::where('user_id', $order->user_id)->first();
+                        if ($cart) {
+                            $cart->items()->delete();
+                        }
+                    }
+
+                    try {
+                        $admins = \App\Models\Admin::all();
+                        $title = '🛒 New Paid Order Received (Duitku)';
+                        $message = "Order baru #{$order->order_number} telah dibayar via Duitku senilai Rp " . number_format($order->total_amount, 0, ',', '.');
+                        \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\AdminOrderNotification($title, $message, $order->order_number));
+                        \App\Jobs\SendAdminPushNotification::dispatch($title, $message, '/admin/orders?tab=processing');
+                    } catch (\Exception $e) {
+                        Log::error('Admin Notification Failed on Duitku checkPaymentStatus: ' . $e->getMessage());
+                    }
+                }
+
+                return response()->json(['status' => true, 'is_paid' => true, 'transaction_status' => 'settlement']);
+            }
+
+            if ($duitkuRes['status'] && in_array($duitkuRes['transaction_status'], ['cancel', 'deny', 'expire'])) {
+                $order->update(['status' => 'cancelled']);
+                if ($order->payment) {
+                    $order->payment->update(['payment_status' => 'failed']);
+                }
+                return response()->json(['status' => true, 'is_paid' => false, 'transaction_status' => $duitkuRes['transaction_status']]);
+            }
+        }
+
+        // 3. Fallback to Midtrans status inquiry
         $serverKey = env('MIDTRANS_SERVER_KEY');
         $isProduction = env('MIDTRANS_IS_PRODUCTION', false);
         $endpoint = $isProduction ? "https://api.midtrans.com/v2/{$order_number}/status" : "https://api.sandbox.midtrans.com/v2/{$order_number}/status";

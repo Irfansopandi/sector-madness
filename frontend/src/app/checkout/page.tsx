@@ -571,7 +571,7 @@ function CheckoutContent() {
       });
 
       if (!res.status || !res.order_number) {
-        throw new Error("Failed to generate Midtrans transaction authorization.");
+        throw new Error("Failed to generate payment transaction authorization.");
       }
 
       showToast("Initializing Sector Madness custom core payment protocol...", "success", "GATEWAY CONNECTED");
@@ -584,6 +584,7 @@ function CheckoutContent() {
         receiverName: fullNameCombined,
         vaNumber: res.va_number,
         qrString: res.qr_string,
+        paymentUrl: res.payment_url,
       });
       setIsPaying(false);
       setCustomModalOpen(true);
@@ -600,11 +601,6 @@ function CheckoutContent() {
       style={{ fontFamily: "'Inter', -apple-system, sans-serif" }}
       className="min-h-screen bg-[#0A0A0A] text-[#FFFFFF] flex flex-col selection:bg-[#FFFFFF] selection:text-[#0A0A0A]"
     >
-      <Script
-        src={process.env.NEXT_PUBLIC_MIDTRANS_SNAP_URL || (process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === "true" ? "https://app.midtrans.com/snap/snap.js" : "https://app.sandbox.midtrans.com/snap/snap.js")}
-        data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || "Mid-client-sBSqTk7RhzcH4GEK"}
-        strategy="afterInteractive"
-      />
       <Navbar />
 
       {/* FULL-WIDTH HEADER SECTION WITH EDGE-TO-EDGE BORDER LINE (SHOPPING BAG SPACING PARITY) */}
@@ -1630,6 +1626,7 @@ function CheckoutContent() {
         receiverName={paymentTxData?.receiverName || "Customer"}
         vaNumber={paymentTxData?.vaNumber}
         qrString={paymentTxData?.qrString}
+        paymentUrl={paymentTxData?.paymentUrl}
       />
 
       <AddressModal

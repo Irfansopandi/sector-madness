@@ -193,7 +193,7 @@ class OrderController extends Controller
             [
                 'status' => 'Payment Verification',
                 'date'   => $pay && $pay->payment_status === 'paid' ? $order->updated_at->format('d M Y - H:i') : 'In Progress',
-                'detail' => $pay && $pay->payment_status === 'paid' ? 'Midtrans transaction verified & funds secured' : 'Waiting for payment verification via Midtrans gateway',
+                'detail' => $pay && $pay->payment_status === 'paid' ? 'Payment transaction verified & funds secured' : 'Waiting for payment verification via secure payment gateway',
                 'done'   => $pay && ($pay->payment_status === 'paid' || $order->status === 'processing'),
             ],
             [

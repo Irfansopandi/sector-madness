@@ -13,6 +13,7 @@ interface CustomPaymentModalProps {
   receiverName?: string;
   vaNumber?: string;
   qrString?: string;
+  paymentUrl?: string;
 }
 
 export default function CustomPaymentModal({
@@ -25,6 +26,7 @@ export default function CustomPaymentModal({
   receiverName = "Customer",
   vaNumber,
   qrString,
+  paymentUrl,
 }: CustomPaymentModalProps) {
   const { showToast, error } = useToast();
   const [copiedType, setCopiedType] = useState<string | null>(null);
@@ -434,11 +436,21 @@ export default function CustomPaymentModal({
         </div>
 
         {/* Action Footer */}
-        <div className="bg-[#111111] border-t border-[#222222] p-6 sm:p-8 shrink-0">
+        <div className="bg-[#111111] border-t border-[#222222] p-6 sm:p-8 shrink-0 flex flex-col sm:flex-row gap-3">
+          {paymentUrl && (
+            <a
+              href={paymentUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full sm:w-auto text-[12px] font-mono font-bold uppercase tracking-[0.15em] transition-all flex items-center justify-center border border-white/40 text-white hover:bg-white hover:text-black py-4 px-6 text-center"
+            >
+              <span>PAY ON DUITKU PAGE ↗</span>
+            </a>
+          )}
           <button
             onClick={handleConfirmPayment}
             disabled={isVerifying}
-            className={`w-full text-[13px] sm:text-sm font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center shadow-2xl ${
+            className={`flex-1 text-[13px] sm:text-sm font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center shadow-2xl ${
               isVerifying
                 ? "bg-[#1A1A1A] text-[#666666] cursor-not-allowed border border-[#333333]"
                 : "bg-white text-black hover:bg-[#EAEAEA] active:scale-[0.99] border border-white"

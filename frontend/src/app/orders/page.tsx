@@ -126,7 +126,7 @@ export default function OrdersListPage() {
                       </div>
                       <div>
                         <span className="text-[#777777] uppercase block text-[10px]">PAYMENT GATEWAY</span>
-                        <span className="text-[#EDEDED] font-extrabold">{order.payment_method || "MIDTRANS // BITESHIP"}</span>
+                        <span className="text-[#EDEDED] font-extrabold">{order.payment_method ? `${order.payment_method.toUpperCase()} // DUITKU` : "DUITKU // BITESHIP"}</span>
                       </div>
                       {order.tracking_number && (
                         <div className="hidden md:block">
