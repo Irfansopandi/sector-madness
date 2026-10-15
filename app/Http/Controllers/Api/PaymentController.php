@@ -66,7 +66,7 @@ class PaymentController extends Controller
         if ($order->payment) {
             $order->payment->update([
                 'transaction_id'   => $ref,
-                'snap_token'       => $payUrl ?? $vaNo ?? $ref,
+                'snap_token'       => $vaNo ?? $payUrl ?? $ref,
                 'payload_response' => $duitkuRes['raw'] ?? [],
             ]);
         }

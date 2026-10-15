@@ -50,6 +50,11 @@ export default function CustomPaymentModal({
 
   if (!isOpen) return null;
 
+  // Sanitize VA Number and Payment URL:
+  const isVaUrl = Boolean(vaNumber && (vaNumber.startsWith("http://") || vaNumber.startsWith("https://")));
+  const effectivePaymentUrl = paymentUrl || (isVaUrl ? vaNumber : undefined);
+  const effectiveVa = isVaUrl ? undefined : vaNumber;
+
   // Format currency
   const formatIDR = (amount: number) => {
     return new Intl.NumberFormat("id-ID", {
@@ -71,7 +76,7 @@ export default function CustomPaymentModal({
           type: "va",
           title: "BCA VIRTUAL ACCOUNT",
           bankName: "BANK CENTRAL ASIA (BCA)",
-          vaNumber: vaNumber || `807770${cleanOrderDigits}`,
+          vaNumber: effectiveVa || `7007014${cleanOrderDigits}`,
           color: "#0066AE",
         };
       case "mandiri_va":
@@ -80,7 +85,7 @@ export default function CustomPaymentModal({
           type: "va",
           title: "MANDIRI VIRTUAL ACCOUNT",
           bankName: "BANK MANDIRI (BILL / VA)",
-          vaNumber: vaNumber || `891180${cleanOrderDigits}`,
+          vaNumber: effectiveVa || `891180${cleanOrderDigits}`,
           color: "#003A70",
         };
       case "bri_va":
@@ -88,7 +93,7 @@ export default function CustomPaymentModal({
           type: "va",
           title: "BRI VIRTUAL ACCOUNT (BRIVA)",
           bankName: "BANK RAKYAT INDONESIA",
-          vaNumber: vaNumber || `230000${cleanOrderDigits}`,
+          vaNumber: effectiveVa || `230000${cleanOrderDigits}`,
           color: "#00529C",
         };
       case "bni_va":
@@ -96,7 +101,7 @@ export default function CustomPaymentModal({
           type: "va",
           title: "BNI VIRTUAL ACCOUNT",
           bankName: "BANK NEGARA INDONESIA",
-          vaNumber: vaNumber || `827720${cleanOrderDigits}`,
+          vaNumber: effectiveVa || `827720${cleanOrderDigits}`,
           color: "#F15A22",
         };
       case "permata_va":
@@ -104,7 +109,7 @@ export default function CustomPaymentModal({
           type: "va",
           title: "PERMATA VIRTUAL ACCOUNT",
           bankName: "BANK PERMATA",
-          vaNumber: vaNumber || `850010${cleanOrderDigits}`,
+          vaNumber: effectiveVa || `850010${cleanOrderDigits}`,
           color: "#009B4D",
         };
       case "cimb_va":
@@ -437,9 +442,9 @@ export default function CustomPaymentModal({
 
         {/* Action Footer */}
         <div className="bg-[#111111] border-t border-[#222222] p-6 sm:p-8 shrink-0 flex flex-col sm:flex-row gap-3">
-          {paymentUrl && (
+          {effectivePaymentUrl && (
             <a
-              href={paymentUrl}
+              href={effectivePaymentUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full sm:w-auto text-[12px] font-mono font-bold uppercase tracking-[0.15em] transition-all flex items-center justify-center border border-white/40 text-white hover:bg-white hover:text-black py-4 px-6 text-center"

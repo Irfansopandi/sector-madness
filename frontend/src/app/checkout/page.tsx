@@ -537,12 +537,17 @@ function CheckoutContent() {
       const ordNo = existingOrder?.order_number || orderNumberParam;
       const fullNameCombined = fullName.trim() || existingOrder?.customer_info?.name || "Customer";
       showToast("Initializing Sector Madness custom payment gateway...", "success", "GATEWAY CONNECTED");
+      const pInfo = existingOrder?.payment_info;
+      const snap = pInfo?.snap_token || "";
+      const isUrl = snap.startsWith("http");
+
       setPaymentTxData({
         order_number: ordNo,
         payment_method: selectedPaymentMethod,
         grossAmount: grandTotal,
         receiverName: fullNameCombined,
-        vaNumber: existingOrder?.payment_info?.snap_token,
+        vaNumber: (pInfo as any)?.va_number || (!isUrl ? snap : undefined),
+        paymentUrl: (pInfo as any)?.payment_url || (isUrl ? snap : undefined),
         shipping_rate: selectedRate,
       });
       setCustomModalOpen(true);

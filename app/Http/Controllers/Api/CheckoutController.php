@@ -628,7 +628,7 @@ class CheckoutController extends Controller
         OrderPayment::create([
             'order_id'         => $order->id,
             'transaction_id'   => $reference,
-            'snap_token'       => $paymentUrl ?? $vaNumber ?? $reference,
+            'snap_token'       => $vaNumber ?? $paymentUrl ?? $reference,
             'payment_type'     => $request->payment_method,
             'payment_status'   => 'unpaid',
             'gross_amount'     => $grandTotal,
