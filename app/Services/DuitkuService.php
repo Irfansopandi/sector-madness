@@ -22,7 +22,7 @@ class DuitkuService
         $this->apiKey       = (string)(config('services.duitku.api_key') ?: (env('DUITKU_API_KEY') ?: '839fb4e6295437db048392368f3959f2'));
         $this->env          = strtolower((string)(config('services.duitku.env') ?: (env('DUITKU_ENV') ?: 'sandbox')));
         $this->callbackUrl  = (string)(config('services.duitku.callback_url') ?: (env('DUITKU_CALLBACK_URL') ?: 'https://sectormadness.com/api/webhook/duitku'));
-        $this->returnUrl    = (string)(config('services.duitku.return_url') ?: (env('DUITKU_RETURN_URL') ?: 'https://sectormadness.com/orders'));
+        $this->returnUrl    = (string)(config('services.duitku.return_url') ?: (env('DUITKU_RETURN_URL') ?: 'https://sectormadness.com/dashboard/orders'));
         $this->expiryPeriod = (int)(config('services.duitku.expiry_period') ?: 1440);
 
         $this->baseUrl = $this->env === 'production'
@@ -124,7 +124,7 @@ class DuitkuService
                 'shippingAddress' => $addressInfo,
             ],
             'callbackUrl'      => $this->callbackUrl,
-            'returnUrl'        => $this->returnUrl,
+            'returnUrl'        => 'https://sectormadness.com/dashboard/orders?view_order=' . $orderNumber,
             'signature'        => $signature,
             'expiryPeriod'     => $this->expiryPeriod,
         ];
