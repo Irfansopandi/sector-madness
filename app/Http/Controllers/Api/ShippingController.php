@@ -49,8 +49,13 @@ class ShippingController extends Controller
 
         $destCity = strtolower(trim($request->city ?? ''));
         $destProvince = strtolower(trim($request->province ?? ''));
+        $destDistrict = strtolower(trim($request->district ?? ''));
+        $destPostcode = (string)($request->destination_postcode ?? '');
 
-        $isKarawang = ($destCity === 'karawang' || $destCity === 'kabupaten karawang') && ($destProvince === 'jawa barat');
+        // Smart flexible Karawang detection (Karawang, Karawang Barat, postal code 413xx)
+        $isKarawang = str_contains($destCity, 'karawang') 
+            || str_contains($destDistrict, 'karawang')
+            || (!empty($destPostcode) && str_starts_with($destPostcode, '413'));
 
         $requestedCouriers = $request->couriers ?? 'jne,jnt';
         $couriersArray = explode(',', $requestedCouriers);
@@ -66,8 +71,9 @@ class ShippingController extends Controller
             $couriersToRequest = 'jne,jnt';
         }
 
-        // Panggil Biteship API asli bila API key terdaftar
-        if (!empty($apiKey)) {
+        // Panggil Biteship API asli bila API key terdaftar dan tidak dipaksa mock
+        $forceDummy = env('BITESHIP_FORCE_DUMMY', false);
+        if (!empty($apiKey) && !$forceDummy) {
             try {
                 $payload = [
                     'origin_area_id'      => $originAreaId ?: env('BITESHIP_ORIGIN_AREA_ID', 'IDNPJ001'),
@@ -95,7 +101,7 @@ class ShippingController extends Controller
                     'curl' => [
                         CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
                     ]
-                ])->timeout(30)->withHeaders([
+                ])->timeout(3)->withHeaders([
                     'Authorization' => 'Bearer ' . $apiKey,
                     'Content-Type'  => 'application/json',
                 ])->post($baseUrl . '/v1/rates/couriers', $payload);
@@ -120,65 +126,23 @@ class ShippingController extends Controller
                     ], 200);
                 }
 
-                // Selalu fallback ke dummy jika API Biteship gagal (misalnya pakai API key test)
+                // Fallback otomatis ke dummy jika API Biteship gagal / saldo habis (misal sandbox test key)
                 return response()->json([
                     'status' => true,
                     'data'   => $this->getDummyRates($request, $isKarawang, $originCity, $originPostcode, $originProvince),
                 ], 200);
 
             } catch (\Exception $e) {
-                Log::error('Biteship Exception: ' . $e->getMessage());
+                Log::warning('Biteship Rates API failed/timeout, falling back to local rates: ' . $e->getMessage());
                 
-                // Selalu fallback ke dummy jika ada error koneksi ke Biteship
-                if (true) {
-                    $multiplier = ceil(max(100, $request->weight ?? 1000) / 1000);
-                    $dummyRates = [
-                        [
-                            'courier_code'       => 'JNE',
-                            'courier_name'       => 'JNE LOGISTICS',
-                            'service_code'       => 'REG',
-                            'service_name'       => 'Reguler Service',
-                            'shipping_price'     => 15000 * $multiplier,
-                            'estimated_delivery' => '1-3 Days',
-                            'description'        => '[DUMMY LOCAL] Biteship Sandbox/API Error',
-                        ],
-                        [
-                            'courier_code'       => 'JNT',
-                            'courier_name'       => 'J&T LOGISTICS',
-                            'service_code'       => 'EZ',
-                            'service_name'       => 'EZ Service',
-                            'shipping_price'     => 14000 * $multiplier,
-                            'estimated_delivery' => '1-3 Days',
-                            'description'        => '[DUMMY LOCAL] Biteship Sandbox/API Error',
-                        ]
-                    ];
-                    
-                    if ($isKarawang) {
-                        $dummyRates[] = [
-                            'courier_code'       => 'GOSEND',
-                            'courier_name'       => 'GOSEND INSTANT',
-                            'service_code'       => 'INSTANT',
-                            'service_name'       => 'Instant Delivery',
-                            'shipping_price'     => 12000,
-                            'estimated_delivery' => '1-3 Hours',
-                            'description'        => '[DUMMY LOCAL] Biteship Sandbox/API Error',
-                        ];
-                    }
-
-                    return response()->json([
-                        'status' => true,
-                        'data'   => $dummyRates,
-                    ], 200);
-                }
-
                 return response()->json([
-                    'status'  => false,
-                    'message' => 'Exception when calling Biteship API',
-                ], 500);
+                    'status' => true,
+                    'data'   => $this->getDummyRates($request, $isKarawang, $originCity, $originPostcode, $originProvince),
+                ], 200);
             }
         }
 
-        // Fallback ke dummy jika API key belum diisi di .env
+        // Fallback ke dummy jika API key belum diisi di .env atau BITESHIP_FORCE_DUMMY=true
         return response()->json([
             'status' => true,
             'data'   => $this->getDummyRates($request, $isKarawang, $originCity, $originPostcode, $originProvince),
@@ -286,7 +250,11 @@ class ShippingController extends Controller
             $shippingAddress = $order->shipping_address ?? [];
             $destCity = strtolower(trim($shippingAddress['city'] ?? ''));
             $destProvince = strtolower(trim($shippingAddress['province'] ?? ''));
-            $isKarawang = ($destCity === 'karawang' || $destCity === 'kabupaten karawang') && ($destProvince === 'jawa barat');
+            $destDistrict = strtolower(trim($shippingAddress['district'] ?? ''));
+            $destPostcode = (string)($shippingAddress['postal_code'] ?? '');
+            $isKarawang = str_contains($destCity, 'karawang') 
+                || str_contains($destDistrict, 'karawang') 
+                || (!empty($destPostcode) && str_starts_with($destPostcode, '413'));
             
             if (!$isKarawang) {
                 return response()->json(['status' => false, 'message' => 'GoSend is only available for destinations in Kabupaten Karawang, Jawa Barat.'], 403);
@@ -391,14 +359,14 @@ class ShippingController extends Controller
                     ],
                     'status'         => 'allocated',
                     'shipper'        => [
-                        'name'    => $payload['shipper_contact_name'],
-                        'phone'   => $payload['shipper_contact_phone'],
-                        'address' => $payload['origin_address'],
+                        'name'    => $payload['origin_contact_name'] ?? 'Warehouse Admin',
+                        'phone'   => $payload['origin_contact_phone'] ?? '081234567890',
+                        'address' => $payload['origin_address'] ?? 'Warehouse Origin',
                     ],
                     'destination'    => [
-                        'name'    => $payload['destination_contact_name'],
-                        'phone'   => $payload['destination_contact_phone'],
-                        'address' => $payload['destination_address'],
+                        'name'    => $payload['destination_contact_name'] ?? 'Customer',
+                        'phone'   => $payload['destination_contact_phone'] ?? '081234567890',
+                        'address' => $payload['destination_address'] ?? 'Customer Address',
                     ]
                 ],
             ], 200);
@@ -422,7 +390,8 @@ class ShippingController extends Controller
             'data'   => $warehouse,
         ], 200);
     }
-    private function getDummyRates(Request $request, $isKarawang, $originCity, $originPostcode, $originProvince)
+
+    public function getDummyRates(Request $request, $isKarawang, $originCity, $originPostcode, $originProvince)
     {
         $destCity = strtolower(trim($request->city ?? ''));
         $destProvince = strtolower(trim($request->province ?? ''));

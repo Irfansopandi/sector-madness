@@ -498,28 +498,83 @@ class CheckoutController extends Controller
 
         $shippingRequest = new \Illuminate\Http\Request();
         $shippingRequest->replace([
-            'city' => $shippingAddressData['city'] ?? null,
-            'province' => $shippingAddressData['province'] ?? null,
-            'district' => $shippingAddressData['district'] ?? null,
+            'destination_area_id'  => $request->destination_area_id ?: ($shippingAddressData['area_id'] ?? null),
+            'city'                 => $shippingAddressData['city'] ?? null,
+            'province'             => $shippingAddressData['province'] ?? null,
+            'district'             => $shippingAddressData['district'] ?? null,
             'destination_postcode' => $shippingAddressData['postal_code'] ?? null,
-            'weight' => $totalWeightGrams,
-            'couriers' => strtolower($request->courier_code),
+            'weight'               => $totalWeightGrams,
+            'couriers'             => strtolower($request->courier_code),
         ]);
 
         $shippingController = app(\App\Http\Controllers\Api\ShippingController::class);
         $ratesResponse = $shippingController->rates($shippingRequest);
         $ratesData = $ratesResponse->getData(true);
 
+        $normalizeCourier = function($code) {
+            $c = strtoupper(trim($code ?? ''));
+            if (in_array($c, ['J&T', 'JET', 'JNT', 'J&T EXPRESS', 'J&T LOGISTICS'])) return 'JNT';
+            if (in_array($c, ['GO-SEND', 'GOSEND', 'GOJEK', 'GOSEND INSTANT'])) return 'GOSEND';
+            if (in_array($c, ['JNE', 'JNE EXPRESS', 'JNE LOGISTICS'])) return 'JNE';
+            if (in_array($c, ['SICEPAT', 'SI CEPAT', 'SICEPAT EXPRESS'])) return 'SICEPAT';
+            return $c;
+        };
+
         $validShippingCost = null;
+        $reqCourierNorm = $normalizeCourier($request->courier_code);
+        $reqService = strtoupper(trim($request->service_code ?? ''));
+
         if (isset($ratesData['status']) && $ratesData['status'] === true && !empty($ratesData['data'])) {
+            // 1. Exact courier + exact service match
             foreach ($ratesData['data'] as $rate) {
                 if (
-                    strtoupper($rate['courier_code']) === strtoupper($request->courier_code) &&
-                    strtoupper($rate['service_code']) === strtoupper($request->service_code)
+                    $normalizeCourier($rate['courier_code'] ?? '') === $reqCourierNorm &&
+                    strtoupper(trim($rate['service_code'] ?? '')) === $reqService
                 ) {
                     $validShippingCost = (int) $rate['shipping_price'];
                     break;
                 }
+            }
+
+            // 2. Exact courier match with any available service (if service code differs slightly)
+            if ($validShippingCost === null) {
+                foreach ($ratesData['data'] as $rate) {
+                    if ($normalizeCourier($rate['courier_code'] ?? '') === $reqCourierNorm) {
+                        $validShippingCost = (int) $rate['shipping_price'];
+                        break;
+                    }
+                }
+            }
+        }
+
+        // 3. Fallback calculation if Biteship was unreachable, empty, or balance depleted
+        if ($validShippingCost === null) {
+            $destCity = strtolower(trim($shippingAddressData['city'] ?? ''));
+            $destProvince = strtolower(trim($shippingAddressData['province'] ?? ''));
+            $destDistrict = strtolower(trim($shippingAddressData['district'] ?? ''));
+            $destPostcode = (string)($shippingAddressData['postal_code'] ?? '');
+            $isKarawang = str_contains($destCity, 'karawang') 
+                || str_contains($destDistrict, 'karawang') 
+                || (!empty($destPostcode) && str_starts_with($destPostcode, '413'));
+
+            $warehouse = \App\Models\Warehouse::where('is_primary', true)->first() ?? \App\Models\Warehouse::first();
+            $originCity = strtolower(trim($warehouse->city ?? 'karawang'));
+            $originProvince = strtolower(trim($warehouse->province ?? 'jawa barat'));
+            $originPostcode = (string)($warehouse->postal_code ?? '41361');
+
+            $fallbackRates = $shippingController->getDummyRates($shippingRequest, $isKarawang, $originCity, $originPostcode, $originProvince);
+            foreach ($fallbackRates as $rate) {
+                if ($normalizeCourier($rate['courier_code']) === $reqCourierNorm) {
+                    $validShippingCost = (int) $rate['shipping_price'];
+                    break;
+                }
+            }
+
+            // If still null, use the first available fallback rate or provided shipping price
+            if ($validShippingCost === null && !empty($fallbackRates)) {
+                $validShippingCost = (int) $fallbackRates[0]['shipping_price'];
+            } elseif ($validShippingCost === null && (int)$request->shipping_price > 0) {
+                $validShippingCost = (int) $request->shipping_price;
             }
         }
 
