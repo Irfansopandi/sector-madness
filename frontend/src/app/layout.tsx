@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://www.sectormadness.com"),
   title: "SECTOR MADNESS",
   description:
-    "Sector Madness is not just clothing, but a movement and identity. Each collection represents a different sector of creativity, mindset, and expression. Designed for those who move differently.",
+    "We trust quality. Sector Madness is not just clothing, but a movement and identity. Each collection represents a different sector of creativity, mindset, and expression.",
   icons: {
     icon: "/images/tab-icon.png",
     shortcut: "/images/tab-icon.png",
