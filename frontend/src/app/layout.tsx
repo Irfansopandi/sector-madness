@@ -18,6 +18,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://sectormadness.com"),
   title: "SECTOR MADNESS",
   description:
     "Sector Madness is not just clothing, but a movement and identity. Each collection represents a different sector of creativity, mindset, and expression. Designed for those who move differently.",
@@ -28,6 +29,12 @@ export const metadata: Metadata = {
   },
   keywords: [
     "sector madness",
+    "sectormadness",
+    "streetwear indonesia",
+    "brand lokal indonesia",
+    "local pride indonesia",
+    "oversized t-shirt",
+    "clothing brand",
     "We trust quality",
     "Premium fashion",
     "independent fashion",
@@ -38,6 +45,8 @@ export const metadata: Metadata = {
     description:
       "We trust quality. Sector Madness official archive and store.",
     type: "website",
+    url: "https://sectormadness.com",
+    siteName: "SECTOR MADNESS",
   },
 };
 
