@@ -225,8 +225,11 @@ export default function Hero() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.7, delay: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-                style={{ padding: "clamp(8px, 1.5vw, 12px) clamp(24px, 4vw, 40px)" }}
-                className="mt-16 md:mt-20 inline-flex items-center justify-center bg-[#F5F5F5] hover:bg-[#E5E5E5] text-[#0A0A0A] rounded-full font-sans font-medium text-[11px] md:text-[13px] transition-colors duration-300 shadow-lg"
+                style={{
+                  padding: "clamp(8px, 1.5vw, 12px) clamp(24px, 4vw, 40px)",
+                  marginTop: "clamp(23px, 4vw, 40px)",
+                }}
+                className="inline-flex items-center justify-center bg-[#F5F5F5] hover:bg-[#E5E5E5] text-[#0A0A0A] rounded-[4px] font-sans font-medium text-[11px] md:text-[13px] transition-colors duration-300 shadow-lg"
               >
                 Shop now
               </motion.a>

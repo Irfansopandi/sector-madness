@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderPayment;
-use App\Services\DuitkuService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -13,15 +12,8 @@ use Illuminate\Support\Str;
 
 class PaymentController extends Controller
 {
-    protected DuitkuService $duitkuService;
-
-    public function __construct(DuitkuService $duitkuService)
-    {
-        $this->duitkuService = $duitkuService;
-    }
-
     /**
-     * Generate Payment Token / URL for an Order (Duitku / Midtrans)
+     * Generate Payment Token / URL for an Order (Midtrans)
      * Endpoint: POST /api/payment/token/{order_number}
      */
     public function generateToken(Request $request, $order_number)
@@ -34,53 +26,98 @@ class PaymentController extends Controller
             return response()->json(['status' => false, 'message' => 'Order not found'], 404);
         }
 
-        // --- 1. Duitku Gateway Integration (Exclusively) ---
-        $paymentMethod = $order->payment?->payment_type ?? $request->input('payment_method', 'bca_va');
-        $shippingData = [];
-        if ($order->shipment) {
-            $shippingData = [
-                'receiver_name'  => $order->user?->name ?? 'Customer',
-                'phone_number'   => $order->user?->phone ?? '08123456789',
-                'street_address' => $order->shipment->destination_address ?? 'Customer Address',
-                'city'           => $order->shipment->destination_city ?? 'Jakarta',
-                'postal_code'    => $order->shipment->destination_postal_code ?? '10110',
+        $serverKey = config('services.midtrans.server_key') ?: env('MIDTRANS_SERVER_KEY');
+        $isProduction = filter_var(config('services.midtrans.is_production', env('MIDTRANS_IS_PRODUCTION', false)), FILTER_VALIDATE_BOOLEAN);
+
+        $endpoint = $isProduction 
+            ? 'https://app.midtrans.com/snap/v1/transactions' 
+            : 'https://app.sandbox.midtrans.com/snap/v1/transactions';
+
+        $itemDetails = [];
+        foreach ($order->items as $item) {
+            $rawP = (float)$item->price;
+            $itemP = (int)($rawP < 1000 ? $rawP * 1000 : $rawP);
+            $itemDetails[] = [
+                'id'       => $item->product_id ? (string)$item->product_id : 'SM-001',
+                'price'    => $itemP,
+                'quantity' => (int)$item->quantity,
+                'name'     => substr($item->product_name . ($item->color || $item->size ? ' (' . implode(', ', array_filter([$item->color, $item->size])) . ')' : ''), 0, 48),
+            ];
+        }
+        if ($order->shipment && $order->shipment->shipping_cost > 0) {
+            $itemDetails[] = [
+                'id'       => 'SHIPPING',
+                'price'    => (int)$order->shipment->shipping_cost,
+                'quantity' => 1,
+                'name'     => 'Shipping Cost (' . ($order->shipment->courier_company ?? 'COURIER') . ')',
             ];
         }
 
-        $duitkuRes = $this->duitkuService->createInvoice($order, $paymentMethod, $shippingData);
+        $rawTotal = (float)$order->total_amount;
+        $grossAmount = (int)($rawTotal < 1000 ? $rawTotal * 1000 : $rawTotal);
 
-        if (!$duitkuRes['success']) {
-            Log::error("Duitku createInvoice failed in generateToken for Order {$order_number}: " . ($duitkuRes['error'] ?? 'Unknown error'));
+        // Balance item_details sum with grossAmount strictly for Midtrans
+        $sumItems = array_reduce($itemDetails, fn($acc, $i) => $acc + ($i['price'] * $i['quantity']), 0);
+        if ($sumItems !== $grossAmount) {
+            $itemDetails = [[
+                'id'       => substr($order->order_number, 0, 48),
+                'price'    => $grossAmount,
+                'quantity' => 1,
+                'name'     => 'Order #' . $order->order_number,
+            ]];
+        }
+
+        $payload = [
+            'transaction_details' => [
+                'order_id'     => $order->order_number,
+                'gross_amount' => $grossAmount,
+            ],
+            'customer_details' => [
+                'first_name' => $order->user ? $order->user->name : 'Customer',
+                'email'      => $order->user ? $order->user->email : 'customer@sectormadness.com',
+                'phone'      => $order->user ? ($order->user->phone ?? '+628123456789') : '+628123456789',
+            ],
+            'item_details' => $itemDetails,
+        ];
+
+        try {
+            $response = Http::withBasicAuth($serverKey, '')
+                ->withHeaders(['Content-Type' => 'application/json'])
+                ->post($endpoint, $payload);
+
+            if ($response->successful()) {
+                $snapToken = $response->json()['token'] ?? null;
+                $redirectUrl = $response->json()['redirect_url'] ?? null;
+
+                if ($order->payment) {
+                    $order->payment->update([
+                        'snap_token'       => $snapToken ?? $order->payment->snap_token,
+                        'payload_response' => $response->json(),
+                    ]);
+                }
+
+                return response()->json([
+                    'status'       => true,
+                    'gateway'      => 'midtrans',
+                    'token'        => $snapToken,
+                    'redirect_url' => $redirectUrl,
+                    'payment_url'  => $redirectUrl,
+                    'va_number'    => $order->payment?->snap_token,
+                ], 200);
+            }
+
+            Log::error("Midtrans Snap token generation failed for {$order_number}: " . $response->body());
             return response()->json([
                 'status'  => false,
-                'message' => 'Gagal membuat invoice Duitku: ' . ($duitkuRes['error'] ?? 'Koneksi gateway gagal'),
-                'details' => $duitkuRes['raw'] ?? null,
+                'message' => 'Gagal generate Snap Token Midtrans: ' . $response->body(),
             ], 422);
+        } catch (\Exception $e) {
+            Log::error("Midtrans Exception in generateToken: " . $e->getMessage());
+            return response()->json([
+                'status'  => false,
+                'message' => 'Exception when calling Midtrans Server: ' . $e->getMessage()
+            ], 500);
         }
-
-        $ref    = $duitkuRes['reference'];
-        $payUrl = $duitkuRes['payment_url'];
-        $vaNo   = $duitkuRes['va_number'];
-        $qr     = $duitkuRes['qr_string'];
-
-        if ($order->payment) {
-            $order->payment->update([
-                'transaction_id'   => $ref,
-                'snap_token'       => $vaNo ?? $payUrl ?? $ref,
-                'payload_response' => $duitkuRes['raw'] ?? [],
-            ]);
-        }
-
-        return response()->json([
-            'status'       => true,
-            'gateway'      => 'duitku',
-            'token'        => $ref ?? $vaNo,
-            'reference'    => $ref,
-            'redirect_url' => $payUrl,
-            'payment_url'  => $payUrl,
-            'va_number'    => $vaNo,
-            'qr_string'    => $qr,
-        ], 200);
     }
 
     /**
@@ -101,7 +138,7 @@ class PaymentController extends Controller
             return response()->json(['status' => false, 'message' => 'Missing order_id'], 400);
         }
 
-        $order = Order::with('payment')->where('order_number', $orderNumber)->first();
+        $order = Order::with(['payment', 'items', 'shipment'])->where('order_number', $orderNumber)->first();
         if (!$order) {
             return response()->json(['status' => false, 'message' => 'Order not found'], 404);
         }
@@ -111,19 +148,20 @@ class PaymentController extends Controller
             return response()->json(['status' => false, 'message' => 'Missing signature components'], 403);
         }
 
-        $serverKey = env('MIDTRANS_SERVER_KEY');
+        $serverKey = config('services.midtrans.server_key') ?: env('MIDTRANS_SERVER_KEY');
         $expectedSignature = hash('sha512', $orderNumber . $statusCode . $grossAmount . $serverKey);
         
         if (!hash_equals($expectedSignature, $signatureKey)) {
+            Log::warning("Midtrans Webhook: Signature mismatch for Order {$orderNumber}");
             return response()->json(['status' => false, 'message' => 'Invalid signature'], 403);
         }
 
         // --- 2. GROSS AMOUNT VALIDATION ---
-        // Ensure gross_amount from Midtrans matches order's actual total_amount
         $midtransAmount = (float)$grossAmount;
         $orderAmount = (float)$order->total_amount;
         
-        if (abs($midtransAmount - $orderAmount) > 0.01) {
+        if (abs($midtransAmount - $orderAmount) > 1.0) {
+            Log::warning("Midtrans Webhook: Gross amount mismatch for Order {$orderNumber}: {$midtransAmount} vs {$orderAmount}");
             return response()->json(['status' => false, 'message' => 'Gross amount mismatch'], 400);
         }
 
@@ -151,7 +189,7 @@ class PaymentController extends Controller
         if ($order->payment) {
             $order->payment->update([
                 'payment_status'   => $status,
-                'transaction_id'   => $notif['transaction_id'] ?? null,
+                'transaction_id'   => $notif['transaction_id'] ?? $order->payment->transaction_id,
                 'payment_type'     => $notif['payment_type'] ?? $order->payment->payment_type,
                 'payload_response' => $notif,
                 'paid_at'          => $status === 'paid' ? now() : null,
@@ -159,95 +197,6 @@ class PaymentController extends Controller
         }
 
         if ($status === 'paid') {
-            $order->update(['status' => 'paid']);
-
-            // Create a dummy Biteship Tracking Number if it doesn't exist
-            if ($order->shipment && empty($order->shipment->tracking_number)) {
-                $courier = strtoupper($order->shipment->courier_company ?? 'JNT');
-                $order->shipment->update([
-                    'tracking_number' => $courier . '-' . time()
-                ]);
-            }
-
-            // Admin Notifications
-            try {
-                $admins = \App\Models\Admin::all();
-                $title = '🛒 New Paid Order Received';
-                $message = "Order baru #{$order->order_number} telah dibayar senilai Rp " . number_format($order->total_amount, 0, ',', '.');
-
-                // 1. Internal DB Notification (Bell)
-                \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\AdminOrderNotification($title, $message, $order->order_number));
-
-                // 2. External Web Push
-                \App\Jobs\SendAdminPushNotification::dispatch($title, $message, '/admin/orders?tab=processing');
-            } catch (\Exception $e) {
-                Log::error('Admin Notification Failed on Webhook: ' . $e->getMessage());
-            }
-        } elseif ($status === 'failed') {
-            $order->update(['status' => 'cancelled']);
-        }
-
-        return response()->json(['status' => true, 'message' => 'Notification processed'], 200);
-    }
-
-    /**
-     * Webhook Notification from Duitku Server
-     * Endpoint: POST /api/webhook/duitku
-     */
-    public function webhookDuitku(Request $request)
-    {
-        $params = $request->all();
-        Log::info('Duitku Webhook Received: ', $params);
-
-        // 1. Signature Validation
-        if (!$this->duitkuService->validateCallback($params)) {
-            Log::warning('Duitku Webhook: Invalid Signature', $params);
-            return response()->json(['status' => false, 'message' => 'Invalid signature'], 403);
-        }
-
-        $orderNumber = $params['merchantOrderId'] ?? null;
-        $amount      = (float)($params['amount'] ?? 0);
-        $resultCode  = $params['resultCode'] ?? null; // "00" = Success, "01" = Failed
-        $reference   = $params['reference'] ?? null;
-
-        if (!$orderNumber) {
-            return response()->json(['status' => false, 'message' => 'Missing merchantOrderId'], 400);
-        }
-
-        $order = Order::with(['items', 'payment', 'shipment', 'user'])
-            ->where('order_number', $orderNumber)
-            ->first();
-
-        if (!$order) {
-            Log::warning("Duitku Webhook: Order {$orderNumber} not found");
-            return response()->json(['status' => false, 'message' => 'Order not found'], 404);
-        }
-
-        // 2. Amount Validation
-        $orderAmount = (float)$order->total_amount;
-        if (abs($amount - $orderAmount) > 1.0) {
-            Log::warning("Duitku Webhook: Amount mismatch for {$orderNumber}: {$amount} vs {$orderAmount}");
-            return response()->json(['status' => false, 'message' => 'Amount mismatch'], 400);
-        }
-
-        // 3. Idempotency Check
-        if ($order->status === 'paid' && $resultCode === '00') {
-            Log::info("Duitku Webhook: Order {$orderNumber} already processed");
-            return response('SUCCESS', 200)->header('Content-Type', 'text/plain');
-        }
-
-        // 4. Update Status based on resultCode
-        if ($resultCode === '00') {
-            if ($order->payment) {
-                $order->payment->update([
-                    'payment_status'   => 'paid',
-                    'transaction_id'   => $reference ?? $order->payment->transaction_id,
-                    'payment_type'     => $params['paymentCode'] ?? $order->payment->payment_type,
-                    'payload_response' => $params,
-                    'paid_at'          => now(),
-                ]);
-            }
-
             $isFirstTime = in_array($order->status, ['pending', 'unpaid']);
             $order->update(['status' => 'paid']);
 
@@ -267,7 +216,7 @@ class PaymentController extends Controller
                     }
                 }
 
-                // Clear user cart upon successful payment
+                // Clear user cart
                 if ($order->user_id) {
                     $cart = \App\Models\Cart::where('user_id', $order->user_id)->first();
                     if ($cart) {
@@ -287,30 +236,23 @@ class PaymentController extends Controller
             // Admin Notifications
             try {
                 $admins = \App\Models\Admin::all();
-                $title = '🛒 New Paid Order Received (Duitku)';
-                $message = "Order baru #{$order->order_number} telah dibayar via Duitku senilai Rp " . number_format($order->total_amount, 0, ',', '.');
+                $title = '🛒 New Paid Order Received (Midtrans)';
+                $message = "Order baru #{$order->order_number} telah dibayar via Midtrans senilai Rp " . number_format($order->total_amount, 0, ',', '.');
 
+                // 1. Internal DB Notification (Bell)
                 \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\AdminOrderNotification($title, $message, $order->order_number));
+
+                // 2. External Web Push
                 \App\Jobs\SendAdminPushNotification::dispatch($title, $message, '/admin/orders?tab=processing');
             } catch (\Exception $e) {
-                Log::error('Admin Notification Failed on Duitku Webhook: ' . $e->getMessage());
+                Log::error('Admin Notification Failed on Webhook: ' . $e->getMessage());
             }
-
-            Log::info("Duitku Webhook: Order {$orderNumber} successfully marked as PAID");
-        } else {
-            if ($order->payment) {
-                $order->payment->update([
-                    'payment_status'   => 'failed',
-                    'payload_response' => $params,
-                ]);
-            }
+        } elseif ($status === 'failed') {
             $order->update(['status' => 'cancelled']);
-            Log::info("Duitku Webhook: Order {$orderNumber} marked as CANCELLED (resultCode: {$resultCode})");
         }
 
-        return response('SUCCESS', 200)->header('Content-Type', 'text/plain');
+        return response()->json(['status' => true, 'message' => 'Notification processed'], 200);
     }
-
 
     /**
      * Generate Instant Snap Token for Frontend Direct Checkout
@@ -318,8 +260,8 @@ class PaymentController extends Controller
      */
     public function instantToken(Request $request)
     {
-        $serverKey = env('MIDTRANS_SERVER_KEY');
-        $isProduction = env('MIDTRANS_IS_PRODUCTION', false);
+        $serverKey = config('services.midtrans.server_key') ?: env('MIDTRANS_SERVER_KEY');
+        $isProduction = filter_var(config('services.midtrans.is_production', env('MIDTRANS_IS_PRODUCTION', false)), FILTER_VALIDATE_BOOLEAN);
         
         $endpoint = $isProduction 
             ? 'https://app.midtrans.com/snap/v1/transactions' 

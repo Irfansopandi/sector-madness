@@ -69,7 +69,23 @@ Route::post('/shipping/create/{order_number}', [ShippingController::class, 'crea
 Route::post('/payment/token/{order_number}', [PaymentController::class, 'generateToken']);
 Route::post('/payment/instant-token', [PaymentController::class, 'instantToken']);
 Route::post('/webhook/midtrans', [PaymentController::class, 'webhook']);
-Route::post('/webhook/duitku', [PaymentController::class, 'webhookDuitku']);
+
+// Clear cache helper via API
+Route::get('/clear-cache', function () {
+    \Illuminate\Support\Facades\Artisan::call('config:clear');
+    \Illuminate\Support\Facades\Artisan::call('route:clear');
+    \Illuminate\Support\Facades\Artisan::call('cache:clear');
+    \Illuminate\Support\Facades\Artisan::call('view:clear');
+
+    return response()->json([
+        'status'  => true,
+        'message' => 'Semua cache Laravel (config, route, cache, view) berhasil dibersihkan!',
+        'midtrans_env' => [
+            'is_production' => config('services.midtrans.is_production'),
+            'server_key_set' => !empty(config('services.midtrans.server_key')),
+        ]
+    ]);
+});
 
 /*
 |--------------------------------------------------------------------------

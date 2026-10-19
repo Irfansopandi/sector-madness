@@ -449,7 +449,18 @@ export default function CustomPaymentModal({
               rel="noopener noreferrer"
               className="w-full sm:w-auto text-[12px] font-mono font-bold uppercase tracking-[0.15em] transition-all flex items-center justify-center border border-white/40 text-white hover:bg-white hover:text-black py-4 px-6 text-center"
             >
-              <span>PAY ON DUITKU PAGE ↗</span>
+              <span>PAY ON MIDTRANS PAGE ↗</span>
+            </a>
+          )}
+          {paymentInfo.type === "va" && (
+            <a
+              href="https://simulator.sandbox.midtrans.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full sm:w-auto text-[11px] font-mono font-bold uppercase tracking-[0.15em] transition-all flex items-center justify-center border border-[#333333] text-[#A78BFA] hover:bg-[#A78BFA] hover:text-black py-4 px-5 text-center"
+              title="Open Midtrans Sandbox Payment Simulator to test Virtual Account payments"
+            >
+              <span>MIDTRANS SIMULATOR ↗</span>
             </a>
           )}
           <button
