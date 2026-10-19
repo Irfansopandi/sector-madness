@@ -18,7 +18,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://sectormadness.com"),
+  metadataBase: new URL("https://www.sectormadness.com"),
   title: "SECTOR MADNESS",
   description:
     "Sector Madness is not just clothing, but a movement and identity. Each collection represents a different sector of creativity, mindset, and expression. Designed for those who move differently.",
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     description:
       "We trust quality. Sector Madness official archive and store.",
     type: "website",
-    url: "https://sectormadness.com",
+    url: "https://www.sectormadness.com",
     siteName: "SECTOR MADNESS",
   },
 };

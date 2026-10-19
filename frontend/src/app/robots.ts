@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/admin/", "/checkout/", "/dashboard/", "/account/"],
       },
     ],
-    sitemap: "https://sectormadness.com/sitemap.xml",
+    sitemap: "https://www.sectormadness.com/sitemap.xml",
   };
 }
