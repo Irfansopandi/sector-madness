@@ -69,6 +69,20 @@ Route::post('/shipping/create/{order_number}', [ShippingController::class, 'crea
 Route::post('/payment/token/{order_number}', [PaymentController::class, 'generateToken']);
 Route::post('/payment/instant-token', [PaymentController::class, 'instantToken']);
 Route::post('/webhook/midtrans', [PaymentController::class, 'webhook']);
+Route::post('/payment/notification', [PaymentController::class, 'webhook']);
+Route::post('/midtrans/notification', [PaymentController::class, 'webhook']);
+Route::get('/payment/notification', function () {
+    return response()->json([
+        'status'  => true,
+        'message' => 'Midtrans Payment Notification Webhook is active and ready to receive POST requests.'
+    ]);
+});
+Route::get('/webhook/midtrans', function () {
+    return response()->json([
+        'status'  => true,
+        'message' => 'Midtrans Payment Notification Webhook is active and ready to receive POST requests.'
+    ]);
+});
 
 // Clear cache helper via API
 Route::get('/clear-cache', function () {
