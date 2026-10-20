@@ -640,6 +640,7 @@ export default function AdminSalesReportPage() {
                       <option value="SHIPPED">SHIPPED / DELIVERING</option>
                       <option value="PROCESSING">PROCESSING / PENDING</option>
                       <option value="PAID">PAID</option>
+                      <option value="UNPAID">UNPAID</option>
                     </select>
                   </div>
 

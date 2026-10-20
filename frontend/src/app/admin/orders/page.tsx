@@ -388,18 +388,47 @@ export default function AdminOrdersPage() {
         ? "IN PROCESSING"
         : rawSt;
 
-    const matchesStatus =
-      statusFilter === "ALL" ||
-      mappedStatus === statusFilter ||
-      (statusFilter === "CANCEL PENDING" &&
-        (mappedStatus === "CANCEL PENDING" || mappedStatus === "CANCEL_PENDING" || mappedStatus === "CANCEL_REQUESTED"));
+    const rawPaySt = (ord.payment_status || (ord as any).payment?.payment_status || "").toUpperCase();
+    const isPaid = rawPaySt === "PAID" || rawPaySt === "SETTLED" || rawPaySt === "SUCCESS";
+
+    let matchesStatus = true;
+    if (statusFilter === "ALL") {
+      matchesStatus = true;
+    } else if (statusFilter === "PAID") {
+      matchesStatus = isPaid;
+    } else if (statusFilter === "UNPAID") {
+      matchesStatus = !isPaid;
+    } else if (statusFilter === "CANCEL PENDING") {
+      matchesStatus =
+        mappedStatus === "CANCEL PENDING" ||
+        mappedStatus === "CANCEL_PENDING" ||
+        mappedStatus === "CANCEL_REQUESTED";
+    } else {
+      matchesStatus = mappedStatus === statusFilter;
+    }
 
     return matchesSearch && matchesTab && matchesStatus;
   }).sort((a, b) => {
-    const timeA = new Date(a.created_at || a.order_date || 0).getTime();
-    const timeB = new Date(b.created_at || b.order_date || 0).getTime();
+    const timeA = new Date(a.created_at || (a as any).order_date || 0).getTime();
+    const timeB = new Date(b.created_at || (b as any).order_date || 0).getTime();
+
     if (sortBy === "NEWEST") return timeB - timeA;
     if (sortBy === "OLDEST") return timeA - timeB;
+
+    if (sortBy === "PAYMENT_PAID" || sortBy === "PAID") {
+      const payA = ((a.payment_status || (a as any).payment?.payment_status || "").toUpperCase() === "PAID" || (a.payment_status || "").toUpperCase() === "SETTLED" || (a.payment_status || "").toUpperCase() === "SUCCESS") ? 1 : 0;
+      const payB = ((b.payment_status || (b as any).payment?.payment_status || "").toUpperCase() === "PAID" || (b.payment_status || "").toUpperCase() === "SETTLED" || (b.payment_status || "").toUpperCase() === "SUCCESS") ? 1 : 0;
+      if (payB !== payA) return payB - payA;
+      return timeB - timeA;
+    }
+
+    if (sortBy === "PAYMENT_UNPAID" || sortBy === "UNPAID") {
+      const payA = ((a.payment_status || (a as any).payment?.payment_status || "").toUpperCase() === "PAID" || (a.payment_status || "").toUpperCase() === "SETTLED" || (a.payment_status || "").toUpperCase() === "SUCCESS") ? 1 : 0;
+      const payB = ((b.payment_status || (b as any).payment?.payment_status || "").toUpperCase() === "PAID" || (b.payment_status || "").toUpperCase() === "SETTLED" || (b.payment_status || "").toUpperCase() === "SUCCESS") ? 1 : 0;
+      if (payA !== payB) return payA - payB;
+      return timeB - timeA;
+    }
+
     return 0;
   });
 
@@ -636,6 +665,8 @@ export default function AdminOrdersPage() {
                   }}
                 >
                   <option value="ALL">SEMUA STATUS</option>
+                  <option value="PAID">PAID</option>
+                  <option value="UNPAID">UNPAID</option>
                   <option value="IN PROCESSING">IN PROCESSING</option>
                   <option value="SHIPPED">SHIPPED</option>
                   <option value="DELIVERED">DELIVERED</option>
@@ -662,6 +693,8 @@ export default function AdminOrdersPage() {
                 >
                   <option value="NEWEST">TERBARU</option>
                   <option value="OLDEST">TERLAMA</option>
+                  <option value="PAYMENT_PAID">STATUS PAYMENT: PAID</option>
+                  <option value="PAYMENT_UNPAID">STATUS PAYMENT: UNPAID</option>
                 </select>
               </div>
             </div>
@@ -796,8 +829,17 @@ export default function AdminOrdersPage() {
                         >
                           Rp {(ord.total || 0).toLocaleString("id-ID")}
                         </td>
-                        <td style={{ padding: "14px 16px" }} className="font-bold text-emerald-500 whitespace-nowrap">
-                          {ord.payment_status || "PAID"}
+                        <td
+                          style={{ padding: "14px 16px" }}
+                          className={`font-bold whitespace-nowrap ${
+                            (ord.payment_status || "").toUpperCase() === "PAID" ||
+                            (ord.payment_status || "").toUpperCase() === "SETTLED" ||
+                            (ord.payment_status || "").toUpperCase() === "SUCCESS"
+                              ? "text-emerald-500"
+                              : "text-amber-400"
+                          }`}
+                        >
+                          {ord.payment_status || "UNPAID"}
                         </td>
                         <td style={{ padding: "14px 16px" }} className="whitespace-nowrap">
                           {(() => {

@@ -572,18 +572,23 @@ class OrderController extends Controller
                 break;
         }
 
-        // Fetch valid non-cancelled orders within period
+        // Fetch valid non-cancelled orders with PAID payment status within period
         $orders = Order::with(['items', 'payment', 'shipment'])
             ->where('created_at', '>=', $startDate)
             ->get()
-            ->reject(function ($ord) {
+            ->filter(function ($ord) {
                 $st = strtoupper((string)($ord->status ?? ''));
                 $shipSt = strtoupper((string)($ord->shipment ? $ord->shipment->status : ''));
                 $paySt = strtoupper((string)($ord->payment ? $ord->payment->payment_status : ''));
-                return in_array($st, ['CANCELLED', 'CANCELED', 'DIBATALKAN']) ||
-                       in_array($shipSt, ['CANCELLED', 'CANCELED', 'DIBATALKAN']) ||
-                       in_array($paySt, ['CANCELLED', 'CANCELED', 'DIBATALKAN']);
-            });
+
+                $isCancelled = in_array($st, ['CANCELLED', 'CANCELED', 'DIBATALKAN']) ||
+                               in_array($shipSt, ['CANCELLED', 'CANCELED', 'DIBATALKAN']) ||
+                               in_array($paySt, ['CANCELLED', 'CANCELED', 'DIBATALKAN']);
+
+                $isPaid = in_array($paySt, ['PAID', 'SETTLED', 'SUCCESS']) || ($st === 'PAID');
+
+                return !$isCancelled && $isPaid;
+            })->values();
 
         // 1. Group Sales Trend Data based on period
         $salesTrend = [];

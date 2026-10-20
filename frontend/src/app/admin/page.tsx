@@ -288,14 +288,21 @@ export default function AdminDashboardPage() {
     retry: false,
   });
 
+  // Helper to check if an order has paid status
+  const checkIsOrderPaid = (ord: any) => {
+    const paySt = (ord.payment_status || ord.payment?.payment_status || "").toUpperCase();
+    return paySt === "PAID" || paySt === "SETTLED" || paySt === "SUCCESS";
+  };
+
+  const checkIsOrderCancelled = (ord: any) => {
+    const st = (ord.shipping_status || ord.status || "").toUpperCase();
+    const paySt = (ord.payment_status || ord.payment?.payment_status || "").toUpperCase();
+    return st === "CANCELLED" || st === "CANCELED" || st === "DIBATALKAN" || st === "FAILED" || paySt === "CANCELLED" || paySt === "FAILED";
+  };
+
   // Calculate real-time metrics dynamically from active database state (Only paid & non-cancelled orders)
   const validOrders = orders.filter((ord) => {
-    const st = (ord.shipping_status || ord.status || "").toUpperCase();
-    const paySt = (ord.payment?.payment_status || "").toUpperCase();
-    const isCancelled = st === "CANCELLED" || st === "CANCELED" || st === "DIBATALKAN" || st === "FAILED" || paySt === "CANCELLED" || paySt === "FAILED";
-    const isPaid = paySt === "PAID" || paySt === "SETTLED" || paySt === "SUCCESS" || st === "PROCESSING" || st === "SHIPPED" || st === "DELIVERING" || st === "DELIVERED" || st === "COMPLETED" || st === "SELESAI" || st === "RECEIVED" || st === "IN PROCESSING";
-    
-    return !isCancelled && isPaid;
+    return !checkIsOrderCancelled(ord) && checkIsOrderPaid(ord);
   });
 
   const totalRevenue = validOrders.reduce((sum, ord) => sum + (ord.total || 0), 0);
@@ -311,23 +318,7 @@ export default function AdminDashboardPage() {
 
   const recentOrders = orders
     .filter((ord) => {
-      const st = (ord.shipping_status || ord.status || "").toUpperCase();
-      const ordSt = (ord.status || "").toUpperCase();
-      const isCancelled = st === "CANCELLED" || st === "CANCELED" || st === "DIBATALKAN" || ordSt === "CANCELLED" || ordSt === "DIBATALKAN";
-      const isCompleted = st === "COMPLETED" || st === "SELESAI" || st === "RECEIVED" || ordSt === "COMPLETED" || ordSt === "SELESAI" || ordSt === "RECEIVED";
-      
-      let isDeliveredAutoFinished = false;
-      if (st === "DELIVERED" || ordSt === "DELIVERED" || st === "DELIVERY" || ordSt === "DELIVERY" || st === "DELIVERING" || ordSt === "DELIVERING") {
-        const timeRef = ord.updated_at || ord.created_at || ord.order_date || "";
-        if (timeRef) {
-          const updateTime = new Date(timeRef).getTime();
-          if (!isNaN(updateTime) && Date.now() - updateTime > 5 * 24 * 60 * 60 * 1000) {
-            isDeliveredAutoFinished = true;
-          }
-        }
-      }
-
-      return !isCancelled && !isCompleted && !isDeliveredAutoFinished;
+      return !checkIsOrderCancelled(ord) && checkIsOrderPaid(ord);
     })
     .slice(0, 6);
 
@@ -477,7 +468,7 @@ export default function AdminDashboardPage() {
               />
               <AdminStatCard
                 label="PRODUK TERJUAL"
-                value={totalItemsSold > 0 ? `${totalItemsSold} UNIT` : "20 UNIT"}
+                value={`${totalItemsSold} UNIT`}
                 subtext="Total unit produk berhasil terjual"
                 icon={<PackageCheck />}
                 accentColor="#0A0A0A"

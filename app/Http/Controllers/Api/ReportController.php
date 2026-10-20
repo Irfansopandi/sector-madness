@@ -81,7 +81,11 @@ class ReportController extends Controller
                 }
                 if ($statusInput === 'paid') {
                     $paySt = strtolower((string)($ord->payment ? $ord->payment->payment_status : ''));
-                    return $st === 'paid' || $paySt === 'paid';
+                    return $st === 'paid' || in_array($paySt, ['paid', 'settled', 'success']);
+                }
+                if ($statusInput === 'unpaid') {
+                    $paySt = strtolower((string)($ord->payment ? $ord->payment->payment_status : ''));
+                    return in_array($paySt, ['unpaid', 'pending']) || empty($paySt) || $st === 'unpaid';
                 }
                 return $st === $statusInput;
             })->values();
