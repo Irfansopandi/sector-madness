@@ -388,7 +388,7 @@ class OrderController extends Controller
                 'customer_phone'  => $customerPhone,
                 'shipping_address'=> $addr,
                 'total'           => $grandTotal,
-                'payment_status'  => $order->payment ? strtoupper($order->payment->payment_status) : strtoupper($order->status),
+                'payment_status'  => (($order->payment && in_array(strtolower($order->payment->payment_status), ['paid', 'settled', 'success'])) || in_array(strtolower($order->status), ['paid', 'settled', 'success', 'completed'])) ? 'PAID' : 'UNPAID',
                 'shipping_status' => $shipStatus,
                 'courier'         => $order->shipment ? ($order->shipment->courier_company ?: 'JNE Express') : 'JNE Express',
                 'tracking_number' => $order->shipment ? $order->shipment->tracking_number : null,

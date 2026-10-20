@@ -1118,9 +1118,19 @@ export default function AdminDashboardPage() {
                         >
                           Rp {(ord.total || 0).toLocaleString("id-ID")}
                         </td>
-                        <td style={{ padding: "20px 24px" }} className="font-bold text-emerald-500 whitespace-nowrap">
-                          {ord.payment_status || "PAID"}
-                        </td>
+                        {(() => {
+                          const isPaid = (ord.payment_status || "").toUpperCase() === "PAID" ||
+                            (ord.payment_status || "").toUpperCase() === "SETTLED" ||
+                            (ord.payment_status || "").toUpperCase() === "SUCCESS";
+                          return (
+                            <td
+                              style={{ padding: "20px 24px" }}
+                              className={`font-bold whitespace-nowrap ${isPaid ? "text-emerald-500" : "text-amber-400"}`}
+                            >
+                              {isPaid ? "PAID" : "UNPAID"}
+                            </td>
+                          );
+                        })()}
                         <td style={{ padding: "20px 24px" }} className="whitespace-nowrap">
                           {(() => {
                             const rawSt = (ord.shipping_status || "IN PROCESSING").toUpperCase();
@@ -1259,9 +1269,15 @@ export default function AdminDashboardPage() {
                   </div>
                   <div className="space-y-1.5 text-left">
                     <span className="text-[10px] text-[#8A8A8A] uppercase tracking-wider block font-bold">PAYMENT STATUS</span>
-                    <span className="text-emerald-400 font-extrabold text-sm uppercase block">
-                      ✓ {(selectedOrderDetail.payment_info?.payment_status || (selectedOrderDetail as any).payment_status || "PAID").toUpperCase()}
-                    </span>
+                    {(() => {
+                      const rawPay = (selectedOrderDetail.payment_info?.payment_status || (selectedOrderDetail as any).payment_status || "").toUpperCase();
+                      const isPaid = rawPay === "PAID" || rawPay === "SETTLED" || rawPay === "SUCCESS";
+                      return (
+                        <span className={`font-extrabold text-sm uppercase block ${isPaid ? "text-emerald-400" : "text-amber-400"}`}>
+                          {isPaid ? "✓ PAID" : "UNPAID"}
+                        </span>
+                      );
+                    })()}
                   </div>
                   <div className="space-y-1.5 text-left">
                     <span className="text-[10px] text-[#8A8A8A] uppercase tracking-wider block font-bold">COURIER</span>
