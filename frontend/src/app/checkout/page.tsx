@@ -433,22 +433,13 @@ function CheckoutContent() {
   }, [displayShippingOptions, selectedRate?.courier_code, selectedRate?.shipping_price, selectedRate?.service_code, existingOrder]);
 
   /* ====================================================
-     5. PAYMENT METHOD & TERMS (CATEGORY DIVIDED, NO LOGOS, DROPDOWNS)
+     5. PAYMENT METHOD & TERMS (BNI, MANDIRI, BRI VIRTUAL ACCOUNT)
   ==================================================== */
-  const [paymentCategory, setPaymentCategory] = useState<"bank" | "ewallet">("bank");
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("bca_va");
+  const [paymentCategory, setPaymentCategory] = useState<"bank">("bank");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("bni_va");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
   const [isSuccessLoading, setIsSuccessLoading] = useState(false);
-
-  const handleCategorySwitch = (cat: "bank" | "ewallet") => {
-    setPaymentCategory(cat);
-    if (cat === "bank") {
-      setSelectedPaymentMethod("bca_va");
-    } else {
-      setSelectedPaymentMethod("qris");
-    }
-  };
 
   /* ====================================================
      6. PROMO / DISCOUNT CODE VAULT SYSTEM
@@ -1410,125 +1401,53 @@ function CheckoutContent() {
                     className="uppercase text-white text-base tracking-[0.2em]" 
                     style={{ marginBottom: "20px", letterSpacing: "0.2em", fontFamily: "'Roboto', sans-serif", fontWeight: 600 }}
                   >
-                    PAYMENT METHOD
+                    PAYMENT METHOD (VIRTUAL ACCOUNT)
                   </h3>
 
-                  <div style={{ display: "flex", flexDirection: "column", gap: "16px" }} className="font-mono">
-                    
-                    {/* Category 1: BANK / VIRTUAL ACCOUNT */}
-                    <div
-                      onClick={() => {
-                        if (paymentCategory !== "bank") handleCategorySwitch("bank");
-                      }}
-                      style={{ padding: "24px" }}
-                      className={`border transition-all cursor-pointer ${
-                        paymentCategory === "bank"
-                          ? "bg-[#141414] border-white shadow-md"
-                          : "bg-[#0C0C0C] border-[#222222] hover:border-[#383838]"
-                      }`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
-                          paymentCategory === "bank" ? "border-white bg-white/10" : "border-[#444] bg-[#141414]"
-                        }`}>
-                          {paymentCategory === "bank" && <div className="w-2.5 h-2.5 rounded-full bg-white" />}
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[13px] font-extrabold text-white tracking-[0.16em] uppercase block">
-                            BANK / VIRTUAL ACCOUNT
-                          </span>
-                          <span className="text-[11px] text-[#777777] uppercase tracking-wider block">
-                            AUTOMATED SYSTEM VERIFICATION (24/7)
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Circular Button Sub-options for Virtual Account Banks with Smooth Expand Animation */}
-                      <AnimatePresence>
-                        {paymentCategory === "bank" && (
-                          <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                            exit={{ opacity: 0, height: 0 }}
-                            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                            className="overflow-hidden"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <div style={{ marginTop: "22px", paddingTop: "20px", borderTop: "1px solid #242424" }}>
-                              <label className="text-[11px] text-[#999999] tracking-[0.18em] uppercase block mb-3 font-bold">
-                                SELECT VIRTUAL ACCOUNT BANK :
-                              </label>
-
-                              <div className="space-y-2.5 font-mono">
-                                {[
-                                  { id: "bca_va", name: "BCA — VIRTUAL ACCOUNT" },
-                                  { id: "mandiri_va", name: "MANDIRI — VIRTUAL ACCOUNT" },
-                                  { id: "bri_va", name: "BRI — VIRTUAL ACCOUNT" },
-                                  { id: "bni_va", name: "BNI — VIRTUAL ACCOUNT" },
-                                ].map((item) => {
-                                  const isSubSelected = selectedPaymentMethod === item.id;
-                                  return (
-                                    <div
-                                      key={item.id}
-                                      onClick={() => setSelectedPaymentMethod(item.id)}
-                                      style={{ padding: "14px 18px" }}
-                                      className={`border transition-all cursor-pointer flex items-center gap-3.5 ${
-                                        isSubSelected
-                                          ? "bg-[#1C1C1C] border-white shadow-sm"
-                                          : "bg-[#090909] border-[#222222] hover:border-[#383838]"
-                                      }`}
-                                    >
-                                      {/* Circular Radio Button */}
-                                      <div
-                                        className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
-                                          isSubSelected ? "border-white bg-white/20" : "border-[#555555] bg-[#121212]"
-                                        }`}
-                                      >
-                                        {isSubSelected && <div className="w-2 h-2 rounded-full bg-white" />}
-                                      </div>
-
-                                      <span className="text-[12px] font-bold text-white uppercase tracking-wider block">
-                                        {item.name}
-                                      </span>
-                                    </div>
-                                  );
-                                })}
-                              </div>
+                  <div className="space-y-3 font-mono">
+                    {[
+                      { id: "bni_va", name: "BNI — VIRTUAL ACCOUNT", desc: "Automated 24/7 Verification via Bank Negara Indonesia" },
+                      { id: "mandiri_va", name: "MANDIRI — VIRTUAL ACCOUNT", desc: "Automated 24/7 Verification via Bank Mandiri" },
+                      { id: "bri_va", name: "BRI — VIRTUAL ACCOUNT", desc: "Automated 24/7 Verification via Bank Rakyat Indonesia BRIVA" },
+                    ].map((item) => {
+                      const isSelected = selectedPaymentMethod === item.id;
+                      return (
+                        <div
+                          key={item.id}
+                          onClick={() => setSelectedPaymentMethod(item.id)}
+                          style={{ padding: "18px 22px" }}
+                          className={`border transition-all cursor-pointer flex items-center justify-between gap-4 ${
+                            isSelected
+                              ? "bg-[#181818] border-white shadow-md"
+                              : "bg-[#0C0C0C] border-[#222222] hover:border-[#383838]"
+                          }`}
+                        >
+                          <div className="flex items-center gap-4">
+                            {/* Circular Radio Button */}
+                            <div
+                              className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
+                                isSelected ? "border-white bg-white/20" : "border-[#555555] bg-[#121212]"
+                              }`}
+                            >
+                              {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
                             </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
 
-                    {/* Category 2: E-WALLET & INSTANT PAYMENT */}
-                    <div
-                      onClick={() => {
-                        if (paymentCategory !== "ewallet") handleCategorySwitch("ewallet");
-                      }}
-                      style={{ padding: "24px" }}
-                      className={`border transition-all cursor-pointer ${
-                        paymentCategory === "ewallet"
-                          ? "bg-[#141414] border-white shadow-md"
-                          : "bg-[#0C0C0C] border-[#222222] hover:border-[#383838]"
-                      }`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
-                          paymentCategory === "ewallet" ? "border-white bg-white/10" : "border-[#444] bg-[#141414]"
-                        }`}>
-                          {paymentCategory === "ewallet" && <div className="w-2.5 h-2.5 rounded-full bg-white" />}
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[13px] font-extrabold text-white tracking-[0.16em] uppercase block">
-                            E-WALLET / INSTANT PAYMENT
-                          </span>
-                          <span className="text-[11px] text-[#777777] uppercase tracking-wider block">
-                            QRIS
+                            <div className="flex flex-col gap-0.5">
+                              <span className="text-[12px] font-bold text-white uppercase tracking-wider block">
+                                {item.name}
+                              </span>
+                              <span className="text-[10px] text-[#777777] uppercase tracking-wider block">
+                                {item.desc}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <span className="text-[10px] text-[#888] font-bold uppercase tracking-widest hidden sm:block">
+                            INSTANT 24/7
                           </span>
                         </div>
-                      </div>
-                    </div>
-
+                      );
+                    })}
                   </div>
                 </div>
 

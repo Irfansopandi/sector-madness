@@ -36,8 +36,10 @@ return [
     ],
 
     'biteship' => [
-        'api_key'  => env('BITESHIP_API_KEY'),
-        'base_url' => env('BITESHIP_BASE_URL', 'https://api.biteship.com'),
+        'api_key'        => env('BITESHIP_API_KEY'),
+        'base_url'       => env('BITESHIP_BASE_URL', 'https://api.biteship.com'),
+        'origin_area_id' => env('BITESHIP_ORIGIN_AREA_ID'),
+        'force_dummy'    => env('BITESHIP_FORCE_DUMMY', false),
     ],
 
 

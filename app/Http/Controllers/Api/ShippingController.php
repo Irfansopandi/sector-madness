@@ -35,8 +35,8 @@ class ShippingController extends Controller
             ], 422);
         }
 
-        $apiKey = config('services.biteship.api_key');
-        $baseUrl = rtrim(config('services.biteship.base_url', 'https://api.biteship.com'), '/');
+        $apiKey = config('services.biteship.api_key') ?: env('BITESHIP_API_KEY');
+        $baseUrl = rtrim(config('services.biteship.base_url', env('BITESHIP_BASE_URL', 'https://api.biteship.com')), '/');
         $warehouse = \App\Models\Warehouse::where('is_primary', true)->first() 
             ?? \App\Models\Warehouse::first();
 
@@ -72,26 +72,43 @@ class ShippingController extends Controller
         }
 
         // Panggil Biteship API asli bila API key terdaftar dan tidak dipaksa mock
-        $forceDummy = env('BITESHIP_FORCE_DUMMY', false);
+        $forceDummy = filter_var(config('services.biteship.force_dummy', env('BITESHIP_FORCE_DUMMY', false)), FILTER_VALIDATE_BOOLEAN);
         if (!empty($apiKey) && !$forceDummy) {
             try {
+                // Evaluasi validitas Biteship Area ID (Biteship ID asli panjang seperti IDNP6IDNC148IDND843IDZ12250, bukan placeholder IDNPJ001)
+                $effectiveOriginAreaId = $originAreaId ?: (config('services.biteship.origin_area_id') ?: env('BITESHIP_ORIGIN_AREA_ID'));
+                $isValidOriginArea = !empty($effectiveOriginAreaId) && strlen($effectiveOriginAreaId) > 10 && !str_starts_with($effectiveOriginAreaId, 'IDNPJ');
+
+                $destAreaId = $request->destination_area_id;
+                $isValidDestArea = !empty($destAreaId) && strlen($destAreaId) > 10 && !str_starts_with($destAreaId, 'IDNPJ');
+
                 $payload = [
-                    'origin_area_id'      => $originAreaId ?: env('BITESHIP_ORIGIN_AREA_ID', 'IDNPJ001'),
-                    'origin_postal_code'  => (int)$originPostcode,
-                    'destination_area_id' => $request->destination_area_id ?: 'IDNPJ002',
-                    'couriers'            => $couriersToRequest,
-                    'items'               => [
+                    'couriers' => $couriersToRequest,
+                    'items'    => [
                         [
                             'name'        => 'Sector Madness Package',
                             'description' => 'Luxury Technical Garment',
+                            'value'       => (int)($request->item_value ?? 100000),
+                            'quantity'    => 1,
                             'weight'      => $request->weight ? (int)$request->weight : 1000,
                         ]
                     ],
                 ];
 
-                if (!empty($request->destination_postcode)) {
-                    $payload['destination_postal_code'] = (int)$request->destination_postcode;
+                if ($isValidOriginArea) {
+                    $payload['origin_area_id'] = $effectiveOriginAreaId;
                 }
+                if (!empty($originPostcode)) {
+                    $payload['origin_postal_code'] = (int)$originPostcode;
+                }
+
+                if ($isValidDestArea) {
+                    $payload['destination_area_id'] = $destAreaId;
+                }
+                if (!empty($destPostcode)) {
+                    $payload['destination_postal_code'] = (int)$destPostcode;
+                }
+
                 if ($originLat && $originLng) {
                     $payload['origin_latitude']  = (float)$originLat;
                     $payload['origin_longitude'] = (float)$originLng;
@@ -101,7 +118,7 @@ class ShippingController extends Controller
                     'curl' => [
                         CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
                     ]
-                ])->timeout(3)->withHeaders([
+                ])->timeout(8)->withHeaders([
                     'Authorization' => 'Bearer ' . $apiKey,
                     'Content-Type'  => 'application/json',
                 ])->post($baseUrl . '/v1/rates/couriers', $payload);
@@ -124,6 +141,8 @@ class ShippingController extends Controller
                         'status' => true,
                         'data'   => array_values($formattedRates),
                     ], 200);
+                } else {
+                    Log::warning('Biteship Rates API returned non-200 or empty pricing: ' . $response->status() . ' - ' . $response->body());
                 }
 
                 // Fallback otomatis ke dummy jika API Biteship gagal / saldo habis (misal sandbox test key)
@@ -207,7 +226,7 @@ class ShippingController extends Controller
             ], 400);
         }
 
-        $apiKey = env('BITESHIP_API_KEY');
+        $apiKey = config('services.biteship.api_key') ?: env('BITESHIP_API_KEY');
         if (!empty($apiKey)) {
             try {
                 $response = Http::withHeaders([

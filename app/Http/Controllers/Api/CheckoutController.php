@@ -42,54 +42,6 @@ class CheckoutController extends Controller
     {
         $methods = [
             [
-                'id'          => 'qris',
-                'name'        => 'QRIS',
-                'category'    => 'E-Wallet / QR',
-                'description' => 'Scan & authorize via any Indonesian bank or e-wallet apps',
-                'icon'        => 'qr',
-                'is_active'   => true,
-            ],
-            [
-                'id'          => 'gopay',
-                'name'        => 'GoPay',
-                'category'    => 'E-Wallet',
-                'description' => 'Instant seamless checkout directly through your GoPay account',
-                'icon'        => 'wallet',
-                'is_active'   => true,
-            ],
-            [
-                'id'          => 'shopeepay',
-                'name'        => 'ShopeePay',
-                'category'    => 'E-Wallet',
-                'description' => 'Rapid mobile transaction authorization via ShopeePay application',
-                'icon'        => 'wallet',
-                'is_active'   => true,
-            ],
-            [
-                'id'          => 'dana',
-                'name'        => 'DANA',
-                'category'    => 'E-Wallet',
-                'description' => 'Digital Wallet authorization & DANA Protection',
-                'icon'        => 'wallet',
-                'is_active'   => true,
-            ],
-            [
-                'id'          => 'ovo',
-                'name'        => 'OVO',
-                'category'    => 'E-Wallet',
-                'description' => 'Instant push notification payment to OVO mobile number',
-                'icon'        => 'wallet',
-                'is_active'   => true,
-            ],
-            [
-                'id'          => 'bca_va',
-                'name'        => 'BCA Virtual Account',
-                'category'    => 'Virtual Account',
-                'description' => 'Automated payment validation via Bank Central Asia VA system',
-                'icon'        => 'bank',
-                'is_active'   => true,
-            ],
-            [
                 'id'          => 'bni_va',
                 'name'        => 'BNI Virtual Account',
                 'category'    => 'Virtual Account',
@@ -106,19 +58,11 @@ class CheckoutController extends Controller
                 'is_active'   => true,
             ],
             [
-                'id'          => 'permata_va',
-                'name'        => 'Permata Virtual Account',
+                'id'          => 'bri_va',
+                'name'        => 'BRI Virtual Account',
                 'category'    => 'Virtual Account',
-                'description' => 'Automated verification via Bank Permata Virtual Account',
+                'description' => 'Automated payment processing through Bank Rakyat Indonesia BRIVA',
                 'icon'        => 'bank',
-                'is_active'   => true,
-            ],
-            [
-                'id'          => 'credit_card',
-                'name'        => 'Credit / Debit Card',
-                'category'    => 'Credit Card',
-                'description' => '3D Secure encrypted authorization for Visa, Mastercard, and JCB',
-                'icon'        => 'card',
                 'is_active'   => true,
             ],
         ];
@@ -795,12 +739,54 @@ class CheckoutController extends Controller
                     $qrString = $midtransResponse['qr_string'];
                 }
             } else {
-                Log::warning("Midtrans Charge Failed for Order {$order->order_number}: ", $midtransResponse);
-                return response()->json([
-                    'status'  => false,
-                    'message' => 'Gagal membuat transaksi Midtrans: ' . ($midtransResponse['status_message'] ?? 'Gateway returned an error'),
-                    'details' => $midtransResponse,
-                ], 422);
+                Log::warning("Midtrans Core Charge Failed for Order {$order->order_number}, attempting Snap fallback: ", $midtransResponse);
+
+                // Otomatis fallback ke Midtrans Snap API (karena di Production, channel bank seperti BRI/BNI/Mandiri aktif di Snap secara default)
+                $snapEndpoint = $isProduction 
+                    ? 'https://app.midtrans.com/snap/v1/transactions' 
+                    : 'https://app.sandbox.midtrans.com/snap/v1/transactions';
+
+                $snapPayload = [
+                    'transaction_details' => [
+                        'order_id'     => $order->order_number,
+                        'gross_amount' => (int)$grandTotal,
+                    ],
+                    'customer_details' => [
+                        'first_name' => $shippingAddressData['receiver_name'],
+                        'phone'      => $shippingAddressData['phone_number'],
+                        'email'      => $user->email ?? 'customer@sectormadness.com',
+                        'shipping_address' => [
+                            'first_name'  => $shippingAddressData['receiver_name'],
+                            'phone'       => $shippingAddressData['phone_number'],
+                            'address'     => $shippingAddressData['street_address'],
+                            'city'        => $shippingAddressData['city'],
+                            'postal_code' => $shippingAddressData['postal_code'],
+                        ],
+                    ],
+                    'item_details' => $itemDetailsForMidtrans,
+                ];
+
+                $snapRes = Http::withBasicAuth($serverKey, '')
+                    ->withHeaders([
+                        'Content-Type' => 'application/json',
+                        'Accept'       => 'application/json'
+                    ])
+                    ->post($snapEndpoint, $snapPayload);
+
+                if ($snapRes->successful() && !empty($snapRes->json()['token'])) {
+                    $snapData = $snapRes->json();
+                    $transactionId = $order->order_number;
+                    $paymentUrl = $snapData['redirect_url'] ?? null;
+                    $vaNumber = $paymentUrl;
+                    $midtransResponse = $snapData;
+                } else {
+                    Log::warning("Midtrans Snap Fallback also failed: ", $snapRes->json() ?? []);
+                    return response()->json([
+                        'status'  => false,
+                        'message' => 'Gagal membuat transaksi Midtrans: ' . ($midtransResponse['status_message'] ?? 'Gateway returned an error'),
+                        'details' => $midtransResponse,
+                    ], 422);
+                }
             }
         } catch (\Exception $e) {
             Log::error("Midtrans Charge Exception for Order {$order->order_number}: " . $e->getMessage());

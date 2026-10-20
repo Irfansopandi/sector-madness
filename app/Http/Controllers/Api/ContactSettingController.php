@@ -225,7 +225,7 @@ class ContactSettingController extends Controller
                 if ($warehouse) {
                     $warehouse->refresh();
 
-                    $apiKey = env('BITESHIP_API_KEY');
+                    $apiKey = config('services.biteship.api_key') ?: env('BITESHIP_API_KEY');
                     if (!empty($apiKey) && (!empty($warehouse->city) || !empty($warehouse->postal_code))) {
                         try {
                             $query = trim("{$warehouse->city} {$warehouse->postal_code}");
