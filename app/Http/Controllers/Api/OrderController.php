@@ -101,7 +101,7 @@ class OrderController extends Controller
                 'total'           => (float)$calcTotal,
                 'payment_status'  => $pay ? $pay->payment_status : 'unpaid',
                 'payment_method'  => $pay ? strtoupper($pay->payment_type ?? 'QRIS') : 'QRIS',
-                'shipping_status' => $order->status === 'cancel pending' ? 'cancel pending' : ($order->status === 'cancelled' ? 'cancelled' : ($ship ? $ship->status : 'pending')),
+                'shipping_status' => $order->status === 'cancel pending' ? 'cancel pending' : ($order->status === 'cancelled' ? 'cancelled' : ($ship ? (in_array(strtolower($ship->status), ['allocated', 'shipped']) ? 'shipped' : $ship->status) : 'pending')),
                 'tracking_number' => $ship && $ship->tracking_number ? $ship->tracking_number : null,
                 'items_count'     => $order->items->sum('quantity'),
                 'snap_token'      => $pay ? $pay->snap_token : null,
@@ -280,7 +280,7 @@ class OrderController extends Controller
                     'paid_at'        => $pay && $pay->payment_status === 'paid' ? $pay->updated_at->format('d F Y, H:i') : null,
                 ],
                 'status'            => $order->status,
-                'shipping_status'   => $order->status === 'cancel pending' ? 'cancel pending' : ($order->status === 'cancelled' ? 'cancelled' : ($ship ? $ship->status : 'pending')),
+                'shipping_status'   => $order->status === 'cancel pending' ? 'cancel pending' : ($order->status === 'cancelled' ? 'cancelled' : ($ship ? (in_array(strtolower($ship->status), ['allocated', 'shipped']) ? 'shipped' : $ship->status) : 'pending')),
                 'timeline'          => $timeline,
             ],
         ], 200);
@@ -370,8 +370,22 @@ class OrderController extends Controller
             $shipCost = $order->shipment ? (float)$order->shipment->shipping_cost : 0;
             $grandTotal = (float)$order->grand_total > 0 ? (float)$order->grand_total : max(0, $calcSubtotal + $shipCost);
 
-            $rawShipStatus = $order->shipment ? strtoupper($order->shipment->status) : strtoupper($order->status);
-            $shipStatus = in_array($rawShipStatus, ['ALLOCATED', 'IN PROCESS', 'PENDING', 'ORDERED', '']) ? 'IN PROCESSING' : $rawShipStatus;
+            $rawOrderSt = strtoupper((string)($order->status ?? ''));
+            $rawShipSt = $order->shipment ? strtoupper((string)($order->shipment->status ?? '')) : '';
+
+            if (in_array($rawOrderSt, ['CANCELLED', 'CANCELED', 'DIBATALKAN', 'CANCEL']) || in_array($rawShipSt, ['CANCELLED', 'CANCELED', 'DIBATALKAN', 'CANCEL'])) {
+                $shipStatus = 'CANCEL';
+            } elseif (in_array($rawOrderSt, ['CANCEL PENDING', 'CANCEL_PENDING', 'CANCEL_REQUESTED']) || in_array($rawShipSt, ['CANCEL PENDING', 'CANCEL_PENDING', 'CANCEL_REQUESTED'])) {
+                $shipStatus = 'CANCEL PENDING';
+            } elseif (in_array($rawShipSt, ['SHIPPED', 'ALLOCATED', 'IN TRANSIT', 'IN_TRANSIT']) || in_array($rawOrderSt, ['SHIPPED', 'ALLOCATED', 'IN TRANSIT', 'IN_TRANSIT'])) {
+                $shipStatus = 'SHIPPED';
+            } elseif (in_array($rawShipSt, ['DELIVERED', 'COMPLETED', 'RECEIVED', 'SELESAI']) || in_array($rawOrderSt, ['DELIVERED', 'COMPLETED', 'RECEIVED', 'SELESAI'])) {
+                $shipStatus = 'DELIVERED';
+            } elseif (in_array($rawShipSt, ['IN PROCESS', 'PROCESSING', 'PENDING', 'ORDERED', ''])) {
+                $shipStatus = 'IN PROCESSING';
+            } else {
+                $shipStatus = $rawShipSt ?: 'IN PROCESSING';
+            }
 
             $addr = $order->shipping_address ?? [];
             $customerUser = $order->user;
@@ -447,7 +461,7 @@ class OrderController extends Controller
 
         $shipment->update($shipmentData);
 
-        if (in_array(strtolower((string)$newStatus), ['cancelled', 'dibatalkan']) && $order->payment) {
+        if (in_array(strtolower((string)$newStatus), ['cancel', 'cancelled', 'dibatalkan']) && $order->payment) {
             // Restore stock if the order was previously paid (because stock was deducted when paid)
             if (in_array(strtolower($order->payment->payment_status), ['paid', 'settled', 'success'])) {
                 foreach ($order->items as $item) {
@@ -471,7 +485,7 @@ class OrderController extends Controller
 
         // PUSH NOTIFICATION & EMAIL: Tracking / Resi Update
         if ($oldStatus === 'cancel pending') {
-            if (in_array(strtolower((string)$newStatus), ['cancelled', 'dibatalkan'])) {
+            if (in_array(strtolower((string)$newStatus), ['cancel', 'cancelled', 'dibatalkan'])) {
                 \App\Jobs\SendOrderTrackingPush::dispatch($order, 'cancel_approved');
                 if ($order->user && $order->user->email) {
                     \Illuminate\Support\Facades\Mail::to($order->user->email)->queue(new \App\Mail\OrderTrackingMail($order, 'cancel_approved'));

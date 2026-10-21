@@ -724,10 +724,10 @@ export const getShipmentTracking = async (trackingNumber: string): Promise<Track
   // Format consistent tracking timeline
   const st = strtoupper(raw.status || "");
   const formattedStatus = 
-    st === "ALLOCATED" || st === "PROCESSING" || st === "IN PROCESS" ? "IN PROCESS" :
-    st === "PACKED" || st === "READY_TO_SHIP" || st === "READY FOR DISPATCH" || st === "SIAP KIRIM" ? "READY TO SHIP" :
+    st === "ALLOCATED" || st === "PACKED" || st === "READY_TO_SHIP" || st === "READY FOR DISPATCH" || st === "SIAP KIRIM" ? "READY TO SHIP" :
+    st === "PROCESSING" || st === "IN PROCESS" ? "IN PROCESS" :
     st === "SHIPPED" || st === "IN_TRANSIT" || st === "IN TRANSIT" ? "IN TRANSIT" :
-    st === "DELIVERED" || st === "COMPLETED" ? "DELIVERED" : (st || "IN PROCESS");
+    st === "DELIVERED" || st === "COMPLETED" ? "DELIVERED" : (st || "READY TO SHIP");
 
   return {
     current_status: formattedStatus,

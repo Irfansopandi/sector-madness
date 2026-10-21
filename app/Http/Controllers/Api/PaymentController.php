@@ -249,6 +249,9 @@ class PaymentController extends Controller
             }
         } elseif ($status === 'failed') {
             $order->update(['status' => 'cancelled']);
+            if ($order->shipment) {
+                $order->shipment->update(['status' => 'cancelled']);
+            }
         }
 
         return response()->json(['status' => true, 'message' => 'Notification processed'], 200);

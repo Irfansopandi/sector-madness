@@ -1134,10 +1134,42 @@ export default function AdminDashboardPage() {
                         <td style={{ padding: "20px 24px" }} className="whitespace-nowrap">
                           {(() => {
                             const rawSt = (ord.shipping_status || "IN PROCESSING").toUpperCase();
-                            const statusLabel =
-                              rawSt === "ALLOCATED" || rawSt === "IN PROCESS" || rawSt === "PENDING"
-                                ? "IN PROCESSING"
-                                : rawSt;
+                            const ordSt = (ord.status || "").toUpperCase();
+                            const isCancelled =
+                              rawSt === "CANCEL" ||
+                              rawSt === "CANCELLED" ||
+                              rawSt === "DIBATALKAN" ||
+                              rawSt === "CANCELED" ||
+                              ordSt === "CANCEL" ||
+                              ordSt === "CANCELLED" ||
+                              ordSt === "DIBATALKAN" ||
+                              ordSt === "CANCELED";
+
+                            const isCancelPending =
+                              rawSt === "CANCEL PENDING" ||
+                              rawSt === "CANCEL_PENDING" ||
+                              rawSt === "CANCEL_REQUESTED" ||
+                              ordSt === "CANCEL PENDING" ||
+                              ordSt === "CANCEL_PENDING";
+
+                            const rawPaymentSt = (ord.payment_status || "PAID").toUpperCase();
+                            const isUnpaid = rawPaymentSt === "UNPAID" || rawPaymentSt === "PENDING";
+
+                            let statusLabel = rawSt;
+                            if (isCancelPending) {
+                              statusLabel = "CANCEL PENDING";
+                            } else if (isCancelled) {
+                              statusLabel = "CANCEL";
+                            } else if (isUnpaid) {
+                              statusLabel = "PENDING";
+                            } else if (rawSt === "ALLOCATED") {
+                              statusLabel = "SHIPPED";
+                            } else if (
+                              rawSt === "IN PROCESS" ||
+                              rawSt === "PROCESSING"
+                            ) {
+                              statusLabel = "IN PROCESSING";
+                            }
 
                             let textColor = isDarkMode ? "text-amber-300" : "text-amber-800";
 
@@ -1145,7 +1177,11 @@ export default function AdminDashboardPage() {
                               textColor = isDarkMode ? "text-blue-400" : "text-blue-700";
                             } else if (statusLabel === "DELIVERED" || statusLabel === "COMPLETED") {
                               textColor = isDarkMode ? "text-emerald-400" : "text-emerald-700";
-                            } else if (statusLabel === "CANCELLED" || statusLabel === "DIBATALKAN") {
+                            } else if (statusLabel === "CANCEL PENDING") {
+                              textColor = isDarkMode
+                                ? "text-amber-400 bg-amber-500/15 border-amber-500/40 font-black animate-pulse"
+                                : "text-amber-800 bg-amber-100 border-amber-300 font-black";
+                            } else if (statusLabel === "CANCEL" || statusLabel === "CANCELLED" || statusLabel === "DIBATALKAN") {
                               textColor = isDarkMode ? "text-red-400" : "text-red-700";
                             }
 

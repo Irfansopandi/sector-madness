@@ -638,9 +638,8 @@ export default function AdminSalesReportPage() {
                       <option value="ALL">SEMUA STATUS (ALL)</option>
                       <option value="COMPLETED">COMPLETED / DELIVERED</option>
                       <option value="SHIPPED">SHIPPED / DELIVERING</option>
-                      <option value="PROCESSING">PROCESSING / PENDING</option>
+                      <option value="PROCESSING">PROCESSING</option>
                       <option value="PAID">PAID</option>
-                      <option value="UNPAID">UNPAID</option>
                     </select>
                   </div>
 
@@ -751,7 +750,7 @@ export default function AdminSalesReportPage() {
                   )}
                 </div>
                 <div style={{ fontSize: "11px" }} className="font-mono text-[#8A8A8A] print:hidden">
-                  * PESANAN BERSTATUS <span className="text-red-400 font-bold">CANCELLED</span> DIKECUALIKAN.
+                  * PESANAN BERSTATUS <span className="text-red-400 font-bold">CANCELLED</span> & <span className="text-amber-400 font-bold">UNPAID</span> DIKECUALIKAN.
                 </div>
               </div>
             )}

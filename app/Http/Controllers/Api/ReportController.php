@@ -55,14 +55,27 @@ class ReportController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Exclude cancelled orders
+        // Exclude cancelled and unpaid orders
         $validOrders = $rawOrders->reject(function ($ord) {
             $st = strtoupper((string)($ord->status ?? ''));
             $shipSt = strtoupper((string)($ord->shipment ? $ord->shipment->status : ''));
             $paySt = strtoupper((string)($ord->payment ? $ord->payment->payment_status : ''));
-            return in_array($st, ['CANCELLED', 'CANCELED', 'DIBATALKAN']) ||
-                   in_array($shipSt, ['CANCELLED', 'CANCELED', 'DIBATALKAN']) ||
-                   in_array($paySt, ['CANCELLED', 'CANCELED', 'DIBATALKAN']);
+
+            // Exclude cancelled
+            if (in_array($st, ['CANCELLED', 'CANCELED', 'DIBATALKAN']) ||
+                in_array($shipSt, ['CANCELLED', 'CANCELED', 'DIBATALKAN']) ||
+                in_array($paySt, ['CANCELLED', 'CANCELED', 'DIBATALKAN'])) {
+                return true;
+            }
+
+            // Exclude unpaid orders: must have verified payment
+            $isPaid = ($ord->payment && in_array(strtolower($ord->payment->payment_status), ['paid', 'settled', 'success'])) ||
+                      in_array(strtolower($st), ['paid', 'settled', 'success', 'completed']);
+            if (!$isPaid) {
+                return true;
+            }
+
+            return false;
         })->values();
 
         // Optional status filter
@@ -84,8 +97,7 @@ class ReportController extends Controller
                     return $st === 'paid' || in_array($paySt, ['paid', 'settled', 'success']);
                 }
                 if ($statusInput === 'unpaid') {
-                    $paySt = strtolower((string)($ord->payment ? $ord->payment->payment_status : ''));
-                    return in_array($paySt, ['unpaid', 'pending']) || empty($paySt) || $st === 'unpaid';
+                    return false;
                 }
                 return $st === $statusInput;
             })->values();
@@ -136,7 +148,7 @@ class ReportController extends Controller
                 'customer_email' => $customerEmail,
                 'items_count'    => (int)$itemsCount,
                 'status'         => $order->status,
-                'payment_status' => $order->payment ? $order->payment->payment_status : 'unpaid',
+                'payment_status' => ($order->payment && !empty($order->payment->payment_status)) ? $order->payment->payment_status : 'paid',
                 'total_amount'   => (float)$orderTotal,
             ];
         }
@@ -200,14 +212,26 @@ class ReportController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Exclude cancelled orders
+        // Exclude cancelled and unpaid orders
         $validOrders = $rawOrders->reject(function ($ord) {
             $st = strtoupper((string)($ord->status ?? ''));
             $shipSt = strtoupper((string)($ord->shipment ? $ord->shipment->status : ''));
             $paySt = strtoupper((string)($ord->payment ? $ord->payment->payment_status : ''));
-            return in_array($st, ['CANCELLED', 'CANCELED', 'DIBATALKAN']) ||
-                   in_array($shipSt, ['CANCELLED', 'CANCELED', 'DIBATALKAN']) ||
-                   in_array($paySt, ['CANCELLED', 'CANCELED', 'DIBATALKAN']);
+
+            if (in_array($st, ['CANCELLED', 'CANCELED', 'DIBATALKAN']) ||
+                in_array($shipSt, ['CANCELLED', 'CANCELED', 'DIBATALKAN']) ||
+                in_array($paySt, ['CANCELLED', 'CANCELED', 'DIBATALKAN'])) {
+                return true;
+            }
+
+            // Exclude unpaid orders: must have verified payment
+            $isPaid = ($ord->payment && in_array(strtolower($ord->payment->payment_status), ['paid', 'settled', 'success'])) ||
+                      in_array(strtolower($st), ['paid', 'settled', 'success', 'completed']);
+            if (!$isPaid) {
+                return true;
+            }
+
+            return false;
         })->values();
 
         // Group valid orders by customer (user_id or guest email)

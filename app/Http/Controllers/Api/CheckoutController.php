@@ -910,6 +910,9 @@ class CheckoutController extends Controller
 
                 if (in_array($transactionStatus, ['cancel', 'deny', 'expire'])) {
                     $order->update(['status' => 'cancelled']);
+                    if ($order->shipment) {
+                        $order->shipment->update(['status' => 'cancelled']);
+                    }
                     if ($order->payment) {
                         $order->payment->update(['payment_status' => 'failed']);
                     }

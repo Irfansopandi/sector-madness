@@ -245,17 +245,67 @@ export default function AdminOrdersPage() {
         text: data.message || "Biteship courier has been requested successfully.",
         background: isDarkMode ? "#141414" : "#ffffff",
         color: isDarkMode ? "#F5F5F5" : "#000000",
+        confirmButtonColor: "#B6A47E",
       });
-      setSelectedOrderDetail(null);
+      setSelectedOrderDetail((prev) => {
+        if (!prev) return null;
+        const newTracking = data.data?.shipment?.tracking_number || data.biteship_response?.courier?.waybill_id || data.biteship_response?.courier?.tracking_id || prev.courier_info?.tracking_number;
+        return {
+          ...prev,
+          shipping_status: "SHIPPED",
+          courier_info: {
+            ...prev.courier_info,
+            tracking_number: newTracking,
+          }
+        };
+      });
     },
     onError: (err: any) => {
-      Swal.fire({
-        icon: "error",
-        title: "Request Failed",
-        text: err.response?.data?.message || "Failed to create Biteship shipment",
-        background: isDarkMode ? "#141414" : "#ffffff",
-        color: isDarkMode ? "#F5F5F5" : "#000000",
-      });
+      const respData = err.response?.data;
+      const isBalanceError =
+        err.response?.status === 402 ||
+        respData?.error_type === "insufficient_balance" ||
+        /balance|saldo|deposit|insufficient|payment\s+failed|wallet/i.test(respData?.message || respData?.detail || "");
+
+      if (isBalanceError) {
+        Swal.fire({
+          icon: "warning",
+          title: "Saldo Biteship Tidak Cukup",
+          html: `
+            <div style="font-size: 13px; line-height: 1.6; text-align: left; padding: 4px;">
+              <p style="margin-bottom: 12px; color: ${isDarkMode ? '#F5F5F5' : '#111827'};">
+                ${respData?.message || "Saldo Biteship tidak mencukupi untuk melakukan request pickup kurir ini."}
+              </p>
+              <div style="background: ${isDarkMode ? '#1E1E22' : '#F3F4F6'}; padding: 10px 14px; border-radius: 6px; font-size: 11px; font-family: monospace; color: #B6A47E; margin-bottom: 12px;">
+                ⚠️ <strong>Info:</strong> Request pickup dibatalkan tanpa mengganti resi menjadi dummy.
+              </div>
+              <p style="font-size: 11px; color: #8A8A8A;">
+                Silakan lakukan top up saldo di akun <strong>Dashboard Biteship</strong> Anda, lalu coba lagi.
+              </p>
+            </div>
+          `,
+          showCancelButton: true,
+          confirmButtonColor: "#B6A47E",
+          cancelButtonColor: "#333333",
+          confirmButtonText: "Buka Dashboard Biteship",
+          cancelButtonText: "Tutup",
+          background: isDarkMode ? "#141414" : "#ffffff",
+          color: isDarkMode ? "#F5F5F5" : "#000000",
+        }).then((result) => {
+          if (result.isConfirmed) {
+            window.open("https://dashboard.biteship.com/balance", "_blank");
+          }
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Request Pickup Gagal",
+          text: respData?.message || err.message || "Gagal membuat shipment di Biteship",
+          background: isDarkMode ? "#141414" : "#ffffff",
+          color: isDarkMode ? "#F5F5F5" : "#000000",
+          confirmButtonColor: "#B6A47E",
+        });
+      }
     }
   });
 
@@ -263,9 +313,13 @@ export default function AdminOrdersPage() {
     setSelectedOrder(ord);
     const rawSt = (ord.shipping_status || "IN PROCESSING").toUpperCase();
     const mappedStatus =
-      rawSt === "ALLOCATED" || rawSt === "IN PROCESS" || rawSt === "PROCESSING"
-        ? "IN PROCESSING"
-        : rawSt;
+      rawSt === "ALLOCATED"
+        ? "SHIPPED"
+        : (rawSt === "IN PROCESS" || rawSt === "PROCESSING"
+          ? "IN PROCESSING"
+          : (rawSt === "CANCELLED" || rawSt === "CANCEL" || rawSt === "DIBATALKAN" || rawSt === "CANCELED"
+            ? "CANCEL"
+            : rawSt));
     setShippingStatus(mappedStatus);
     setCourier(ord.courier || "JNE Express");
     setTrackingNumber(ord.tracking_number || "");
@@ -290,16 +344,19 @@ export default function AdminOrdersPage() {
     const st = (o.shipping_status || o.status || "").toUpperCase();
     const ordSt = (o.status || "").toUpperCase();
     return (
+      st === "CANCEL" ||
       st === "CANCELLED" ||
       st === "DIBATALKAN" ||
       st === "CANCELED" ||
       st === "CANCEL PENDING" ||
       st === "CANCEL_PENDING" ||
       st === "CANCEL_REQUESTED" ||
+      ordSt === "CANCEL" ||
       ordSt === "CANCELLED" ||
       ordSt === "DIBATALKAN" ||
       ordSt === "CANCELED" ||
-      ordSt === "CANCEL PENDING"
+      ordSt === "CANCEL PENDING" ||
+      ordSt === "CANCEL_PENDING"
     );
   };
 
@@ -384,9 +441,13 @@ export default function AdminOrdersPage() {
 
     const rawSt = (ord.shipping_status || "IN PROCESSING").toUpperCase();
     const mappedStatus =
-      rawSt === "ALLOCATED" || rawSt === "IN PROCESS" || rawSt === "PROCESSING"
-        ? "IN PROCESSING"
-        : rawSt;
+      rawSt === "ALLOCATED"
+        ? "SHIPPED"
+        : (rawSt === "IN PROCESS" || rawSt === "PROCESSING"
+          ? "IN PROCESSING"
+          : (rawSt === "CANCELLED" || rawSt === "CANCEL" || rawSt === "DIBATALKAN" || rawSt === "CANCELED"
+            ? "CANCEL"
+            : rawSt));
 
     const rawPaySt = (ord.payment_status || (ord as any).payment?.payment_status || "").toUpperCase();
     const isPaid = rawPaySt === "PAID" || rawPaySt === "SETTLED" || rawPaySt === "SUCCESS";
@@ -402,7 +463,17 @@ export default function AdminOrdersPage() {
       matchesStatus =
         mappedStatus === "CANCEL PENDING" ||
         mappedStatus === "CANCEL_PENDING" ||
-        mappedStatus === "CANCEL_REQUESTED";
+        mappedStatus === "CANCEL_REQUESTED" ||
+        (ord.status || "").toUpperCase() === "CANCEL PENDING" ||
+        (ord.status || "").toUpperCase() === "CANCEL_PENDING";
+    } else if (statusFilter === "CANCEL" || statusFilter === "CANCELLED") {
+      matchesStatus =
+        isCancelled &&
+        mappedStatus !== "CANCEL PENDING" &&
+        mappedStatus !== "CANCEL_PENDING" &&
+        mappedStatus !== "CANCEL_REQUESTED" &&
+        (ord.status || "").toUpperCase() !== "CANCEL PENDING" &&
+        (ord.status || "").toUpperCase() !== "CANCEL_PENDING";
     } else {
       matchesStatus = mappedStatus === statusFilter;
     }
@@ -671,7 +742,7 @@ export default function AdminOrdersPage() {
                   <option value="SHIPPED">SHIPPED</option>
                   <option value="DELIVERED">DELIVERED</option>
                   <option value="CANCEL PENDING">CANCEL PENDING</option>
-                  <option value="CANCELLED">CANCELLED</option>
+                  <option value="CANCEL">CANCEL</option>
                 </select>
 
                 {/* Sort Dropdown */}
@@ -847,12 +918,40 @@ export default function AdminOrdersPage() {
                             const rawSt = (ord.shipping_status || "IN PROCESSING").toUpperCase();
                             const rawPaymentSt = (ord.payment_status || "PAID").toUpperCase();
                             const isUnpaid = rawPaymentSt === "UNPAID" || rawPaymentSt === "PENDING";
+                            const isCancelled = checkIsOrderCancelled(ord);
                             
-                            const statusLabel = isUnpaid 
-                              ? "PENDING"
-                              : (rawSt === "ALLOCATED" || rawSt === "IN PROCESS" || rawSt === "PROCESSING"
-                                ? "IN PROCESSING"
-                                : rawSt);
+                            let statusLabel = rawSt;
+
+                            if (
+                              rawSt === "CANCEL PENDING" ||
+                              rawSt === "CANCEL_PENDING" ||
+                              rawSt === "CANCEL_REQUESTED" ||
+                              (ord.status || "").toUpperCase() === "CANCEL PENDING" ||
+                              (ord.status || "").toUpperCase() === "CANCEL_PENDING"
+                            ) {
+                              statusLabel = "CANCEL PENDING";
+                            } else if (
+                              isCancelled ||
+                              rawSt === "CANCEL" ||
+                              rawSt === "CANCELLED" ||
+                              rawSt === "CANCELED" ||
+                              rawSt === "DIBATALKAN" ||
+                              (ord.status || "").toUpperCase() === "CANCEL" ||
+                              (ord.status || "").toUpperCase() === "CANCELLED" ||
+                              (ord.status || "").toUpperCase() === "CANCELED" ||
+                              (ord.status || "").toUpperCase() === "DIBATALKAN"
+                            ) {
+                              statusLabel = "CANCEL";
+                            } else if (isUnpaid) {
+                              statusLabel = "PENDING";
+                            } else if (rawSt === "ALLOCATED") {
+                              statusLabel = "SHIPPED";
+                            } else if (
+                              rawSt === "IN PROCESS" ||
+                              rawSt === "PROCESSING"
+                            ) {
+                              statusLabel = "IN PROCESSING";
+                            }
 
                             let textColor = isDarkMode ? "text-amber-300" : "text-amber-800";
 
@@ -860,9 +959,11 @@ export default function AdminOrdersPage() {
                               textColor = isDarkMode ? "text-blue-400" : "text-blue-700";
                             } else if (statusLabel === "DELIVERED" || statusLabel === "COMPLETED") {
                               textColor = isDarkMode ? "text-emerald-400" : "text-emerald-700";
-                            } else if (statusLabel === "CANCEL PENDING" || statusLabel === "CANCEL_PENDING" || statusLabel === "CANCEL_REQUESTED") {
-                              textColor = isDarkMode ? "text-amber-400 bg-amber-500/15 border-amber-500/40 font-black animate-pulse" : "text-amber-800 bg-amber-100 border-amber-300 font-black";
-                            } else if (statusLabel === "CANCELLED" || statusLabel === "DIBATALKAN" || statusLabel === "CANCELED") {
+                            } else if (statusLabel === "CANCEL PENDING") {
+                              textColor = isDarkMode
+                                ? "text-amber-400 bg-amber-500/15 border-amber-500/40 font-black animate-pulse"
+                                : "text-amber-800 bg-amber-100 border-amber-300 font-black";
+                            } else if (statusLabel === "CANCEL" || statusLabel === "CANCELLED" || statusLabel === "DIBATALKAN") {
                               textColor = isDarkMode ? "text-red-400" : "text-red-700";
                             }
 
@@ -878,16 +979,18 @@ export default function AdminOrdersPage() {
                                 >
                                   {statusLabel}
                                 </span>
-                                {(statusLabel.includes("CANCEL") || statusLabel === "DIBATALKAN") && (
+                                {(statusLabel === "CANCEL" || statusLabel === "CANCEL PENDING" || statusLabel === "CANCELLED" || statusLabel === "DIBATALKAN") && (
                                   <span
                                     className={`text-[10px] font-mono tracking-normal block max-w-[200px] truncate ${
-                                      statusLabel.includes("PENDING") || statusLabel.includes("REQUESTED")
+                                      statusLabel === "CANCEL PENDING"
                                         ? "text-amber-400 font-semibold"
                                         : "text-red-400"
                                     }`}
-                                    title={ord.cancel_reason || ord.cancellation_reason || "Form Pembatalan Terdaftar"}
+                                    title={ord.cancel_reason || ord.cancellation_reason || (statusLabel === "CANCEL PENDING" ? "Menunggu verifikasi refund" : "Pesanan dibatalkan")}
                                   >
-                                    Pesan: "{ord.cancel_reason || ord.cancellation_reason || "Alasan pembatalan terdaftar"}"
+                                    {statusLabel === "CANCEL PENDING"
+                                      ? `Refund: "${ord.cancel_reason || ord.cancellation_reason || "Butuh verifikasi admin"}"`
+                                      : `Alasan: "${ord.cancel_reason || ord.cancellation_reason || "Dibatalkan"}"`}
                                   </span>
                                 )}
                               </div>
@@ -1136,7 +1239,7 @@ export default function AdminOrdersPage() {
                   <option value="IN PROCESSING">IN PROCESSING</option>
                   <option value="SHIPPED">SHIPPED</option>
                   <option value="DELIVERED">DELIVERED</option>
-                  <option value="CANCELLED">CANCELLED</option>
+                  <option value="CANCEL">CANCEL</option>
                 </select>
               </div>
 
@@ -1346,12 +1449,19 @@ export default function AdminOrdersPage() {
               const isCancelPending =
                 (selectedOrderDetail.shipping_status || "").toUpperCase() === "CANCEL PENDING" ||
                 (selectedOrderDetail.shipping_status || "").toUpperCase() === "CANCEL_PENDING" ||
-                (selectedOrderDetail.shipping_status || "").toUpperCase() === "CANCEL_REQUESTED";
+                (selectedOrderDetail.shipping_status || "").toUpperCase() === "CANCEL_REQUESTED" ||
+                ((selectedOrderDetail as any).status || "").toUpperCase() === "CANCEL PENDING" ||
+                ((selectedOrderDetail as any).status || "").toUpperCase() === "CANCEL_PENDING";
 
               const isCancelled =
+                (selectedOrderDetail.shipping_status || "").toUpperCase() === "CANCEL" ||
                 (selectedOrderDetail.shipping_status || "").toUpperCase() === "CANCELLED" ||
                 (selectedOrderDetail.shipping_status || "").toUpperCase() === "DIBATALKAN" ||
                 (selectedOrderDetail.shipping_status || "").toUpperCase() === "CANCELED" ||
+                ((selectedOrderDetail as any).status || "").toUpperCase() === "CANCEL" ||
+                ((selectedOrderDetail as any).status || "").toUpperCase() === "CANCELLED" ||
+                ((selectedOrderDetail as any).status || "").toUpperCase() === "DIBATALKAN" ||
+                ((selectedOrderDetail as any).status || "").toUpperCase() === "CANCELED" ||
                 Boolean(selectedOrderDetail.cancel_reason || selectedOrderDetail.cancellation_reason);
 
               if (!isCancelPending && !isCancelled) return null;
@@ -1527,14 +1637,14 @@ export default function AdminOrdersPage() {
                           updateShipmentMut.mutate(
                             {
                               orderNumber: selectedOrderDetail.order_number,
-                              data: { shipping_status: "CANCELLED" },
+                              data: { shipping_status: "CANCEL" },
                             },
                             {
                               onSuccess: () => {
                                 setSelectedOrderDetail((prev) =>
-                                  prev ? { ...prev, shipping_status: "CANCELLED" } : null
+                                  prev ? { ...prev, shipping_status: "CANCEL", status: "cancelled" } : null
                                 );
-                                showSuccessAlert("Permintaan pembatalan disetujui. Status order resmi CANCELLED!");
+                                showSuccessAlert("Permintaan pembatalan disetujui. Dana akan di-refund dan status order resmi CANCEL!");
                               },
                             }
                           );

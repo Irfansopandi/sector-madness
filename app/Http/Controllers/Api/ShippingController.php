@@ -287,7 +287,11 @@ class ShippingController extends Controller
             return response()->json(['status' => false, 'message' => 'Biteship API Key is missing in configuration'], 500);
         }
 
-        $shippingAddress = $order->shipping_address;
+        $shippingAddress = $order->shipping_address ?? [];
+        if (is_string($shippingAddress)) {
+            $shippingAddress = json_decode($shippingAddress, true) ?? [];
+        }
+
         $itemsPayload = [];
         foreach ($order->items as $item) {
             $rawP = (float)$item->price;
@@ -295,30 +299,48 @@ class ShippingController extends Controller
             $itemsPayload[] = [
                 'name'        => substr($item->product_name . ($item->color || $item->size ? ' (' . implode('-', array_filter([$item->color, $item->size])) . ')' : ''), 0, 50),
                 'description' => 'Sector Madness Technical Garment',
-                'value'       => $valIdr,
-                'quantity'    => $item->quantity,
-                'weight'      => 800 * $item->quantity, // gram per item
+                'value'       => $valIdr > 0 ? $valIdr : 100000,
+                'quantity'    => $item->quantity ?: 1,
+                'weight'      => 800 * ($item->quantity ?: 1), // gram per item
+            ];
+        }
+        if (empty($itemsPayload)) {
+            $itemsPayload[] = [
+                'name'        => 'Sector Madness Order #' . $order->order_number,
+                'description' => 'Sector Madness Technical Garment',
+                'value'       => 100000,
+                'quantity'    => 1,
+                'weight'      => 1000,
             ];
         }
 
         $warehouse = \App\Models\Warehouse::where('is_primary', true)->first() 
             ?? \App\Models\Warehouse::first();
 
+        $effectiveOriginAreaId = $warehouse->area_id ?? (config('services.biteship.origin_area_id') ?: env('BITESHIP_ORIGIN_AREA_ID'));
+        $isValidOriginArea = !empty($effectiveOriginAreaId) && strlen($effectiveOriginAreaId) > 10 && !str_starts_with($effectiveOriginAreaId, 'IDNPJ');
+
+        $destAreaId = $shippingAddress['area_id'] ?? null;
+        $isValidDestArea = !empty($destAreaId) && strlen($destAreaId) > 10 && !str_starts_with($destAreaId, 'IDNPJ');
+
+        $destPostcode = (int)($shippingAddress['postal_code'] ?? $shippingAddress['postcode'] ?? 10110);
+        $destStreet = $shippingAddress['street_address'] ?? $shippingAddress['street'] ?? $shippingAddress['address'] ?? 'Jl. Raya';
+        $destCity = $shippingAddress['city'] ?? 'Jakarta';
+        $destProvince = $shippingAddress['province'] ?? 'DKI Jakarta';
+
         $payload = [
-            'origin_contact_name'   => $warehouse ? $warehouse->contact_name : 'Sector Madness Archive Lab',
-            'origin_contact_phone'  => $warehouse ? $warehouse->phone : '081234567890',
-            'origin_contact_email'  => $warehouse ? $warehouse->email : 'logistics@sectormadness.com',
-            'shipper_organization'  => $warehouse ? $warehouse->name : 'Sector Madness Official',
-            'origin_address'        => $warehouse ? ($warehouse->address . ', ' . $warehouse->city . ', ' . $warehouse->province) : 'Jl. Senopati Raya No. 28, Kebayoran Baru, Jakarta Selatan',
-            'origin_note'           => $warehouse ? ($warehouse->notes ?? 'Pickup at warehouse loading bay') : 'Pickup at warehouse loading bay',
-            'origin_postal_code'    => (int)($warehouse ? $warehouse->postal_code : 12190),
-            'origin_area_id'        => $warehouse ? $warehouse->area_id : 'IDNPJ_KRWB',
-            'destination_contact_name'  => $shippingAddress['receiver_name'] ?? ($order->user ? $order->user->name : 'Customer'),
-            'destination_contact_phone' => $shippingAddress['phone'] ?? ($order->user ? $order->user->phone : '081234567890'),
+            'origin_contact_name'       => $warehouse ? $warehouse->contact_name : 'Sector Madness Archive Lab',
+            'origin_contact_phone'      => $warehouse ? $warehouse->phone : '081234567890',
+            'origin_contact_email'      => $warehouse ? $warehouse->email : 'logistics@sectormadness.com',
+            'shipper_organization'      => $warehouse ? $warehouse->name : 'Sector Madness Official',
+            'origin_address'            => $warehouse ? ($warehouse->address . ', ' . $warehouse->city . ', ' . $warehouse->province) : 'Jl. Senopati Raya No. 28, Kebayoran Baru, Jakarta Selatan',
+            'origin_note'               => $warehouse ? ($warehouse->notes ?? 'Pickup at warehouse loading bay') : 'Pickup at warehouse loading bay',
+            'origin_postal_code'        => (int)($warehouse ? $warehouse->postal_code : 12190),
+            'destination_contact_name'  => $shippingAddress['receiver_name'] ?? $shippingAddress['name'] ?? ($order->user ? $order->user->name : 'Customer'),
+            'destination_contact_phone' => $shippingAddress['phone_number'] ?? $shippingAddress['phone'] ?? ($order->user ? $order->user->phone : '081234567890'),
             'destination_contact_email' => $order->user ? $order->user->email : 'customer@sectormadness.com',
-            'destination_address'       => ($shippingAddress['street'] ?? 'Jl. Raya') . ', ' . ($shippingAddress['city'] ?? 'Jakarta') . ', ' . ($shippingAddress['province'] ?? 'DKI Jakarta'),
-            'destination_postal_code'   => (int)($shippingAddress['postal_code'] ?? 10110),
-            'destination_area_id'       => $shippingAddress['area_id'] ?? 'IDNPJ002',
+            'destination_address'       => $destStreet . ', ' . $destCity . ', ' . $destProvince,
+            'destination_postal_code'   => $destPostcode,
             'courier_company'           => strtolower($order->shipment->courier_company ?? 'jne'),
             'courier_type'              => strtolower($order->shipment->courier_type ?? 'reg'),
             'delivery_type'             => 'later',
@@ -328,6 +350,13 @@ class ShippingController extends Controller
             'items'                     => $itemsPayload,
         ];
 
+        if ($isValidOriginArea) {
+            $payload['origin_area_id'] = $effectiveOriginAreaId;
+        }
+        if ($isValidDestArea) {
+            $payload['destination_area_id'] = $destAreaId;
+        }
+
         try {
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $apiKey,
@@ -336,62 +365,104 @@ class ShippingController extends Controller
 
             if ($response->successful()) {
                 $resData = $response->json();
-                $biteshipId = $resData['id'] ?? (strtoupper(substr(md5($order->order_number), 0, 10)));
+                $biteshipId = $resData['id'] ?? null;
                 $courierComp = strtoupper($order->shipment->courier_company ?? 'JNE');
-                $trackingNum = $resData['courier']['tracking_id'] ?? ($courierComp === 'GOSEND' || $courierComp === 'GO-SEND' ? 'GK-' . rand(100000000, 999999999) : $courierComp . '-' . rand(1000000000, 9999999999));
+                $trackingNum = $resData['courier']['waybill_id'] 
+                    ?? $resData['courier']['tracking_id'] 
+                    ?? null;
                 
+                if (empty($trackingNum)) {
+                    $trackingNum = $resData['id'] ?? $order->shipment->tracking_number;
+                }
+
+                // Tetap simpan status sebagai 'shipped' agar tidak turun kembali ke in processing
                 $order->shipment->update([
-                    'biteship_order_id' => $biteshipId,
-                    'tracking_number'   => $trackingNum,
-                    'status'            => 'allocated',
+                    'biteship_order_id' => $biteshipId ?: $order->shipment->biteship_order_id,
+                    'tracking_number'   => $trackingNum ?: $order->shipment->tracking_number,
+                    'status'            => 'shipped',
                 ]);
+
+                $order->update(['status' => 'shipped']);
 
                 return response()->json([
                     'status'  => true,
-                    'message' => 'Shipment created via Biteship Live API',
+                    'message' => 'Request pickup berhasil dikirim ke Biteship!',
                     'data'    => $order->load('shipment'),
                     'biteship_response' => $resData,
                 ], 200);
             }
 
-            // Fallback for Sandbox / Development Biteship Key
-            $mockBiteshipId = strtoupper(substr(md5($order->order_number), 0, 10));
-            $courierCompSandbox = strtoupper($order->shipment->courier_company ?? 'JNE');
-            $mockTrackingNum = $courierCompSandbox === 'GOSEND' || $courierCompSandbox === 'GO-SEND' ? 'GK-' . rand(100000000, 999999999) : $courierCompSandbox . '-' . rand(1000000000, 9999999999);
-            
-            $order->shipment->update([
-                'biteship_order_id' => $mockBiteshipId,
-                'tracking_number'   => $mockTrackingNum,
-                'status'            => 'allocated',
-            ]);
+            // Response error dari Biteship API
+            $statusCode = $response->status();
+            $resJson = $response->json();
+            $errorMsg = is_array($resJson) 
+                ? ($resJson['error'] ?? $resJson['message'] ?? $response->body()) 
+                : $response->body();
+            $errorCode = is_array($resJson) ? ($resJson['code'] ?? null) : null;
 
+            Log::error("Biteship Create Order Error [{$statusCode}]: " . json_encode($resJson ?? $response->body()));
+
+            // Deteksi saldo Biteship tidak cukup (HTTP 402, kode Biteship 40009001-40009004, atau kata kunci saldo/balance/deposit/payment failed)
+            $isInsufficientBalance = ($statusCode === 402)
+                || in_array($errorCode, [40009001, 40009002, 40009003, 40009004])
+                || preg_match('/(balance|saldo|deposit|insufficient|payment\s+failed|wallet|dana\s+tidak\s+cukup)/i', (string)$errorMsg);
+
+            if ($isInsufficientBalance) {
+                // JANGAN digantikan dengan dummy! Biarkan data sebelumnya utuh dan beri informasi yang jelas.
+                return response()->json([
+                    'status'     => false,
+                    'error_type' => 'insufficient_balance',
+                    'message'    => 'Saldo Biteship tidak mencukupi untuk melakukan request pickup kurir ini. Silakan top up saldo akun di dashboard Biteship terlebih dahulu.',
+                    'detail'     => $errorMsg,
+                    'biteship_response' => $resJson,
+                ], 402);
+            }
+
+            // Fallback mock HANYA jika secara eksplisit diset BITESHIP_FORCE_DUMMY=true di .env
+            $forceDummy = filter_var(config('services.biteship.force_dummy', env('BITESHIP_FORCE_DUMMY', false)), FILTER_VALIDATE_BOOLEAN);
+            if ($forceDummy) {
+                $mockBiteshipId = strtoupper(substr(md5($order->order_number), 0, 10));
+                $courierCompSandbox = strtoupper($order->shipment->courier_company ?? 'JNE');
+                $mockTrackingNum = $courierCompSandbox === 'GOSEND' || $courierCompSandbox === 'GO-SEND' ? 'GK-' . rand(100000000, 999999999) : $courierCompSandbox . '-' . rand(1000000000, 9999999999);
+                
+                $order->shipment->update([
+                    'biteship_order_id' => $mockBiteshipId,
+                    'tracking_number'   => $mockTrackingNum,
+                    'status'            => 'shipped',
+                ]);
+                $order->update(['status' => 'shipped']);
+
+                return response()->json([
+                    'status'  => true,
+                    'message' => '[FORCE DUMMY] Shipment output generated via Biteship Integration',
+                    'data'    => $order->load('shipment'),
+                    'biteship_response' => [
+                        'id'             => $mockBiteshipId,
+                        'courier'        => [
+                            'company'     => strtolower($order->shipment->courier_company ?? 'jne'),
+                            'type'        => strtolower($order->shipment->courier_type ?? 'reg'),
+                            'tracking_id' => $mockTrackingNum,
+                        ],
+                        'status'         => 'shipped',
+                    ],
+                ], 200);
+            }
+
+            // Jika error API umum lainnya: JANGAN ganti dengan data dummy!
             return response()->json([
-                'status'  => true,
-                'message' => 'Shipment output generated via Biteship Integration',
-                'data'    => $order->load('shipment'),
-                'biteship_response' => [
-                    'id'             => $mockBiteshipId,
-                    'courier'        => [
-                        'company'     => strtolower($order->shipment->courier_company ?? 'jne'),
-                        'type'        => strtolower($order->shipment->courier_type ?? 'reg'),
-                        'tracking_id' => $mockTrackingNum,
-                    ],
-                    'status'         => 'allocated',
-                    'shipper'        => [
-                        'name'    => $payload['origin_contact_name'] ?? 'Warehouse Admin',
-                        'phone'   => $payload['origin_contact_phone'] ?? '081234567890',
-                        'address' => $payload['origin_address'] ?? 'Warehouse Origin',
-                    ],
-                    'destination'    => [
-                        'name'    => $payload['destination_contact_name'] ?? 'Customer',
-                        'phone'   => $payload['destination_contact_phone'] ?? '081234567890',
-                        'address' => $payload['destination_address'] ?? 'Customer Address',
-                    ]
-                ],
-            ], 200);
+                'status'     => false,
+                'error_type' => 'biteship_error',
+                'message'    => 'Gagal melakukan request pickup ke Biteship: ' . ($errorMsg ?: 'Terjadi kesalahan respon dari Biteship API'),
+                'detail'     => $errorMsg,
+                'biteship_response' => $resJson,
+            ], $statusCode >= 400 && $statusCode < 600 ? $statusCode : 400);
+
         } catch (\Exception $e) {
             Log::error('Biteship Create Order Exception: ' . $e->getMessage());
-            return response()->json(['status' => false, 'message' => 'Server exception when connecting to Biteship'], 500);
+            return response()->json([
+                'status'  => false,
+                'message' => 'Terjadi kesalahan server saat menghubungi Biteship: ' . $e->getMessage(),
+            ], 500);
         }
     }
 
