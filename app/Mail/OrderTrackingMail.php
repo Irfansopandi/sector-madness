@@ -10,12 +10,12 @@ use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 use App\Models\Order;
 
-class OrderTrackingMail extends Mailable implements ShouldQueue
+class OrderTrackingMail extends Mailable
 {
     use Queueable, SerializesModels;
 
     public $order;
-    public $messageType; // 'status' or 'tracking'
+    public $messageType; // 'status', 'tracking', 'shipped', 'delivered', 'cancel_approved', 'cancel_rejected'
 
     /**
      * Create a new message instance.
@@ -31,8 +31,10 @@ class OrderTrackingMail extends Mailable implements ShouldQueue
      */
     public function envelope(): Envelope
     {
-        if ($this->messageType === 'tracking') {
+        if ($this->messageType === 'tracking' || $this->messageType === 'shipped') {
             $subject = '📦 Resi Pengiriman Pesanan #' . $this->order->order_number;
+        } elseif ($this->messageType === 'delivered' || strtolower((string)$this->order->status) === 'delivered') {
+            $subject = '🎉 Pesanan Selesai / Telah Tiba #' . $this->order->order_number;
         } elseif ($this->messageType === 'cancel_approved') {
             $subject = '✅ Pembatalan Pesanan Disetujui #' . $this->order->order_number;
         } elseif ($this->messageType === 'cancel_rejected') {

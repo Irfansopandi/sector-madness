@@ -2,14 +2,13 @@
 
 namespace App\Jobs;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use App\Services\WebPushService;
 use App\Models\PushSubscription;
 use App\Models\Order;
 use Illuminate\Support\Facades\Log;
 
-class SendOrderTrackingPush implements ShouldQueue
+class SendOrderTrackingPush
 {
     use Queueable;
 

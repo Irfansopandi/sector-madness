@@ -32,8 +32,8 @@
             <h2 class="title" style="font-size: 18px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 24px; text-align: center; color: #0A0A0A;">ORDER UPDATE: #{{ $order->order_number }}</h2>
             
             <p class="desc" style="font-size: 14px; line-height: 1.6; color: #555555; margin: 0 0 24px; text-align: center;">
-                Halo, <strong style="color: #0A0A0A;">{{ $order->user ? $order->user->name : 'Pelanggan' }}</strong>!<br>
-            @if($messageType === 'tracking' && $order->shipment && $order->shipment->tracking_number)
+                Halo, <strong style="color: #0A0A0A;">{{ $order->user ? $order->user->name : (($order->shipping_address['receiver_name'] ?? $order->shipping_name) ?: 'Pelanggan') }}</strong>!<br>
+            @if(($messageType === 'tracking' || $messageType === 'shipped') && $order->shipment && $order->shipment->tracking_number)
                 Kabar baik! Pesanan Anda sedang dalam perjalanan menggunakan kurir <strong style="color: #0A0A0A;">{{ $order->shipment->courier_company }}</strong>.<br>
                 Berikut adalah nomor resi pengiriman Anda:
             </p>
@@ -55,6 +55,10 @@
                 Ajuan pembatalan untuk pesanan Anda <strong style="color: #0A0A0A;">ditolak</strong>.<br>
                 Pesanan Anda akan tetap diproses dan dikirimkan ke alamat Anda.
             </p>
+            @elseif($messageType === 'delivered' || strtolower((string)$order->status) === 'delivered')
+                Kabar gembira! Pesanan Anda telah <strong style="color: #0A0A0A;">berhasil sampai di tujuan</strong>.<br>
+                Terima kasih telah berbelanja dan mempercayai <strong>Sector Madness</strong>!
+            </p>
             @else
                 Status pesanan Anda telah diperbarui menjadi: <strong style="color: #0A0A0A;">{{ ucfirst($order->status) }}</strong>.
             </p>
@@ -67,7 +71,7 @@
             @endif
             
             <div style="text-align: center; margin-bottom: 40px;">
-                <a href="{{ config('app.frontend_url', 'http://localhost:3000') }}/dashboard/orders?view_order={{ $order->order_number }}" class="btn" style="display: inline-block; padding: 14px 28px; background-color: #0A0A0A; color: #FFFFFF; text-decoration: none; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; border: 1px solid #0A0A0A;">
+                <a href="{{ rtrim(config('app.frontend_url') ?: env('FRONTEND_URL', 'https://sectormadness.com'), '/') }}/dashboard/orders?view_order={{ $order->order_number }}" class="btn" style="display: inline-block; padding: 14px 28px; background-color: #0A0A0A; color: #FFFFFF; text-decoration: none; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; border: 1px solid #0A0A0A;">
                     Lihat Detail Pesanan
                 </a>
             </div>

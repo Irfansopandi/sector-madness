@@ -483,29 +483,45 @@ class OrderController extends Controller
             $order->payment->update(['payment_status' => 'cancelled']);
         }
 
+        // Resolve Target Customer Email and Name accurately
+        $shippingAddr = is_array($order->shipping_address) ? $order->shipping_address : (json_decode($order->shipping_address, true) ?: []);
+        $targetEmail = $order->user?->email 
+            ?: $order->shipping_email 
+            ?: ($shippingAddr['email'] ?? null);
+
+        $newStLower = strtolower((string)$newStatus);
+        $emailType = 'status';
+
         // PUSH NOTIFICATION & EMAIL: Tracking / Resi Update
-        if ($oldStatus === 'cancel pending') {
-            if (in_array(strtolower((string)$newStatus), ['cancel', 'cancelled', 'dibatalkan'])) {
-                \App\Jobs\SendOrderTrackingPush::dispatch($order, 'cancel_approved');
-                if ($order->user && $order->user->email) {
-                    \Illuminate\Support\Facades\Mail::to($order->user->email)->queue(new \App\Mail\OrderTrackingMail($order, 'cancel_approved'));
+        if ($targetEmail) {
+            try {
+                if ($oldStatus === 'cancel pending') {
+                    if (in_array($newStLower, ['cancel', 'cancelled', 'dibatalkan'])) {
+                        $emailType = 'cancel_approved';
+                    } elseif (in_array($newStLower, ['in processing', 'processing', 'paid', 'shipped', 'delivering', 'delivered'])) {
+                        $emailType = 'cancel_rejected';
+                    }
+                } elseif (in_array($newStLower, ['delivered', 'completed', 'received', 'selesai'])) {
+                    $emailType = 'delivered';
+                } elseif (in_array($newStLower, ['shipped', 'in transit', 'delivering']) || (!empty($trackingNumber) && $trackingNumber !== $order->shipment?->getOriginal('tracking_number'))) {
+                    $emailType = 'tracking';
                 }
-            } elseif (in_array(strtolower((string)$newStatus), ['in processing', 'processing', 'paid', 'shipped', 'delivering', 'delivered'])) {
-                \App\Jobs\SendOrderTrackingPush::dispatch($order, 'cancel_rejected');
-                if ($order->user && $order->user->email) {
-                    \Illuminate\Support\Facades\Mail::to($order->user->email)->queue(new \App\Mail\OrderTrackingMail($order, 'cancel_rejected'));
-                }
+
+                // Kirim langsung secara sinkron (send) agar sampai saat itu juga dan tidak tertahan di antrean queue database
+                \Illuminate\Support\Facades\Mail::to($targetEmail)->send(new \App\Mail\OrderTrackingMail($order, $emailType));
+                \Illuminate\Support\Facades\Log::info("Order update email sent immediately to {$targetEmail} for order #{$order->order_number} (type: {$emailType})");
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error("Failed to send order update email to {$targetEmail}: " . $e->getMessage());
             }
-        } elseif ($trackingNumber !== null) {
-            \App\Jobs\SendOrderTrackingPush::dispatch($order, 'tracking');
-            if ($order->user && $order->user->email) {
-                \Illuminate\Support\Facades\Mail::to($order->user->email)->queue(new \App\Mail\OrderTrackingMail($order, 'tracking'));
+        }
+
+        // Web Push notification
+        try {
+            if ($order->user_id) {
+                \App\Jobs\SendOrderTrackingPush::dispatchSync($order, $emailType);
             }
-        } elseif ($newStatus) {
-            \App\Jobs\SendOrderTrackingPush::dispatch($order, 'status');
-            if ($order->user && $order->user->email) {
-                \Illuminate\Support\Facades\Mail::to($order->user->email)->queue(new \App\Mail\OrderTrackingMail($order, 'status'));
-            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning("Web push notification dispatch error: " . $e->getMessage());
         }
 
         return response()->json([

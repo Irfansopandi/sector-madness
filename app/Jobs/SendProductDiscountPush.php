@@ -2,14 +2,13 @@
 
 namespace App\Jobs;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use App\Services\WebPushService;
 use App\Models\PushSubscription;
 use App\Models\Product;
 use Illuminate\Support\Facades\Log;
 
-class SendProductDiscountPush implements ShouldQueue
+class SendProductDiscountPush
 {
     use Queueable;
 

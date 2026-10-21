@@ -384,6 +384,17 @@ class ShippingController extends Controller
 
                 $order->update(['status' => 'shipped']);
 
+                // Kirim notifikasi email resi pickup ke customer secara langsung
+                $targetEmail = $order->user?->email ?: $order->shipping_email ?: ($shippingAddress['email'] ?? null);
+                if ($targetEmail) {
+                    try {
+                        \Illuminate\Support\Facades\Mail::to($targetEmail)->send(new \App\Mail\OrderTrackingMail($order, 'tracking'));
+                        \Illuminate\Support\Facades\Log::info("Pickup tracking email sent immediately to {$targetEmail} for order #{$order->order_number}");
+                    } catch (\Throwable $e) {
+                        \Illuminate\Support\Facades\Log::error("Failed to send pickup tracking email to {$targetEmail}: " . $e->getMessage());
+                    }
+                }
+
                 return response()->json([
                     'status'  => true,
                     'message' => 'Request pickup berhasil dikirim ke Biteship!',

@@ -1401,7 +1401,7 @@ function CheckoutContent() {
                     className="uppercase text-white text-base tracking-[0.2em]" 
                     style={{ marginBottom: "20px", letterSpacing: "0.2em", fontFamily: "'Roboto', sans-serif", fontWeight: 600 }}
                   >
-                    PAYMENT METHOD (VIRTUAL ACCOUNT)
+                    PAYMENT METHOD
                   </h3>
 
                   <div className="space-y-3 font-mono">

@@ -2,13 +2,12 @@
 
 namespace App\Jobs;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use App\Services\WebPushService;
 use App\Models\PushSubscription;
 use Illuminate\Support\Facades\Log;
 
-class SendAdminPushNotification implements ShouldQueue
+class SendAdminPushNotification
 {
     use Queueable;
 
