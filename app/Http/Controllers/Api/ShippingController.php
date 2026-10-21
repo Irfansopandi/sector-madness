@@ -553,7 +553,7 @@ class ShippingController extends Controller
                 'service_name'       => 'Reguler Service',
                 'shipping_price'     => $jnePrice * $multiplier,
                 'estimated_delivery' => $jneEst,
-                'description'        => '[DUMMY LOCAL] Biteship Sandbox/API Error',
+                'description'        => 'Layanan Pengiriman Reguler JNE Express',
             ],
             [
                 'courier_code'       => 'JNT',
@@ -562,7 +562,7 @@ class ShippingController extends Controller
                 'service_name'       => 'EZ Service',
                 'shipping_price'     => $jntPrice * $multiplier,
                 'estimated_delivery' => $jntEst,
-                'description'        => '[DUMMY LOCAL] Biteship Sandbox/API Error',
+                'description'        => 'Layanan Pengiriman Reguler J&T Express',
             ]
         ];
         
@@ -585,7 +585,7 @@ class ShippingController extends Controller
                 'service_name'       => 'Instant Delivery',
                 'shipping_price'     => $gosendPrice * $multiplier,
                 'estimated_delivery' => '1-3 Hours',
-                'description'        => '[DUMMY LOCAL] Biteship Sandbox/API Error',
+                'description'        => 'Pengiriman Instant Kilat Kurir Karawang',
             ];
         }
 
