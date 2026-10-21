@@ -34,7 +34,7 @@ export const subscribeToWebPush = async (token?: string | null) => {
             return;
         }
 
-        const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+        const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "BOFu5J4bkO1x69eeV0miIJUjiQNt59OS66oumpoiwxfUNCUTrtBsnYxfb1Aa8dc4g402_sbQ7oQ5c5G8nI9Qttg";
         console.log('[WebPush] VAPID Key available:', !!vapidPublicKey);
         if (!vapidPublicKey) {
             console.error('[WebPush] VAPID public key not found');
@@ -82,7 +82,7 @@ export const subscribeToWebPush = async (token?: string | null) => {
         }
 
         console.log('[WebPush] Sending to backend...');
-        const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/push/subscribe`, {
+        const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.sectormadness.com/api'}/push/subscribe`, {
             endpoint: subJson.endpoint,
             keys: subJson.keys
         }, {

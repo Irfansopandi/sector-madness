@@ -395,6 +395,15 @@ class ShippingController extends Controller
                     }
                 }
 
+                // Kirim Web Push ke browser customer jika terdaftar
+                try {
+                    if ($order->user_id) {
+                        \App\Jobs\SendOrderTrackingPush::dispatchSync($order, 'tracking');
+                    }
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning("Web push notification dispatch error on pickup: " . $e->getMessage());
+                }
+
                 return response()->json([
                     'status'  => true,
                     'message' => 'Request pickup berhasil dikirim ke Biteship!',
