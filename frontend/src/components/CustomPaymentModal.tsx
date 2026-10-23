@@ -361,54 +361,37 @@ export default function CustomPaymentModal({
           </div>
         </div>
 
-        {/* Action Footer */}
-        <div className="bg-[#111111] border-t border-[#222222] p-6 sm:p-8 shrink-0 flex flex-col sm:flex-row gap-3">
-          {/* Main Button: Proceed via Snap */}
-          <button
-            onClick={handleOpenSnap}
-            disabled={isSnapLoading}
-            className="flex-1 text-[13px] sm:text-sm font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center bg-white text-black hover:bg-[#EAEAEA] active:scale-[0.99] border border-white py-4 px-6 shadow-2xl"
-          >
-            {isSnapLoading ? (
-              <div className="flex items-center gap-3">
-                <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                <span>OPENING GATEWAY...</span>
-              </div>
-            ) : (
-              <span>[ PROCEED TO PAYMENT // MIDTRANS SNAP ]</span>
-            )}
-          </button>
-
-          {/* Secondary Button: Confirm Payment */}
-          <button
-            onClick={handleConfirmPayment}
-            disabled={isVerifying}
-            className="sm:w-auto text-[11px] sm:text-xs font-bold uppercase tracking-[0.18em] transition-all flex items-center justify-center bg-[#181818] text-[#CCCCCC] hover:text-white hover:bg-[#222222] border border-[#333] py-4 px-6"
-          >
-            {isVerifying ? (
-              <div className="flex items-center gap-2">
-                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>VERIFYING SETTLEMENT...</span>
-              </div>
-            ) : (
-              <span>[ I HAVE COMPLETED PAYMENT ]</span>
-            )}
-          </button>
-        </div>
-
-        {/* Direct Link Option */}
-        {effectivePaymentUrl && (
-          <div className="bg-[#0E0E0E] border-t border-[#1C1C1C] py-2.5 text-center">
+        {/* Action Footer Matching Exact Layout */}
+        <div className="bg-[#111111] border-t border-[#222222] p-6 sm:p-8 shrink-0 flex flex-col sm:flex-row gap-3 items-stretch">
+          {effectivePaymentUrl && (
             <a
               href={effectivePaymentUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[10px] sm:text-[11px] text-[#666] hover:text-white underline underline-offset-4 tracking-wider transition-colors inline-block font-mono"
+              className="font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.18em] transition-all flex items-center justify-center bg-[#0C0C0C] hover:bg-[#1A1A1A] text-[#888888] hover:text-white border border-[#2B2B2B] px-5 py-4 shrink-0 whitespace-nowrap"
             >
-              If the payment window does not open automatically, click here to open the payment page.
+              PAY ON MIDTRANS PAGE ↗
             </a>
-          </div>
-        )}
+          )}
+          <button
+            onClick={handleConfirmPayment}
+            disabled={isVerifying}
+            className={`flex-1 text-[13px] sm:text-sm font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center shadow-2xl py-4.5 px-8 ${
+              isVerifying
+                ? "bg-[#1A1A1A] text-[#666666] cursor-not-allowed border border-[#333333]"
+                : "bg-white text-black hover:bg-[#EAEAEA] active:scale-[0.99] border border-white"
+            }`}
+          >
+            {isVerifying ? (
+              <div className="flex items-center gap-3">
+                <div className="w-4 h-4 border-2 border-[#666666] border-t-black rounded-full animate-spin" />
+                <span>VERIFYING NETWORK SETTLEMENT...</span>
+              </div>
+            ) : (
+              <span>[ ✓ I HAVE COMPLETED PAYMENT ]</span>
+            )}
+          </button>
+        </div>
 
       </div>
     </div>
