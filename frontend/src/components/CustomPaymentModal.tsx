@@ -361,22 +361,12 @@ export default function CustomPaymentModal({
           </div>
         </div>
 
-        {/* Action Footer Matching Exact Layout */}
-        <div className="bg-[#111111] border-t border-[#222222] p-6 sm:p-8 shrink-0 flex flex-col sm:flex-row gap-3 items-stretch">
-          {effectivePaymentUrl && (
-            <a
-              href={effectivePaymentUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.18em] transition-all flex items-center justify-center bg-[#0C0C0C] hover:bg-[#1A1A1A] text-[#888888] hover:text-white border border-[#2B2B2B] px-5 py-4 shrink-0 whitespace-nowrap"
-            >
-              PAY ON MIDTRANS PAGE ↗
-            </a>
-          )}
+        {/* Action Footer */}
+        <div className="bg-[#111111] border-t border-[#222222] p-6 sm:p-8 shrink-0 flex flex-col gap-3">
           <button
             onClick={handleConfirmPayment}
             disabled={isVerifying}
-            className={`flex-1 text-[13px] sm:text-sm font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center shadow-2xl py-4.5 px-8 ${
+            className={`w-full text-sm sm:text-base font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center shadow-2xl py-5 sm:py-6 px-8 min-h-[60px] ${
               isVerifying
                 ? "bg-[#1A1A1A] text-[#666666] cursor-not-allowed border border-[#333333]"
                 : "bg-white text-black hover:bg-[#EAEAEA] active:scale-[0.99] border border-white"
