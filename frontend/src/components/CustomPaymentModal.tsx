@@ -7,7 +7,6 @@ interface CustomPaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
   onPaymentConfirmed: () => void;
-  onCancelOrder?: () => void;
   orderNumber: string;
   paymentMethod?: string;
   grossAmount: number;
@@ -24,7 +23,6 @@ export default function CustomPaymentModal({
   isOpen,
   onClose,
   onPaymentConfirmed,
-  onCancelOrder,
   orderNumber,
   grossAmount,
   receiverName = "Customer",
@@ -205,9 +203,6 @@ export default function CustomPaymentModal({
                   {formatIDR(grossAmount)}
                 </div>
               </div>
-              <span className="text-[10px] font-bold text-white uppercase tracking-wider bg-[#1A1A1A] border border-[#333] px-3 py-1.5">
-                AUTOMATED 24/7 SETTLEMENT
-              </span>
             </div>
 
             {/* ─── SECTION 3: Verified Channels & Instructions ─── */}
@@ -227,9 +222,13 @@ export default function CustomPaymentModal({
                         MIDTRANS VERIFIED PROTOCOL
                       </div>
                     </div>
-                    <span className="text-[11px] font-black bg-white/10 border border-white/20 text-white tracking-[0.15em] uppercase hidden sm:block" style={{ padding: "8px 16px" }}>
-                      AUTOMATED 24/7
-                    </span>
+                    <button
+                      onClick={handleOpenSnap}
+                      disabled={isSnapLoading}
+                      className="font-extrabold text-[11px] sm:text-xs uppercase tracking-[0.2em] transition-all shrink-0 border bg-white text-black hover:bg-[#EAEAEA] active:scale-[0.98] border-white px-6 sm:px-8 py-3 sm:py-3.5 shadow-md"
+                    >
+                      {isSnapLoading ? "OPENING..." : "[ PAY NOW ]"}
+                    </button>
                   </div>
 
                   {/* Channel Options Display (Clean single bar) */}
@@ -352,53 +351,26 @@ export default function CustomPaymentModal({
           </div>
         </div>
 
-        {/* Action Footer */}
-        <div className="bg-[#111111] border-t border-[#222222] p-6 sm:p-8 shrink-0 flex flex-col gap-3">
-          {/* Primary Action Button: Pay via Midtrans Snap */}
-          <button
-            onClick={handleOpenSnap}
-            disabled={isSnapLoading}
-            className="w-full text-sm sm:text-base font-black uppercase tracking-[0.25em] transition-all flex items-center justify-center shadow-2xl py-6 sm:py-7 px-8 min-h-[68px] sm:min-h-[74px] bg-white text-black hover:bg-[#EAEAEA] active:scale-[0.99] border border-white"
-          >
-            {isSnapLoading ? (
-              <div className="flex items-center gap-3">
-                <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                <span>OPENING MIDTRANS GATEWAY...</span>
-              </div>
-            ) : (
-              <span>[ PAY VIA MIDTRANS SNAP ]</span>
-            )}
-          </button>
-
-          {/* Verification Button: I Have Completed Payment */}
+        {/* Action Footer - Single White Luxury Button */}
+        <div className="bg-[#111111] border-t border-[#222222] p-6 sm:p-8 shrink-0">
           <button
             onClick={handleConfirmPayment}
             disabled={isVerifying}
-            className={`w-full text-xs sm:text-sm font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center py-4 sm:py-5 px-6 min-h-[52px] border ${
+            className={`w-full text-sm sm:text-base font-black uppercase tracking-[0.25em] transition-all flex items-center justify-center shadow-2xl py-6 sm:py-7 px-8 min-h-[68px] sm:min-h-[74px] ${
               isVerifying
-                ? "bg-[#1A1A1A] text-[#666666] cursor-not-allowed border-[#333333]"
-                : "bg-transparent text-white hover:bg-white/10 active:scale-[0.99] border-[#444444] hover:border-white"
+                ? "bg-[#1A1A1A] text-[#666666] cursor-not-allowed border border-[#333333]"
+                : "bg-white text-black hover:bg-[#EAEAEA] active:scale-[0.99] border border-white"
             }`}
           >
             {isVerifying ? (
               <div className="flex items-center gap-3">
-                <div className="w-4 h-4 border-2 border-[#666666] border-t-white rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-[#666666] border-t-black rounded-full animate-spin" />
                 <span>VERIFYING NETWORK SETTLEMENT...</span>
               </div>
             ) : (
               <span>[ ✓ I HAVE COMPLETED PAYMENT ]</span>
             )}
           </button>
-
-          {/* Cancel & Choose Different Method */}
-          {onCancelOrder && (
-            <button
-              onClick={onCancelOrder}
-              className="text-[11px] sm:text-xs font-bold text-[#888888] hover:text-[#FFFFFF] uppercase tracking-[0.2em] transition-colors py-2 text-center"
-            >
-              [ ✕ CANCEL & CHOOSE DIFFERENT PAYMENT METHOD ]
-            </button>
-          )}
         </div>
 
       </div>
