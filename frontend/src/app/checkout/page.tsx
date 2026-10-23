@@ -564,6 +564,7 @@ function CheckoutContent() {
         shipping_price: selectedRate?.shipping_price || 0,
         estimated_delivery: selectedRate?.estimated_delivery || "N/A",
         payment_method: "bni_va",
+        voucher_code: appliedPromo?.code || undefined,
       });
 
       if (!res.status || !res.order_number) {
