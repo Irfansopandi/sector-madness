@@ -614,7 +614,7 @@ export const createPaymentTransaction = async (payload: {
   estimated_delivery?: string;
   payment_method: string;
   voucher_code?: string;
-}): Promise<{ status: boolean; message?: string; snap_token?: string; va_number?: string; qr_string?: string; payment_url?: string; reference?: string; order_number: string }> => {
+}): Promise<{ status: boolean; message?: string; snap_token?: string; client_key?: string; is_production?: boolean; va_number?: string; qr_string?: string; payment_url?: string; reference?: string; order_number: string }> => {
   const res = await api.post("/payment/create", payload);
   return res.data;
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/components/Toast";
 
 interface CustomPaymentModalProps {
@@ -8,12 +8,15 @@ interface CustomPaymentModalProps {
   onClose: () => void;
   onPaymentConfirmed: () => void;
   orderNumber: string;
-  paymentMethod: string;
+  paymentMethod?: string;
   grossAmount: number;
   receiverName?: string;
+  snapToken?: string;
+  paymentUrl?: string;
+  clientKey?: string;
+  isProduction?: boolean;
   vaNumber?: string;
   qrString?: string;
-  paymentUrl?: string;
 }
 
 export default function CustomPaymentModal({
@@ -21,18 +24,51 @@ export default function CustomPaymentModal({
   onClose,
   onPaymentConfirmed,
   orderNumber,
-  paymentMethod,
   grossAmount,
   receiverName = "Customer",
-  vaNumber,
-  qrString,
+  snapToken,
   paymentUrl,
+  clientKey,
+  isProduction = true,
 }: CustomPaymentModalProps) {
   const { showToast, error } = useToast();
-  const [copiedType, setCopiedType] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"mbanking" | "atm" | "ibanking">("mbanking");
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isSnapLoading, setIsSnapLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState({ hours: 23, minutes: 59, seconds: 45 });
+
+  // Sanitize effective payment url
+  const effectivePaymentUrl = paymentUrl || (snapToken ? `https://app.midtrans.com/snap/v4/redirection/${snapToken}` : undefined);
+
+  // Format currency
+  const formatIDR = (amount: number) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  // Dynamically load Midtrans Snap JS Script
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const scriptId = "midtrans-snap-script";
+    const existingScript = document.getElementById(scriptId) as HTMLScriptElement | null;
+    const snapJsUrl = isProduction 
+      ? "https://app.midtrans.com/snap/snap.js" 
+      : "https://app.sandbox.midtrans.com/snap/snap.js";
+    const cKey = clientKey || (isProduction ? "Mid-client-IuGSj1Tf8bngO780" : "Mid-client-sBSqTk7RhzcH4GEK");
+
+    if (!existingScript) {
+      const script = document.createElement("script");
+      script.id = scriptId;
+      script.src = snapJsUrl;
+      script.setAttribute("data-client-key", cKey);
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  }, [isOpen, isProduction, clientKey]);
 
   // Countdown timer simulation for payment validity (24 hours)
   useEffect(() => {
@@ -48,419 +84,280 @@ export default function CustomPaymentModal({
     return () => clearInterval(timer);
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
-  // Sanitize VA Number and Payment URL:
-  const isVaUrl = Boolean(vaNumber && (vaNumber.startsWith("http://") || vaNumber.startsWith("https://")));
-  const effectivePaymentUrl = paymentUrl || (isVaUrl ? vaNumber : undefined);
-  const effectiveVa = isVaUrl ? undefined : vaNumber;
-
-  // Format currency
-  const formatIDR = (amount: number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  // Determine VA prefix & bank info
-  const getPaymentDetails = () => {
-    const code = paymentMethod.toLowerCase();
-    const cleanOrderDigits = orderNumber.replace(/\D/g, "").padEnd(6, "0").slice(0, 8);
-
-    switch (code) {
-      case "bca_va":
-        return {
-          type: "va",
-          title: "BCA VIRTUAL ACCOUNT",
-          bankName: "BANK CENTRAL ASIA (BCA)",
-          vaNumber: effectiveVa || `7007014${cleanOrderDigits}`,
-          color: "#0066AE",
-        };
-      case "mandiri_va":
-      case "echannel":
-        return {
-          type: "va",
-          title: "MANDIRI VIRTUAL ACCOUNT",
-          bankName: "BANK MANDIRI (BILL / VA)",
-          vaNumber: effectiveVa || `891180${cleanOrderDigits}`,
-          color: "#003A70",
-        };
-      case "bri_va":
-        return {
-          type: "va",
-          title: "BRI VIRTUAL ACCOUNT (BRIVA)",
-          bankName: "BANK RAKYAT INDONESIA",
-          vaNumber: effectiveVa || `230000${cleanOrderDigits}`,
-          color: "#00529C",
-        };
-      case "bni_va":
-        return {
-          type: "va",
-          title: "BNI VIRTUAL ACCOUNT",
-          bankName: "BANK NEGARA INDONESIA",
-          vaNumber: effectiveVa || `827720${cleanOrderDigits}`,
-          color: "#F15A22",
-        };
-      case "permata_va":
-        return {
-          type: "va",
-          title: "PERMATA VIRTUAL ACCOUNT",
-          bankName: "BANK PERMATA",
-          vaNumber: effectiveVa || `850010${cleanOrderDigits}`,
-          color: "#009B4D",
-        };
-      case "cimb_va":
-        return {
-          type: "va",
-          title: "CIMB VIRTUAL ACCOUNT",
-          bankName: "BANK CIMB NIAGA",
-          vaNumber: vaNumber || `273000${cleanOrderDigits}`,
-          color: "#009B4D",
-        };
-      case "qris":
-      case "other_qris":
-      case "gopay":
-      case "ovo":
-      case "dana":
-      case "shopeepay":
-      default:
-        return {
-          type: "ewallet",
-          title: code === "qris" ? "QRIS UNIVERSAL INSTANT SCAN" : `${code.toUpperCase()} INSTANT SCAN`,
-          bankName: "QRIS NATIONAL PAYMENT PROTOCOL",
-          vaNumber: null,
-          color: "#202020",
-        };
+  // Open Midtrans Snap Popup
+  const handleOpenSnap = useCallback(() => {
+    if (!snapToken && !effectivePaymentUrl) {
+      error("Sesi transaksi Midtrans belum siap. Mohon tunggu beberapa saat...");
+      return;
     }
-  };
 
-  const paymentInfo = getPaymentDetails();
+    setIsSnapLoading(true);
 
-  // Copy helper
-  const handleCopy = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedType(label);
-    showToast(`${label} copied to clipboard!`, "success", "CLIPBOARD COPIED");
-    setTimeout(() => setCopiedType(null), 3000);
-  };
+    if (typeof window !== "undefined" && (window as any).snap && snapToken) {
+      setIsSnapLoading(false);
+      (window as any).snap.pay(snapToken, {
+        onSuccess: (result: any) => {
+          showToast("Pembayaran Anda berhasil dikonfirmasi!", "success", "TRANSACTION SUCCESS");
+          onPaymentConfirmed();
+        },
+        onPending: (result: any) => {
+          showToast("Menunggu penyelesaian transfer bank atau scan QRIS Anda...", "info", "AWAITING SETTLEMENT");
+        },
+        onError: (result: any) => {
+          error("Pembayaran gagal atau dibatalkan oleh pengguna.");
+        },
+        onClose: () => {
+          showToast("Jendela pembayaran ditutup. Anda dapat membukanya kembali kapan saja.", "info", "PAYMENT POPUP CLOSED");
+        },
+      });
+    } else if (effectivePaymentUrl) {
+      setIsSnapLoading(false);
+      window.open(effectivePaymentUrl, "_blank");
+    } else {
+      setIsSnapLoading(false);
+      error("Gagal memuat portal Snap Midtrans. Silakan coba kembali.");
+    }
+  }, [snapToken, effectivePaymentUrl, error, showToast, onPaymentConfirmed]);
 
-  // Check real-time payment verification
-  const handleConfirmPayment = async () => {
+  // Auto-launch Snap popup once loaded when modal opens
+  useEffect(() => {
+    if (!isOpen || !snapToken) return;
+    const timeout = setTimeout(() => {
+      handleOpenSnap();
+    }, 600);
+    return () => clearTimeout(timeout);
+  }, [isOpen, snapToken, handleOpenSnap]);
+
+  // Check real-time payment verification directly with server
+  const handleCheckPaymentStatus = async () => {
     setIsVerifying(true);
-    showToast("Connecting to banking settlement system...", "info", "VERIFYING PAYMENT");
+    showToast("Menghubungkan ke sistem penyelesaian perbankan Midtrans...", "info", "VERIFIKASI REALTIME");
     
     try {
-      // Lazy load api.ts to avoid cyclical imports or SSR issues
       const { checkPaymentStatus } = await import("@/utils/api");
       const res = await checkPaymentStatus(orderNumber);
       
       if (res.status && res.is_paid) {
-        showToast("Payment confirmed! Processing your shipment.", "success", "TRANSACTION SUCCESS");
+        showToast("Pembayaran lunas terverifikasi! Pesanan Anda segera diproses.", "success", "TRANSACTION SUCCESS");
         onPaymentConfirmed();
       } else {
         setIsVerifying(false);
-        error(`Payment not yet received (Status: ${res.transaction_status}). Please complete your transfer and try again.`);
+        error(`Pembayaran belum diterima (Status: ${res.transaction_status || "pending"}). Silakan selesaikan pembayaran Anda.`);
       }
     } catch (err: any) {
       setIsVerifying(false);
-      error("Verification failed. Please try again or wait a moment.");
+      error("Gagal memeriksa status. Silakan coba beberapa saat lagi.");
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[99999] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 sm:p-8 overflow-y-auto animate-fadeIn">
       {/* Main Luxury Modal Container */}
-      <div style={{ fontFamily: "'Roboto', sans-serif" }} className="w-full max-w-4xl bg-[#0A0A0A] border border-[#252525] text-white shadow-[0_0_60px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col max-h-[98vh] sm:max-h-[94vh]">
+      <div style={{ fontFamily: "'Roboto', sans-serif" }} className="w-full max-w-3xl bg-[#0A0A0A] border border-[#252525] text-white shadow-[0_0_60px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col max-h-[96vh]">
         
         {/* Top Protocol Bar */}
         <div className="bg-[#111111] border-b border-[#222222] px-6 sm:px-10 py-5 flex items-center justify-between shrink-0 gap-3">
           <div className="flex items-center gap-3 sm:gap-4 overflow-hidden">
-            <span className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-white animate-pulse shadow-[0_0_12px_rgba(255,255,255,0.8)] shrink-0" />
-            <span className="text-[9px] sm:text-xs text-white font-bold tracking-wider sm:tracking-[0.25em] uppercase truncate">
-              SECTOR MADNESS <span className="hidden sm:inline">// CORE PAY GATEWAY</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_12px_rgba(16,185,129,0.8)] shrink-0" />
+            <span className="text-[10px] sm:text-xs text-white font-bold tracking-wider sm:tracking-[0.25em] uppercase truncate">
+              SECTOR MADNESS <span className="hidden sm:inline">// MIDTRANS OFFICIAL GATEWAY</span>
             </span>
           </div>
           <button
             onClick={onClose}
             className="text-[9px] sm:text-[11px] text-[#888] hover:text-white transition-colors font-extrabold tracking-wider sm:tracking-[0.2em] uppercase px-4 py-2 sm:px-3 sm:py-1.5 bg-[#1A1A1A] hover:bg-[#252525] border border-[#333] shrink-0"
           >
-            [ X ] <span className="hidden sm:inline">CLOSE</span>
+            [ X ] <span className="hidden sm:inline">TUTUP</span>
           </button>
         </div>
 
         {/* Scrollable Content Body */}
-        <div className="overflow-y-auto flex-1" style={{ padding: "clamp(32px, 5vw, 56px)" }}>
-          <div className="space-y-14">
+        <div className="overflow-y-auto flex-1" style={{ padding: "clamp(24px, 4vw, 40px)" }}>
+          <div className="space-y-8">
 
-            {/* ─── SECTION 1: Order Identity & Timer ─── */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 sm:gap-8 w-full" style={{ paddingBottom: "32px", borderBottom: "1px solid #1E1E1E" }}>
-              <div className="space-y-3 w-full sm:w-auto overflow-hidden">
-                <span className="text-[11px] sm:text-xs text-[#666] uppercase tracking-[0.25em] block font-bold">
-                  TRANSACTION REFERENCE
+            {/* SECTION 1: Order Identity & Timer */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 w-full pb-6 border-b border-[#1E1E1E]">
+              <div className="space-y-2 w-full sm:w-auto">
+                <span className="text-[10px] sm:text-[11px] text-[#777] uppercase tracking-[0.25em] block font-bold">
+                  NOMOR TRANSAKSI / ORDER
                 </span>
-                <div className="text-[13px] min-[375px]:text-sm sm:text-2xl font-black text-white tracking-[0.15em] uppercase whitespace-nowrap overflow-x-auto">
+                <div className="text-sm min-[375px]:text-base sm:text-xl font-black text-white tracking-[0.12em] uppercase whitespace-nowrap overflow-x-auto">
                   {orderNumber}
                 </div>
-                <span className="text-[10px] sm:text-[11px] text-[#FFFFFF] font-bold uppercase tracking-[0.2em] block truncate">
-                  STATUS: AWAITING CUSTOMER SETTLEMENT
+                <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-[0.15em] block">
+                  STATUS: MENUNGGU PEMBAYARAN VIA SNAP
                 </span>
               </div>
 
-              <div className="flex items-center justify-between sm:block sm:text-right shrink-0 w-full sm:w-auto mt-2 sm:mt-0">
-                <span className="text-[10px] sm:text-[11px] text-[#777] uppercase tracking-[0.2em] block font-bold sm:mb-2">
-                  PAYMENT EXPIRES IN
+              <div className="flex items-center justify-between sm:block sm:text-right shrink-0 w-full sm:w-auto">
+                <span className="text-[10px] text-[#777] uppercase tracking-[0.2em] block font-bold sm:mb-1.5">
+                  BATAS WAKTU PEMBAYARAN
                 </span>
-                <div className="text-base sm:text-xl font-black text-white tracking-[0.12em]">
+                <div className="text-sm sm:text-lg font-black text-white tracking-[0.12em] font-mono">
                   {String(timeLeft.hours).padStart(2, "0")} : {String(timeLeft.minutes).padStart(2, "0")} : {String(timeLeft.seconds).padStart(2, "0")}
                 </div>
               </div>
             </div>
 
-            {/* ─── SECTION 2: Total Amount Payable ─── */}
-            <div className="bg-[#111111] border border-[#252525] flex flex-col sm:flex-row items-start sm:items-center justify-between" style={{ padding: "32px", gap: "24px" }}>
-              <div className="space-y-2">
-                <span className="text-[11px] sm:text-xs text-[#888] uppercase tracking-[0.25em] block font-bold">
-                  TOTAL AMOUNT PAYABLE
+            {/* SECTION 2: Total Amount Payable */}
+            <div className="bg-[#111111] border border-[#252525] flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 sm:p-8 gap-4">
+              <div className="space-y-1">
+                <span className="text-[10px] sm:text-xs text-[#888] uppercase tracking-[0.25em] block font-bold">
+                  TOTAL TAGIHAN PEMBAYARAN
                 </span>
-                <div className="text-2xl sm:text-3xl font-extrabold text-white tracking-wider">
+                <div className="text-2xl sm:text-3xl font-extrabold text-white tracking-wider font-mono">
                   {formatIDR(grossAmount)}
                 </div>
               </div>
+              <span className="text-[10px] font-bold text-[#888] uppercase tracking-wider bg-[#1A1A1A] border border-[#333] px-3 py-1.5">
+                OTOMATIS 24/7 TANPA KONFIRMASI MANUAL
+              </span>
             </div>
 
-            {/* ─── SECTION 3: VA or QRIS ─── */}
-            {paymentInfo.type === "va" ? (
-              <div className="space-y-10">
-
-                {/* VA Number Card */}
-                <div className="bg-[#111111] border border-[#252525]" style={{ padding: "clamp(24px, 4vw, 40px)" }}>
-                  <div className="space-y-10">
-
-                    {/* Bank Header */}
-                    <div className="flex items-center justify-between" style={{ paddingBottom: "24px", borderBottom: "1px solid #222" }}>
-                      <div className="space-y-2">
-                        <span className="text-[11px] text-[#777] uppercase tracking-[0.25em] block font-bold">
-                          VIRTUAL ACCOUNT PARTNER
-                        </span>
-                        <div className="text-base sm:text-lg font-extrabold text-white uppercase tracking-[0.15em]">
-                          {paymentInfo.title}
-                        </div>
-                      </div>
-                      <span className="text-[11px] font-black bg-white/10 border border-white/20 text-white tracking-[0.15em] uppercase hidden sm:block" style={{ padding: "8px 16px" }}>
-                        AUTOMATED 24/7
-                      </span>
-                    </div>
-
-                    {/* VA Number Display */}
-                    <div className="space-y-5">
-                      <span className="text-xs text-[#999] uppercase tracking-[0.25em] block font-bold">
-                        VIRTUAL ACCOUNT NUMBER :
-                      </span>
-                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center" style={{ gap: "16px" }}>
-                        <div 
-                          className="flex-1 bg-[#050505] border border-[#333] font-black text-white tracking-[0.1em] sm:tracking-[0.2em] select-all text-center sm:text-left shadow-inner text-[13px] sm:text-2xl whitespace-nowrap overflow-x-auto" 
-                          style={{ padding: "16px 16px" }}
-                        >
-                          {paymentInfo.vaNumber}
-                        </div>
-                        <button
-                          onClick={() => handleCopy(paymentInfo.vaNumber || "", "VA Number")}
-                          className={`font-extrabold text-[11px] sm:text-xs uppercase tracking-[0.2em] transition-all shrink-0 border ${
-                            copiedType === "VA Number"
-                              ? "bg-transparent text-white border-white font-black"
-                              : "bg-white text-black hover:bg-[#E0E0E0] border-white"
-                          }`}
-                          style={{ padding: "20px 32px" }}
-                        >
-                          {copiedType === "VA Number" ? "✓ VA COPIED" : "COPY VA NUMBER"}
-                        </button>
-                      </div>
-                    </div>
-
-                  </div>
-                </div>
-
-                {/* Instructions Tabbed System */}
-                <div className="bg-[#0E0E0E] border border-[#222222] overflow-hidden">
-                  {/* Tabs */}
-                  <div className="grid grid-cols-3 border-b border-[#222222] bg-[#0A0A0A]">
-                    <button
-                      onClick={() => setActiveTab("mbanking")}
-                      className={`text-center text-[11px] sm:text-xs font-extrabold uppercase tracking-[0.2em] border-r border-[#222] transition-colors ${
-                        activeTab === "mbanking" ? "bg-[#161616] text-white border-b-2 border-b-white" : "text-[#666] hover:text-[#AAA]"
-                      }`}
-                      style={{ padding: "18px 12px" }}
-                    >
-                      M-BANKING
-                    </button>
-                    <button
-                      onClick={() => setActiveTab("atm")}
-                      className={`text-center text-[11px] sm:text-xs font-extrabold uppercase tracking-[0.2em] border-r border-[#222] transition-colors ${
-                        activeTab === "atm" ? "bg-[#161616] text-white border-b-2 border-b-white" : "text-[#666] hover:text-[#AAA]"
-                      }`}
-                      style={{ padding: "18px 12px" }}
-                    >
-                      ATM TRANSFER
-                    </button>
-                    <button
-                      onClick={() => setActiveTab("ibanking")}
-                      className={`text-center text-[11px] sm:text-xs font-extrabold uppercase tracking-[0.2em] transition-colors ${
-                        activeTab === "ibanking" ? "bg-[#161616] text-white border-b-2 border-b-white" : "text-[#666] hover:text-[#AAA]"
-                      }`}
-                      style={{ padding: "18px 12px" }}
-                    >
-                      I-BANKING
-                    </button>
-                  </div>
-
-                  {/* Tab Content */}
-                  <div className="text-[13px] sm:text-sm text-[#BBBBBB] tracking-wide text-justify" style={{ padding: "clamp(28px, 4vw, 48px)" }}>
-                    {activeTab === "mbanking" && (
-                      <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
-                        <div className="flex items-start" style={{ gap: "20px" }}>
-                          <span className="font-extrabold text-white bg-[#1A1A1A] border border-[#333] text-[11px] sm:text-xs shrink-0" style={{ padding: "8px 14px", marginTop: "2px" }}>01</span>
-                          <p style={{ lineHeight: "2" }}>Open your Mobile Banking Application (e.g. BCA Mobile / Livin by Mandiri / BRImo / myBCA) and login to your account.</p>
-                        </div>
-                        <div className="flex items-start" style={{ gap: "20px" }}>
-                          <span className="font-extrabold text-white bg-[#1A1A1A] border border-[#333] text-[11px] sm:text-xs shrink-0" style={{ padding: "8px 14px", marginTop: "2px" }}>02</span>
-                          <p style={{ lineHeight: "2" }}>Select menu <span className="text-white font-bold">Transfer</span> &gt; <span className="text-white font-bold">Virtual Account / Bill Payment</span>.</p>
-                        </div>
-                        <div className="flex items-start" style={{ gap: "20px" }}>
-                          <span className="font-extrabold text-white bg-[#1A1A1A] border border-[#333] text-[11px] sm:text-xs shrink-0" style={{ padding: "8px 14px", marginTop: "2px" }}>03</span>
-                          <p style={{ lineHeight: "2" }}>Input Virtual Account Number <span className="text-white font-black underline underline-offset-4 select-all">{paymentInfo.vaNumber}</span> and select Continue.</p>
-                        </div>
-                        <div className="flex items-start" style={{ gap: "20px" }}>
-                          <span className="font-extrabold text-white bg-[#1A1A1A] border border-[#333] text-[11px] sm:text-xs shrink-0" style={{ padding: "8px 14px", marginTop: "2px" }}>04</span>
-                          <p style={{ lineHeight: "2" }}>Verify that merchant name displays <span className="text-white font-black">SECTOR MADNESS</span> and total corresponds to <span className="text-white font-bold">{formatIDR(grossAmount)}</span>. Enter PIN to complete.</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {activeTab === "atm" && (
-                      <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
-                        <div className="flex items-start" style={{ gap: "20px" }}>
-                          <span className="font-extrabold text-white bg-[#1A1A1A] border border-[#333] text-[11px] sm:text-xs shrink-0" style={{ padding: "8px 14px", marginTop: "2px" }}>01</span>
-                          <p style={{ lineHeight: "2" }}>Insert ATM Card and enter your PIN at any bank ATM terminal.</p>
-                        </div>
-                        <div className="flex items-start" style={{ gap: "20px" }}>
-                          <span className="font-extrabold text-white bg-[#1A1A1A] border border-[#333] text-[11px] sm:text-xs shrink-0" style={{ padding: "8px 14px", marginTop: "2px" }}>02</span>
-                          <p style={{ lineHeight: "2" }}>Choose <span className="text-white font-bold">Other Transactions</span> &gt; <span className="text-white font-bold">Transfer</span> &gt; <span className="text-white font-bold">To Virtual Account</span>.</p>
-                        </div>
-                        <div className="flex items-start" style={{ gap: "20px" }}>
-                          <span className="font-extrabold text-white bg-[#1A1A1A] border border-[#333] text-[11px] sm:text-xs shrink-0" style={{ padding: "8px 14px", marginTop: "2px" }}>03</span>
-                          <p style={{ lineHeight: "2" }}>Enter number <span className="text-white font-black underline underline-offset-4">{paymentInfo.vaNumber}</span> and press Correct.</p>
-                        </div>
-                        <div className="flex items-start" style={{ gap: "20px" }}>
-                          <span className="font-extrabold text-white bg-[#1A1A1A] border border-[#333] text-[11px] sm:text-xs shrink-0" style={{ padding: "8px 14px", marginTop: "2px" }}>04</span>
-                          <p style={{ lineHeight: "2" }}>Inspect payment receipt upon completion. Our server will receive an automated callback instantly.</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {activeTab === "ibanking" && (
-                      <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
-                        <div className="flex items-start" style={{ gap: "20px" }}>
-                          <span className="font-extrabold text-white bg-[#1A1A1A] border border-[#333] text-[11px] sm:text-xs shrink-0" style={{ padding: "8px 14px", marginTop: "2px" }}>01</span>
-                          <p style={{ lineHeight: "2" }}>Access Internet Banking web browser portal and sign in with your credentials.</p>
-                        </div>
-                        <div className="flex items-start" style={{ gap: "20px" }}>
-                          <span className="font-extrabold text-white bg-[#1A1A1A] border border-[#333] text-[11px] sm:text-xs shrink-0" style={{ padding: "8px 14px", marginTop: "2px" }}>02</span>
-                          <p style={{ lineHeight: "2" }}>Navigate to <span className="text-white font-bold">Funds Transfer</span> &gt; <span className="text-white font-bold">Virtual Account Transfer</span>.</p>
-                        </div>
-                        <div className="flex items-start" style={{ gap: "20px" }}>
-                          <span className="font-extrabold text-white bg-[#1A1A1A] border border-[#333] text-[11px] sm:text-xs shrink-0" style={{ padding: "8px 14px", marginTop: "2px" }}>03</span>
-                          <p style={{ lineHeight: "2" }}>Insert destination VA <span className="text-white font-black underline underline-offset-4">{paymentInfo.vaNumber}</span> and confirm authorization using hardware token or MFA.</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-              </div>
-            ) : (
-              /* ─── E-WALLET / QRIS SCAN DISPLAY ─── */
-              <div className="bg-[#111111] border border-[#252525] flex flex-col items-center text-center" style={{ padding: "clamp(32px, 5vw, 56px)" }}>
-                <div className="space-y-3" style={{ marginBottom: "32px" }}>
-                  <span className="text-[11px] sm:text-xs text-[#777] uppercase tracking-[0.3em] block font-bold">
-                    UNIVERSAL SCAN PROTOCOL
+            {/* SECTION 3: 4 Verified Payment Methods Display Card */}
+            <div className="bg-[#111111] border border-[#252525] p-6 sm:p-8 space-y-6">
+              <div className="flex items-center justify-between pb-4 border-b border-[#222]">
+                <div>
+                  <span className="text-[10px] text-[#777] uppercase tracking-[0.25em] block font-bold">
+                    METODE PEMBAYARAN TERVERIFIKASI
                   </span>
-                  <div className="text-lg sm:text-xl font-extrabold text-white uppercase tracking-[0.2em]">
-                    {paymentInfo.title}
+                  <div className="text-sm sm:text-base font-extrabold text-white uppercase tracking-[0.15em] mt-1">
+                    4 JALUR PEMBAYARAN RESMI AKTIF
                   </div>
                 </div>
+                <span className="text-[10px] font-black text-emerald-400 bg-emerald-950/40 border border-emerald-800 px-3 py-1 uppercase tracking-widest hidden sm:inline-block">
+                  TERVERIFIKASI RESMI
+                </span>
+              </div>
+
+              {/* Grid of the 4 Channels */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 font-mono">
                 
-                {/* QR Code Box */}
-                <div className="bg-white border-[6px] border-[#1A1A1A] shadow-2xl flex flex-col items-center" style={{ padding: "clamp(24px, 4vw, 40px)", gap: "24px", marginBottom: "32px" }}>
-                  <div className="bg-[#1A1A1A] text-white font-black tracking-[0.25em] text-[11px] w-full uppercase text-center" style={{ padding: "10px 20px", borderBottom: "3px solid black" }}>
-                    SCAN TO PAY IN IDR
+                {/* 1. BNI VA */}
+                <div className="bg-[#0A0A0A] border border-[#2A2A2A] p-4 flex items-center justify-between hover:border-[#444] transition-colors">
+                  <div className="space-y-0.5">
+                    <span className="text-xs font-bold text-white block uppercase tracking-wider">
+                      BNI VIRTUAL ACCOUNT
+                    </span>
+                    <span className="text-[10px] text-[#777] block">
+                      Transfer via BNI Mobile / ATM / I-Banking
+                    </span>
                   </div>
-                  {qrString ? (
-                    <img 
-                      src={qrString.startsWith("http") ? qrString : `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(qrString)}&margin=12`} 
-                      alt="QRIS Code" 
-                      width={280} 
-                      height={280}
-                      className="w-full max-w-[280px] aspect-square block border-4 border-black" 
-                    />
-                  ) : (
-                    <svg width="280" height="280" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full max-w-[280px] aspect-square block">
-                      <rect width="200" height="200" fill="white"/>
-                      <rect x="20" y="20" width="45" height="45" stroke="black" strokeWidth="8"/>
-                      <rect x="30" y="30" width="25" height="25" fill="black"/>
-                      <rect x="135" y="20" width="45" height="45" stroke="black" strokeWidth="8"/>
-                      <rect x="145" y="30" width="25" height="25" fill="black"/>
-                      <rect x="20" y="135" width="45" height="45" stroke="black" strokeWidth="8"/>
-                      <rect x="30" y="145" width="25" height="25" fill="black"/>
-                      <path d="M85 20H115V35H85V20Z" fill="black"/>
-                      <path d="M95 45H105V75H95V45Z" fill="black"/>
-                      <path d="M135 85H180V100H135V85Z" fill="black"/>
-                      <path d="M20 85H65V100H20V85Z" fill="black"/>
-                      <path d="M85 165H115V180H85V165Z" fill="black"/>
-                      <path d="M85 115H180V130H85V115Z" fill="black"/>
-                      <path d="M85 135H105V150H85V135Z" fill="black"/>
-                      <path d="M135 150H180V180H135V150ZM150 165H165V150H150V165Z" fill="black"/>
-                    </svg>
-                  )}
+                  <span className="text-[10px] text-emerald-400 font-bold uppercase shrink-0">
+                    AKTIF
+                  </span>
                 </div>
 
-                <div className="bg-[#0A0A0A] border border-[#222] w-full text-left max-w-lg" style={{ padding: "24px 28px" }}>
-                  <div className="flex items-center text-[11px] text-[#A78BFA] font-bold tracking-[0.2em] uppercase" style={{ gap: "8px", marginBottom: "12px" }}>
-                    <span>ℹ INSTANT AUTOMATIC RECOGNITION</span>
+                {/* 2. Mandiri VA */}
+                <div className="bg-[#0A0A0A] border border-[#2A2A2A] p-4 flex items-center justify-between hover:border-[#444] transition-colors">
+                  <div className="space-y-0.5">
+                    <span className="text-xs font-bold text-white block uppercase tracking-wider">
+                      MANDIRI BILL / VA
+                    </span>
+                    <span className="text-[10px] text-[#777] block">
+                      Livin by Mandiri / ATM / E-Channel
+                    </span>
                   </div>
-                  <p className="text-[13px] text-[#AAA] text-justify" style={{ lineHeight: "1.9" }}>
-                    Once scanned and verified in your application, this window will automatically synchronize with our dispatch server within seconds. No manual screenshot verification required.
-                  </p>
+                  <span className="text-[10px] text-emerald-400 font-bold uppercase shrink-0">
+                    AKTIF
+                  </span>
                 </div>
+
+                {/* 3. BRI VA */}
+                <div className="bg-[#0A0A0A] border border-[#2A2A2A] p-4 flex items-center justify-between hover:border-[#444] transition-colors">
+                  <div className="space-y-0.5">
+                    <span className="text-xs font-bold text-white block uppercase tracking-wider">
+                      BRI VIRTUAL ACCOUNT (BRIVA)
+                    </span>
+                    <span className="text-[10px] text-[#777] block">
+                      BRImo / ATM BRI / Agen BRILink
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-emerald-400 font-bold uppercase shrink-0">
+                    AKTIF
+                  </span>
+                </div>
+
+                {/* 4. QRIS */}
+                <div className="bg-[#0A0A0A] border border-[#2A2A2A] p-4 flex items-center justify-between hover:border-[#444] transition-colors">
+                  <div className="space-y-0.5">
+                    <span className="text-xs font-bold text-white block uppercase tracking-wider">
+                      QRIS UNIVERSAL
+                    </span>
+                    <span className="text-[10px] text-[#777] block">
+                      DANA, GoPay, OVO, ShopeePay & M-Banking
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-emerald-400 font-bold uppercase shrink-0">
+                    AKTIF
+                  </span>
+                </div>
+
               </div>
-            )}
+
+              {/* Explanatory banner */}
+              <div className="bg-[#0E0E0E] border border-[#222] p-4 text-[12px] text-[#AAA] leading-relaxed flex items-start gap-3">
+                <span className="text-emerald-400 font-mono font-bold shrink-0">[INFO]</span>
+                <p>
+                  Klik tombol <strong className="text-white">BAYAR SEKARANG VIA MIDTRANS SNAP</strong> di bawah. Anda dapat langsung memilih salah satu dari 4 metode di atas dan sistem akan langsung menghasilkan nomor Virtual Account resmi atau kode QRIS Bank Indonesia asli.
+                </p>
+              </div>
+            </div>
 
           </div>
         </div>
 
         {/* Action Footer */}
-        <div className="bg-[#111111] border-t border-[#222222] p-6 sm:p-8 shrink-0 flex flex-col sm:flex-row gap-3">
+        <div className="bg-[#111111] border-t border-[#222222] p-6 sm:p-8 shrink-0 flex flex-col gap-3">
+          
+          {/* Main Button: Pay Now via Midtrans Snap */}
           <button
-            onClick={handleConfirmPayment}
-            disabled={isVerifying}
-            className={`w-full text-[13px] sm:text-sm font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center shadow-2xl ${
-              isVerifying
-                ? "bg-[#1A1A1A] text-[#666666] cursor-not-allowed border border-[#333333]"
-                : "bg-white text-black hover:bg-[#EAEAEA] active:scale-[0.99] border border-white"
-            }`}
-            style={{ padding: "18px 28px", gap: "12px" }}
+            onClick={handleOpenSnap}
+            disabled={isSnapLoading}
+            className="w-full text-[13px] sm:text-sm font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center bg-white text-black hover:bg-[#EAEAEA] active:scale-[0.99] border border-white py-4 px-6 shadow-2xl"
           >
-            {isVerifying ? (
-              <>
-                <div className="w-5 h-5 border-2 border-[#666] border-t-white rounded-full animate-spin" />
-                <span>VERIFYING NETWORK SETTLEMENT...</span>
-              </>
+            {isSnapLoading ? (
+              <div className="flex items-center gap-3">
+                <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                <span>MEMBUKA JENDELA MIDTRANS...</span>
+              </div>
             ) : (
-              <span>[ ✓ I HAVE COMPLETED PAYMENT ]</span>
+              <span>[ BAYAR SEKARANG VIA MIDTRANS SNAP ]</span>
             )}
           </button>
+
+          {/* Secondary Button: Check Payment Status */}
+          <button
+            onClick={handleCheckPaymentStatus}
+            disabled={isVerifying}
+            className="w-full text-[11px] sm:text-xs font-bold uppercase tracking-[0.18em] transition-all flex items-center justify-center bg-[#181818] text-[#CCCCCC] hover:text-white hover:bg-[#222222] border border-[#333] py-3.5 px-6"
+          >
+            {isVerifying ? (
+              <div className="flex items-center gap-2">
+                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>MEMERIKSA JARINGAN PERBANKAN...</span>
+              </div>
+            ) : (
+              <span>[ SUDAH TRANSFER? CEK STATUS PEMBAYARAN ]</span>
+            )}
+          </button>
+
+          {/* Fallback Direct Link */}
+          {effectivePaymentUrl && (
+            <div className="text-center pt-2">
+              <a
+                href={effectivePaymentUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] text-[#777] hover:text-white underline underline-offset-4 tracking-wider transition-colors inline-block font-mono"
+              >
+                Jika jendela pembayaran tidak terbuka otomatis, klik di sini untuk membuka halaman pembayaran.
+              </a>
+            </div>
+          )}
+
         </div>
 
       </div>

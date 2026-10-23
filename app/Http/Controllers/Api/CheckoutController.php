@@ -600,58 +600,15 @@ class CheckoutController extends Controller
         });
 
         // Admin notification moved to PaymentController (only when paid)
-        // 7. Call Payment Gateway (Midtrans Core API v2/charge)
+        // 7. Call Payment Gateway (Midtrans Snap Session)
+        // Dikonfigurasi khusus untuk 4 metode pembayaran terverifikasi: BNI, MANDIRI (echannel), BRI, dan QRIS
         $serverKey = config('services.midtrans.server_key') ?: env('MIDTRANS_SERVER_KEY');
+        $clientKey = config('services.midtrans.client_key') ?: env('MIDTRANS_CLIENT_KEY');
         $isProduction = filter_var(config('services.midtrans.is_production', env('MIDTRANS_IS_PRODUCTION', false)), FILTER_VALIDATE_BOOLEAN);
-        $endpoint = $isProduction ? 'https://api.midtrans.com/v2/charge' : 'https://api.sandbox.midtrans.com/v2/charge';
 
-        $paymentMethod = strtolower($request->payment_method);
-        $paymentType = 'bank_transfer';
-        $bankTransfer = null;
-        $echannel = null;
-        $qrisAcquirer = null;
-
-        switch ($paymentMethod) {
-            case 'bca_va':
-                $paymentType = 'bank_transfer';
-                $bankTransfer = ['bank' => 'bca'];
-                break;
-            case 'bni_va':
-                $paymentType = 'bank_transfer';
-                $bankTransfer = ['bank' => 'bni'];
-                break;
-            case 'bri_va':
-                $paymentType = 'bank_transfer';
-                $bankTransfer = ['bank' => 'bri'];
-                break;
-            case 'permata_va':
-                $paymentType = 'bank_transfer';
-                $bankTransfer = ['bank' => 'permata'];
-                break;
-            case 'cimb_va':
-                $paymentType = 'bank_transfer';
-                $bankTransfer = ['bank' => 'cimb'];
-                break;
-            case 'mandiri_va':
-                $paymentType = 'echannel';
-                $echannel = [
-                    'bill_info1' => 'Payment For',
-                    'bill_info2' => 'Sector Madness'
-                ];
-                break;
-            case 'qris':
-            case 'gopay':
-            case 'shopeepay':
-            case 'ovo':
-            case 'dana':
-                $paymentType = 'qris';
-                $qrisAcquirer = ['acquirer' => 'gopay'];
-                break;
-            default:
-                $paymentType = 'bank_transfer';
-                $bankTransfer = ['bank' => 'bca'];
-                break;
-        }
+        $snapEndpoint = $isProduction 
+            ? 'https://app.midtrans.com/snap/v1/transactions' 
+            : 'https://app.sandbox.midtrans.com/snap/v1/transactions';
 
         // Strict validation: sum(item_details) MUST strictly match gross_amount in Midtrans
         $sumItemDetails = array_reduce($itemDetailsForMidtrans, function ($carry, $item) {
@@ -669,8 +626,16 @@ class CheckoutController extends Controller
             ];
         }
 
-        $payload = [
-            'payment_type' => $paymentType,
+        // 4 Metode Pembayaran Aktif Terverifikasi: BNI VA, Mandiri Bill (echannel), BRI VA, dan QRIS
+        $enabledPayments = [
+            'bni_va',
+            'echannel',
+            'bri_va',
+            'qris',
+            'gopay',
+        ];
+
+        $snapPayload = [
             'transaction_details' => [
                 'order_id'     => $order->order_number,
                 'gross_amount' => (int)$grandTotal,
@@ -680,116 +645,45 @@ class CheckoutController extends Controller
                 'phone'      => $shippingAddressData['phone_number'],
                 'email'      => $user->email ?? 'customer@sectormadness.com',
                 'shipping_address' => [
-                    'first_name' => $shippingAddressData['receiver_name'],
-                    'phone'      => $shippingAddressData['phone_number'],
-                    'address'    => $shippingAddressData['street_address'],
-                    'city'       => $shippingAddressData['city'],
-                    'postal_code'=> $shippingAddressData['postal_code'],
+                    'first_name'  => $shippingAddressData['receiver_name'],
+                    'phone'       => $shippingAddressData['phone_number'],
+                    'address'     => $shippingAddressData['street_address'],
+                    'city'        => $shippingAddressData['city'],
+                    'postal_code' => $shippingAddressData['postal_code'],
                 ],
             ],
-            'item_details' => $itemDetailsForMidtrans,
+            'item_details'     => $itemDetailsForMidtrans,
+            'enabled_payments' => $enabledPayments,
         ];
 
-        if ($paymentType === 'bank_transfer' && isset($bankTransfer)) {
-            $payload['bank_transfer'] = $bankTransfer;
-        } elseif ($paymentType === 'echannel' && isset($echannel)) {
-            $payload['echannel'] = $echannel;
-        } elseif ($paymentType === 'qris' && isset($qrisAcquirer)) {
-            $payload['qris'] = $qrisAcquirer;
-        }
-
-        $vaNumber = null;
-        $qrString = null;
+        $snapToken = null;
         $paymentUrl = null;
-        $transactionId = null;
-        $midtransResponse = [];
+        $snapData = [];
 
         try {
-            $res = Http::withBasicAuth($serverKey, '')
+            $snapRes = Http::withBasicAuth($serverKey, '')
                 ->withHeaders([
                     'Content-Type' => 'application/json',
                     'Accept'       => 'application/json'
                 ])
-                ->post($endpoint, $payload);
+                ->post($snapEndpoint, $snapPayload);
 
-            $midtransResponse = $res->json() ?? [];
-            Log::info("Midtrans Charge Response for Order {$order->order_number}: ", $midtransResponse);
+            $snapData = $snapRes->json() ?? [];
+            Log::info("Midtrans Snap Generation for Order {$order->order_number}: ", $snapData);
 
-            if ($res->successful() && isset($midtransResponse['status_code']) && in_array($midtransResponse['status_code'], ['200', '201'])) {
-                $transactionId = $midtransResponse['transaction_id'] ?? null;
-
-                // Extract Virtual Account
-                if (isset($midtransResponse['va_numbers'][0]['va_number'])) {
-                    $vaNumber = $midtransResponse['va_numbers'][0]['va_number'];
-                } elseif (isset($midtransResponse['permata_va_number'])) {
-                    $vaNumber = $midtransResponse['permata_va_number'];
-                } elseif (isset($midtransResponse['biller_code']) && isset($midtransResponse['bill_key'])) {
-                    $vaNumber = $midtransResponse['biller_code'] . ' ' . $midtransResponse['bill_key'];
-                }
-
-                // Extract QRIS (actions -> url or direct qr_string)
-                if (isset($midtransResponse['actions'])) {
-                    foreach ($midtransResponse['actions'] as $action) {
-                        if (($action['name'] ?? '') === 'generate-qr-code') {
-                            $qrString = $action['url'];
-                        }
-                    }
-                }
-                if (empty($qrString) && isset($midtransResponse['qr_string'])) {
-                    $qrString = $midtransResponse['qr_string'];
-                }
+            if ($snapRes->successful() && !empty($snapData['token'])) {
+                $snapToken = $snapData['token'];
+                $paymentUrl = $snapData['redirect_url'] ?? null;
             } else {
-                Log::warning("Midtrans Core Charge Failed for Order {$order->order_number}, attempting Snap fallback: ", $midtransResponse);
-
-                // Otomatis fallback ke Midtrans Snap API (karena di Production, channel bank seperti BRI/BNI/Mandiri aktif di Snap secara default)
-                $snapEndpoint = $isProduction 
-                    ? 'https://app.midtrans.com/snap/v1/transactions' 
-                    : 'https://app.sandbox.midtrans.com/snap/v1/transactions';
-
-                $snapPayload = [
-                    'transaction_details' => [
-                        'order_id'     => $order->order_number,
-                        'gross_amount' => (int)$grandTotal,
-                    ],
-                    'customer_details' => [
-                        'first_name' => $shippingAddressData['receiver_name'],
-                        'phone'      => $shippingAddressData['phone_number'],
-                        'email'      => $user->email ?? 'customer@sectormadness.com',
-                        'shipping_address' => [
-                            'first_name'  => $shippingAddressData['receiver_name'],
-                            'phone'       => $shippingAddressData['phone_number'],
-                            'address'     => $shippingAddressData['street_address'],
-                            'city'        => $shippingAddressData['city'],
-                            'postal_code' => $shippingAddressData['postal_code'],
-                        ],
-                    ],
-                    'item_details' => $itemDetailsForMidtrans,
-                ];
-
-                $snapRes = Http::withBasicAuth($serverKey, '')
-                    ->withHeaders([
-                        'Content-Type' => 'application/json',
-                        'Accept'       => 'application/json'
-                    ])
-                    ->post($snapEndpoint, $snapPayload);
-
-                if ($snapRes->successful() && !empty($snapRes->json()['token'])) {
-                    $snapData = $snapRes->json();
-                    $transactionId = $order->order_number;
-                    $paymentUrl = $snapData['redirect_url'] ?? null;
-                    $vaNumber = $paymentUrl;
-                    $midtransResponse = $snapData;
-                } else {
-                    Log::warning("Midtrans Snap Fallback also failed: ", $snapRes->json() ?? []);
-                    return response()->json([
-                        'status'  => false,
-                        'message' => 'Gagal membuat transaksi Midtrans: ' . ($midtransResponse['status_message'] ?? 'Gateway returned an error'),
-                        'details' => $midtransResponse,
-                    ], 422);
-                }
+                Log::error("Midtrans Snap Generation Failed for Order {$order->order_number}: ", $snapData);
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'Gagal membuat sesi pembayaran Midtrans: ' . ($snapData['error_messages'][0] ?? $snapData['message'] ?? 'Gateway returned an error'),
+                    'details' => $snapData,
+                ], 422);
             }
         } catch (\Exception $e) {
-            Log::error("Midtrans Charge Exception for Order {$order->order_number}: " . $e->getMessage());
+            Log::error("Midtrans Snap Exception for Order {$order->order_number}: " . $e->getMessage());
             return response()->json([
                 'status'  => false,
                 'message' => 'Exception connecting to Midtrans: ' . $e->getMessage(),
@@ -799,26 +693,26 @@ class CheckoutController extends Controller
         // Rekam OrderPayment
         OrderPayment::create([
             'order_id'         => $order->id,
-            'transaction_id'   => $transactionId ?? $order->order_number,
-            'snap_token'       => $vaNumber ?? $qrString ?? $order->order_number,
-            'payment_type'     => $request->payment_method,
+            'transaction_id'   => $order->order_number,
+            'snap_token'       => $snapToken,
+            'payment_type'     => 'midtrans_snap',
             'payment_status'   => 'unpaid',
             'gross_amount'     => $grandTotal,
-            'payload_response' => $midtransResponse,
+            'payload_response' => $snapData,
         ]);
 
         return response()->json([
             'status'        => true,
             'gateway'       => 'midtrans',
             'is_production' => $isProduction,
+            'client_key'    => $clientKey,
             'message'       => 'Payment transaction generated successfully',
             'order_number'  => $order->order_number,
-            'va_number'     => $vaNumber,
-            'qr_string'     => $qrString,
+            'snap_token'    => $snapToken,
             'payment_url'   => $paymentUrl,
-            'reference'     => $transactionId,
+            'reference'     => $order->order_number,
             'data'          => $order->load('items', 'payment', 'shipment'),
-            'response'      => $midtransResponse,
+            'response'      => $snapData,
         ], 201);
     }
 

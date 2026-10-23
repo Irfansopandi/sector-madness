@@ -534,10 +534,10 @@ function CheckoutContent() {
 
       setPaymentTxData({
         order_number: ordNo,
-        payment_method: selectedPaymentMethod,
+        payment_method: "snap",
         grossAmount: grandTotal,
         receiverName: fullNameCombined,
-        vaNumber: (pInfo as any)?.va_number || (!isUrl ? snap : undefined),
+        snapToken: !isUrl ? snap : undefined,
         paymentUrl: (pInfo as any)?.payment_url || (isUrl ? snap : undefined),
         shipping_rate: selectedRate,
       });
@@ -563,24 +563,25 @@ function CheckoutContent() {
         service_name: selectedRate?.service_name || "Regular Express",
         shipping_price: selectedRate?.shipping_price || 0,
         estimated_delivery: selectedRate?.estimated_delivery || "N/A",
-        payment_method: selectedPaymentMethod,
+        payment_method: "snap",
       });
 
       if (!res.status || !res.order_number) {
         throw new Error("Failed to generate payment transaction authorization.");
       }
 
-      showToast("Initializing Sector Madness custom core payment protocol...", "success", "GATEWAY CONNECTED");
+      showToast("Initializing Sector Madness official payment portal...", "success", "GATEWAY CONNECTED");
 
-      // Open custom proprietary Sector Madness payment UI (Core API Custom Gateway Mode)
+      // Open custom proprietary Sector Madness payment UI (Snap Gateway Mode)
       setPaymentTxData({
         order_number: res.order_number,
-        payment_method: selectedPaymentMethod,
+        payment_method: "snap",
         grossAmount: grandTotal,
         receiverName: fullNameCombined,
-        vaNumber: res.va_number,
-        qrString: res.qr_string,
+        snapToken: res.snap_token,
         paymentUrl: res.payment_url,
+        clientKey: res.client_key,
+        isProduction: res.is_production,
       });
       setIsPaying(false);
       setCustomModalOpen(true);
@@ -1392,65 +1393,6 @@ function CheckoutContent() {
                   </span>
                 </div>
 
-                {/* Divider Before Payment Methods */}
-                <div style={{ height: "1px", backgroundColor: "#1C1C1C", width: "100%", marginBottom: "32px" }} />
-
-                {/* INTEGRATED PAYMENT METHOD (TWO CATEGORIES WITH DROPDOWN, NO LOGOS) */}
-                <div style={{ marginBottom: "36px" }}>
-                  <h3 
-                    className="uppercase text-white text-base tracking-[0.2em]" 
-                    style={{ marginBottom: "20px", letterSpacing: "0.2em", fontFamily: "'Roboto', sans-serif", fontWeight: 600 }}
-                  >
-                    PAYMENT METHOD
-                  </h3>
-
-                  <div className="space-y-3 font-mono">
-                    {[
-                      { id: "bni_va", name: "BNI — VIRTUAL ACCOUNT", desc: "Automated 24/7 Verification via Bank Negara Indonesia" },
-                      { id: "mandiri_va", name: "MANDIRI — VIRTUAL ACCOUNT", desc: "Automated 24/7 Verification via Bank Mandiri" },
-                      { id: "bri_va", name: "BRI — VIRTUAL ACCOUNT", desc: "Automated 24/7 Verification via Bank Rakyat Indonesia BRIVA" },
-                    ].map((item) => {
-                      const isSelected = selectedPaymentMethod === item.id;
-                      return (
-                        <div
-                          key={item.id}
-                          onClick={() => setSelectedPaymentMethod(item.id)}
-                          style={{ padding: "18px 22px" }}
-                          className={`border transition-all cursor-pointer flex items-center justify-between gap-4 ${
-                            isSelected
-                              ? "bg-[#181818] border-white shadow-md"
-                              : "bg-[#0C0C0C] border-[#222222] hover:border-[#383838]"
-                          }`}
-                        >
-                          <div className="flex items-center gap-4">
-                            {/* Circular Radio Button */}
-                            <div
-                              className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
-                                isSelected ? "border-white bg-white/20" : "border-[#555555] bg-[#121212]"
-                              }`}
-                            >
-                              {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
-                            </div>
-
-                            <div className="flex flex-col gap-0.5">
-                              <span className="text-[12px] font-bold text-white uppercase tracking-wider block">
-                                {item.name}
-                              </span>
-                              <span className="text-[10px] text-[#777777] uppercase tracking-wider block">
-                                {item.desc}
-                              </span>
-                            </div>
-                          </div>
-                          
-                          <span className="text-[10px] text-[#888] font-bold uppercase tracking-widest hidden sm:block">
-                            INSTANT 24/7
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
                 {/* Divider Before Actions */}
                 <div style={{ height: "1px", backgroundColor: "#222222", width: "100%", margin: "32px 0" }} />
 
@@ -1545,12 +1487,13 @@ function CheckoutContent() {
           router.push(`/checkout/success?order_number=${paymentTxData?.order_number || "ORD-CONFIRMED"}`);
         }}
         orderNumber={paymentTxData?.order_number || "ORD-000000"}
-        paymentMethod={paymentTxData?.payment_method || selectedPaymentMethod}
+        paymentMethod="snap"
         grossAmount={paymentTxData?.grossAmount || grandTotal}
         receiverName={paymentTxData?.receiverName || "Customer"}
-        vaNumber={paymentTxData?.vaNumber}
-        qrString={paymentTxData?.qrString}
+        snapToken={paymentTxData?.snapToken}
         paymentUrl={paymentTxData?.paymentUrl}
+        clientKey={paymentTxData?.clientKey}
+        isProduction={paymentTxData?.isProduction}
       />
 
       <AddressModal
