@@ -225,9 +225,9 @@ export default function CustomPaymentModal({
                     <button
                       onClick={handleOpenSnap}
                       disabled={isSnapLoading}
-                      className="font-extrabold text-[11px] sm:text-xs uppercase tracking-[0.2em] transition-all shrink-0 border bg-white text-black hover:bg-[#EAEAEA] active:scale-[0.98] border-white px-6 sm:px-8 py-3 sm:py-3.5 shadow-md"
+                      className="font-black text-xs sm:text-sm uppercase tracking-[0.2em] transition-all shrink-0 border bg-white text-black hover:bg-[#EAEAEA] active:scale-[0.98] border-white px-8 sm:px-10 py-3.5 sm:py-4 min-h-[48px] sm:min-h-[52px] shadow-lg flex items-center justify-center"
                     >
-                      {isSnapLoading ? "OPENING..." : "[ PAY NOW ]"}
+                      {isSnapLoading ? "OPENING..." : "PAY NOW"}
                     </button>
                   </div>
 
