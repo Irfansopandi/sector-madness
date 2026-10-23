@@ -327,9 +327,10 @@ class CheckoutController extends Controller
         }
 
         // 4. Validasi Payment Method
-        $validMethods = ['qris', 'gopay', 'shopeepay', 'ovo', 'dana', 'bca_va', 'bni_va', 'bri_va', 'mandiri_va', 'permata_va', 'cimb_va', 'credit_card'];
-        if (!in_array(strtolower($request->payment_method), $validMethods)) {
-            return response()->json(['status' => false, 'message' => 'Selected payment method is currently unavailable or invalid.'], 422);
+        $validMethods = ['snap', 'midtrans', 'qris', 'gopay', 'shopeepay', 'ovo', 'dana', 'bca_va', 'bni_va', 'bri_va', 'mandiri_va', 'permata_va', 'cimb_va', 'credit_card'];
+        $requestedMethod = strtolower($request->payment_method ?: 'bni_va');
+        if (!in_array($requestedMethod, $validMethods)) {
+            $requestedMethod = 'bni_va';
         }
 
         $cart = Cart::where('user_id', $user->id)->first();

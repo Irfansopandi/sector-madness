@@ -108,7 +108,7 @@ export default function CustomPaymentModal({
           error("Payment authorization failed or was declined.");
         },
         onClose: () => {
-          showToast("Payment window closed. You can reopen it at any time.", "info", "WINDOW CLOSED");
+          showToast("Payment window closed. Click [ I HAVE COMPLETED PAYMENT ] once transferred.", "info", "WINDOW CLOSED");
         },
       });
     } else if (effectivePaymentUrl) {
@@ -119,6 +119,15 @@ export default function CustomPaymentModal({
       error("Failed to load Midtrans portal. Please try again.");
     }
   }, [snapToken, effectivePaymentUrl, error, showToast, onPaymentConfirmed]);
+
+  // Auto open Midtrans Snap when modal opens
+  useEffect(() => {
+    if (!isOpen || !snapToken) return;
+    const timer = setTimeout(() => {
+      handleOpenSnap();
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [isOpen, snapToken, handleOpenSnap]);
 
   // Check real-time payment verification directly with server
   const handleConfirmPayment = async () => {
@@ -134,7 +143,10 @@ export default function CustomPaymentModal({
         onPaymentConfirmed();
       } else {
         setIsVerifying(false);
-        error(`Payment not yet received (Status: ${res.transaction_status || "pending"}). Please complete your payment.`);
+        error(`Payment not yet completed (Status: ${res.transaction_status || "pending"}). Reopening payment gateway...`);
+        setTimeout(() => {
+          handleOpenSnap();
+        }, 800);
       }
     } catch (err: any) {
       setIsVerifying(false);
@@ -230,26 +242,15 @@ export default function CustomPaymentModal({
                     </span>
                   </div>
 
-                  {/* Channel Options & Snap Trigger Display */}
-                  <div className="space-y-5">
+                  {/* Channel Options Display (Clean single bar) */}
+                  <div className="space-y-4">
                     <span className="text-xs text-[#999] uppercase tracking-[0.25em] block font-bold">
                       AVAILABLE PAYMENT METHODS :
                     </span>
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center" style={{ gap: "16px" }}>
-                      <div 
-                        className="flex-1 bg-[#050505] border border-[#333] font-bold text-white tracking-[0.1em] sm:tracking-[0.15em] select-all text-center sm:text-left shadow-inner text-[12px] sm:text-base whitespace-nowrap overflow-x-auto" 
-                        style={{ padding: "18px 20px" }}
-                      >
-                        BNI • MANDIRI • BRI • QRIS
-                      </div>
-                      <button
-                        onClick={handleOpenSnap}
-                        disabled={isSnapLoading}
-                        className="font-extrabold text-[11px] sm:text-xs uppercase tracking-[0.2em] transition-all shrink-0 border bg-white text-black hover:bg-[#E0E0E0] border-white"
-                        style={{ padding: "20px 32px" }}
-                      >
-                        {isSnapLoading ? "OPENING..." : "PAY VIA SNAP"}
-                      </button>
+                    <div 
+                      className="w-full bg-[#050505] border border-[#333] font-bold text-white tracking-[0.15em] sm:tracking-[0.2em] select-all text-center shadow-inner text-xs sm:text-base py-5 px-6"
+                    >
+                      BNI • MANDIRI • BRI • QRIS
                     </div>
                   </div>
 
@@ -295,19 +296,19 @@ export default function CustomPaymentModal({
                     <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
                       <div className="flex items-start" style={{ gap: "20px" }}>
                         <span className="font-extrabold text-white bg-[#1A1A1A] border border-[#333] text-[11px] sm:text-xs shrink-0" style={{ padding: "8px 14px", marginTop: "2px" }}>01</span>
-                        <p style={{ lineHeight: "2" }}>Click <span className="text-white font-bold">PAY NOW VIA MIDTRANS SNAP</span> below to launch the payment portal.</p>
+                        <p style={{ lineHeight: "2" }}>Select <span className="text-white font-bold">BNI, Mandiri, BRI, or QRIS</span> in the payment window to generate your official payment code.</p>
                       </div>
                       <div className="flex items-start" style={{ gap: "20px" }}>
                         <span className="font-extrabold text-white bg-[#1A1A1A] border border-[#333] text-[11px] sm:text-xs shrink-0" style={{ padding: "8px 14px", marginTop: "2px" }}>02</span>
-                        <p style={{ lineHeight: "2" }}>Select <span className="text-white font-bold">BNI, Mandiri, BRI, or QRIS</span> to instantly generate your official payment authorization.</p>
+                        <p style={{ lineHeight: "2" }}>Open your Mobile Banking application (BNI Mobile, Livin, BRImo) or E-Wallet (GoPay, DANA, OVO).</p>
                       </div>
                       <div className="flex items-start" style={{ gap: "20px" }}>
                         <span className="font-extrabold text-white bg-[#1A1A1A] border border-[#333] text-[11px] sm:text-xs shrink-0" style={{ padding: "8px 14px", marginTop: "2px" }}>03</span>
-                        <p style={{ lineHeight: "2" }}>Open your Mobile Banking app (BNI Mobile, Livin, BRImo, DANA, GoPay, or QRIS scanner) and complete payment for <span className="text-white font-black">{formatIDR(grossAmount)}</span>.</p>
+                        <p style={{ lineHeight: "2" }}>Navigate to <span className="text-white font-bold">Transfer &gt; Virtual Account</span> (or scan QRIS code) for <span className="text-white font-black">{formatIDR(grossAmount)}</span>.</p>
                       </div>
                       <div className="flex items-start" style={{ gap: "20px" }}>
                         <span className="font-extrabold text-white bg-[#1A1A1A] border border-[#333] text-[11px] sm:text-xs shrink-0" style={{ padding: "8px 14px", marginTop: "2px" }}>04</span>
-                        <p style={{ lineHeight: "2" }}>Upon transfer completion, this window will automatically recognize your transaction in real-time.</p>
+                        <p style={{ lineHeight: "2" }}>Once transfer is authorized, return here and click <span className="text-white font-bold">I HAVE COMPLETED PAYMENT</span> below.</p>
                       </div>
                     </div>
                   )}
@@ -316,7 +317,7 @@ export default function CustomPaymentModal({
                     <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
                       <div className="flex items-start" style={{ gap: "20px" }}>
                         <span className="font-extrabold text-white bg-[#1A1A1A] border border-[#333] text-[11px] sm:text-xs shrink-0" style={{ padding: "8px 14px", marginTop: "2px" }}>01</span>
-                        <p style={{ lineHeight: "2" }}>Click <span className="text-white font-bold">PAY NOW VIA MIDTRANS SNAP</span> below and select your preferred bank (BNI, Mandiri, or BRI).</p>
+                        <p style={{ lineHeight: "2" }}>Select your destination bank <span className="text-white font-bold">(BNI, Mandiri, or BRI)</span> in the payment gateway window.</p>
                       </div>
                       <div className="flex items-start" style={{ gap: "20px" }}>
                         <span className="font-extrabold text-white bg-[#1A1A1A] border border-[#333] text-[11px] sm:text-xs shrink-0" style={{ padding: "8px 14px", marginTop: "2px" }}>02</span>
@@ -328,7 +329,7 @@ export default function CustomPaymentModal({
                       </div>
                       <div className="flex items-start" style={{ gap: "20px" }}>
                         <span className="font-extrabold text-white bg-[#1A1A1A] border border-[#333] text-[11px] sm:text-xs shrink-0" style={{ padding: "8px 14px", marginTop: "2px" }}>04</span>
-                        <p style={{ lineHeight: "2" }}>Input destination Virtual Account number displayed on screen and press Correct.</p>
+                        <p style={{ lineHeight: "2" }}>Input destination Virtual Account number displayed on screen and confirm transaction.</p>
                       </div>
                     </div>
                   )}
@@ -337,7 +338,7 @@ export default function CustomPaymentModal({
                     <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
                       <div className="flex items-start" style={{ gap: "20px" }}>
                         <span className="font-extrabold text-white bg-[#1A1A1A] border border-[#333] text-[11px] sm:text-xs shrink-0" style={{ padding: "8px 14px", marginTop: "2px" }}>01</span>
-                        <p style={{ lineHeight: "2" }}>Click <span className="text-white font-bold">PAY NOW VIA MIDTRANS SNAP</span> to obtain your official Virtual Account number.</p>
+                        <p style={{ lineHeight: "2" }}>Obtain your bank Virtual Account number from the payment gateway portal.</p>
                       </div>
                       <div className="flex items-start" style={{ gap: "20px" }}>
                         <span className="font-extrabold text-white bg-[#1A1A1A] border border-[#333] text-[11px] sm:text-xs shrink-0" style={{ padding: "8px 14px", marginTop: "2px" }}>02</span>
@@ -361,12 +362,12 @@ export default function CustomPaymentModal({
           </div>
         </div>
 
-        {/* Action Footer */}
+        {/* Action Footer - Single Tall Monochrome Button */}
         <div className="bg-[#111111] border-t border-[#222222] p-6 sm:p-8 shrink-0 flex flex-col gap-3">
           <button
             onClick={handleConfirmPayment}
             disabled={isVerifying}
-            className={`w-full text-sm sm:text-base font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center shadow-2xl py-5 sm:py-6 px-8 min-h-[60px] ${
+            className={`w-full text-sm sm:text-base font-black uppercase tracking-[0.25em] transition-all flex items-center justify-center shadow-2xl py-6 sm:py-7 px-8 min-h-[68px] sm:min-h-[74px] ${
               isVerifying
                 ? "bg-[#1A1A1A] text-[#666666] cursor-not-allowed border border-[#333333]"
                 : "bg-white text-black hover:bg-[#EAEAEA] active:scale-[0.99] border border-white"

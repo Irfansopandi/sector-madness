@@ -563,7 +563,7 @@ function CheckoutContent() {
         service_name: selectedRate?.service_name || "Regular Express",
         shipping_price: selectedRate?.shipping_price || 0,
         estimated_delivery: selectedRate?.estimated_delivery || "N/A",
-        payment_method: "snap",
+        payment_method: "bni_va",
       });
 
       if (!res.status || !res.order_number) {
@@ -575,7 +575,7 @@ function CheckoutContent() {
       // Open custom proprietary Sector Madness payment UI (Snap Gateway Mode)
       setPaymentTxData({
         order_number: res.order_number,
-        payment_method: "snap",
+        payment_method: "bni_va",
         grossAmount: grandTotal,
         receiverName: fullNameCombined,
         snapToken: res.snap_token,
