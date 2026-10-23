@@ -1474,9 +1474,11 @@ function CheckoutContent() {
         isOpen={customModalOpen}
         onClose={() => {
           setCustomModalOpen(false);
-          if (paymentTxData?.order_number && !existingOrder) {
-            router.push("/dashboard/orders");
-          }
+        }}
+        onCancelOrder={() => {
+          setCustomModalOpen(false);
+          setPaymentTxData(null);
+          showToast("Payment session reset. You can click PLACE ORDER again to select a different payment channel.", "info", "SESSION RESET");
         }}
         onPaymentConfirmed={async () => {
           setCustomModalOpen(false);

@@ -7,6 +7,7 @@ interface CustomPaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
   onPaymentConfirmed: () => void;
+  onCancelOrder?: () => void;
   orderNumber: string;
   paymentMethod?: string;
   grossAmount: number;
@@ -23,6 +24,7 @@ export default function CustomPaymentModal({
   isOpen,
   onClose,
   onPaymentConfirmed,
+  onCancelOrder,
   orderNumber,
   grossAmount,
   receiverName = "Customer",
@@ -120,15 +122,6 @@ export default function CustomPaymentModal({
     }
   }, [snapToken, effectivePaymentUrl, error, showToast, onPaymentConfirmed]);
 
-  // Auto open Midtrans Snap when modal opens
-  useEffect(() => {
-    if (!isOpen || !snapToken) return;
-    const timer = setTimeout(() => {
-      handleOpenSnap();
-    }, 600);
-    return () => clearTimeout(timer);
-  }, [isOpen, snapToken, handleOpenSnap]);
-
   // Check real-time payment verification directly with server
   const handleConfirmPayment = async () => {
     setIsVerifying(true);
@@ -143,10 +136,7 @@ export default function CustomPaymentModal({
         onPaymentConfirmed();
       } else {
         setIsVerifying(false);
-        error(`Payment not yet completed (Status: ${res.transaction_status || "pending"}). Reopening payment gateway...`);
-        setTimeout(() => {
-          handleOpenSnap();
-        }, 800);
+        error(`Payment not yet settled (Status: ${res.transaction_status || "pending"}). Please click [ PAY VIA MIDTRANS SNAP ] or complete your transfer.`);
       }
     } catch (err: any) {
       setIsVerifying(false);
@@ -362,26 +352,53 @@ export default function CustomPaymentModal({
           </div>
         </div>
 
-        {/* Action Footer - Single Tall Monochrome Button */}
+        {/* Action Footer */}
         <div className="bg-[#111111] border-t border-[#222222] p-6 sm:p-8 shrink-0 flex flex-col gap-3">
+          {/* Primary Action Button: Pay via Midtrans Snap */}
+          <button
+            onClick={handleOpenSnap}
+            disabled={isSnapLoading}
+            className="w-full text-sm sm:text-base font-black uppercase tracking-[0.25em] transition-all flex items-center justify-center shadow-2xl py-6 sm:py-7 px-8 min-h-[68px] sm:min-h-[74px] bg-white text-black hover:bg-[#EAEAEA] active:scale-[0.99] border border-white"
+          >
+            {isSnapLoading ? (
+              <div className="flex items-center gap-3">
+                <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                <span>OPENING MIDTRANS GATEWAY...</span>
+              </div>
+            ) : (
+              <span>[ PAY VIA MIDTRANS SNAP ]</span>
+            )}
+          </button>
+
+          {/* Verification Button: I Have Completed Payment */}
           <button
             onClick={handleConfirmPayment}
             disabled={isVerifying}
-            className={`w-full text-sm sm:text-base font-black uppercase tracking-[0.25em] transition-all flex items-center justify-center shadow-2xl py-6 sm:py-7 px-8 min-h-[68px] sm:min-h-[74px] ${
+            className={`w-full text-xs sm:text-sm font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center py-4 sm:py-5 px-6 min-h-[52px] border ${
               isVerifying
-                ? "bg-[#1A1A1A] text-[#666666] cursor-not-allowed border border-[#333333]"
-                : "bg-white text-black hover:bg-[#EAEAEA] active:scale-[0.99] border border-white"
+                ? "bg-[#1A1A1A] text-[#666666] cursor-not-allowed border-[#333333]"
+                : "bg-transparent text-white hover:bg-white/10 active:scale-[0.99] border-[#444444] hover:border-white"
             }`}
           >
             {isVerifying ? (
               <div className="flex items-center gap-3">
-                <div className="w-4 h-4 border-2 border-[#666666] border-t-black rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-[#666666] border-t-white rounded-full animate-spin" />
                 <span>VERIFYING NETWORK SETTLEMENT...</span>
               </div>
             ) : (
               <span>[ ✓ I HAVE COMPLETED PAYMENT ]</span>
             )}
           </button>
+
+          {/* Cancel & Choose Different Method */}
+          {onCancelOrder && (
+            <button
+              onClick={onCancelOrder}
+              className="text-[11px] sm:text-xs font-bold text-[#888888] hover:text-[#FFFFFF] uppercase tracking-[0.2em] transition-colors py-2 text-center"
+            >
+              [ ✕ CANCEL & CHOOSE DIFFERENT PAYMENT METHOD ]
+            </button>
+          )}
         </div>
 
       </div>
